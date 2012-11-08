@@ -79,9 +79,7 @@ if character_data.has_chaotic_metagem():
     character_gear_buffs.append('chaotic_metagem')
 test_gear_buffs = stats.GearBuffs(*character_gear_buffs)
 
-test_stats = stats.Stats(lst['str'], lst['agi'], lst['int'], lst['spirit'], lst['stam'], lst['ap'], lst['crit'], lst['hit'], lst['exp'],
-                         lst['haste'], lst['mastery'], test_mh, test_oh, test_procs, test_gear_buffs,
-                         pvp_power=lst['pvp_power'], pvp_resil=lst['pvp_resil'], pvp_target_armor=None)
+test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs, **lst)
 
 # Initialize talents..
 if charInfo['talents'] == None:
