@@ -251,7 +251,7 @@ class CharacterData:
 
     def get_weapon(self, weapon_data, item_data):
         weapon_info = weapon_data['data'][u'weaponInfo']
-        weaponMap = {1:'axe', 2:'2h_axe', 3:'bow', 4:'rifle',5:'mace', 6:'2h_mace', 7:'polearm', 8:'sword', 9:'2H_sword', 10:'staff',
+        weaponMap = {0:'axe', 1:'axe', 2:'2h_axe', 3:'bow', 4:'rifle',5:'mace', 6:'2h_mace', 7:'polearm', 8:'sword', 9:'2H_sword', 10:'staff',
                      11:'exotic', 12:'2h_exotic', 13:'fist', 14:'misc', 15:'dagger', 16:'thrown', 17:'spear', 18:'xbow', 19:'wand',
                      20:'fishing_pole'}
         tmpItem = get_item_cached(self.region, item_data[u'id'])

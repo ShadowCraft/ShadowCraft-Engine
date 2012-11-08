@@ -564,8 +564,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         oh_sb_swings_per_second = attacks_per_second['oh_autoattacks'] * shadow_blades_uptime
         #assumes AR is stacked with SB, should have better implementation later
         if self.settings.is_combat_rogue():
-            mh_sb_swings_per_second = mh_sb_swings_per_second / (1 + .2 * self.ar_uptime) * 1.2
-            oh_sb_swings_per_second = oh_sb_swings_per_second / (1 + .2 * self.ar_uptime) * 1.2
+            mh_sb_swings_per_second = mh_sb_swings_per_second * 1.2
+            oh_sb_swings_per_second = oh_sb_swings_per_second * 1.2
         attacks_per_second['mh_autoattacks'] -= mh_sb_swings_per_second
         attacks_per_second['oh_autoattacks'] -= oh_sb_swings_per_second
         attacks_per_second['mh_shadow_blade'] = mh_sb_swings_per_second * self.strike_hit_chance
@@ -1470,6 +1470,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         attacks_per_second['eviscerate'] = [finisher_chance * total_evis_per_second for finisher_chance in finisher_size_breakdown]
         extra_finishers_per_second = attacks_per_second['revealing_strike'] / 5
+        extra_finishers_per_second += shb_uptime * .7 #needs accurate modelling
         for opener, cps in [('ambush', 2), ('garrote', 1)]:
             if opener in attacks_per_second:
                 extra_finishers_per_second += attacks_per_second[opener] * cps / 5
