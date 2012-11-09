@@ -20,7 +20,7 @@ class RogueDamageCalculator(DamageCalculator):
     normalize_ep_stat = 'ap'
     if normalize_ep_stat in default_ep_stats:
         default_ep_stats.remove(normalize_ep_stat)
-    melee_attacks = ['mh_autoattack_hits', 'oh_autoattack_hits', 'mh_shadow_blade', 'oh_shadow_blade',
+    melee_attacks = ['mh_autoattack_hits', 'oh_autoattack_hits', 'mh_shadow_blade', 'oh_shadow_blade', 'autoattack', 'shadow_blades',
                      'rupture', 'eviscerate', 'envenom', 'ambush', 'garrote',
                      'sinister_strike', 'revealing_strike', 'main_gauche', 'mh_killing_spree', 'oh_killing_spree',
                      'backstab', 'hemorrhage', 
