@@ -188,6 +188,7 @@ class GearBuffs(object):
         'lfr_jade_bandit_figurine':       {'stat': 'haste', 'value': 3184, 'duration': 15, 'cooldown': 60},
         'hawkmasters_talon':              {'stat': 'haste', 'value': 3595, 'duration': 15, 'cooldown': 60},
         'flashing_steel_talisman':        {'stat': 'agi', 'value': 4232, 'duration': 15, 'cooldown': 90},
+        'woundripper_medallion':          {'stat': 'crit', 'value': 3838, 'duration': 15, 'cooldown': 60}, # 5.1
         'gerps_perfect_arrow':            {'stat': 'agi', 'value': 3480, 'duration': 20, 'cooldown': 120},
         'ancient_petrified_seed':         {'stat': 'agi', 'value': 1277, 'duration': 15, 'cooldown': 60},
         'heroic_ancient_petrified_seed':  {'stat': 'agi', 'value': 1441, 'duration': 15, 'cooldown': 60},

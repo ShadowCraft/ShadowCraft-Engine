@@ -359,7 +359,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         # Sets the swing_reset_spacing and total_openers_per_second variables.
         opener_cd = [10, 20][self.settings.opener_name == 'garrote']
         if self.settings.use_opener == 'always':
-            opener_spacing = (180. + self.settings.response_time)
+            opener_spacing = (120. + self.settings.response_time)
             if self.race.shadowmeld and self.settings.is_subtlety_rogue():
                 shadowmeld_spacing = 120. + self.settings.response_time
                 opener_spacing = 1. / (1 / opener_spacing + 1 / shadowmeld_spacing)
@@ -1125,7 +1125,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             seal_fate_proc_rate = mut_seal_fate_proc_rate * (1 - dispatch_as_cpg_chance) + dsp_seal_fate_proc_rate * dispatch_as_cpg_chance
             base_cp_per_cpg = 2
         else:
-            seal_fate_proc_rate = crit_rates['dispatch']
+            if self.talents.shuriken_toss:
+                seal_fate_proc_rate = 0
+            else:
+                seal_fate_proc_rate = crit_rates['dispatch']
             base_cp_per_cpg = 1
 
         if self.talents.anticipation:
@@ -1470,7 +1473,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         attacks_per_second['eviscerate'] = [finisher_chance * total_evis_per_second for finisher_chance in finisher_size_breakdown]
         extra_finishers_per_second = attacks_per_second['revealing_strike'] / 5
-        extra_finishers_per_second += shb_uptime * .7 #needs accurate modelling
         for opener, cps in [('ambush', 2), ('garrote', 1)]:
             if opener in attacks_per_second:
                 extra_finishers_per_second += attacks_per_second[opener] * cps / 5
@@ -1533,7 +1535,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         find_weakness_multiplier = 1 + (find_weakness_damage_boost - 1) * self.find_weakness_uptime
         
         mos_value = .1
-        mos_intervals = (180 + self.settings.response_time) + self.talents.preparation / (360. + self.settings.response_time * 3)
+        mos_intervals = (120. + self.settings.response_time) + self.talents.preparation / (360. + self.settings.response_time * 3)
         mos_multiplier = 1. + mos_value * (6 + 3 * self.talents.subterfuge) / mos_intervals
 
         for key in damage_breakdown:
@@ -1627,13 +1629,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         snd_per_cycle = 1.
         total_cycle_regen = cycle_length * modified_energy_regen
 
-        vanish_cooldown = 180
+        vanish_cooldown = 120
         ambushes_from_vanish = (1. + 1. * self.talents.subterfuge) / (vanish_cooldown + self.settings.response_time) + self.talents.preparation / (360. + self.settings.response_time * 3)
         ambush_rate = ambushes_from_vanish
         self.find_weakness_uptime = (10 + 2.5 * self.talents.subterfuge) * ambushes_from_vanish
         shadowmeld_ambushes = 0
         if self.race.shadowmeld:
-            shadowmeld_ambushes = 1. / (120 + self.settings.response_time)
+            shadowmeld_ambushes = 1. / (120. + self.settings.response_time)
             self.find_weakness_uptime += 10 * shadowmeld_ambushes
             ambush_rate += shadowmeld_ambushes
 

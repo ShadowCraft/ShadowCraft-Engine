@@ -107,7 +107,6 @@ allowed_procs = {
     },
 
 
-
     # Cata Items
     'heroic_nokaled_the_elements_of_death': {
         'stat': 'spell_damage',
@@ -323,8 +322,9 @@ behaviours = {
     },
     # weapon procs
     'dancing_steel': {
+        'real_ppm':True,
         'icd': 0,
-        'ppm': 1,
+        'ppm': 2,
         'trigger': 'all_melee_attacks'
     },
     'windsong': {

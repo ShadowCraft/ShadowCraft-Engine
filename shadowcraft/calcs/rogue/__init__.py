@@ -59,7 +59,7 @@ class RogueDamageCalculator(DamageCalculator):
         self.vw_base_dmg =      self.get_factor(0.5500000119) # 68389
         self.dp_base_dmg =      self.get_factor(0.6000000238) # 853
         self.ip_base_dmg =      self.get_factor(0.3129999936, 0.2800000012) # 126788
-        self.wp_base_dmg =      self.get_factor(0.3129999936, 0.2800000012) # 3617
+        self.wp_base_dmg =      self.get_factor(0.4169999957, 0.2800000012) # 3617
         self.garrote_base_dmg = self.get_factor(0.1180000007) # 280
         self.rup_base_dmg =     self.get_factor(0.1850000024) # 586
         self.rup_bonus_dmg =    self.get_factor(0.0260000005) # 586 - 'unknown' field
@@ -71,7 +71,7 @@ class RogueDamageCalculator(DamageCalculator):
         self.st_base_dmg =      self.get_factor(1.0000000000) # 127100
         self.vw_percentage_dmg = .160 # spellID 79136 (was .168)
         self.dp_percentage_dmg = .213 # spellID 2818
-        self.wp_percentage_dmg = .090 # spellID 8680
+        self.wp_percentage_dmg = .120 # spellID 8680
         self.ip_percentage_dmg = .109 # spellID 113780
 
     def get_factor(self, avg, delta=0):
@@ -469,6 +469,22 @@ class RogueDamageCalculator(DamageCalculator):
             # 'shiv':                (20, 'strike'),
         }
         return base_cost[ability]
+    
+    def get_spell_cd(self, ability):
+        base_cd = {
+            'tricks_of_the_trade': 30,
+            'blind':               90,
+            'kick':                15,
+            'kidney_shot':         20,
+            'shiv':                8,
+            'vanish':              120,
+            'shadow_blades':       180,
+            'vendetta':            120,
+            'adrenaline_rush':     180,
+            'killing_spree':       120,
+            'shadow_dance':        60,
+        }
+        return base_cd[ability]
 
     def melee_crit_rate(self, agi=None, crit=None):
         if agi == None:
