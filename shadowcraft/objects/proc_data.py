@@ -80,21 +80,24 @@ allowed_procs = {
         'value': 10848,
         'duration': 10,
         'proc_name': 'Reflection of Torment',
-        'behaviours': {'default': 'corens_cold_chromium_coaster'}
+        'behaviours': {'default': 'corens_cold_chromium_coaster'},
+        'scaling': {'factor': 5.9439997673, 'item_level': 470, 'quality': 'epic'}
     },
     'searing_words': {
         'stat': 'agi',
         'value': 3386,
         'duration': 25,
         'proc_name': "Searing Words",
-        'behaviours': {'default': 'searing_words'}
+        'behaviours': {'default': 'searing_words'},
+        'scaling': {'factor': 1.9800000191, 'item_level': 463, 'quality': 'blue'}
     },
     'windswept_pages': {
         'stat': 'haste',
         'value': 3386,
         'duration': 20,
         'proc_name': 'Windswept Pages',
-        'behaviours': {'default': 'windswept_pages'}
+        'behaviours': {'default': 'windswept_pages'},
+        'scaling': {'factor': 1.9800000191, 'item_level': 463, 'quality': 'blue'}
     },
     'zen_alchemist_stone': {
         'stat': 'highest',
@@ -103,6 +106,7 @@ allowed_procs = {
         'duration': 15,
         'proc_name': 'Zen Alchemist Stone',
         'behaviours': {'default': 'zen_alchemist_stone'}
+        'scaling': {'factor': 2.6670000553, 'item_level': 458, 'quality': 'blue'}
     },
     'the_gloaming_blade': {
         'stat': 'crit',
