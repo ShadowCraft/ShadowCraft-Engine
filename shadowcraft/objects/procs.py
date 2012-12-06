@@ -8,7 +8,7 @@ class InvalidProcException(exceptions.InvalidInputException):
 class Proc(object):
     allowed_behaviours = proc_data.behaviours
 
-    def __init__(self, stat, value, duration, proc_name, behaviours, max_stacks=1, can_crit=True, stats=None, scaling=None):
+    def __init__(self, stat, value, duration, proc_name, behaviours, max_stacks=1, can_crit=True, stats=None, scaling=None, upgrade_level=0):
         self.stat = stat
         if stats is not None:
             self.stats = set(stats)
@@ -17,6 +17,7 @@ class Proc(object):
         self.duration = duration
         self.max_stacks = max_stacks
         self.scaling = scaling
+        self.upgrade_level = upgrade_level
         self.proc_name = proc_name
         self.proc_behaviours = {}
         for i in behaviours:
@@ -140,10 +141,16 @@ class ProcsList(object):
 
     def __init__(self, *args):
         for arg in args:
-            if arg in self.allowed_procs:
-                setattr(self, arg, Proc(**self.allowed_procs[arg]))
+            if not isinstance(arg, (list,tuple)):
+                arg = (arg,0)
+            print arg[0]
+            print arg[1]
+            if arg[0] in self.allowed_procs:
+                proc_data = self.allowed_procs[arg[0]]
+                proc_data['upgrade_level'] = arg[1]
+                setattr(self, arg[0], Proc(**(self.allowed_procs[arg[0]])))
             else:
-                raise InvalidProcException(_('No data for proc {proc}').format(proc=arg))
+                raise InvalidProcException(_('No data for proc {proc}').format(proc=arg[0]))
 
     def set_proc(self, proc):
         setattr(self, proc, Proc(**self.allowed_procs[proc]))
@@ -196,19 +203,3 @@ class ProcsList(object):
                     procs.append(proc)
 
         return procs
-
-class ProcUpgrades(object):
-    allowed_procs = proc_data.allowed_procs
-
-    def __init__(self, *args):
-        for arg in args:
-            if arg[0] in self.allowed_procs:
-                setattr(self, self.allowed_procs[arg[0]]['proc_name'], arg[1])
-            else:
-                raise InvalidProcException(_('No data for proc {proc}').format(proc=arg))
-
-    def __getattr__(self, proc):
-        # Any proc we haven't assigned a value to, we don't have.
-        if proc in self.allowed_procs:
-            return False
-        object.__getattribute__(self, proc)

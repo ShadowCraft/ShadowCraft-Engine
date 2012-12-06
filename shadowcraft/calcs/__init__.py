@@ -293,6 +293,58 @@ class DamageCalculator(object):
 
         return ep_values
 
+    def get_upgrades_ep(self, list, normalize_ep_stat=None):
+        if not normalize_ep_stat:
+            normalize_ep_stat = self.normalize_ep_stat
+        # This method computes ep for every other buff/proc not covered by
+        # get_ep or get_weapon_ep. Weapon enchants, being tied to the
+        # weapons they are on, are computed by get_weapon_ep.
+        ep_values = [0,1,2]
+        baseline_dps = self.get_dps()
+        normalize_dps = self.ep_helper(normalize_ep_stat)
+
+        procs_list = []
+        gear_buffs_list = []
+        upgrade_level_list = [0,1,2]
+        for i in list:
+            if i in self.stats.procs.allowed_procs:
+                procs_list.append(i)
+            elif i in self.stats.gear_buffs.allowed_buffs:
+                gear_buffs_list.append(i)
+            else:
+                ep_values[i] = _('not allowed')
+
+        for l in upgrade_level_list:
+            ep_values[l] = {}
+            for i in gear_buffs_list:
+                # Note that activated abilites like trinkets, potions, or
+                # engineering gizmos are handled as gear buffs by the engine.
+                setattr(self.stats.gear_buffs, i, not getattr(self.stats.gear_buffs, i))
+                new_dps = self.get_dps()
+                ep_values[l][i] = abs(new_dps - baseline_dps) / (normalize_dps - baseline_dps)
+                setattr(self.stats.gear_buffs, i, not getattr(self.stats.gear_buffs, i))
+
+            for i in procs_list:
+                try:
+                    if getattr(self.stats.procs, i):
+                        upgrade_level = getattr(getattr(self.stats.procs, i), 'upgrade_level')
+                        print  upgrade_level
+                        delattr(self.stats.procs, i)
+                    else:
+                        self.stats.procs.set_proc(i)
+                    new_dps = self.get_dps()
+                    ep_values[l][i] = abs(new_dps - baseline_dps) / (normalize_dps - baseline_dps)
+                    if getattr(self.stats.procs, i):
+                        delattr(self.stats.procs, i)
+                    else:
+                        self.stats.procs.set_proc(i)
+                except InvalidProcException:
+                    # Data for these procs is not complete/correct
+                    ep_values[i] = _('not supported')
+                    delattr(self.stats.procs, i)
+
+        return ep_values
+
     def get_glyphs_ranking(self, list=None):
         glyphs = []
         glyphs_ranking = {}

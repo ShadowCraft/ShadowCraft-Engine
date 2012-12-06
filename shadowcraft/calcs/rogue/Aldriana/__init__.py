@@ -927,13 +927,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 if proc.scaling is not None:
                     print "before",proc.value
                     item_level = proc.scaling['item_level']
-                    if hasattr(self.stats.proc_upgrades, proc.proc_name):
-                        upgrade_level = getattr(self.stats.proc_upgrades, proc.proc_name)
-                        print proc.proc_name, upgrade_level
-                        if proc.scaling['quality'] == 'epic':
-                            item_level += upgrade_level * 4
-                        elif proc.scaling['quality'] == 'blue':
-                            item_level += upgrade_level * 8
+                    print "old_item_level",item_level
+                    if proc.scaling['quality'] == 'epic':
+                        item_level += proc.upgrade_level * 4
+                    elif proc.scaling['quality'] == 'blue':
+                        item_level += proc.upgrade_level * 8
                     print "item_level",item_level
                     proc.value = round(proc.scaling['factor'] * self.tools.get_random_prop_point(item_level, proc.scaling['quality']))
                     print "after",proc.value

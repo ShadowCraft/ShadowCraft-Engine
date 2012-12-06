@@ -18,7 +18,7 @@ class Stats(object):
     pvp_power_rating_conversion_values = {60:1.0, 70:2.0, 80:4.0, 85:79.182, 90:265.0}
     pvp_resil_rating_conversion_values = {60:1.0, 70:2.0, 80:4.0, 85:79.98, 90:310.0}
 
-    def __init__(self, mh, oh, procs, gear_buffs, str=0, agi=0, int=0, spirit=0, stam=0, ap=0, crit=0, hit=0, exp=0, haste=0, mastery=0, level=None, pvp_power=0, pvp_resil=0, pvp_target_armor=None, proc_upgrades=None):
+    def __init__(self, mh, oh, procs, gear_buffs, str=0, agi=0, int=0, spirit=0, stam=0, ap=0, crit=0, hit=0, exp=0, haste=0, mastery=0, level=None, pvp_power=0, pvp_resil=0, pvp_target_armor=None):
         # This will need to be adjusted if at any point we want to support
         # other classes, but this is probably the easiest way to do it for
         # the moment.
@@ -41,7 +41,6 @@ class Stats(object):
         self.pvp_power = pvp_power
         self.pvp_resil = pvp_resil
         self.pvp_target_armor = pvp_target_armor
-        self.proc_upgrades = proc_upgrades
 
     def _set_constants_for_level(self):
         self.procs.level = self.level
