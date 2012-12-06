@@ -292,7 +292,7 @@ class GearBuffs(object):
         # Hardcoded to use maxed tradeskills for the character level.
         tradeskills = ('skill', 'base', 'master_of_anatomy', 'lifeblood', 'synapse_springs')
         if self.level == 90:
-            return (600, 320, 480, 2880, 2940)[tradeskills.index(tradeskill)]
+            return (600, 320, 480, 2880, 1920)[tradeskills.index(tradeskill)]
         tradeskill_base_bonus = {
             (01, 60): (0, None, None, None, 0),
             (60, 70): (300, 9,   9,   70,   0),
