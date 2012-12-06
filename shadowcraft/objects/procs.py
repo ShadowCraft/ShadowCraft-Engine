@@ -196,3 +196,19 @@ class ProcsList(object):
                     procs.append(proc)
 
         return procs
+
+class ProcUpgrades(object):
+    allowed_procs = proc_data.allowed_procs
+
+    def __init__(self, *args):
+        for arg in args:
+            if arg[0] in self.allowed_procs:
+                setattr(self, self.allowed_procs[arg[0]]['proc_name'], arg[1])
+            else:
+                raise InvalidProcException(_('No data for proc {proc}').format(proc=arg))
+
+    def __getattr__(self, proc):
+        # Any proc we haven't assigned a value to, we don't have.
+        if proc in self.allowed_procs:
+            return False
+        object.__getattribute__(self, proc)

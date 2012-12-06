@@ -45,12 +45,14 @@ test_oh = stats.Weapon(9725.5, 2.6, 'fist', 'dancing_steel')
 
 # Set up procs.
 test_procs = procs.ProcsList('heroic_bottle_of_infinite_stars', 'heroic_terror_in_the_mists')
+test_proc_upgrades = procs.ProcUpgrades(('heroic_bottle_of_infinite_stars',2),('heroic_terror_in_the_mists',2))
 
 # Set up gear buffs.
 test_gear_buffs = stats.GearBuffs('rogue_t14_2pc', 'rogue_t14_4pc', 'leather_specialization', 'virmens_bite', 'virmens_bite_prepot', 'chaotic_metagem')
 
 # Set up a calcs object..
-test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
+test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs, 
+                         proc_upgrades=test_proc_upgrades,
                          str=80,
                          agi=16695,
                          crit=3209,

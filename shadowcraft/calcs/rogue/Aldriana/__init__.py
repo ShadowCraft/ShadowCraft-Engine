@@ -925,7 +925,18 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
             for proc in active_procs:
                 if proc.scaling is not None:
-                    proc.value = round(proc.scaling['factor'] * self.tools.get_random_prop_point(proc.scaling['item_level'], proc.scaling['quality']))
+                    print "before",proc.value
+                    item_level = proc.scaling['item_level']
+                    if hasattr(self.stats.proc_upgrades, proc.proc_name):
+                        upgrade_level = getattr(self.stats.proc_upgrades, proc.proc_name)
+                        print proc.proc_name, upgrade_level
+                        if proc.scaling['quality'] == 'epic':
+                            item_level += upgrade_level * 4
+                        elif proc.scaling['quality'] == 'blue':
+                            item_level += upgrade_level * 8
+                    print "item_level",item_level
+                    proc.value = round(proc.scaling['factor'] * self.tools.get_random_prop_point(item_level, proc.scaling['quality']))
+                    print "after",proc.value
 
             for proc in damage_procs:
                 if not proc.icd:
