@@ -24,49 +24,56 @@ allowed_procs = {
         'value': 7796,
         'duration': 20,
         'proc_name': 'Terror in the Mists',
-        'behaviours': {'default': 'terror_in_the_mists'}
+        'behaviours': {'default': 'terror_in_the_mists'},
+        'scaling': {'factor': 2.9700000286, 'item_level': 509, 'quality': 'epic'}
     },
     'terror_in_the_mists': {
         'stat': 'crit',
         'value': 6908,
         'duration': 20,
         'proc_name': 'Terror in the Mists',
-        'behaviours': {'default': 'terror_in_the_mists'}
+        'behaviours': {'default': 'terror_in_the_mists'},
+        'scaling': {'factor': 2.9700000286, 'item_level': 496, 'quality': 'epic'}
     },
     'lfr_terror_in_the_mists': {
         'stat': 'crit',
         'value': 6121,
         'duration': 20,
         'proc_name': 'Terror in the Mists',
-        'behaviours': {'default': 'terror_in_the_mists'}
+        'behaviours': {'default': 'terror_in_the_mists'},
+        'scaling': {'factor': 2.9700000286, 'item_level': 483, 'quality': 'epic'}
     },
     'heroic_bottle_of_infinite_stars': {
         'stat': 'agi',
         'value': 3653,
         'duration': 20,
         'proc_name': 'Full of Stars',
-        'behaviours': {'default': 'bottle_of_infinite_stars'}
+        'behaviours': {'default': 'bottle_of_infinite_stars'},
+        'scaling': {'factor': 1.4850000143, 'item_level': 502, 'quality': 'epic'}
     },
     'bottle_of_infinite_stars': {
         'stat': 'agi',
         'value': 3236,
         'duration': 20,
         'proc_name': 'Full of Stars',
-        'behaviours': {'default': 'bottle_of_infinite_stars'}
+        'behaviours': {'default': 'bottle_of_infinite_stars'},
+        'scaling': {'factor': 1.4850000143, 'item_level': 489, 'quality': 'epic'}
     },
     'lfr_bottle_of_infinite_stars': {
         'stat': 'agi',
         'value': 2866,
         'duration': 20,
         'proc_name': 'Full of Stars',
-        'behaviours': {'default': 'bottle_of_infinite_stars'}
+        'behaviours': {'default': 'bottle_of_infinite_stars'},
+        'scaling': {'factor': 1.4850000143, 'item_level': 476, 'quality': 'epic'}
     },
     'relic_of_xuen': {
         'stat': 'agi',
         'value': 3027,
         'duration': 15,
         'proc_name': 'Relic of Xuen',
-        'behaviours': {'default': 'relic_of_xuen'}
+        'behaviours': {'default': 'relic_of_xuen'},
+        'scaling': {'factor': 1.5684000254, 'item_level': 476, 'quality': 'epic'}
     },
     'corens_cold_chromium_coaster': {
         'stat': 'ap',
