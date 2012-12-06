@@ -408,6 +408,6 @@ class Util(object):
     def get_random_prop_point(self, item_level, quality='epic'):
         if item_level < 277:
             raise exceptions.InvalidInputException(_('item_level={item_level} need to be >= 277').format(item_level=item_level))
-        if quality not in ['epic','blue']:
+        if quality not in ('epic','blue'):
             raise exceptions.InvalidInputException(_('quality={quality} not allowed, only epic/blue').format(quality=quality))
-        return self.RANDOM_PROP_POINTS[item_level-277][1+quality][0]
+        return self.RANDOM_PROP_POINTS[item_level - 277][1 + quality][0]
