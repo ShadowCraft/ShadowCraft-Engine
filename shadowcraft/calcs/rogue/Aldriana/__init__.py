@@ -923,6 +923,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
             self.update_crit_rates_for_4pc_t11(attacks_per_second, crit_rates)
 
+            for proc in active_procs:
+                if proc.scaling is not None:
+                    proc.value = round(proc.scaling['factor'] * self.tools.get_random_prop_point(proc.scaling['item_level'], proc.scaling['quality']))
+
             for proc in damage_procs:
                 if not proc.icd:
                     self.update_with_damaging_proc(proc, attacks_per_second, crit_rates)

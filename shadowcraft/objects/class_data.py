@@ -410,4 +410,8 @@ class Util(object):
             raise exceptions.InvalidInputException(_('item_level={item_level} need to be >= 277').format(item_level=item_level))
         if quality not in ('epic','blue'):
             raise exceptions.InvalidInputException(_('quality={quality} not allowed, only epic/blue').format(quality=quality))
-        return self.RANDOM_PROP_POINTS[item_level - 277][1 + quality][0]
+        quality_index = {
+            'epic':0,
+            'blue':1
+        }
+        return self.RANDOM_PROP_POINTS[item_level - 277][1 + quality_index[quality]][0]
