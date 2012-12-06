@@ -148,7 +148,7 @@ class ProcsList(object):
             if arg[0] in self.allowed_procs:
                 proc_data = self.allowed_procs[arg[0]]
                 proc_data['upgrade_level'] = arg[1]
-                setattr(self, arg[0], Proc(**(self.allowed_procs[arg[0]])))
+                setattr(self, arg[0], Proc(**proc_data))
             else:
                 raise InvalidProcException(_('No data for proc {proc}').format(proc=arg[0]))
 

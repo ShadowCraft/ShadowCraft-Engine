@@ -7,6 +7,7 @@ from shadowcraft.core import exceptions
 from shadowcraft.calcs import armor_mitigation
 from shadowcraft.objects import class_data
 from shadowcraft.objects import talents
+from shadowcraft.objects import procs
 from shadowcraft.objects.procs import InvalidProcException
 
 class DamageCalculator(object):
@@ -300,12 +301,14 @@ class DamageCalculator(object):
         # get_ep or get_weapon_ep. Weapon enchants, being tied to the
         # weapons they are on, are computed by get_weapon_ep.
         ep_values = [0,1,2]
+        old_procs = self.stats.procs
+        #self.stats.procs = procs.ProcsList()
         baseline_dps = self.get_dps()
         normalize_dps = self.ep_helper(normalize_ep_stat)
 
         procs_list = []
         gear_buffs_list = []
-        upgrade_level_list = [0,1,2]
+        upgrade_level_list = (0,1,2)
         for i in list:
             if i in self.stats.procs.allowed_procs:
                 procs_list.append(i)
@@ -315,6 +318,7 @@ class DamageCalculator(object):
                 ep_values[i] = _('not allowed')
 
         for l in upgrade_level_list:
+            print "l",l
             ep_values[l] = {}
             for i in gear_buffs_list:
                 # Note that activated abilites like trinkets, potions, or
@@ -326,23 +330,48 @@ class DamageCalculator(object):
 
             for i in procs_list:
                 try:
+                    print i
+                    print getattr(self.stats.procs, i)
+                    old_upgrade_level = -1
                     if getattr(self.stats.procs, i):
-                        upgrade_level = getattr(getattr(self.stats.procs, i), 'upgrade_level')
-                        print "upgad_lvl",upgrade_level
-                        delattr(self.stats.procs, i)
+                        old_upgrade_level = getattr(self.stats.procs, i).upgrade_level
+                        print "bla",old_upgrade_level, l
+                        if old_upgrade_level == l:
+                            print "del proc from list"
+                            delattr(self.stats.procs, i)
+                        else:
+                            getattr(self.stats.procs, i).upgrade_level = l
                     else:
                         self.stats.procs.set_proc(i)
+                        getattr(self.stats.procs, i).upgrade_level = l
                     new_dps = self.get_dps()
                     ep_values[l][i] = abs(new_dps - baseline_dps) / (normalize_dps - baseline_dps)
+                    #print l,i,ep_values[l][i]
                     if getattr(self.stats.procs, i):
-                        delattr(self.stats.procs, i)
+                        if old_upgrade_level == -1:
+                            delattr(self.stats.procs, i)
+                        else:
+                            getattr(self.stats.procs, i).upgrade_level = old_upgrade_level
                     else:
                         self.stats.procs.set_proc(i)
+                        getattr(self.stats.procs, i).upgrade_level = old_upgrade_level
+                    #print "procs_after",self.stats.procs.get_all_procs_for_stat()
                 except InvalidProcException:
                     # Data for these procs is not complete/correct
-                    ep_values[i] = _('not supported')
+                    ep_values[l][i] = _('not supported')
                     delattr(self.stats.procs, i)
 
+        #for i in procs_list:
+        #    if getattr(self.stats.procs, i):
+        #        active_upgrade_level = getattr(self.stats.procs, i).upgrade_level
+        #        avaible_lvl = [0,1,2]
+        #        for lvl in avaible_lvl:
+        #            if lvl > active_upgrade_level:
+        #                ep_values[lvl][i] += ep_values[active_upgrade_level][i]
+        #           elif lvl < active_upgrade_level:
+        #                ep_values[lvl][i] -= ep_values[active_upgrade_level][i]
+
+        self.stats.procs = old_procs
         return ep_values
 
     def get_glyphs_ranking(self, list=None):
