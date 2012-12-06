@@ -8,7 +8,7 @@ class InvalidProcException(exceptions.InvalidInputException):
 class Proc(object):
     allowed_behaviours = proc_data.behaviours
 
-    def __init__(self, stat, value, duration, proc_name, behaviours, max_stacks=1, can_crit=True, stats=None):
+    def __init__(self, stat, value, duration, proc_name, behaviours, max_stacks=1, can_crit=True, stats=None, scaling=None):
         self.stat = stat
         if stats is not None:
             self.stats = set(stats)
@@ -16,6 +16,7 @@ class Proc(object):
         self.can_crit = can_crit
         self.duration = duration
         self.max_stacks = max_stacks
+        self.scaling = scaling
         self.proc_name = proc_name
         self.proc_behaviours = {}
         for i in behaviours:
