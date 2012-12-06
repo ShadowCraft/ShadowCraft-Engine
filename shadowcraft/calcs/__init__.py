@@ -328,7 +328,7 @@ class DamageCalculator(object):
                 try:
                     if getattr(self.stats.procs, i):
                         upgrade_level = getattr(getattr(self.stats.procs, i), 'upgrade_level')
-                        print  upgrade_level
+                        print "upgad_lvl",upgrade_level
                         delattr(self.stats.procs, i)
                     else:
                         self.stats.procs.set_proc(i)
