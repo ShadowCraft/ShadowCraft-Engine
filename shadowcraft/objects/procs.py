@@ -143,8 +143,6 @@ class ProcsList(object):
         for arg in args:
             if not isinstance(arg, (list,tuple)):
                 arg = (arg,0)
-            print arg[0]
-            print arg[1]
             if arg[0] in self.allowed_procs:
                 proc_data = self.allowed_procs[arg[0]]
                 proc_data['upgrade_level'] = arg[1]
