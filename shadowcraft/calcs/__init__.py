@@ -300,7 +300,7 @@ class DamageCalculator(object):
         # This method computes ep for every other buff/proc not covered by
         # get_ep or get_weapon_ep. Weapon enchants, being tied to the
         # weapons they are on, are computed by get_weapon_ep.
-        ep_values = [0,1,2]
+        ep_values = {}
         old_procs = self.stats.procs
         #self.stats.procs = procs.ProcsList()
         baseline_dps = self.get_dps()
@@ -317,10 +317,9 @@ class DamageCalculator(object):
             #else:
             #    ep_values[3][i] = _('not allowed')
 
-        for l in upgrade_level_list:
-            ep_values[l] = {}
-            
-            for i in gear_buffs_list:
+        for i in gear_buffs_list:
+            ep_values[i] = []
+            for l in upgrade_level_list:
                 if getattr(self.stats.gear_buffs, i):
                     old_buff = self.stats.gear_buffs.activated_boosts[i]['upgrade_level']
                     delattr(self.stats.gear_buffs, i)
@@ -333,15 +332,17 @@ class DamageCalculator(object):
                 new_dps = self.get_dps()
                 if new_dps != no_buff_dps:
                     ep = abs(new_dps - no_buff_dps) / (no_buff_normalize_dps - no_buff_dps)
-                    ep_values[l][i] = ep
+                    ep_values[i].append(ep)
                 if old_buff:
                     setattr(self.stats.gear_buffs, i, True)
                     self.stats.gear_buffs.activated_boosts[i]['upgrade_level'] = old_buff
                 else:
                     setattr(self.stats.gear_buffs, i, False)
                     self.stats.gear_buffs.activated_boosts[i]['upgrade_level'] = 0
-            
-            for i in procs_list:
+ 
+        for i in procs_list:
+            ep_values[i] = []
+            for l in upgrade_level_list:
                 try:
                     if getattr(self.stats.procs, i):
                         old_proc = getattr(self.stats.procs, i)
@@ -355,7 +356,7 @@ class DamageCalculator(object):
                     new_dps = self.get_dps()
                     if new_dps != no_proc_dps:
                         ep = abs(new_dps - no_proc_dps) / (no_proc_normalize_dps - no_proc_dps)
-                        ep_values[l][i] = ep
+                        ep_values[i].append(ep)
                     if old_proc:
                         self.stats.procs.set_proc(i)
                         getattr(self.stats.procs, i).upgrade_level = old_proc.upgrade_level
@@ -363,7 +364,7 @@ class DamageCalculator(object):
                         delattr(self.stats.procs, i)
                 except InvalidProcException:
                     # Data for these procs is not complete/correct
-                    ep_values[l][i] = _('not supported')
+                    ep_values[i][l] = _('not supported')
                     delattr(self.stats.procs, i)
 
         #for i in procs_list:
