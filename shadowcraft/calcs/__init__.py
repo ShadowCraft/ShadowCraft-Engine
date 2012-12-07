@@ -300,7 +300,7 @@ class DamageCalculator(object):
         # This method computes ep for every other buff/proc not covered by
         # get_ep or get_weapon_ep. Weapon enchants, being tied to the
         # weapons they are on, are computed by get_weapon_ep.
-        ep_values = {}
+        ep_values = [0,1,2]
         old_procs = self.stats.procs
         #self.stats.procs = procs.ProcsList()
         baseline_dps = self.get_dps()
@@ -316,7 +316,7 @@ class DamageCalculator(object):
                 gear_buffs_list.append(i)
             #else:
             #    ep_values[3][i] = _('not allowed')
-        '''
+
         for l in upgrade_level_list:
             ep_values[l] = {}
             
@@ -340,9 +340,8 @@ class DamageCalculator(object):
                 else:
                     setattr(self.stats.gear_buffs, i, False)
                     self.stats.gear_buffs.activated_boosts[i]['upgrade_level'] = 0
-        '''
-        for i in procs_list:
-            for l in upgrade_level_list:
+            
+            for i in procs_list:
                 try:
                     if getattr(self.stats.procs, i):
                         old_proc = getattr(self.stats.procs, i)
@@ -356,7 +355,7 @@ class DamageCalculator(object):
                     new_dps = self.get_dps()
                     if new_dps != no_proc_dps:
                         ep = abs(new_dps - no_proc_dps) / (no_proc_normalize_dps - no_proc_dps)
-                        ep_values[i][l] = ep
+                        ep_values[l][i] = ep
                     if old_proc:
                         self.stats.procs.set_proc(i)
                         getattr(self.stats.procs, i).upgrade_level = old_proc.upgrade_level
