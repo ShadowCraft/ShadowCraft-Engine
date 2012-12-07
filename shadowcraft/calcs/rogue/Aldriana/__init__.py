@@ -890,6 +890,15 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             elif proc_info.stat == 'extra_weapon_damage':
                 weapon_damage_procs.append(proc_info)
 
+        for proc in active_procs:
+            if proc.scaling is not None:
+                item_level = proc.scaling['item_level']
+                if proc.scaling['quality'] == 'epic':
+                    item_level += proc.upgrade_level * 4
+                elif proc.scaling['quality'] == 'blue':
+                    item_level += proc.upgrade_level * 8
+                proc.value = round(proc.scaling['factor'] * self.tools.get_random_prop_point(item_level, proc.scaling['quality']))
+
         windsong_enchants = []
         weapon_enchants = set([])
         for hand, enchant in [(x, y) for x in ('mh', 'oh') for y in ('landslide', 'hurricane', 'avalanche', 'windsong', 'dancing_steel', 'elemental_force')]:
@@ -930,15 +939,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             }
 
             self.update_crit_rates_for_4pc_t11(attacks_per_second, crit_rates)
-
-            for proc in active_procs:
-                if proc.scaling is not None:
-                    item_level = proc.scaling['item_level']
-                    if proc.scaling['quality'] == 'epic':
-                        item_level += proc.upgrade_level * 4
-                    elif proc.scaling['quality'] == 'blue':
-                        item_level += proc.upgrade_level * 8
-                    proc.value = round(proc.scaling['factor'] * self.tools.get_random_prop_point(item_level, proc.scaling['quality']))
 
             for proc in damage_procs:
                 if not proc.icd:
