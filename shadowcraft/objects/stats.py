@@ -217,8 +217,13 @@ class GearBuffs(object):
 
     def __init__(self, *args):
         for arg in args:
-            if arg in self.allowed_buffs:
-                setattr(self, arg, True)
+            if not isinstance(arg, (list,tuple)):
+                arg = (arg,0)
+            if arg[0] in self.allowed_buffs:
+                if arg[0] in frozenset(self.activated_boosts.keys()):
+                    self.activated_boosts[arg[0]]['upgrade_level'] = arg[1]
+                setattr(self, arg[0], True)
+                
 
     def __getattr__(self, name):
         # Any gear buff we haven't assigned a value to, we don't have.

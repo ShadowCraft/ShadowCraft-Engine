@@ -105,7 +105,7 @@ allowed_procs = {
         'value': 4041,
         'duration': 15,
         'proc_name': 'Zen Alchemist Stone',
-        'behaviours': {'default': 'zen_alchemist_stone'}
+        'behaviours': {'default': 'zen_alchemist_stone'},
         'scaling': {'factor': 2.6670000553, 'item_level': 458, 'quality': 'blue'}
     },
     'the_gloaming_blade': {

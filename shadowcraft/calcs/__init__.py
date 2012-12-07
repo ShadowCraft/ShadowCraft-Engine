@@ -314,48 +314,53 @@ class DamageCalculator(object):
                 procs_list.append(i)
             elif i in self.stats.gear_buffs.allowed_buffs:
                 gear_buffs_list.append(i)
-            else:
-                ep_values[i] = _('not allowed')
+            #else:
+            #    ep_values[3][i] = _('not allowed')
 
         for l in upgrade_level_list:
-            print "l",l
             ep_values[l] = {}
+            
             for i in gear_buffs_list:
-                # Note that activated abilites like trinkets, potions, or
-                # engineering gizmos are handled as gear buffs by the engine.
-                setattr(self.stats.gear_buffs, i, not getattr(self.stats.gear_buffs, i))
+                if getattr(self.stats.gear_buffs, i):
+                    old_buff = self.stats.gear_buffs.activated_boosts[i]['upgrade_level']
+                    delattr(self.stats.gear_buffs, i)
+                else:
+                    old_buff = False
+                no_buff_dps = self.get_dps()
+                no_buff_normalize_dps = self.ep_helper(normalize_ep_stat)
+                setattr(self.stats.gear_buffs, i, True)
+                self.stats.gear_buffs.activated_boosts[i]['upgrade_level'] = l
                 new_dps = self.get_dps()
-                ep_values[l][i] = abs(new_dps - baseline_dps) / (normalize_dps - baseline_dps)
-                setattr(self.stats.gear_buffs, i, not getattr(self.stats.gear_buffs, i))
-
+                if new_dps != no_buff_dps:
+                    ep = abs(new_dps - no_buff_dps) / (no_buff_normalize_dps - no_buff_dps)
+                    ep_values[l][i] = ep
+                if old_buff:
+                    setattr(self.stats.gear_buffs, i, True)
+                    self.stats.gear_buffs.activated_boosts[i]['upgrade_level'] = old_buff
+                else:
+                    setattr(self.stats.gear_buffs, i, False)
+                    self.stats.gear_buffs.activated_boosts[i]['upgrade_level'] = 0
+            
             for i in procs_list:
                 try:
-                    print i
-                    print getattr(self.stats.procs, i)
-                    old_upgrade_level = -1
                     if getattr(self.stats.procs, i):
-                        old_upgrade_level = getattr(self.stats.procs, i).upgrade_level
-                        print "bla",old_upgrade_level, l
-                        if old_upgrade_level == l:
-                            print "del proc from list"
-                            delattr(self.stats.procs, i)
-                        else:
-                            getattr(self.stats.procs, i).upgrade_level = l
+                        old_proc = getattr(self.stats.procs, i)
+                        delattr(self.stats.procs, i)
                     else:
-                        self.stats.procs.set_proc(i)
-                        getattr(self.stats.procs, i).upgrade_level = l
+                        old_proc = False
+                    no_proc_dps = self.get_dps()
+                    no_proc_normalize_dps = self.ep_helper(normalize_ep_stat)
+                    self.stats.procs.set_proc(i)
+                    getattr(self.stats.procs, i).upgrade_level = l
                     new_dps = self.get_dps()
-                    ep_values[l][i] = abs(new_dps - baseline_dps) / (normalize_dps - baseline_dps)
-                    #print l,i,ep_values[l][i]
-                    if getattr(self.stats.procs, i):
-                        if old_upgrade_level == -1:
-                            delattr(self.stats.procs, i)
-                        else:
-                            getattr(self.stats.procs, i).upgrade_level = old_upgrade_level
-                    else:
+                    if new_dps != no_proc_dps:
+                        ep = abs(new_dps - no_proc_dps) / (no_proc_normalize_dps - no_proc_dps)
+                        ep_values[l][i] = ep
+                    if old_proc:
                         self.stats.procs.set_proc(i)
-                        getattr(self.stats.procs, i).upgrade_level = old_upgrade_level
-                    #print "procs_after",self.stats.procs.get_all_procs_for_stat()
+                        getattr(self.stats.procs, i).upgrade_level = old_proc.upgrade_level
+                    else:
+                        delattr(self.stats.procs, i)
                 except InvalidProcException:
                     # Data for these procs is not complete/correct
                     ep_values[l][i] = _('not supported')

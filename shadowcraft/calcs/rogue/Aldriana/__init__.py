@@ -255,6 +255,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         for stat in self.base_stats:
             for boost in self.stats.gear_buffs.get_all_activated_boosts_for_stat(stat):
+                #print boost
+                if 'scaling' in boost and 'upgrade_level' in boost:
+                    item_level = boost['scaling']['item_level']
+                    if boost['scaling']['quality'] == 'epic':
+                        item_level += boost['upgrade_level'] * 4
+                    elif boost['scaling']['quality'] == 'blue':
+                        item_level += boost['upgrade_level'] * 8
+                    boost['value'] = round(boost['scaling']['factor'] * self.tools.get_random_prop_point(item_level, boost['scaling']['quality']))
                 if boost['cooldown'] is not None:
                     self.base_stats[stat] += (boost['value'] * boost['duration']) * 1.0 / (boost['cooldown'] + self.settings.response_time)
                 else:
@@ -925,17 +933,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
             for proc in active_procs:
                 if proc.scaling is not None:
-                    #print "before",proc.value
                     item_level = proc.scaling['item_level']
-                    #print "old_item_level",item_level
-                    #print "upgrade_levelllllllll",proc.upgrade_level
                     if proc.scaling['quality'] == 'epic':
                         item_level += proc.upgrade_level * 4
                     elif proc.scaling['quality'] == 'blue':
                         item_level += proc.upgrade_level * 8
-                    #print "item_level",item_level
                     proc.value = round(proc.scaling['factor'] * self.tools.get_random_prop_point(item_level, proc.scaling['quality']))
-                    #print "after",proc.value
 
             for proc in damage_procs:
                 if not proc.icd:
