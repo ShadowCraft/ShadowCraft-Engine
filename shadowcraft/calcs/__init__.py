@@ -301,10 +301,6 @@ class DamageCalculator(object):
         # get_ep or get_weapon_ep. Weapon enchants, being tied to the
         # weapons they are on, are computed by get_weapon_ep.
         ep_values = {}
-        old_procs = self.stats.procs
-        #self.stats.procs = procs.ProcsList()
-        #baseline_dps = self.get_dps()
-        #normalize_dps = self.ep_helper(normalize_ep_stat)
 
         procs_list = []
         gear_buffs_list = []
@@ -319,16 +315,14 @@ class DamageCalculator(object):
 
         for i in gear_buffs_list:
             ep_values[i] = []
+            if getattr(self.stats.gear_buffs, i):
+                old_buff = self.stats.gear_buffs.activated_boosts[i]['upgrade_level']
+                delattr(self.stats.gear_buffs, i)
+            else:
+                old_buff = False
+            no_buff_dps = self.get_dps()
+            no_buff_normalize_dps = self.ep_helper(normalize_ep_stat)
             for l in upgrade_level_list:
-                if 'scaling' not in self.stats.gear_buffs.activated_boosts[i] and l > 0:
-                    continue
-                if getattr(self.stats.gear_buffs, i):
-                    old_buff = self.stats.gear_buffs.activated_boosts[i]['upgrade_level']
-                    delattr(self.stats.gear_buffs, i)
-                else:
-                    old_buff = False
-                no_buff_dps = self.get_dps()
-                no_buff_normalize_dps = self.ep_helper(normalize_ep_stat)
                 setattr(self.stats.gear_buffs, i, True)
                 self.stats.gear_buffs.activated_boosts[i]['upgrade_level'] = l
                 if l == 0 or 'scaling' in self.stats.gear_buffs.activated_boosts[i]:
@@ -336,24 +330,25 @@ class DamageCalculator(object):
                     if new_dps != no_buff_dps:
                         ep = abs(new_dps - no_buff_dps) / (no_buff_normalize_dps - no_buff_dps)
                         ep_values[i].append(ep)
-                if old_buff:
-                    setattr(self.stats.gear_buffs, i, True)
-                    self.stats.gear_buffs.activated_boosts[i]['upgrade_level'] = old_buff
-                else:
-                    setattr(self.stats.gear_buffs, i, False)
-                    self.stats.gear_buffs.activated_boosts[i]['upgrade_level'] = 0
+            if old_buff:
+                setattr(self.stats.gear_buffs, i, True)
+                self.stats.gear_buffs.activated_boosts[i]['upgrade_level'] = old_buff
+            else:
+                setattr(self.stats.gear_buffs, i, False)
+                self.stats.gear_buffs.activated_boosts[i]['upgrade_level'] = 0
  
         for i in procs_list:
             ep_values[i] = []
-            for l in upgrade_level_list:
-                try:
-                    if getattr(self.stats.procs, i):
-                        old_proc = getattr(self.stats.procs, i)
-                        delattr(self.stats.procs, i)
-                    else:
-                        old_proc = False
-                    no_proc_dps = self.get_dps()
-                    no_proc_normalize_dps = self.ep_helper(normalize_ep_stat)
+            try:
+                if getattr(self.stats.procs, i):
+                    old_proc = getattr(self.stats.procs, i)
+                    delattr(self.stats.procs, i)
+                else:
+                    old_proc = False
+                no_proc_dps = self.get_dps()
+                no_proc_normalize_dps = self.ep_helper(normalize_ep_stat)
+                self.stats.procs.set_proc(i)
+                for l in upgrade_level_list:
                     self.stats.procs.set_proc(i)
                     getattr(self.stats.procs, i).upgrade_level = l
                     if l == 0 or getattr(self.stats.procs, i).scaling:
@@ -361,27 +356,16 @@ class DamageCalculator(object):
                         if new_dps != no_proc_dps:
                             ep = abs(new_dps - no_proc_dps) / (no_proc_normalize_dps - no_proc_dps)
                             ep_values[i].append(ep)
-                    if old_proc:
-                        self.stats.procs.set_proc(i)
-                        getattr(self.stats.procs, i).upgrade_level = old_proc.upgrade_level
-                    else:
-                        delattr(self.stats.procs, i)
-                except InvalidProcException:
-                    # Data for these procs is not complete/correct
-                    ep_values[i][l] = _('not supported')
+                if old_proc:
+                    self.stats.procs.set_proc(i)
+                    getattr(self.stats.procs, i).upgrade_level = old_proc.upgrade_level
+                else:
                     delattr(self.stats.procs, i)
+            except InvalidProcException:
+                # Data for these procs is not complete/correct
+                ep_values[i][l] = _('not supported')
+                delattr(self.stats.procs, i)
 
-        #for i in procs_list:
-        #    if getattr(self.stats.procs, i):
-        #        active_upgrade_level = getattr(self.stats.procs, i).upgrade_level
-        #        avaible_lvl = [0,1,2]
-        #        for lvl in avaible_lvl:
-        #            if lvl > active_upgrade_level:
-        #                ep_values[lvl][i] += ep_values[active_upgrade_level][i]
-        #           elif lvl < active_upgrade_level:
-        #                ep_values[lvl][i] -= ep_values[active_upgrade_level][i]
-
-        self.stats.procs = old_procs
         return ep_values
 
     def get_glyphs_ranking(self, list=None):
