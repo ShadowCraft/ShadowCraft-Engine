@@ -326,6 +326,8 @@ class DamageCalculator(object):
                 setattr(self.stats.gear_buffs, i, True)
                 self.stats.gear_buffs.activated_boosts[i]['upgrade_level'] = l
                 if l == 0 or 'scaling' in self.stats.gear_buffs.activated_boosts[i]:
+                    if l == 2 and self.stats.gear_buffs.activated_boosts[i]['scaling']['quality'] == 'blue':
+                        continue
                     new_dps = self.get_dps()
                     if new_dps != no_buff_dps:
                         ep = abs(new_dps - no_buff_dps) / (no_buff_normalize_dps - no_buff_dps)
@@ -352,6 +354,8 @@ class DamageCalculator(object):
                     self.stats.procs.set_proc(i)
                     getattr(self.stats.procs, i).upgrade_level = l
                     if l == 0 or getattr(self.stats.procs, i).scaling:
+                        if l == 2 and getattr(self.stats.procs, i).scaling['quality'] == 'blue':
+                            continue
                         new_dps = self.get_dps()
                         if new_dps != no_proc_dps:
                             ep = abs(new_dps - no_proc_dps) / (no_proc_normalize_dps - no_proc_dps)

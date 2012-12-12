@@ -66,7 +66,7 @@ test_talents = talents.Talents('322213', test_class, test_level)
 glyph_list = ['recuperate']
 test_glyphs = glyphs.Glyphs(test_class, *glyph_list)
 
-# Set up settings.
+# Set up settings
 test_cycle = settings.CombatCycle()
 test_settings = settings.Settings(test_cycle, response_time=.5, duration=360, dmg_poison='dp', utl_poison='lp', is_pvp=False)
 
