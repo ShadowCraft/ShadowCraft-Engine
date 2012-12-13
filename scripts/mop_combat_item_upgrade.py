@@ -98,9 +98,6 @@ start = clock()
 trinkets_ep_value = calculator.get_other_ep(trinkets_list)
 print "normal", (clock() - start)
 start = clock()
-trinkets_upgrades_ep_value2 = calculator.get_upgrades_ep2(trinkets_list)
-print "upgrade2", (clock() - start)
-start = clock()
 trinkets_upgrades_ep_value = calculator.get_upgrades_ep(trinkets_list)
 print "upgrade", (clock() - start)
 
@@ -142,6 +139,6 @@ dicts_for_pretty_print = [
     trinkets_ep_value,
 ]
 pretty_print(dicts_for_pretty_print)
-pretty_print([trinkets_upgrades_ep_value,trinkets_upgrades_ep_value2])
+pretty_print([trinkets_upgrades_ep_value])
 pretty_print([dps_breakdown], total_sum=total_dps, show_percent=True)
 print ' ' * (max_length(dicts_for_pretty_print) + 1), total_dps, _("total damage per second.")
