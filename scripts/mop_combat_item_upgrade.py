@@ -1,6 +1,7 @@
 # Simple test program to debug + play with assassination models.
 from os import path
 import sys
+from time import clock
 sys.path.append(path.abspath(path.join(path.dirname(__file__), '..')))
 
 from shadowcraft.calcs.rogue.Aldriana import AldrianasRogueDamageCalculator
@@ -93,9 +94,15 @@ trinkets_list = [
     'searing_words',
     'flashing_steel_talisman'
 ]
+start = clock()
 trinkets_ep_value = calculator.get_other_ep(trinkets_list)
-
+print "normal", (clock() - start)
+start = clock()
+trinkets_upgrades_ep_value2 = calculator.get_upgrades_ep2(trinkets_list)
+print "upgrade2", (clock() - start)
+start = clock()
 trinkets_upgrades_ep_value = calculator.get_upgrades_ep(trinkets_list)
+print "upgrade", (clock() - start)
 
 # Compute DPS Breakdown.
 dps_breakdown = calculator.get_dps_breakdown()
@@ -135,6 +142,6 @@ dicts_for_pretty_print = [
     trinkets_ep_value,
 ]
 pretty_print(dicts_for_pretty_print)
-pretty_print([trinkets_upgrades_ep_value])
+pretty_print([trinkets_upgrades_ep_value,trinkets_upgrades_ep_value2])
 pretty_print([dps_breakdown], total_sum=total_dps, show_percent=True)
 print ' ' * (max_length(dicts_for_pretty_print) + 1), total_dps, _("total damage per second.")
