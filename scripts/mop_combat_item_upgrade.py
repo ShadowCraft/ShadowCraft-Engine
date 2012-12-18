@@ -92,7 +92,12 @@ trinkets_list = [
     'hawkmasters_talon',
     'windswept_pages',
     'searing_words',
-    'flashing_steel_talisman'
+    'flashing_steel_talisman',
+    'corens_cold_chromium_coaster',
+    'braid_of_ten_songs',
+    'zen_alchemist_stone',
+    'gerps_perfect_arrow',
+    'woundripper_medallion'
 ]
 start = clock()
 trinkets_ep_value = calculator.get_other_ep(trinkets_list)

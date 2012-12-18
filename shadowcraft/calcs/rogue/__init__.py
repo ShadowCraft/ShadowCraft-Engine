@@ -190,7 +190,7 @@ class RogueDamageCalculator(DamageCalculator):
         weapon_damage = self.get_weapon_damage('mh', ap)
         mult, crit_mult = self.get_modifiers('physical', armor=armor, is_bleeding=is_bleeding)
 
-        damage = 1.55 * (weapon_damage + self.ss_bonus_dmg) * mult
+        damage = 1.45 * (weapon_damage + self.ss_bonus_dmg) * mult
         crit_damage = damage * crit_mult
 
         return damage, crit_damage

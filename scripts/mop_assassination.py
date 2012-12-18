@@ -151,14 +151,14 @@ print ' ' * (max_length([dps_breakdown]) + 1), total_dps, _("total damage per se
 print ''
 
 
-# non_execute_breakdown = calculator.assassination_dps_breakdown_non_execute()
-# non_execute_total = sum(entry[1] for entry in non_execute_breakdown.items())
-# print 'non-execute breakdown: '
-# pretty_print([non_execute_breakdown], total_sum=non_execute_total, show_percent=True)
-# print ' ' * (max_length([non_execute_breakdown]) + 1), non_execute_total, _("total damage per second.")
+non_execute_breakdown = calculator.assassination_dps_breakdown_non_execute()
+non_execute_total = sum(entry[1] for entry in non_execute_breakdown.items())
+print 'non-execute breakdown: '
+pretty_print([non_execute_breakdown], total_sum=non_execute_total, show_percent=True)
+print ' ' * (max_length([non_execute_breakdown]) + 1), non_execute_total, _("total damage per second.")
 
-# execute_breakdown = calculator.assassination_dps_breakdown_execute()
-# execute_total = sum(entry[1] for entry in execute_breakdown.items())
-# print 'execute breakdown: '
-# pretty_print([execute_breakdown], total_sum=execute_total, show_percent=True)
-# print ' ' * (max_length([execute_breakdown]) + 1), execute_total, _("total damage per second.")
+execute_breakdown = calculator.assassination_dps_breakdown_execute()
+execute_total = sum(entry[1] for entry in execute_breakdown.items())
+print 'execute breakdown: '
+pretty_print([execute_breakdown], total_sum=execute_total, show_percent=True)
+print ' ' * (max_length([execute_breakdown]) + 1), execute_total, _("total damage per second.")

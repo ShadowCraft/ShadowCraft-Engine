@@ -255,7 +255,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         for stat in self.base_stats:
             for boost in self.stats.gear_buffs.get_all_activated_boosts_for_stat(stat):
-                #print boost
                 if 'scaling' in boost and 'upgrade_level' in boost:
                     item_level = boost['scaling']['item_level']
                     if boost['scaling']['quality'] == 'epic':
@@ -1106,7 +1105,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         vw_energy_per_bleed_tick = vw_energy_return * vw_proc_chance
 
         blindside_proc_rate = [0, .3][cpg == 'mutilate']
-        blindside_proc_rate *= self.strike_hit_chance
+        blindside_proc_rate *= self.strike_hit_chance * self.strike_hit_chance # because mutilate and dispatch both need to hit
         dispatch_as_cpg_chance = blindside_proc_rate / (1 + blindside_proc_rate)
         if cpg == 'mutilate' and self.talents.shuriken_toss:
             cpg = 'shuriken_toss'
@@ -1140,16 +1139,18 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             mut_seal_fate_proc_rate = 1 - (1 - crit_rates['mutilate']) ** 2
             dsp_seal_fate_proc_rate = crit_rates['dispatch']
             seal_fate_proc_rate = mut_seal_fate_proc_rate * (1 - dispatch_as_cpg_chance) + dsp_seal_fate_proc_rate * dispatch_as_cpg_chance
-            base_cp_per_cpg = 2
+            base_cp_per_cpg = 1
+            mutilate_extra_cp_chance = 1 - dispatch_as_cpg_chance # in non execute the ratio of mutilate attacks is (1 - dispatch_as_cpg_chance)
         else:
             if self.talents.shuriken_toss:
                 seal_fate_proc_rate = 0
             else:
                 seal_fate_proc_rate = crit_rates['dispatch']
             base_cp_per_cpg = 1
+            mutilate_extra_cp_chance = 0 # never using mutilate, so no extra cp chance
 
         if self.talents.anticipation:
-            cp_per_cpg = self.get_cp_per_cpg(1, seal_fate_proc_rate, shadow_blades_uptime, 1 - dispatch_as_cpg_chance)
+            cp_per_cpg = self.get_cp_per_cpg(1, seal_fate_proc_rate, shadow_blades_uptime, mutilate_extra_cp_chance)
             cp_distribution, rupture_sizes, avg_cp_per_cpg = self.get_cp_distribution_for_cycle(cp_per_cpg, finisher_size)
         else:
             # This should be handled by the cp_distribution method or something
