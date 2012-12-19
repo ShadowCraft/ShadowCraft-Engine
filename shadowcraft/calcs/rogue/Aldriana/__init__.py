@@ -1105,7 +1105,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         vw_energy_per_bleed_tick = vw_energy_return * vw_proc_chance
 
         blindside_proc_rate = [0, .3][cpg == 'mutilate']
-        blindside_proc_rate *= self.strike_hit_chance * self.strike_hit_chance # because mutilate and dispatch both need to hit
+        blindside_proc_rate *= self.strike_hit_chance
         dispatch_as_cpg_chance = blindside_proc_rate / (1 + blindside_proc_rate)
         if cpg == 'mutilate' and self.talents.shuriken_toss:
             cpg = 'shuriken_toss'
