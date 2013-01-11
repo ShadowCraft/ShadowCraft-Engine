@@ -366,9 +366,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         # Sets the swing_reset_spacing and total_openers_per_second variables.
         opener_cd = [10, 20][self.settings.opener_name == 'garrote']
         if self.settings.use_opener == 'always':
-            opener_spacing = (120. + self.settings.response_time)
+            opener_spacing = (self.get_spell_cd('vanish') + self.settings.response_time)
             if self.race.shadowmeld and self.settings.is_subtlety_rogue():
-                shadowmeld_spacing = 120. + self.settings.response_time
+                shadowmeld_spacing = self.get_spell_cd('shadowmeld') + self.settings.response_time
                 opener_spacing = 1. / (1 / opener_spacing + 1 / shadowmeld_spacing)
             total_openers_per_second = (1. + math.floor((self.settings.duration - opener_cd) / opener_spacing)) / self.settings.duration
         elif self.settings.use_opener == 'opener':
@@ -385,7 +385,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             return 0
         else:
             energy_per_opener = self.get_net_energy_cost(self.settings.opener_name)
-            return [-1, 1][self.talents.shadow_focus] * energy_per_opener * self.total_openers_per_second
+            return [-1, 1][self.talents.shadow_focus] * self.get_shadow_focus_multiplier(energy_per_opener) * energy_per_opener * self.total_openers_per_second
 
     def get_t12_2p_damage(self, damage_breakdown):
         crit_damage = 0
@@ -405,7 +405,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         average_ap = current_stats['ap'] + 2 * current_stats['agi'] + self.base_strength
         average_ap *= self.buffs.attack_power_multiplier()
         if self.settings.is_combat_rogue():
-            average_ap *= 1.25
+            average_ap *= 1.30
 
         damage_breakdown = {}
 
@@ -564,7 +564,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     def get_shadow_blades_uptime(self, cooldown=None):
         # 'cooldown' used as an overide for combat cycles
         duration = self.get_shadow_blades_duration()
-        return self.get_activated_uptime(duration, (cooldown, 180)[cooldown is None])
+        return self.get_activated_uptime(duration, (cooldown, self.get_spell_cd('shadow_blades'))[cooldown is None])
 
     def update_with_shadow_blades(self, attacks_per_second, shadow_blades_uptime):
         mh_sb_swings_per_second = attacks_per_second['mh_autoattacks'] * shadow_blades_uptime
@@ -792,6 +792,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             return 1.45
         else:
             return 1.
+    
+    def get_shadow_focus_multiplier(self, energy_cost):
+        if self.talents.shadow_focus:
+            return .75
+        return 1.
 
     def setup_unique_procs(self):
         # We need to set these behaviours before calling any other method.
@@ -1028,7 +1033,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         vendetta_duration = 20 + 10 * self.glyphs.vendetta
         vendetta_duration += self.stats.gear_buffs.rogue_t13_4pc * 9
-        vendetta_uptime = vendetta_duration / (120 + self.settings.response_time)
+        vendetta_uptime = vendetta_duration / (self.get_spell_cd('vendetta') + self.settings.response_time)
         vendetta_multiplier = .3 - .05 * self.glyphs.vendetta
         self.vendetta_mult = 1 + vendetta_multiplier * vendetta_uptime
 
@@ -1037,7 +1042,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         vendetta_uptime_during_shadow_blades = .5 * vendetta_shadow_blades_overlap / shadow_blades_duration
         self.shadow_blades_vendetta_mult = 1 + vendetta_multiplier * vendetta_uptime_during_shadow_blades
 
-        shadow_blades_spacing = 180 + self.settings.response_time
+        shadow_blades_spacing = self.get_spell_cd('shadow_blades') + self.settings.response_time
         autoattack_duration = shadow_blades_spacing - shadow_blades_duration
         autoattack_vendetta_overlap = shadow_blades_spacing * vendetta_uptime - shadow_blades_duration * vendetta_uptime_during_shadow_blades
         self.autoattack_vendetta_mult = 1 + vendetta_multiplier * autoattack_vendetta_overlap / autoattack_duration
@@ -1110,11 +1115,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if cpg == 'mutilate' and self.talents.shuriken_toss:
             cpg = 'shuriken_toss'
 
-        if self.talents.shadow_focus:
-            opener_net_cost = 0
-        else:
-            opener_net_cost = self.get_net_energy_cost(self.settings.opener_name)
-            opener_net_cost *= self.stats.gear_buffs.rogue_t13_2pc_cost_multiplier()
+        opener_net_cost = self.get_net_energy_cost(self.settings.opener_name)
+        opener_net_cost *= self.get_shadow_focus_multiplier(opener_net_cost)
+        opener_net_cost *= self.stats.gear_buffs.rogue_t13_2pc_cost_multiplier()
 
         if self.settings.opener_name == 'garrote':
             energy_regen += vw_energy_return * vw_proc_chance / self.settings.duration # Only the first tick at the start of the fight
@@ -1320,11 +1323,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             else:
                 damage_breakdown[key] *= self.ksp_multiplier
         
+        bf_mod = .25
         if self.settings.cycle.blade_flurry:
             damage_breakdown['blade_flurry'] = 0
             for key in damage_breakdown:
                 if key in self.melee_attacks:
-                    damage_breakdown['blade_flurry'] += damage_breakdown[key]
+                    damage_breakdown['blade_flurry'] += bf_mod * damage_breakdown[key] * self.settings.cycle.bf_targets
         
         return damage_breakdown
 
@@ -1553,7 +1557,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         find_weakness_multiplier = 1 + (find_weakness_damage_boost - 1) * self.find_weakness_uptime
         
         mos_value = .1
-        mos_intervals = (120. + self.settings.response_time) + self.talents.preparation / (360. + self.settings.response_time * 3)
+        mos_intervals = (self.get_spell_cd('vanish') + self.settings.response_time) + 1. / (360. + self.settings.response_time * 3)
         mos_multiplier = 1. + mos_value * (6 + 3 * self.talents.subterfuge) / mos_intervals
 
         for key in damage_breakdown:
@@ -1594,7 +1598,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         energy_regen = self.base_energy_regen * haste_multiplier + self.bonus_energy_regen
         if self.race.shadowmeld:
-            energy_regen -= self.get_net_energy_cost(self.settings.opener_name) / (120. + self.settings.response_time)
+            energy_regen -= self.get_net_energy_cost(self.settings.opener_name) / (self.get_spell_cd('shadowmeld') + self.settings.response_time)
 
         if self.settings.cycle.use_hemorrhage == 'always':
             cp_builder_energy_cost = self.base_hemo_cost
@@ -1647,19 +1651,19 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         snd_per_cycle = 1.
         total_cycle_regen = cycle_length * modified_energy_regen
 
-        vanish_cooldown = 120
-        ambushes_from_vanish = (1. + 1. * self.talents.subterfuge) / (vanish_cooldown + self.settings.response_time) + self.talents.preparation / (360. + self.settings.response_time * 3)
+        vanish_cooldown = self.get_spell_cd('vanish')
+        ambushes_from_vanish = (1. + 1. * self.talents.subterfuge) / (vanish_cooldown + self.settings.response_time) + 1. / (360. + self.settings.response_time * 3)
         ambush_rate = ambushes_from_vanish
         self.find_weakness_uptime = (10 + 2.5 * self.talents.subterfuge) * ambushes_from_vanish
         shadowmeld_ambushes = 0
         if self.race.shadowmeld:
-            shadowmeld_ambushes = 1. / (120. + self.settings.response_time)
+            shadowmeld_ambushes = 1. / (self.get_spell_cd('shadowmeld') + self.settings.response_time)
             self.find_weakness_uptime += 10 * shadowmeld_ambushes
             ambush_rate += shadowmeld_ambushes
 
         cp_per_ambush = 2.
         if self.talents.shadow_focus:
-            ambush_cost = 0
+            ambush_cost = self.base_ambush_energy_cost * .75
         else:
             ambush_cost = self.base_ambush_energy_cost
 

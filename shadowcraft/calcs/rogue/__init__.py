@@ -17,7 +17,7 @@ class RogueDamageCalculator(DamageCalculator):
 
     default_ep_stats = ['white_hit', 'yellow_hit', 'str', 'agi', 'haste',
         'crit', 'mastery', 'dodge_exp', 'spell_hit', 'spell_exp', 'pvp_power', 'ap']
-    normalize_ep_stat = 'ap'
+    normalize_ep_stat = 'ap' #use 'dps' to prevent normalization
     if normalize_ep_stat in default_ep_stats:
         default_ep_stats.remove(normalize_ep_stat)
     melee_attacks = ['mh_autoattack_hits', 'oh_autoattack_hits', 'mh_shadow_blade', 'oh_shadow_blade', 'autoattack', 'shadow_blades',
@@ -118,7 +118,7 @@ class RogueDamageCalculator(DamageCalculator):
         # Sanguinary Vein
         kwargs.setdefault('is_bleeding', True)
         if kwargs['is_bleeding'] and self.settings.is_subtlety_rogue():
-            base_modifier *= 1.16
+            base_modifier *= 1.2
         # Raid modifiers
         kwargs.setdefault('armor', None)
         ability_type_check = 0
@@ -468,6 +468,8 @@ class RogueDamageCalculator(DamageCalculator):
             # 'sap':                 (35, 'debuff'),
             # 'shiv':                (20, 'strike'),
         }
+        if ability == 'tricks_of_the_trade' and self.glyphs.tricks_of_the_trade:
+            return 
         return base_cost[ability]
     
     def get_spell_cd(self, ability):
@@ -483,6 +485,7 @@ class RogueDamageCalculator(DamageCalculator):
             'adrenaline_rush':     180,
             'killing_spree':       120,
             'shadow_dance':        60,
+            'shadowmeld':          120,
         }
         return base_cd[ability]
 

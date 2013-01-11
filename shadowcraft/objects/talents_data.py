@@ -59,9 +59,9 @@ talents = {
         ('nightstalker', 'subterfuge', 'shadow_focus'),
         ('deadly_throw', 'nerve_strike', 'combat_readiness'),
         ('cheat_death', 'leeching_poison', 'elusiveness'),
-        ('preparation', 'shadowstep', 'burst_of_speed'),
+        ('cloak_and_dagger', 'shadowstep', 'burst_of_speed'),
         ('prey_on_the_weak', 'paralytic_poison', 'dirty_tricks'),
-        ('shuriken_toss', 'versatility', 'anticipation')
+        ('shuriken_toss', 'marked_for_death', 'anticipation')
     ),
     'shaman': (
         ('natures_guardian', 'stone_bulwark_totem', 'astral_shift'),

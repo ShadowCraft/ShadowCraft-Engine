@@ -209,6 +209,8 @@ class GearBuffs(object):
         'rogue_t13_legendary',          # Increase 45% damage on SS and RvS, used in case the rogue only equips the mh of a set.
         'rogue_t14_2pc',                # Venom Wound damage by 20%, Sinister Strike by 15%, Backstab by 10%
         'rogue_t14_4pc',                # Shadow Blades by +12s
+        'rogue_t15_2pc',                # Extra CP per finisher (max of 6)
+        'rogue_t15_4pc',                # Abilities cast during Shadow Blades cost 40% less
         'mixology',
         'master_of_anatomy'
     ]
@@ -286,6 +288,22 @@ class GearBuffs(object):
         if is_combat:
             return self.rogue_t14_4pc * 6
         return self.rogue_t14_4pc * 12
+    
+    def rogue_t15_2pc_bonus_cp(self):
+        if self.rogue_t15_2pc:
+            return 1
+        return 0
+    
+    def rogue_t15_4pc_reduced_cost(self, uptime= 12. / 180.): #This is for Mut/Sub calcs
+        cost_reduction = .4
+        if self.rogue_t15_4pc:
+            return 1. - (cost_reduction * uptime)
+        return 1.
+    
+    def rogue_t15_4pc_modifier(self): #This is for Combat calcs
+        if self.rogue_t15_4pc:
+            return .6 # 1 - .4
+        return 1
 
     def leather_specialization_multiplier(self):
         if self.leather_specialization:
