@@ -149,6 +149,12 @@ class RogueDamageCalculator(DamageCalculator):
         crit_damage = damage * crit_mult
 
         return damage, crit_damage
+    
+    def mh_shuriken(self, ap, armor=None, is_bleeding=True):
+        return .75 * mh_damage(ap, armor=armor, is_bleeding=is_bleeding)
+    
+    def oh_shuriken(self, ap, armor=None, is_bleeding=True):
+        return .75 * oh_damage(ap, armor=armor, is_bleeding=is_bleeding)
 
     def backstab_damage(self, ap, armor=None, is_bleeding=True):
         weapon_damage = self.get_weapon_damage('mh', ap)

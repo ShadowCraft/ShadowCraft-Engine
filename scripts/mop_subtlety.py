@@ -44,7 +44,7 @@ test_mh = stats.Weapon(6733, 1.8, 'dagger', 'dancing_steel')
 test_oh = stats.Weapon(6733, 1.8, 'dagger', 'dancing_steel')
 
 # Set up procs.
-test_procs = procs.ProcsList('heroic_bottle_of_infinite_stars', 'relic_of_xuen')
+test_procs = procs.ProcsList( ('heroic_bottle_of_infinite_stars', 2), ('relic_of_xuen', 2) )
 
 # Set up gear buffs.
 test_gear_buffs = stats.GearBuffs('rogue_t14_2pc', 'rogue_t14_4pc', 'leather_specialization', 'virmens_bite', 'virmens_bite_prepot', 'chaotic_metagem')

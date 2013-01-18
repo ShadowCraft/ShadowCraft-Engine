@@ -220,7 +220,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         return crit_rates
 
     def get_snd_length(self, size):
-        duration = 6 + 6 * size
+        duration = 6 + 6 * (size + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp())
         return duration
 
     def set_constants(self):
@@ -833,7 +833,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.settings.is_assassination_rogue():
             poison_base_proc_rate += .2
             poison_envenom_proc_rate = poison_base_proc_rate + .15
-            envenom_uptime = min(sum([(1 / self.strike_hit_chance + cps) * attacks_per_second['envenom'][cps] for cps in xrange(1, 6)]), 1)
+            envenom_uptime = min(sum([(1 / self.strike_hit_chance + cps + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp()) * attacks_per_second['envenom'][cps] for cps in xrange(1, 6)]), 1)
             avg_poison_proc_rate = poison_base_proc_rate * (1 - envenom_uptime) + poison_envenom_proc_rate * envenom_uptime
         else:
             avg_poison_proc_rate = poison_base_proc_rate
@@ -1207,7 +1207,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 avg_cp_per_cpg += dists[2] * uptime
 
         avg_rupture_size = sum([i * rupture_sizes[i] for i in xrange(6)])
-        avg_rupture_length = 4. * (1 + avg_rupture_size)
+        avg_rupture_length = 4. * (1 + avg_rupture_size + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp())
         avg_wait_to_strike_connect = 1 / self.strike_hit_chance - 1
         avg_gap = .5 * (avg_wait_to_strike_connect + .5 * self.settings.response_time)
         avg_cycle_length = avg_gap + avg_rupture_length
@@ -1323,7 +1323,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             else:
                 damage_breakdown[key] *= self.ksp_multiplier
         
-        bf_mod = .25
+        bf_mod = .40
         if self.settings.cycle.blade_flurry:
             damage_breakdown['blade_flurry'] = 0
             for key in damage_breakdown:
@@ -1475,10 +1475,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         energy_spent_on_snd = snd_cost / (snd_duration - self.settings.response_time)
 
         if self.settings.cycle.use_rupture:
-            #avg_rupture_gap = (total_rupture_cost - .5 * total_eviscerate_cost) / energy_regen
-            avg_rupture_duration = 4 * (1 + cp_per_finisher)
-            #attacks_per_second['rupture'] = 1 / (avg_rupture_duration + avg_rupture_gap)
-            attacks_per_second['rupture'] = 1 / (avg_rupture_duration * 2)
+            avg_rupture_gap = (total_rupture_cost - .5 * total_eviscerate_cost) / energy_regen
+            avg_rupture_duration = 4 * (1 + cp_per_finisher + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp())
+            attacks_per_second['rupture'] = 1 / (avg_rupture_duration + avg_rupture_gap)
         else:
             attacks_per_second['rupture'] = 0
         energy_spent_on_rupture = total_rupture_cost * attacks_per_second['rupture']
@@ -1669,7 +1668,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         cp_from_premeditation = 2.
         
-        rupture_duration = 24 # 4 * 6
+        rupture_duration = 24 + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp() * 2 # 4 * 6 + tier bonus
         rupture_per_cycle = cycle_length / (rupture_duration + self.settings.response_time)
         
         total_cost_of_extra_eviscerate = 5 * cp_builder_energy_cost + self.base_eviscerate_energy_cost - 5 * self.relentless_strikes_energy_return_per_cp
@@ -1683,7 +1682,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         energy_for_evis_spam = total_cycle_regen - energy_spent_on_bonus_finishers
         extra_eviscerates_per_cycle = energy_for_evis_spam / total_cost_of_extra_eviscerate
         
-        attacks_per_second['rupture'] = 1. / 24
+        attacks_per_second['rupture'] = 1. / (24 + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp() * 4)
         attacks_per_second['cp_builder'] = 5 * extra_eviscerates_per_cycle / cycle_length
         attacks_per_second['eviscerate'] = [0, 0, 0, 0, 0, (bonus_eviscerates + extra_eviscerates_per_cycle) / cycle_length]
         attacks_per_second['ambush'] = ambush_rate

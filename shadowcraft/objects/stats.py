@@ -201,6 +201,7 @@ class GearBuffs(object):
     other_gear_buffs = [
         'leather_specialization',       # Increase %stat by 5%
         'chaotic_metagem',              # Increase critical damage by 3%
+        'rogue_pvp_4pc',                # 30 Extra Energy
         'rogue_t11_2pc',                # Increase crit chance for BS, Mut, SS by 5%
         'rogue_t12_2pc',                # Add 6% of melee crit damage as a fire DOT
         'rogue_t12_4pc',                # Increase crit/haste/mastery rating by 25% every TotT
@@ -247,7 +248,12 @@ class GearBuffs(object):
             return 1.03
         else:
             return 1
-
+    
+    def rogue_pvp_4pc(self):
+        if self.rogue_pvp_4pc:
+            return 30
+        return 0
+    
     def rogue_t11_2pc_crit_bonus(self):
         if self.rogue_t11_2pc:
             return .05

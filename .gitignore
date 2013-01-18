@@ -8,3 +8,4 @@ build
 MANIFEST
 item_db
 item_db.db
+.DS_Store
