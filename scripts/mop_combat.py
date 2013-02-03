@@ -21,7 +21,7 @@ i18n.set_language(test_language)
 
 # Set up level/class/race
 test_level = 90
-test_race = race.Race('night_elf')
+test_race = race.Race('pandaren')
 test_class = 'rogue'
 
 # Set up buffs.
@@ -63,7 +63,7 @@ test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
 test_talents = talents.Talents('322213', test_class, test_level)
 
 # Set up glyphs.
-glyph_list = ['recuperate']
+glyph_list = ['recuperate', 'adrenaline_rush']
 test_glyphs = glyphs.Glyphs(test_class, *glyph_list)
 
 # Set up settings.
