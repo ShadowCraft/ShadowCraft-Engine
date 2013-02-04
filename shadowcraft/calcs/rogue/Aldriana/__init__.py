@@ -1362,10 +1362,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             cds[e] -= abs(ar_duration - self.get_shadow_blades_duration()) / self.rb_cd_modifier(aps)
             
         #Phase 3: (not) AR (nor) SB
-        self.ks_cd = cds['ksp'] + phases['buffer'][1] + phases['both'][1]
+        self.ks_cd = cds['ksp']
+        self.ks_cd_extra = phases['buffer'][1] + phases['both'][1]
         stats, aps, crits, procs = self.determine_stats(self.combat_attack_counts_none)
         #rb_actual_cd(attacks_per_second, base_cds, avg_rb_effect=10)
-        phases['none'] = (aps, self.rb_actual_cd(aps, cds)['ar'], self.compute_damage(self.combat_attack_counts_none))
+        phases['none'] = (aps, self.rb_actual_cds(aps, cds)['ar'], self.compute_damage(self.combat_attack_counts_none))
+        self.ks_cd = cds['ksp'] + phases['buffer'][1] + phases['both'][1]
         
         #average it together
         total_duration = phases['none'][1] + phases['buffer'][1] + phases['both'][1]
@@ -1569,20 +1571,16 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         avg_stacks = (3 * time_at_level + 45) / cycle_duration
         self.bandits_guile_multiplier = 1 + .1 * avg_stacks
         
-        #if not sb and not ar:
-            #print self.ks_cd
-            #var_a = self.ks_cd[1]
-            #var_b = self.rb_actual_cd(attacks_per_second, {'ksp':self.ks_cd[0]})['ksp'] #+ self.ks_cd[1]
-            ##self.ks_cd = self.ks_cd['ksp']
-            #self.ks_cd = var_a + var_b
-            #attacks_per_second['mh_killing_spree'] = 7 * self.strike_hit_chance / (self.ks_cd + self.settings.response_time)
-            #attacks_per_second['oh_killing_spree'] = 7 * self.off_hand_melee_hit_chance() / (self.ks_cd + self.settings.response_time)
-            #attacks_per_second['main_gauche'] = attacks_per_second['mh_killing_spree'] * main_gauche_proc_rate
-            #bonus_energy = combat_potency_from_mg * attacks_per_second['main_gauche']
-            #ss_energy_cost = self.base_sinister_strike_energy_cost - main_gauche_proc_rate * combat_potency_from_mg
-            ##very rough accounting of bonus energy and damage from KS
-            #attacks_per_second['sinister_strike'] = bonus_energy / ss_energy_cost
-            #attacks_per_second['main_gauche'] += attacks_per_second['sinister_strike'] * main_gauche_proc_rate
+        if not sb and not ar:
+            self.ks_cd = self.rb_actual_cd(attacks_per_second, self.ks_cd) + self.ks_cd_extra
+            attacks_per_second['mh_killing_spree'] = 7 * self.strike_hit_chance / (self.ks_cd + self.settings.response_time)
+            attacks_per_second['oh_killing_spree'] = 7 * self.off_hand_melee_hit_chance() / (self.ks_cd + self.settings.response_time)
+            attacks_per_second['main_gauche'] += attacks_per_second['mh_killing_spree'] * main_gauche_proc_rate
+            bonus_energy = combat_potency_from_mg * attacks_per_second['main_gauche']
+            #very rough accounting of bonus energy and damage from KS
+            ss_per_second_bonus = bonus_energy / sinister_strike_energy_cost
+            attacks_per_second['sinister_strike'] += ss_per_second_bonus
+            attacks_per_second['main_gauche'] += ss_per_second_bonus * main_gauche_proc_rate
         
         #TODO: Make sure the poison counts are correct.
         self.get_poison_counts(attacks_per_second)
@@ -1590,7 +1588,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #print attacks_per_second
         return attacks_per_second, crit_rates
     
-    def rb_actual_cd(self, attacks_per_second, base_cds, avg_rb_effect=10):
+    def rb_actual_cds(self, attacks_per_second, base_cds, avg_rb_effect=10):
         final_cds = {}
         #if it's best to always use 5CP finishers as combat now, it should continue to be so, this is simpler
         offensive_finisher_rate = attacks_per_second['eviscerate'][5] + attacks_per_second['rupture']
@@ -1600,6 +1598,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 final_cds[cd_name] = base_cds[cd_name] * (1 - avg_rb_effect / (1/offensive_finisher_rate + avg_rb_effect))
         else:
             final_cds[cd_name] = base_cds[cd_name]
+        return final_cds
+    def rb_actual_cd(self, attacks_per_second, base_cd, avg_rb_effect=10):
+        final_cd = base_cd
+        #if it's best to always use 5CP finishers as combat now, it should continue to be so, this is simpler
+        offensive_finisher_rate = attacks_per_second['eviscerate'][5] + attacks_per_second['rupture']
+        #should never happen, catch error just in case
+        if offensive_finisher_rate != 0:
+            final_cds = base_cd * (1 - avg_rb_effect / (1/offensive_finisher_rate + avg_rb_effect))
         return final_cds
     
     def rb_cd_modifier(self, attacks_per_second, avg_rb_effect=10):
