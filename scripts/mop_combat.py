@@ -40,24 +40,24 @@ test_buffs = buffs.Buffs(
     )
 
 # Set up weapons.
-test_mh = stats.Weapon(9725.5, 2.6, 'fist', 'dancing_steel')
-test_oh = stats.Weapon(9725.5, 2.6, 'fist', 'dancing_steel')
+test_mh = stats.Weapon(10478.5, 2.6, 'fist', 'dancing_steel')
+test_oh = stats.Weapon(10478.5, 2.6, 'fist', 'dancing_steel')
 
 # Set up procs.
 test_procs = procs.ProcsList( ('heroic_bottle_of_infinite_stars', 2), ('heroic_terror_in_the_mists', 2) )
 
 # Set up gear buffs.
-test_gear_buffs = stats.GearBuffs('rogue_t14_2pc', 'rogue_t14_4pc', 'leather_specialization', 'virmens_bite', 'virmens_bite_prepot', 'chaotic_metagem')
+test_gear_buffs = stats.GearBuffs('rogue_t15_2pc', 'rogue_t15_2pc', 'leather_specialization', 'virmens_bite', 'virmens_bite_prepot', 'chaotic_metagem')
 
 # Set up a calcs object..
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          str=80,
-                         agi=16695,
-                         crit=3209,
-                         hit=2570,
-                         exp=2547,
-                         haste=7721,
-                         mastery=5220)
+                         agi=17625,
+                         crit=3060,
+                         hit=2600,
+                         exp=2554,
+                         haste=8428,
+                         mastery=6136)
 
 # Initialize talents..
 test_talents = talents.Talents('322213', test_class, test_level)
@@ -68,14 +68,14 @@ test_glyphs = glyphs.Glyphs(test_class, *glyph_list)
 
 # Set up settings.
 test_cycle = settings.CombatCycle()
-test_settings = settings.Settings(test_cycle, response_time=.5, duration=360, dmg_poison='dp', utl_poison='lp', is_pvp=False)
+test_settings = settings.Settings(test_cycle, response_time=.5, duration=360, dmg_poison='dp', utl_poison='lp', is_pvp=False, stormlash=1)
 
 # Build a DPS object.
 calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_glyphs, test_buffs, test_race, test_settings, test_level)
 
 # Compute EP values.
 ep_values = calculator.get_ep()
-tier_ep_values = calculator.get_other_ep(['rogue_t14_4pc', 'rogue_t14_2pc'])
+tier_ep_values = calculator.get_other_ep(['rogue_t14_4pc', 'rogue_t14_2pc', 'rogue_t15_4pc', 'rogue_t15_2pc'])
 mh_enchants_and_dps_ep_values, oh_enchants_and_dps_ep_values = calculator.get_weapon_ep(dps=True, enchants=True)
 
 trinkets_list = [

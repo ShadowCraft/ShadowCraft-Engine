@@ -1402,29 +1402,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         return damage_breakdown
     
-    def ks_bonus_damage(self, ks_cd=120):
-        attacks_per_second = {}
-        current_stats = {
-            'agi': self.base_stats['agi'] * self.agi_multiplier,
-            'ap': self.base_stats['ap'],
-            'crit': self.base_stats['crit'],
-            'haste': self.base_stats['haste'],
-            'mastery': self.base_stats['mastery']
-        }
-        
-        main_gauche_proc_rate = self.combat_mastery_conversion * self.stats.get_mastery_from_rating(self.base_stats['mastery']) * self.one_hand_melee_hit_chance()
-        attacks_per_second['mh_killing_spree'] = 7 * self.strike_hit_chance / (ks_cd + self.settings.response_time)
-        attacks_per_second['oh_killing_spree'] = 7 * self.off_hand_melee_hit_chance() / (ks_cd + self.settings.response_time)
-        attacks_per_second['main_gauche'] = attacks_per_second['mh_killing_spree'] * main_gauche_proc_rate
-        combat_potency_from_mg = 15 * .2
-        bonus_energy = combat_potency_from_mg * attacks_per_second['main_gauche']
-        ss_energy_cost = self.base_sinister_strike_energy_cost - main_gauche_proc_rate * combat_potency_from_mg
-        #very rough accounting of bonus energy and damage from KS
-        attacks_per_second['sinister_strike'] = bonus_energy / ss_energy_cost
-        attacks_per_second['main_gauche'] += attacks_per_second['sinister_strike'] * main_gauche_proc_rate
-        self.get_poison_counts(attacks_per_second)
-        return attacks_per_second, self.get_crit_rates(current_stats)
-
     def combat_attack_counts(self, current_stats, ar=False, sb=False):
         attacks_per_second = {}
         #base_energy_regen is broken when not reset for each call for no fucking reason
@@ -1466,10 +1443,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             mh_autoswing_type = 'mh_shadow_blade'
             oh_autoswing_type = 'oh_shadow_blade'
 
-        rupture_energy_cost = self.base_rupture_energy_cost - main_gauche_proc_rate * combat_potency_from_mg
-        eviscerate_energy_cost = self.base_eviscerate_energy_cost - main_gauche_proc_rate * combat_potency_from_mg
-        revealing_strike_energy_cost = self.base_revealing_strike_energy_cost - main_gauche_proc_rate * combat_potency_from_mg
-        sinister_strike_energy_cost = self.base_sinister_strike_energy_cost - main_gauche_proc_rate * combat_potency_from_mg
+        rupture_energy_cost =  self.stats.gear_buffs.rogue_t15_4pc_modifier() * self.base_rupture_energy_cost
+        rupture_energy_cost -= main_gauche_proc_rate * combat_potency_from_mg
+        eviscerate_energy_cost =  self.stats.gear_buffs.rogue_t15_4pc_modifier() * self.base_eviscerate_energy_cost
+        eviscerate_energy_cost -= main_gauche_proc_rate * combat_potency_from_mg
+        revealing_strike_energy_cost =  self.stats.gear_buffs.rogue_t15_4pc_modifier() * self.base_revealing_strike_energy_cost
+        revealing_strike_energy_cost -= main_gauche_proc_rate * combat_potency_from_mg
+        sinister_strike_energy_cost =  self.stats.gear_buffs.rogue_t15_4pc_modifier() * self.base_sinister_strike_energy_cost
+        sinister_strike_energy_cost -= main_gauche_proc_rate * combat_potency_from_mg
         
         if self.talents.anticipation:
             energy_cap = 5 / cp_per_cpg * sinister_strike_energy_cost / gcd_size
@@ -1483,6 +1464,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if not sb:
             attacks_per_second[mh_autoswing_type] *= self.dual_wield_mh_hit_chance()
             attacks_per_second[oh_autoswing_type] *= self.dual_wield_oh_hit_chance()
+            attacks_per_second['mh_autoattack_hits'] = attacks_per_second[mh_autoswing_type]
+            attacks_per_second['oh_autoattack_hits'] = attacks_per_second[oh_autoswing_type]
         attacks_per_second['main_gauche'] = attacks_per_second[mh_autoswing_type] * main_gauche_proc_rate
         #Base energy
         bonus_energy_from_openers = self.get_bonus_energy_from_openers('sinister_strike', 'revealing_strike')
@@ -1549,7 +1532,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         #attacks_per_second['eviscerate'] = [finisher_chance * total_evis_per_second for finisher_chance in finisher_size_breakdown]
         attacks_per_second['eviscerate'] = [finisher_chance * total_evis_per_second for finisher_chance in [0,0,0,0,0,1]]
-        extra_finishers_per_second = attacks_per_second['revealing_strike'] / 5
+        extra_finishers_per_second = attacks_per_second['revealing_strike'] / (5/cp_per_cpg)
         for opener, cps in [('ambush', 2), ('garrote', 1)]:
             if opener in attacks_per_second:
                 extra_finishers_per_second += attacks_per_second[opener] * cps / 5
@@ -1559,7 +1542,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         attacks_per_second['rupture_ticks'] = [0, 0, 0, 0, 0, 0]
         for i in xrange(1, 6):
-            ticks_per_rupture = 2 * (1 + i)
+            ticks_per_rupture = 2 * (1 + i + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp())
             #attacks_per_second['rupture_ticks'][i] = ticks_per_rupture * attacks_per_second['rupture'] * finisher_size_breakdown[i]
             attacks_per_second['rupture_ticks'][i] = ticks_per_rupture * attacks_per_second['rupture'] * [0,0,0,0,0,1][i]
 
@@ -1573,10 +1556,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         if not sb and not ar:
             self.ks_cd = self.rb_actual_cd(attacks_per_second, self.ks_cd) + self.ks_cd_extra
+            if not self.settings.cycle.ksp_immediately:
+                self.ks_cd += (3 * time_at_level)/2 * (3 * time_at_level)/cycle_duration
             attacks_per_second['mh_killing_spree'] = 7 * self.strike_hit_chance / (self.ks_cd + self.settings.response_time)
             attacks_per_second['oh_killing_spree'] = 7 * self.off_hand_melee_hit_chance() / (self.ks_cd + self.settings.response_time)
-            attacks_per_second['main_gauche'] += attacks_per_second['mh_killing_spree'] * main_gauche_proc_rate
-            bonus_energy = combat_potency_from_mg * attacks_per_second['main_gauche']
+            bonus_mg_procs = attacks_per_second['mh_killing_spree'] * main_gauche_proc_rate
+            attacks_per_second['main_gauche'] += bonus_mg_procs
+            bonus_energy = combat_potency_from_mg * bonus_mg_procs
             #very rough accounting of bonus energy and damage from KS
             ss_per_second_bonus = bonus_energy / sinister_strike_energy_cost
             attacks_per_second['sinister_strike'] += ss_per_second_bonus
