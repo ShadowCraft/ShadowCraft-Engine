@@ -1388,18 +1388,18 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             #AR phase
             stats, aps, crits, procs = self.determine_stats(self.combat_attack_counts_ar)
             phases['ar'] = (aps,
-                                abs(ar_duration - self.get_shadow_blades_duration()),
-                                self.update_with_bandits_guile(self.compute_damage(self.combat_attack_counts_ar)) )
+                            ar_duration,
+                            self.update_with_bandits_guile(self.compute_damage(self.combat_attack_counts_ar)) )
             for e in cds:
-                cds[e] -= min(ar_duration, self.get_shadow_blades_duration()) / self.rb_cd_modifier(aps)
+                cds[e] -= ar_duration / self.rb_cd_modifier(aps)
             
             #SB phase
             stats, aps, crits, procs = self.determine_stats(self.combat_attack_counts_sb)
             phases['sb'] = (aps,
-                                abs(ar_duration - self.get_shadow_blades_duration()),
-                                self.update_with_bandits_guile(self.compute_damage(self.combat_attack_counts_sb)) )
+                            self.get_shadow_blades_duration(),
+                            self.update_with_bandits_guile(self.compute_damage(self.combat_attack_counts_sb)) )
             for e in cds:
-                cds[e] -= min(ar_duration, self.get_shadow_blades_duration()) / self.rb_cd_modifier(aps)
+                cds[e] -= self.get_shadow_blades_duration() / self.rb_cd_modifier(aps)
             
             #none
             self.ks_cd = cds['ksp']
@@ -1486,13 +1486,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             mh_autoswing_type = 'mh_shadow_blade'
             oh_autoswing_type = 'oh_shadow_blade'
 
-        rupture_energy_cost =  self.stats.gear_buffs.rogue_t15_4pc_modifier() * self.base_rupture_energy_cost
+        rupture_energy_cost =  self.stats.gear_buffs.rogue_t15_4pc_modifier(is_sb=sb) * self.base_rupture_energy_cost
         rupture_energy_cost -= main_gauche_proc_rate * combat_potency_from_mg
-        eviscerate_energy_cost =  self.stats.gear_buffs.rogue_t15_4pc_modifier() * self.base_eviscerate_energy_cost
+        eviscerate_energy_cost =  self.stats.gear_buffs.rogue_t15_4pc_modifier(is_sb=sb) * self.base_eviscerate_energy_cost
         eviscerate_energy_cost -= main_gauche_proc_rate * combat_potency_from_mg
-        revealing_strike_energy_cost =  self.stats.gear_buffs.rogue_t15_4pc_modifier() * self.base_revealing_strike_energy_cost
+        revealing_strike_energy_cost =  self.stats.gear_buffs.rogue_t15_4pc_modifier(is_sb=sb) * self.base_revealing_strike_energy_cost
         revealing_strike_energy_cost -= main_gauche_proc_rate * combat_potency_from_mg
-        sinister_strike_energy_cost =  self.stats.gear_buffs.rogue_t15_4pc_modifier() * self.base_sinister_strike_energy_cost
+        sinister_strike_energy_cost =  self.stats.gear_buffs.rogue_t15_4pc_modifier(is_sb=sb) * self.base_sinister_strike_energy_cost
         sinister_strike_energy_cost -= main_gauche_proc_rate * combat_potency_from_mg
         
         if self.talents.anticipation:
@@ -1518,9 +1518,20 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second[self.settings.opener_name] = self.total_openers_per_second
             attacks_per_second['main_gauche'] += self.total_openers_per_second * main_gauche_proc_rate
         energy_regen = self.base_energy_regen * haste_multiplier + self.bonus_energy_regen + combat_potency_regen + bonus_energy_from_openers
-        #print "energy_regen: ", energy_regen
-        #print self.base_energy_regen, haste_multiplier
-        #print self.base_energy_regen * haste_multiplier, self.bonus_energy_regen, combat_potency_regen, bonus_energy_from_openers
+        #cap energy
+        #Minicycle sizes and cpg_per_finisher stats
+        if self.talents.anticipation:
+            ss_per_finisher = 5 / (cp_per_cpg + extra_cp_chance)
+        else:
+            cp_per_ss = self.get_cp_per_cpg(1, extra_cp_chance)
+            ss_per_finisher = 4.3
+            if sb:
+                ss_per_finisher = 2.64
+        #overly simplified, but it's a high estimate for a cap for now.
+        energy_per_minicycle = (ss_per_finisher * sinister_strike_energy_cost + eviscerate_energy_cost) / ((ss_per_finisher + 1) * gcd_size)
+        #print energy_per_minicycle
+        energy_regen = min(energy_regen, energy_per_minicycle)
+        
         #Base actions
         rvs_interval = rvs_duration
         if self.settings.cycle.revealing_strike_pooling:
