@@ -846,7 +846,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.settings.dmg_poison == 'dp':
             poison_procs = avg_poison_proc_rate * total_hits_per_second - 1 / self.settings.duration
             attacks_per_second['deadly_instant_poison'] = poison_procs * self.poison_hit_chance
-            attacks_per_second['deadly_poison'] = 1. / 3 #* (1 - total_hits_per_second / self.settings.duration)
+            attacks_per_second['deadly_poison'] = 1. / 3 * (1 - total_hits_per_second / self.settings.duration)
         elif self.settings.dmg_poison == 'wp':
             attacks_per_second['wound_poison'] = total_hits_per_second * avg_poison_proc_rate * self.poison_hit_chance
 
@@ -1339,59 +1339,79 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         ar_duration += self.stats.gear_buffs.rogue_t13_4pc * 3
         sb_dur = self.get_shadow_blades_duration()
         restless_blades_reduction = 2
-        ksp_buff = 0.5
+        self.ksp_buff = 0.5
         
         cds = self.base_cooldowns
         phases = {}
-        #Phase 1: AR (AND) SB
-        stats, aps, crits, procs = self.determine_stats(self.combat_attack_counts_both)
-        #                (aps, phase_length)
-        phases['both'] = (aps, min(ar_duration, self.get_shadow_blades_duration()), self.compute_damage(self.combat_attack_counts_both) )
-        for e in cds:
-            cds[e] -= min(ar_duration, self.get_shadow_blades_duration()) / self.rb_cd_modifier(aps)
+        #Could definitely be cleaner, but it works for now
+        if self.settings.cycle.stack_cds:
+            #Phase 1: AR (AND) SB
+            stats, aps, crits, procs = self.determine_stats(self.combat_attack_counts_both)
+            #                (aps,
+            #                 phase_length
+            #                 damage_breakdown)
+            phases['both'] = (aps,
+                              min(ar_duration, self.get_shadow_blades_duration()),
+                              self.update_with_bandits_guile(self.compute_damage(self.combat_attack_counts_both)) )
         
-        #Phase 2: AR (xor) SB, if possible
-        phase_length = abs(ar_duration - self.get_shadow_blades_duration()) #length of time with either just AR or SB up
-        if ar_duration > self.get_shadow_blades_duration():
-            stats, aps, crits, procs = self.determine_stats(self.combat_attack_counts_ar)
-            phases['buffer'] = (aps, abs(ar_duration - self.get_shadow_blades_duration()), self.compute_damage(self.combat_attack_counts_ar))
-        elif ar_duration < self.get_shadow_blades_duration():
-            stats, aps, crits, procs = self.determine_stats(self.combat_attack_counts_sb)
-            phases['buffer'] = (aps, abs(ar_duration - self.get_shadow_blades_duration()), self.compute_damage(self.combat_attack_counts_sb))
-        for e in cds:
-            cds[e] -= abs(ar_duration - self.get_shadow_blades_duration()) / self.rb_cd_modifier(aps)
+            for e in cds:
+                cds[e] -= min(ar_duration, self.get_shadow_blades_duration()) / self.rb_cd_modifier(aps)
+        
+            #Phase 2: AR (xor) SB, if possible
+            phase_length = abs(ar_duration - self.get_shadow_blades_duration()) #length of time with either just AR or SB up
+            if ar_duration > self.get_shadow_blades_duration():
+                stats, aps, crits, procs = self.determine_stats(self.combat_attack_counts_ar)
+                phases['buffer'] = (aps,
+                                    abs(ar_duration - self.get_shadow_blades_duration()),
+                                    self.update_with_bandits_guile(self.compute_damage(self.combat_attack_counts_ar)) )
+            elif ar_duration < self.get_shadow_blades_duration():
+                stats, aps, crits, procs = self.determine_stats(self.combat_attack_counts_sb)
+                phases['buffer'] = (aps,
+                                    abs(ar_duration - self.get_shadow_blades_duration()),
+                                    self.update_with_bandits_guile(self.compute_damage(self.combat_attack_counts_sb)) )
+            for e in cds:
+                cds[e] -= abs(ar_duration - self.get_shadow_blades_duration()) / self.rb_cd_modifier(aps)
             
-        #Phase 3: (not) AR (nor) SB
-        self.ks_cd = cds['ksp']
-        self.ks_cd_extra = phases['buffer'][1] + phases['both'][1]
-        stats, aps, crits, procs = self.determine_stats(self.combat_attack_counts_none)
-        #rb_actual_cd(attacks_per_second, base_cds, avg_rb_effect=10)
-        phases['none'] = (aps, self.rb_actual_cds(aps, cds)['ar'], self.compute_damage(self.combat_attack_counts_none))
-        self.ks_cd = cds['ksp'] + phases['buffer'][1] + phases['both'][1]
+            #Phase 3: (not) AR (nor) SB
+            self.ks_cd = cds['ksp']
+            self.ks_cd_extra = phases['buffer'][1] + phases['both'][1]
+            stats, aps, crits, procs = self.determine_stats(self.combat_attack_counts_none)
+            #rb_actual_cd(attacks_per_second, base_cds, avg_rb_effect=10)
+            phases['none'] = (aps,
+                              self.rb_actual_cds(aps, cds)['ar'],
+                              self.update_with_bandits_guile(self.compute_damage(self.combat_attack_counts_none)) )
+            self.ks_cd = cds['ksp'] + phases['buffer'][1] + phases['both'][1]
         
-        #average it together
-        total_duration = phases['none'][1] + phases['buffer'][1] + phases['both'][1]
-        damage_breakdown = self.average_damage_breakdowns(phases, denom = total_duration)
-        
-        if self.settings.cycle.ksp_immediately:
-            self.ksp_multiplier = 1 + (3./self.ks_cd) * ksp_buff
+            #average it together
+            total_duration = phases['none'][1] + phases['buffer'][1] + phases['both'][1]
         else:
-            self.ksp_multiplier = 1 + (3./self.ks_cd) * ksp_buff * self.max_bandits_guile_buff / self.bandits_guile_multiplier
+            #AR phase
+            stats, aps, crits, procs = self.determine_stats(self.combat_attack_counts_ar)
+            phases['ar'] = (aps,
+                                abs(ar_duration - self.get_shadow_blades_duration()),
+                                self.update_with_bandits_guile(self.compute_damage(self.combat_attack_counts_ar)) )
+            for e in cds:
+                cds[e] -= min(ar_duration, self.get_shadow_blades_duration()) / self.rb_cd_modifier(aps)
             
-        for key in damage_breakdown:
-            if key == 'killing_spree':
-                if self.settings.cycle.ksp_immediately:
-                    damage_breakdown[key] *= self.bandits_guile_multiplier * (1. + ksp_buff)
-                else:
-                    damage_breakdown[key] *= self.max_bandits_guile_buff * (1. + ksp_buff)
-            elif key in ('sinister_strike', 'revealing_strike', 'shadow_blades'):
-                damage_breakdown[key] *= self.bandits_guile_multiplier
-            elif key in ('eviscerate', 'rupture'):
-                damage_breakdown[key] *= self.bandits_guile_multiplier * self.revealing_strike_multiplier
-            elif key in ('autoattack', 'instant_poison', 'deadly_poison', 'main_gauche'):
-                damage_breakdown[key] *= self.bandits_guile_multiplier * self.ksp_multiplier
-            else:
-                damage_breakdown[key] *= self.ksp_multiplier
+            #SB phase
+            stats, aps, crits, procs = self.determine_stats(self.combat_attack_counts_sb)
+            phases['sb'] = (aps,
+                                abs(ar_duration - self.get_shadow_blades_duration()),
+                                self.update_with_bandits_guile(self.compute_damage(self.combat_attack_counts_sb)) )
+            for e in cds:
+                cds[e] -= min(ar_duration, self.get_shadow_blades_duration()) / self.rb_cd_modifier(aps)
+            
+            #none
+            self.ks_cd = cds['ksp']
+            self.ks_cd_extra = phases['ar'][1] + phases['sb'][1]
+            stats, aps, crits, procs = self.determine_stats(self.combat_attack_counts_none)
+            phases['none'] = (aps,
+                              self.rb_actual_cds(aps, cds)['ar'],
+                              self.update_with_bandits_guile(self.compute_damage(self.combat_attack_counts_none)) )
+            
+            #average it together
+            total_duration = phases['ar'][1] + phases['sb'][1] + phases['none'][1]
+        damage_breakdown = self.average_damage_breakdowns(phases, denom = total_duration)
         
         bf_mod = .40
         if self.settings.cycle.blade_flurry:
@@ -1400,6 +1420,29 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 if key in self.melee_attacks:
                     damage_breakdown['blade_flurry'] += bf_mod * damage_breakdown[key] * self.settings.cycle.bf_targets
         
+        return damage_breakdown
+    
+    def update_with_bandits_guile(self, damage_breakdown):
+        if self.settings.cycle.ksp_immediately:
+            self.ksp_multiplier = 1 + (3./self.ks_cd) * self.ksp_buff
+        else:
+            self.ksp_multiplier = 1 + (3./self.ks_cd) * self.ksp_buff * self.max_bandits_guile_buff / self.bandits_guile_multiplier
+        
+        for key in damage_breakdown:
+            if key == 'killing_spree':
+                if self.settings.cycle.ksp_immediately:
+                    damage_breakdown[key] *= self.bandits_guile_multiplier * (1. + self.ksp_buff)
+                else:
+                    damage_breakdown[key] *= self.max_bandits_guile_buff * (1. + self.ksp_buff)
+            elif key in ('sinister_strike', 'revealing_strike', 'shadow_blades'):
+                damage_breakdown[key] *= self.bandits_guile_multiplier
+            elif key in ('eviscerate', 'rupture'):
+                damage_breakdown[key] *= self.bandits_guile_multiplier * self.revealing_strike_multiplier
+            elif key in ('autoattack', 'instant_poison', 'deadly_poison', 'main_gauche'):
+                damage_breakdown[key] *= self.bandits_guile_multiplier * self.ksp_multiplier
+            else:
+                damage_breakdown[key] *= self.ksp_multiplier
+                
         return damage_breakdown
     
     def combat_attack_counts(self, current_stats, ar=False, sb=False):
@@ -1555,11 +1598,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.bandits_guile_multiplier = 1 + .1 * avg_stacks
         
         if not sb and not ar:
-            self.ks_cd = self.rb_actual_cd(attacks_per_second, self.ks_cd) + self.ks_cd_extra
+            final_ks_cd = self.rb_actual_cd(attacks_per_second, self.ks_cd) + self.ks_cd_extra
             if not self.settings.cycle.ksp_immediately:
-                self.ks_cd += (3 * time_at_level)/2 * (3 * time_at_level)/cycle_duration
-            attacks_per_second['mh_killing_spree'] = 7 * self.strike_hit_chance / (self.ks_cd + self.settings.response_time)
-            attacks_per_second['oh_killing_spree'] = 7 * self.off_hand_melee_hit_chance() / (self.ks_cd + self.settings.response_time)
+                final_ks_cd += (3 * time_at_level)/2 * (3 * time_at_level)/cycle_duration
+            attacks_per_second['mh_killing_spree'] = 7 * self.strike_hit_chance / (final_ks_cd + self.settings.response_time)
+            attacks_per_second['oh_killing_spree'] = 7 * self.off_hand_melee_hit_chance() / (final_ks_cd + self.settings.response_time)
             bonus_mg_procs = attacks_per_second['mh_killing_spree'] * main_gauche_proc_rate
             attacks_per_second['main_gauche'] += bonus_mg_procs
             bonus_energy = combat_potency_from_mg * bonus_mg_procs
