@@ -1477,6 +1477,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         gcd_size = 1.0
         if self.glyphs.adrenaline_rush:
             gcd_size -= .2
+        max_aps= 1. / gcd_size
         cp_per_cpg = 1.
         if sb:
             cp_per_cpg += 1
@@ -1518,7 +1519,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second[self.settings.opener_name] = self.total_openers_per_second
             attacks_per_second['main_gauche'] += self.total_openers_per_second * main_gauche_proc_rate
         energy_regen = self.base_energy_regen * haste_multiplier + self.bonus_energy_regen + combat_potency_regen + bonus_energy_from_openers
-        #cap energy
         #Minicycle sizes and cpg_per_finisher stats
         if self.talents.anticipation:
             ss_per_finisher = 5 / (cp_per_cpg + extra_cp_chance)
@@ -1527,16 +1527,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             ss_per_finisher = 4.3
             if sb:
                 ss_per_finisher = 2.64
-        #overly simplified, but it's a high estimate for a cap for now.
-        energy_per_minicycle = (ss_per_finisher * sinister_strike_energy_cost + eviscerate_energy_cost) / ((ss_per_finisher + 1) * gcd_size)
-        #print energy_per_minicycle
-        energy_regen = min(energy_regen, energy_per_minicycle)
         
         #Base actions
         rvs_interval = rvs_duration
         if self.settings.cycle.revealing_strike_pooling:
-            min_energy_while_pooling = energy_regen
-            max_energy_while_pooling = 75.
+            min_energy_while_pooling = energy_regen * gcd_size
+            max_energy_while_pooling = 80.
             average_pooling = max(0, (max_energy_while_pooling - min_energy_while_pooling)) / 2
             rvs_interval += average_pooling / energy_regen
         if self.talents.marked_for_death:
@@ -1573,27 +1569,39 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         else:
             attacks_per_second['rupture'] = 0
         energy_spent_on_rupture = total_rupture_cost * attacks_per_second['rupture']
-
+        
+        #Base CPGs
+        attacks_per_second['sinister_strike_base'] = ss_per_snd / (snd_duration - self.settings.response_time) + attacks_per_second['rupture'] * ss_per_finisher
+        attacks_per_second['revealing_strike'] = 1. / rvs_interval
+        extra_finishers_per_second = attacks_per_second['revealing_strike'] / (5/cp_per_cpg)
+        #Scaling CPGs
+        free_gcd = 1.
+        free_gcd -= (1/snd_duration + attacks_per_second['sinister_strike_base'] + attacks_per_second['revealing_strike'] + extra_finishers_per_second) * gcd_size
+        if self.talents.marked_for_death:
+            free_gcd -= 1 / 60
         energy_available_for_evis = energy_regen - energy_spent_on_snd - energy_spent_on_rupture
         total_evis_per_second = energy_available_for_evis / total_eviscerate_cost
-        
-        attacks_per_second['sinister_strike'] = (total_evis_per_second + attacks_per_second['rupture']) * ss_per_finisher + ss_per_snd / (snd_duration - self.settings.response_time)
-        attacks_per_second['revealing_strike'] = 1. / rvs_interval
+        evisc_actions_per_second = (total_evis_per_second * ss_per_finisher + total_evis_per_second) * gcd_size
+        attacks_per_second['sinister_strike'] = total_evis_per_second * ss_per_finisher
         attacks_per_second['main_gauche'] += (attacks_per_second['sinister_strike'] + attacks_per_second['revealing_strike'] + total_evis_per_second + attacks_per_second['rupture']) * main_gauche_proc_rate
-
-        self.current_variables['cp_spent_on_damage_finishers_per_second'] = (attacks_per_second['rupture'] + total_evis_per_second) * cp_per_finisher
-        self.current_variables['cpgs_per_second'] = attacks_per_second['sinister_strike'] + attacks_per_second['revealing_strike']
-
+        #if GCD capped
+        if evisc_actions_per_second > free_gcd:
+            gcd_cap_mod = evisc_actions_per_second / free_gcd
+            attacks_per_second['sinister_strike'] = attacks_per_second['sinister_strike'] / gcd_cap_mod
+            total_evis_per_second = total_evis_per_second / gcd_cap_mod
+        
         #attacks_per_second['eviscerate'] = [finisher_chance * total_evis_per_second for finisher_chance in finisher_size_breakdown]
         attacks_per_second['eviscerate'] = [finisher_chance * total_evis_per_second for finisher_chance in [0,0,0,0,0,1]]
-        extra_finishers_per_second = attacks_per_second['revealing_strike'] / (5/cp_per_cpg)
         for opener, cps in [('ambush', 2), ('garrote', 1)]:
             if opener in attacks_per_second:
                 extra_finishers_per_second += attacks_per_second[opener] * cps / 5
         attacks_per_second['eviscerate'][5] += extra_finishers_per_second
         if self.talents.marked_for_death:
             attacks_per_second['eviscerate'][5] += 1 / 60
-
+        #reintroduce flat gcds
+        attacks_per_second['sinister_strike'] += attacks_per_second['sinister_strike_base']
+        
+        #self.current_variables['cp_spent_on_damage_finishers_per_second'] = (attacks_per_second['rupture'] + total_evis_per_second) * cp_per_finisher
         attacks_per_second['rupture_ticks'] = [0, 0, 0, 0, 0, 0]
         for i in xrange(1, 6):
             ticks_per_rupture = 2 * (1 + i + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp())
@@ -1602,7 +1610,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         if 'garrote' in attacks_per_second:
             attacks_per_second['garrote_ticks'] = 6 * attacks_per_second['garrote']
-            
+        
+        self.current_variables['cpgs_per_second'] = attacks_per_second['sinister_strike'] + attacks_per_second['revealing_strike']
         time_at_level = 4 / self.current_variables['cpgs_per_second']
         cycle_duration = 3 * time_at_level + 15
         avg_stacks = (3 * time_at_level + 45) / cycle_duration
@@ -1616,11 +1625,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second['oh_killing_spree'] = 7 * self.off_hand_melee_hit_chance() / (final_ks_cd + self.settings.response_time)
             bonus_mg_procs = attacks_per_second['mh_killing_spree'] * main_gauche_proc_rate
             attacks_per_second['main_gauche'] += bonus_mg_procs
-            bonus_energy = combat_potency_from_mg * bonus_mg_procs
+            #bonus_energy = combat_potency_from_mg * bonus_mg_procs
             #very rough accounting of bonus energy and damage from KS
-            ss_per_second_bonus = bonus_energy / sinister_strike_energy_cost
-            attacks_per_second['sinister_strike'] += ss_per_second_bonus
-            attacks_per_second['main_gauche'] += ss_per_second_bonus * main_gauche_proc_rate
+            #ss_per_second_bonus = bonus_energy / sinister_strike_energy_cost
+            #attacks_per_second['sinister_strike'] += ss_per_second_bonus
+            #attacks_per_second['main_gauche'] += ss_per_second_bonus * main_gauche_proc_rate
         
         #TODO: Make sure the poison counts are correct.
         self.get_poison_counts(attacks_per_second)

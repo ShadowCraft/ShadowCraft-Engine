@@ -343,7 +343,7 @@ class RogueDamageCalculator(DamageCalculator):
     def eviscerate_damage(self, ap, cp, armor=None, mastery=None, is_bleeding=True):
         mult, crit_mult = self.get_modifiers('physical', 'executioner', mastery=mastery, armor=armor, is_bleeding=is_bleeding)
 
-        damage = (self.evis_base_dmg + self.evis_bonus_dmg * cp + .16 * cp * ap) * mult
+        damage = (self.evis_base_dmg + self.evis_bonus_dmg * cp + .20 * cp * ap) * mult
         crit_damage = damage * crit_mult
         
         return damage, crit_damage
