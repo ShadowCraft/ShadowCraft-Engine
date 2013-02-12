@@ -1414,11 +1414,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         damage_breakdown = self.average_damage_breakdowns(phases, denom = total_duration)
         
         bf_mod = .40
+        bf_max_targets = 4
         if self.settings.cycle.blade_flurry:
             damage_breakdown['blade_flurry'] = 0
             for key in damage_breakdown:
                 if key in self.melee_attacks:
-                    damage_breakdown['blade_flurry'] += bf_mod * damage_breakdown[key] * self.settings.cycle.bf_targets
+                    damage_breakdown['blade_flurry'] += bf_mod * damage_breakdown[key] * min(self.settings.cycle.bf_targets, bf_max_targets)
         
         return damage_breakdown
     
@@ -1470,22 +1471,19 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         restless_blades_reduction = 2
         FINISHER_SIZE = 5
         ksp_buff = 0.5
+        gcd_latency = .05 #It's impossible to always attack on the GCD, lets assume there's always some gap (this value)
         
         if ar:
             self.attack_speed_increase *= 1.2
             self.base_energy_regen *= 2.0
         gcd_size = 1.0
-        if self.glyphs.adrenaline_rush:
+        if self.glyphs.adrenaline_rush and ar:
             gcd_size -= .2
+        gcd_size = gcd_size + gcd_latency
         max_aps= 1. / gcd_size
         cp_per_cpg = 1.
         if sb:
             cp_per_cpg += 1
-        mh_autoswing_type = 'mh_autoattacks'
-        oh_autoswing_type = 'oh_autoattacks'
-        if sb:
-            mh_autoswing_type = 'mh_shadow_blade'
-            oh_autoswing_type = 'oh_shadow_blade'
 
         rupture_energy_cost =  self.stats.gear_buffs.rogue_t15_4pc_modifier(is_sb=sb) * self.base_rupture_energy_cost
         rupture_energy_cost -= main_gauche_proc_rate * combat_potency_from_mg
@@ -1503,13 +1501,20 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         ## Base CPs and Attacks
         #Autoattacks
+        mh_autoswing_type = 'mh_autoattacks'
+        oh_autoswing_type = 'oh_autoattacks'
+        if sb:
+            mh_autoswing_type = 'mh_shadow_blade'
+            oh_autoswing_type = 'oh_shadow_blade'
         attacks_per_second[mh_autoswing_type] = self.attack_speed_increase / self.stats.mh.speed
         attacks_per_second[oh_autoswing_type] = self.attack_speed_increase / self.stats.oh.speed
+        if not ar and not sb:
+            if self.swing_reset_spacing is not None:
+                attacks_per_second['mh_autoattacks'] *= (1 - max((1 - .5 * self.stats.mh.speed / self.attack_speed_increase), 0) / self.swing_reset_spacing)
+                attacks_per_second['oh_autoattacks'] *= (1 - max((1 - .5 * self.stats.oh.speed / self.attack_speed_increase), 0) / self.swing_reset_spacing)
         if not sb:
-            attacks_per_second[mh_autoswing_type] *= self.dual_wield_mh_hit_chance()
-            attacks_per_second[oh_autoswing_type] *= self.dual_wield_oh_hit_chance()
-            attacks_per_second['mh_autoattack_hits'] = attacks_per_second[mh_autoswing_type]
-            attacks_per_second['oh_autoattack_hits'] = attacks_per_second[oh_autoswing_type]
+            attacks_per_second['mh_autoattack_hits'] = attacks_per_second[mh_autoswing_type] * self.dual_wield_mh_hit_chance()
+            attacks_per_second['oh_autoattack_hits'] = attacks_per_second[oh_autoswing_type] * self.dual_wield_oh_hit_chance()
         attacks_per_second['main_gauche'] = attacks_per_second[mh_autoswing_type] * main_gauche_proc_rate
         #Base energy
         bonus_energy_from_openers = self.get_bonus_energy_from_openers('sinister_strike', 'revealing_strike')
@@ -1576,12 +1581,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         extra_finishers_per_second = attacks_per_second['revealing_strike'] / (5/cp_per_cpg)
         #Scaling CPGs
         free_gcd = 1.
-        free_gcd -= (1/snd_duration + attacks_per_second['sinister_strike_base'] + attacks_per_second['revealing_strike'] + extra_finishers_per_second) * gcd_size
+        free_gcd -= (1/snd_duration + attacks_per_second['sinister_strike_base'] + attacks_per_second['revealing_strike'] + extra_finishers_per_second) * gcd_size / self.strike_hit_chance
         if self.talents.marked_for_death:
             free_gcd -= 1 / 60
         energy_available_for_evis = energy_regen - energy_spent_on_snd - energy_spent_on_rupture
         total_evis_per_second = energy_available_for_evis / total_eviscerate_cost
-        evisc_actions_per_second = (total_evis_per_second * ss_per_finisher + total_evis_per_second) * gcd_size
+        evisc_actions_per_second = (total_evis_per_second * ss_per_finisher + total_evis_per_second) * gcd_size / self.strike_hit_chance
         attacks_per_second['sinister_strike'] = total_evis_per_second * ss_per_finisher
         attacks_per_second['main_gauche'] += (attacks_per_second['sinister_strike'] + attacks_per_second['revealing_strike'] + total_evis_per_second + attacks_per_second['rupture']) * main_gauche_proc_rate
         #if GCD capped
@@ -1625,11 +1630,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second['oh_killing_spree'] = 7 * self.off_hand_melee_hit_chance() / (final_ks_cd + self.settings.response_time)
             bonus_mg_procs = attacks_per_second['mh_killing_spree'] * main_gauche_proc_rate
             attacks_per_second['main_gauche'] += bonus_mg_procs
-            #bonus_energy = combat_potency_from_mg * bonus_mg_procs
-            #very rough accounting of bonus energy and damage from KS
-            #ss_per_second_bonus = bonus_energy / sinister_strike_energy_cost
-            #attacks_per_second['sinister_strike'] += ss_per_second_bonus
-            #attacks_per_second['main_gauche'] += ss_per_second_bonus * main_gauche_proc_rate
         
         #TODO: Make sure the poison counts are correct.
         self.get_poison_counts(attacks_per_second)
