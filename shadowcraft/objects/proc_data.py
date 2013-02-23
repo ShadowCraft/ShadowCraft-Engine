@@ -19,6 +19,102 @@ allowed_procs = {
         'proc_name': 'Touch of the Grave',
         'behaviours': {'default': 'touch_of_the_grave'}
     },
+    #5.2
+    'heroic_rune_of_re_origination': {
+        'stat': 'weird_proc',
+        'value': 0,
+        'duration': 10,
+        'proc_name': 'Rune of Re-Origination',
+        'behaviours': {'default': 'rune_of_re_origination'}
+    },
+    'rune_of_re_origination': {
+        'stat': 'weird_proc',
+        'value': 0,
+        'duration': 10,
+        'proc_name': 'Rune of Re-Origination',
+        'behaviours': {'default': 'rune_of_re_origination'}
+    },
+    'lfr_rune_of_re_origination': {
+        'stat': 'weird_proc',
+        'value': 0,
+        'duration': 10,
+        'proc_name': 'Rune of Re-Origination',
+        'behaviours': {'default': 'rune_of_re_origination'}
+    },
+    'heroic_bad_juju': {
+        'stat': 'agi',
+        'value': 8279,
+        'duration': 20,
+        'proc_name': 'Bad Juju',
+        'behaviours': {'default': 'bad_juju'},
+        'scaling': {'factor': 2.9700000286, 'item_level': 535, 'quality': 'epic'}
+    },
+    'bad_juju': {
+        'stat': 'agi',
+        'value': 7333,
+        'duration': 20,
+        'proc_name': 'Bad Juju',
+        'behaviours': {'default': 'bad_juju'},
+        'scaling': {'factor': 2.9700000286, 'item_level': 522, 'quality': 'epic'}
+    },
+    'lfr_bad_juju': {
+        'stat': 'agi',
+        'value': 6088,
+        'duration': 20,
+        'proc_name': 'Bad Juju',
+        'behaviours': {'default': 'bad_juju'},
+        'scaling': {'factor': 2.9700000286, 'item_level': 502, 'quality': 'epic'}
+    },
+    'heroic_talisman_of_bloodlust': {
+        'stat': 'haste',
+        'value': 1736,
+        'duration': 10,
+        'proc_name': 'Talisman of Bloodlust',
+        'behaviours': {'default': 'talisman_of_bloodlust'},
+        'scaling': {'factor': 2.9700000286, 'item_level': 535, 'quality': 'epic'}
+    },
+    'talisman_of_bloodlust': {
+        'stat': 'haste',
+        'value': 1538,
+        'duration': 10,
+        'proc_name': 'Talisman of Bloodlust',
+        'behaviours': {'default': 'talisman_of_bloodlust'},
+        'scaling': {'factor': 2.9700000286, 'item_level': 522, 'quality': 'epic'}
+    },
+    'lfr_talisman_of_bloodlust': {
+        'stat': 'haste',
+        'value': 1277,
+        'duration': 10,
+        'proc_name': 'Talisman of Bloodlust',
+        'behaviours': {'default': 'talisman_of_bloodlust'},
+        'scaling': {'factor': 2.9700000286, 'item_level': 502, 'quality': 'epic'}
+    },
+    'heroic_renatakis_soul_charm': {
+        'stat': 'agi',
+        'value': 7525,
+        'duration': 20,
+        'proc_name': 'Renatakis Sould Charm',
+        'behaviours': {'default': 'renatakis_soul_charm'},
+        'scaling': {'factor': 2.9700000286, 'item_level': 535, 'quality': 'epic'}
+    },
+    'renatakis_soul_charm': {
+        'stat': 'agi',
+        'value': 6665,
+        'duration': 20,
+        'proc_name': 'Renatakis Sould Charm',
+        'behaviours': {'default': 'renatakis_soul_charm'},
+        'scaling': {'factor': 2.9700000286, 'item_level': 522, 'quality': 'epic'}
+    },
+    'lfr_renatakis_soul_charm': {
+        'stat': 'agi',
+        'value': 5535,
+        'duration': 20,
+        'proc_name': 'Renatakis Sould Charm',
+        'behaviours': {'default': 'renatakis_soul_charm'},
+        'scaling': {'factor': 2.9700000286, 'item_level': 502, 'quality': 'epic'}
+    },
+    
+    #5.0-5.1
     'heroic_terror_in_the_mists': {
         'stat': 'crit',
         'value': 7796,
@@ -350,13 +446,44 @@ behaviours = {
         'ppm': 10,
         'trigger': 'all_attacks'
     },
+    #5.2 Procs
+    'rune_of_re_origination': {
+        'real_ppm': True,
+        'icd': 22,
+        'ppm': 0.92,
+        'trigger': 'all_attacks'
+    },
+    'bad_juju': {
+        'real_ppm':True,
+        'icd': 0,
+        'ppm': 0.5,
+        'trigger': 'all_attacks'
+    },
+    'renatakis_soul_charm': {
+        'real_ppm':True,
+        'icd': 22,
+        'ppm': 0.56,
+        'trigger': 'all_attacks'
+    },
+    'talisman_of_bloodlust': {
+        'real_ppm': True,
+        'icd': 0,
+        'ppm': 3,
+        'trigger': 'all_attacks'
+    },
+    'vicious_talisman_of_the_shado-pan_assault': {
+        'icd': 105,
+        'proc_chance': .15,
+        'trigger': 'all_attacks'
+    },
+    
     # 5.0 Procs
     'bottle_of_infinite_stars': {
         'icd': 45,
         'proc_chance': .15,
         'trigger': 'all_attacks'
     },
-    'corens_cold_chromium_coaster': {       # ICD is a guesstimate
+    'corens_cold_chromium_coaster': {
         'icd': 50,
         'proc_chance': .10,
         'trigger': 'all_attacks',

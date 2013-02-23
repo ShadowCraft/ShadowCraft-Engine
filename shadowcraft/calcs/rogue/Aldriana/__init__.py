@@ -289,6 +289,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         if self.stats.procs.heroic_matrix_restabilizer or self.stats.procs.matrix_restabilizer:
             self.set_matrix_restabilizer_stat(self.base_stats)
+        if self.stats.procs.heroic_rune_of_re_origination or self.stats.procs.rune_of_re_origination or self.stats.procs.lfr_rune_of_re_origination:
+            self.set_re_origination_stat()
 
     def get_proc_damage_contribution(self, proc, proc_count, current_stats):
         if proc.stat == 'spell_damage':
@@ -361,6 +363,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.stats.procs.heroic_matrix_restabilizer.stat = sorted_list[0]
         if self.stats.procs.matrix_restabilizer:
             self.stats.procs.matrix_restabilizer.stat = sorted_list[0]
+    
+    def set_re_origination_stat(self):
+        max_stat = ('stat', 0, 0)
+        for key in self.base_stats:
+            if key in ('haste', 'mastery', 'crit') and (self.base_stats[key] > max_stat[1]):
+                max_stat = ('key', self.base_stats[key], max_stat[2] + 2 * self.base_stats[key])
+        
+        self.stats.procs.rune_of_re_origination.stat = max_stat
 
     def set_openers(self):
         # Sets the swing_reset_spacing and total_openers_per_second variables.
@@ -405,7 +415,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         average_ap = current_stats['ap'] + 2 * current_stats['agi'] + self.base_strength
         average_ap *= self.buffs.attack_power_multiplier()
         if self.settings.is_combat_rogue():
-            average_ap *= 1.30
+            average_ap *= 1.35
 
         damage_breakdown = {}
         
@@ -1448,7 +1458,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     
     def combat_attack_counts(self, current_stats, ar=False, sb=False):
         attacks_per_second = {}
-        #base_energy_regen is broken when not reset for each call for no fucking reason
+        #base_energy_regen needs to be reset here.
         self.base_energy_regen = 12.
         if self.settings.cycle.blade_flurry:
             self.base_energy_regen *= .8
@@ -1479,6 +1489,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         gcd_size = 1.0
         if self.glyphs.adrenaline_rush and ar:
             gcd_size -= .2
+        if sb and self.stats.gear_buffs.rogue_t15_4pc:
+            gcd_size -= .3
         gcd_size = gcd_size + gcd_latency
         max_aps= 1. / gcd_size
         cp_per_cpg = 1.
@@ -1581,9 +1593,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         extra_finishers_per_second = attacks_per_second['revealing_strike'] / (5/cp_per_cpg)
         #Scaling CPGs
         free_gcd = 1.
-        free_gcd -= (1/snd_duration + attacks_per_second['sinister_strike_base'] + attacks_per_second['revealing_strike'] + extra_finishers_per_second) * gcd_size / self.strike_hit_chance
+        free_gcd -= (1./snd_duration + attacks_per_second['sinister_strike_base'] + attacks_per_second['revealing_strike'] + extra_finishers_per_second) * gcd_size / self.strike_hit_chance
         if self.talents.marked_for_death:
-            free_gcd -= 1 / 60
+            free_gcd -= (1. / 60) * gcd_size / self.strike_hit_chance
         energy_available_for_evis = energy_regen - energy_spent_on_snd - energy_spent_on_rupture
         total_evis_per_second = energy_available_for_evis / total_eviscerate_cost
         evisc_actions_per_second = (total_evis_per_second * ss_per_finisher + total_evis_per_second) * gcd_size / self.strike_hit_chance
@@ -1602,7 +1614,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 extra_finishers_per_second += attacks_per_second[opener] * cps / 5
         attacks_per_second['eviscerate'][5] += extra_finishers_per_second
         if self.talents.marked_for_death:
-            attacks_per_second['eviscerate'][5] += 1 / 60
+            attacks_per_second['eviscerate'][5] += 1. / 60
         #reintroduce flat gcds
         attacks_per_second['sinister_strike'] += attacks_per_second['sinister_strike_base']
         
@@ -1631,7 +1643,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             bonus_mg_procs = attacks_per_second['mh_killing_spree'] * main_gauche_proc_rate
             attacks_per_second['main_gauche'] += bonus_mg_procs
         
-        #TODO: Make sure the poison counts are correct.
         self.get_poison_counts(attacks_per_second)
         
         #print attacks_per_second
@@ -1644,7 +1655,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #should never happen, catch error just in case
         if offensive_finisher_rate != 0:
             for cd_name in base_cds:
-                final_cds[cd_name] = base_cds[cd_name] * (1 - avg_rb_effect / (1/offensive_finisher_rate + avg_rb_effect))
+                final_cds[cd_name] = base_cds[cd_name] * (1 - avg_rb_effect / (1. / offensive_finisher_rate + avg_rb_effect))
         else:
             final_cds[cd_name] = base_cds[cd_name]
         return final_cds
@@ -1654,7 +1665,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         offensive_finisher_rate = attacks_per_second['eviscerate'][5] + attacks_per_second['rupture']
         #should never happen, catch error just in case
         if offensive_finisher_rate != 0:
-            final_cds = base_cd * (1 - avg_rb_effect / (1/offensive_finisher_rate + avg_rb_effect))
+            final_cds = base_cd * (1 - avg_rb_effect / (1. / offensive_finisher_rate + avg_rb_effect))
         return final_cds
     
     def rb_cd_modifier(self, attacks_per_second, avg_rb_effect=10):
@@ -1662,7 +1673,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         offensive_finisher_rate = attacks_per_second['eviscerate'][5] + attacks_per_second['rupture']
         if offensive_finisher_rate != 0:
             #should never happen, catch error just in case
-            return (1 - avg_rb_effect / (1/offensive_finisher_rate + avg_rb_effect))
+            return (1 - avg_rb_effect / (1. / offensive_finisher_rate + avg_rb_effect))
         else:
             return 1.
     
