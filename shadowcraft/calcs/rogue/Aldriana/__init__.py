@@ -290,7 +290,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.stats.procs.heroic_matrix_restabilizer or self.stats.procs.matrix_restabilizer:
             self.set_matrix_restabilizer_stat(self.base_stats)
         if self.stats.procs.heroic_rune_of_re_origination or self.stats.procs.rune_of_re_origination or self.stats.procs.lfr_rune_of_re_origination:
-            self.set_re_origination_stat()
+            self.set_re_origination_stat(self.base_stats)
 
     def get_proc_damage_contribution(self, proc, proc_count, current_stats):
         if proc.stat == 'spell_damage':
@@ -364,14 +364,59 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.stats.procs.matrix_restabilizer:
             self.stats.procs.matrix_restabilizer.stat = sorted_list[0]
     
-    def set_re_origination_stat(self):
-        max_stat = ('stat', 0, 0)
-        for key in self.base_stats:
-            if key in ('haste', 'mastery', 'crit') and (self.base_stats[key] > max_stat[1]):
-                max_stat = ('key', self.base_stats[key], max_stat[2] + 2 * self.base_stats[key])
+    def set_re_origination_stat(self, base_stats):
+        #http://blue.mmo-champion.com/topic/254470-ptr-class-and-set-bonus-issues-part-iii/#post953
+        mod_table = {541: 1.1288, 535: 1.0674, 528: 1.0000,
+                     522: 0.9456, 502: 0.7849, 463: 0.5457}
         
-        self.stats.procs.rune_of_re_origination.stat = max_stat
-
+        # (extremely sloppy)
+        #update ppm
+        try:
+            proc_data.behaviours['rune_of_re_origination']['ppm'] *= mod_table[ self.stats.procs.heroic_rune_of_re_origination.scaling['item_level'] ]
+        except:
+            'ignore-error'
+        try:
+            proc_data.behaviours['rune_of_re_origination']['ppm'] *= mod_table[ self.stats.procs.rune_of_re_origination.scaling['item_level'] ]
+        except:
+            'ignore-error'
+        try:
+            proc_data.behaviours['rune_of_re_origination']['ppm'] *= mod_table[ self.stats.procs.lfr_rune_of_re_origination.scaling['item_level'] ]
+        except:
+            'ignore-error'
+        
+        max_stat = ('stat', 0)
+        total_stats = 0
+        for key in self.base_stats:
+            if key in ('haste', 'mastery', 'crit'):
+                if (self.base_stats[key] > max_stat[1]):
+                    max_stat = (key, self.base_stats[key])
+        for key in self.base_stats:
+            if key in ('haste', 'mastery', 'crit') and key != max_stat[0]:
+                total_stats += self.base_stats[key]
+                
+        
+        buff_cache = []
+        for key in ('haste', 'mastery', 'crit'):
+            if key != max_stat[0]:
+                buff_cache.append( (key, -1 * self.base_stats[key]) )
+            else:
+                buff_cache.append( (key, (total_stats) * 2) )
+        
+        # (extremely sloppy)
+        #set buff amounts
+        try:
+            self.stats.procs.heroic_rune_of_re_origination.buffs = buff_cache
+        except:
+            'ignore-error'
+        try:
+            self.stats.procs.rune_of_re_origination.buffs = buff_cache
+        except:
+            'ignore-error'
+        try:
+            self.stats.procs.lfr_rune_of_re_origination.buffs = buff_cache
+        except:
+            'ignore-error'
+        
     def set_openers(self):
         # Sets the swing_reset_spacing and total_openers_per_second variables.
         opener_cd = [10, 20][self.settings.opener_name == 'garrote']
@@ -898,7 +943,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.setup_unique_procs()
 
         for proc_info in self.stats.procs.get_all_procs_for_stat():
-            if proc_info.stat in current_stats and not proc_info.is_ppm():
+            if (proc_info.stat in current_stats or proc_info.stat == 'multi') and not proc_info.is_ppm():
                 active_procs.append(proc_info)
             elif proc_info.stat in ('spell_damage', 'physical_damage'):
                 damage_procs.append(proc_info)
@@ -920,7 +965,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             proc = getattr(getattr(self.stats, hand), enchant)
             if proc:
                 setattr(proc, '_'.join((hand, 'only')), True)
-                if proc.stat in current_stats:
+                if (proc.stat in current_stats or proc.stat == 'multi'):
                     active_procs.append(proc)
                 elif enchant in ('avalanche', 'elemental_force'):
                     damage_procs.append(proc)
@@ -962,7 +1007,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             for proc in active_procs:
                 if not proc.icd:
                     self.set_uptime(proc, attacks_per_second, crit_rates)
-                    current_stats[proc.stat] += proc.uptime * proc.value
+                    if proc.stat == 'multi':
+                        for e in proc.buffs:
+                            current_stats[ e[0] ] += proc.uptime * e[1]
+                    else:
+                        current_stats[proc.stat] += proc.uptime * proc.value
 
             if windsong_enchants:
                 proc = windsong_enchants[0]
@@ -983,16 +1032,26 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
             if self.are_close_enough(old_attacks_per_second, attacks_per_second):
                 break
-
+            
         for proc in active_procs:
             if proc.icd:
                 self.set_uptime(proc, attacks_per_second, crit_rates)
-                if proc.stat == 'agi':
-                    current_stats[proc.stat] += proc.uptime * proc.value * self.agi_multiplier
-                elif proc.stat in ('crit', 'haste', 'mastery'):
-                    current_stats[proc.stat] += proc.uptime * proc.value * self.get_4pc_t12_multiplier()
+                if proc.stat == 'multi':
+                    for e in proc.buffs:
+                        current_stats[ e[0] ] += proc.uptime * e[1]
+                        if proc.stat == 'agi':
+                            current_stats[ e[0] ] += proc.uptime * e[1] * self.agi_multiplier
+                        elif proc.stat in ('crit', 'haste', 'mastery'):
+                            current_stats[ e[0] ] += proc.uptime * e[1] * self.get_4pc_t12_multiplier()
+                        else:
+                            current_stats[ e[0] ] += proc.uptime * e[1]
                 else:
-                    current_stats[proc.stat] += proc.uptime * proc.value
+                    if proc.stat == 'agi':
+                        current_stats[proc.stat] += proc.uptime * proc.value * self.agi_multiplier
+                    elif proc.stat in ('crit', 'haste', 'mastery'):
+                        current_stats[proc.stat] += proc.uptime * proc.value * self.get_4pc_t12_multiplier()
+                    else:
+                        current_stats[proc.stat] += proc.uptime * proc.value
 
         attacks_per_second, crit_rates = attack_counts_function(current_stats)
 
@@ -1536,14 +1595,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second[self.settings.opener_name] = self.total_openers_per_second
             attacks_per_second['main_gauche'] += self.total_openers_per_second * main_gauche_proc_rate
         energy_regen = self.base_energy_regen * haste_multiplier + self.bonus_energy_regen + combat_potency_regen + bonus_energy_from_openers
-        #Minicycle sizes and cpg_per_finisher stats
-        if self.talents.anticipation:
-            ss_per_finisher = 5 / (cp_per_cpg + extra_cp_chance)
-        else:
-            cp_per_ss = self.get_cp_per_cpg(1, extra_cp_chance)
-            ss_per_finisher = 4.3
-            if sb:
-                ss_per_finisher = 2.64
         
         #Base actions
         rvs_interval = rvs_duration
@@ -1557,7 +1608,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         #Minicycle sizes and cpg_per_finisher stats
         if self.talents.anticipation:
-            ss_per_finisher = 5 / (cp_per_cpg + extra_cp_chance)
+            ss_per_finisher = FINISHER_SIZE / (cp_per_cpg + extra_cp_chance)
         else:
             cp_per_ss = self.get_cp_per_cpg(1, extra_cp_chance)
             ss_per_finisher = 4.3

@@ -21,25 +21,31 @@ allowed_procs = {
     },
     #5.2
     'heroic_rune_of_re_origination': {
-        'stat': 'weird_proc',
+        'stat': 'multi',
         'value': 0,
+        'buffs': ('none', 0),
         'duration': 10,
         'proc_name': 'Rune of Re-Origination',
-        'behaviours': {'default': 'rune_of_re_origination'}
+        'behaviours': {'default': 'rune_of_re_origination'},
+        'scaling': {'factor': 0.0, 'item_level': 535, 'quality': 'epic'}
     },
     'rune_of_re_origination': {
-        'stat': 'weird_proc',
+        'stat': 'multi',
         'value': 0,
+        'buffs': ('none', 0),
         'duration': 10,
         'proc_name': 'Rune of Re-Origination',
-        'behaviours': {'default': 'rune_of_re_origination'}
+        'behaviours': {'default': 'rune_of_re_origination'},
+        'scaling': {'factor': 0.0, 'item_level': 522, 'quality': 'epic'}
     },
     'lfr_rune_of_re_origination': {
-        'stat': 'weird_proc',
+        'stat': 'multi',
         'value': 0,
+        'buffs': ('none', 0),
         'duration': 10,
         'proc_name': 'Rune of Re-Origination',
-        'behaviours': {'default': 'rune_of_re_origination'}
+        'behaviours': {'default': 'rune_of_re_origination'},
+        'scaling': {'factor': 0.0, 'item_level': 502, 'quality': 'epic'}
     },
     'heroic_bad_juju': {
         'stat': 'agi',

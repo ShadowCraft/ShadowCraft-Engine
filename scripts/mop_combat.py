@@ -79,6 +79,22 @@ tier_ep_values = calculator.get_other_ep(['rogue_t14_4pc', 'rogue_t14_2pc', 'rog
 mh_enchants_and_dps_ep_values, oh_enchants_and_dps_ep_values = calculator.get_weapon_ep(dps=True, enchants=True)
 
 trinkets_list = [
+    #other
+    'heroic_matrix_restabilizer',
+    #5.2
+    'heroic_rune_of_re_origination',
+    'rune_of_re_origination',
+    'lfr_rune_of_re_origination',
+    'heroic_bad_juju',
+    'bad_juju',
+    'lfr_bad_juju',
+    'heroic_talisman_of_bloodlust',
+    'talisman_of_bloodlust',
+    'lfr_talisman_of_bloodlust',
+    'heroic_renatakis_soul_charm',
+    'renatakis_soul_charm',
+    'lfr_renatakis_soul_charm',
+    #5.0-5.1
     'heroic_bottle_of_infinite_stars',
     'bottle_of_infinite_stars',
     'lfr_bottle_of_infinite_stars',
