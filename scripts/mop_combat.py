@@ -79,8 +79,6 @@ tier_ep_values = calculator.get_other_ep(['rogue_t14_4pc', 'rogue_t14_2pc', 'rog
 mh_enchants_and_dps_ep_values, oh_enchants_and_dps_ep_values = calculator.get_weapon_ep(dps=True, enchants=True)
 
 trinkets_list = [
-    #other
-    'heroic_matrix_restabilizer',
     #5.2
     'heroic_rune_of_re_origination',
     'rune_of_re_origination',
