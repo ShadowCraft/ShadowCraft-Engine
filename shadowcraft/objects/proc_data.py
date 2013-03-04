@@ -77,7 +77,15 @@ allowed_procs = {
         'duration': 10,
         'proc_name': 'Talisman of Bloodlust',
         'behaviours': {'default': 'talisman_of_bloodlust'},
-        'scaling': {'factor': 2.9700000286, 'item_level': 535, 'quality': 'epic'} # Needs verification
+        'scaling': {'factor': 0.5189999938*2.5, 'item_level': 535, 'quality': 'epic'} # Needs verification
+    },
+    'thunder_talisman_of_bloodlust': {
+        'stat': 'haste',
+        'value': 1627,
+        'duration': 10,
+        'proc_name': 'Talisman of Bloodlust',
+        'behaviours': {'default': 'talisman_of_bloodlust'},
+        'scaling': {'factor': 0.5189999938*2.5, 'item_level': 528, 'quality': 'epic'} # Needs verification
     },
     'talisman_of_bloodlust': {
         'stat': 'haste',
@@ -85,7 +93,7 @@ allowed_procs = {
         'duration': 10,
         'proc_name': 'Talisman of Bloodlust',
         'behaviours': {'default': 'talisman_of_bloodlust'},
-        'scaling': {'factor': 2.9700000286, 'item_level': 522, 'quality': 'epic'} # Needs verification
+        'scaling': {'factor': 0.5189999938*2.5, 'item_level': 522, 'quality': 'epic'} # Needs verification
     },
     'lfr_talisman_of_bloodlust': {
         'stat': 'haste',
@@ -93,34 +101,46 @@ allowed_procs = {
         'duration': 10,
         'proc_name': 'Talisman of Bloodlust',
         'behaviours': {'default': 'talisman_of_bloodlust'},
-        'scaling': {'factor': 2.9700000286, 'item_level': 502, 'quality': 'epic'} # Needs verification
+        'scaling': {'factor': 0.5189999938*2.5, 'item_level': 502, 'quality': 'epic'} # Needs verification
     },
     'heroic_renatakis_soul_charm': {
         'stat': 'agi',
         'value': 7525,
         'duration': 20,
         'proc_name': 'Renatakis Sould Charm',
-        'max_stacks': 20,
         'behaviours': {'default': 'renatakis_soul_charm'},
-        'scaling': {'factor': 0.4499999881*5, 'item_level': 535, 'quality': 'epic'}
+        'scaling': {'factor': 0.4499999881*5.5, 'item_level': 535, 'quality': 'epic'}
+    },
+    'thunder_renatakis_soul_charm': {
+        'stat': 'agi',
+        'value': 7050, #needs verification
+        'duration': 20,
+        'proc_name': 'Renatakis Sould Charm',
+        'behaviours': {'default': 'renatakis_soul_charm'},
+        'scaling': {'factor': 0.4499999881*5.5, 'item_level': 528, 'quality': 'epic'}
     },
     'renatakis_soul_charm': {
         'stat': 'agi',
         'value': 6665,
         'duration': 20,
         'proc_name': 'Renatakis Sould Charm',
-        'max_stacks': 20,
         'behaviours': {'default': 'renatakis_soul_charm'},
-        'scaling': {'factor': 0.4499999881*5, 'item_level': 522, 'quality': 'epic'}
+        'scaling': {'factor': 0.4499999881*5.5, 'item_level': 522, 'quality': 'epic'}
     },
     'lfr_renatakis_soul_charm': {
         'stat': 'agi',
         'value': 5535,
         'duration': 20,
         'proc_name': 'Renatakis Sould Charm',
-        'max_stacks': 20,
         'behaviours': {'default': 'renatakis_soul_charm'},
-        'scaling': {'factor': 0.4499999881*5, 'item_level': 502, 'quality': 'epic'}
+        'scaling': {'factor': 0.4499999881*5.5, 'item_level': 502, 'quality': 'epic'}
+    },
+    'vicious_talisman_of_the_shado-pan_assault': {
+        'stat': 'agi',
+        'value': 8800,
+        'duration': 20,
+        'proc_name': 'Shado-Pan_Assault',
+        'behaviours': {'default': 'vicious_talisman_of_the_shado-pan_assault'},
     },
     
     #5.0-5.1
@@ -460,24 +480,32 @@ behaviours = {
         'real_ppm': True,
         'icd': 22,
         'ppm': 0.92,
+        'base_ppm': 0.92,
+        'ppm_scale_constant': 528,
         'trigger': 'all_attacks'
     },
     'bad_juju': {
         'real_ppm':True,
         'icd': 0,
         'ppm': 0.5,
+        'base_ppm': 0.5,
+        'ppm_scale_constant': 528,
         'trigger': 'all_attacks'
     },
     'renatakis_soul_charm': {
         'real_ppm':True,
         'icd': 22,
         'ppm': 0.56,
+        'base_ppm': 0.56,
+        'ppm_scale_constant': 528,
         'trigger': 'all_attacks'
     },
     'talisman_of_bloodlust': {
         'real_ppm': True,
         'icd': 0,
         'ppm': 3,
+        'base_ppm': 3,
+        'ppm_scale_constant': 528,
         'trigger': 'all_attacks'
     },
     'vicious_talisman_of_the_shado-pan_assault': {

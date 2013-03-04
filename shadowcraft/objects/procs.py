@@ -37,7 +37,7 @@ class Proc(object):
             else:
                 raise InvalidProcException(_('Behaviour \'{behaviour}\' is not defined for {proc}').format(proc=self.proc_name, behaviour=value))
 
-    def _set_behaviour(self, icd, trigger, proc_chance=False, ppm=False, on_crit=False, on_procced_strikes=True, real_ppm=False):
+    def _set_behaviour(self, icd, trigger, proc_chance=False, ppm=False, on_crit=False, on_procced_strikes=True, real_ppm=False, base_ppm=None, ppm_scale_constant=None):
         # This could be merged with __setattr__; its sole purpose is
         # to clearly surface the parameters passed with the behaviours.
         self.proc_chance = proc_chance
@@ -45,7 +45,9 @@ class Proc(object):
         self.icd = icd
         self.on_crit = on_crit
         self.ppm = ppm
+        self.base_ppm = base_ppm
         self.real_ppm = real_ppm
+        self.ppm_scale_constant = ppm_scale_constant
         self.on_procced_strikes = on_procced_strikes  # Main Gauche and its kin
 
     def procs_off_auto_attacks(self):

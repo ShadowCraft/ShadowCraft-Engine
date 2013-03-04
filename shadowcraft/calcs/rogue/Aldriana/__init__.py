@@ -292,6 +292,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.set_matrix_restabilizer_stat(self.base_stats)
         if self.stats.procs.heroic_rune_of_re_origination or self.stats.procs.rune_of_re_origination or self.stats.procs.lfr_rune_of_re_origination:
             self.set_re_origination_stat(self.base_stats)
+        self.update_rppm_trinkets()
 
     def get_proc_damage_contribution(self, proc, proc_count, current_stats):
         if proc.stat == 'spell_damage':
@@ -367,24 +368,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     
     def set_re_origination_stat(self, base_stats):
         #http://blue.mmo-champion.com/topic/254470-ptr-class-and-set-bonus-issues-part-iii/#post953
-        mod_table = {541: 1.1288, 535: 1.0674, 528: 1.0000,
-                     522: 0.9456, 502: 0.7849, 463: 0.5457}
-        
-        # (extremely sloppy)
-        #update ppm
-        try:
-            proc_data.behaviours['rune_of_re_origination']['ppm'] *= mod_table[ self.stats.procs.heroic_rune_of_re_origination.scaling['item_level'] ]
-        except:
-            'ignore-error'
-        try:
-            proc_data.behaviours['rune_of_re_origination']['ppm'] *= mod_table[ self.stats.procs.rune_of_re_origination.scaling['item_level'] ]
-        except:
-            'ignore-error'
-        try:
-            proc_data.behaviours['rune_of_re_origination']['ppm'] *= mod_table[ self.stats.procs.lfr_rune_of_re_origination.scaling['item_level'] ]
-        except:
-            'ignore-error'
-        
         max_stat = ('stat', 0)
         total_stats = 0
         for key in self.base_stats:
@@ -417,6 +400,18 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.stats.procs.lfr_rune_of_re_origination.buffs = buff_cache
         except:
             'ignore-error'
+    
+    def update_rppm_trinkets(self):
+        #for each active proc
+        #  if proc is rppm
+        #    mod rppm by 1/(1.15^( (528-ItemLevel)/15 ))
+        for entry in self.stats.procs.allowed_procs:
+            tmp_proc = proc_data.behaviours[ self.stats.procs.allowed_procs[entry]['behaviours']['default'] ]
+            if 'real_ppm' in tmp_proc:
+                if tmp_proc['real_ppm']:
+                    tmp_proc['ppm'] = 1/(1.15**((528-self.stats.procs.allowed_procs[entry]['scaling']['item_level'])/15.0)) * tmp_proc['base_ppm']
+        #mod_table = {541: 1.1288, 535: 1.0674, 528: 1.0000,
+        #             522: 0.9456, 502: 0.7849, 463: 0.5457}
         
     def set_openers(self):
         # Sets the swing_reset_spacing and total_openers_per_second variables.
@@ -661,7 +656,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     def get_mh_procs_per_second(self, proc, attacks_per_second, crit_rates):
         if proc.is_real_ppm():
-            return proc.proc_rate(haste=self.attack_speed_increase)
+            return proc.proc_rate(haste=self.stats.get_haste_multiplier_from_rating(self.base_stats['haste']))
         triggers_per_second = 0
         if proc.procs_off_auto_attacks():
             if proc.procs_off_crit_only():
@@ -696,7 +691,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     def get_oh_procs_per_second(self, proc, attacks_per_second, crit_rates):
         if proc.is_real_ppm() and not proc.scaling:
-            return proc.proc_rate(haste=self.attack_speed_increase)
+            return proc.proc_rate(haste=self.stats.get_haste_multiplier_from_rating(self.base_stats['haste']))
         elif proc.is_real_ppm():
             return 0
         triggers_per_second = 0
@@ -718,7 +713,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     def get_other_procs_per_second(self, proc, attacks_per_second, crit_rates):
         if proc.is_real_ppm() and not proc.scaling:
-            return proc.proc_rate(haste=self.attack_speed_increase)
+            return proc.proc_rate(haste=self.stats.get_haste_multiplier_from_rating(self.base_stats['haste']))
         elif proc.is_real_ppm():
             return 0
         triggers_per_second = 0
@@ -1014,6 +1009,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                             current_stats[ e[0] ] += proc.uptime * e[1]
                     else:
                         current_stats[proc.stat] += proc.uptime * proc.value
+                    print proc.proc_name, proc.uptime
 
             if windsong_enchants:
                 proc = windsong_enchants[0]

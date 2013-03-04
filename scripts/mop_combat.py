@@ -93,6 +93,7 @@ trinkets_list = [
     'heroic_renatakis_soul_charm',
     'renatakis_soul_charm',
     'lfr_renatakis_soul_charm',
+    'vicious_talisman_of_the_shado-pan_assault',
     #5.0-5.1
     'heroic_bottle_of_infinite_stars',
     'bottle_of_infinite_stars',
@@ -101,14 +102,27 @@ trinkets_list = [
     'terror_in_the_mists',
     'lfr_terror_in_the_mists',
     'relic_of_xuen',
-    'windswept_pages',
-    'jade_bandit_figurine',
-    'hawkmasters_talon',
-    'windswept_pages',
-    'searing_words',
-    'flashing_steel_talisman'
+    #'windswept_pages',
+    #'jade_bandit_figurine',
+    #'hawkmasters_talon',
+    #'windswept_pages',
+    #'searing_words',
+    #'flashing_steel_talisman'
 ]
 trinkets_ep_value = calculator.get_other_ep(trinkets_list)
+trinkets_ep_value['heroic_rune_of_re_origination'] += 1657 * ep_values['agi']
+trinkets_ep_value['rune_of_re_origination'] += 1467 * ep_values['agi']
+trinkets_ep_value['lfr_rune_of_re_origination'] += 1218 * ep_values['agi']
+trinkets_ep_value['heroic_bad_juju'] += .6 * 1657 * ep_values['mastery'] + .4 * 1657 * ep_values['haste']
+trinkets_ep_value['bad_juju'] += .6 * 1467 * ep_values['mastery'] + .4 * 1467 * ep_values['haste']
+trinkets_ep_value['lfr_bad_juju'] += .6 * 1218 * ep_values['mastery'] + .4 * 1218 * ep_values['haste']
+trinkets_ep_value['heroic_talisman_of_bloodlust'] += 1657 * ep_values['agi']
+trinkets_ep_value['talisman_of_bloodlust'] += 1467 * ep_values['agi']
+trinkets_ep_value['lfr_talisman_of_bloodlust'] += 1218 * ep_values['agi']
+trinkets_ep_value['heroic_renatakis_soul_charm'] += .6 * 1657 * ep_values['dodge_exp'] + .4 * 1657 * ep_values['haste']
+trinkets_ep_value['renatakis_soul_charm'] += .6 * 1467 * ep_values['dodge_exp'] + .4 * 1467 * ep_values['haste']
+trinkets_ep_value['lfr_renatakis_soul_charm'] += .6 * 1218 * ep_values['dodge_exp'] + .4 * 1218 * ep_values['haste']
+trinkets_ep_value['vicious_talisman_of_the_shado-pan_assault']
 
 trinkets_ep_value['heroic_bottle_of_infinite_stars'] += 731 * ep_values['mastery'] + 487 * ep_values['haste']
 trinkets_ep_value['bottle_of_infinite_stars'] += 648 * ep_values['mastery'] + 431 * ep_values['haste']
@@ -117,11 +131,11 @@ trinkets_ep_value['heroic_terror_in_the_mists'] += 1300 * ep_values['agi']
 trinkets_ep_value['terror_in_the_mists'] += 1152 * ep_values['agi']
 trinkets_ep_value['lfr_terror_in_the_mists'] += 1021 * ep_values['agi']
 trinkets_ep_value['relic_of_xuen'] += 956 * ep_values['agi']
-trinkets_ep_value['windswept_pages'] += 847 * ep_values['agi']
-trinkets_ep_value['jade_bandit_figurine'] += 1079 * ep_values['agi']
-trinkets_ep_value['hawkmasters_talon'] += 1079 * ep_values['agi']
-trinkets_ep_value['searing_words'] += 509 * ep_values['crit'] + 338 * ep_values['haste']
-trinkets_ep_value['flashing_steel_talisman'] += 847 * ep_values['haste']
+#trinkets_ep_value['windswept_pages'] += 847 * ep_values['agi']
+#trinkets_ep_value['jade_bandit_figurine'] += 1079 * ep_values['agi']
+#trinkets_ep_value['hawkmasters_talon'] += 1079 * ep_values['agi']
+#trinkets_ep_value['searing_words'] += 509 * ep_values['crit'] + 338 * ep_values['haste']
+#trinkets_ep_value['flashing_steel_talisman'] += 847 * ep_values['haste']
 
 # Compute DPS Breakdown.
 dps_breakdown = calculator.get_dps_breakdown()
