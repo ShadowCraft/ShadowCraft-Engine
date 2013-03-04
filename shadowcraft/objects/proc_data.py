@@ -53,7 +53,7 @@ allowed_procs = {
         'duration': 20,
         'proc_name': 'Bad Juju',
         'behaviours': {'default': 'bad_juju'},
-        'scaling': {'factor': 2.9700000286, 'item_level': 535, 'quality': 'epic'}
+        'scaling': {'factor': 2.4749999046, 'item_level': 535, 'quality': 'epic'}
     },
     'bad_juju': {
         'stat': 'agi',
@@ -61,7 +61,7 @@ allowed_procs = {
         'duration': 20,
         'proc_name': 'Bad Juju',
         'behaviours': {'default': 'bad_juju'},
-        'scaling': {'factor': 2.9700000286, 'item_level': 522, 'quality': 'epic'}
+        'scaling': {'factor': 2.4749999046, 'item_level': 522, 'quality': 'epic'}
     },
     'lfr_bad_juju': {
         'stat': 'agi',
@@ -69,7 +69,7 @@ allowed_procs = {
         'duration': 20,
         'proc_name': 'Bad Juju',
         'behaviours': {'default': 'bad_juju'},
-        'scaling': {'factor': 2.9700000286, 'item_level': 502, 'quality': 'epic'}
+        'scaling': {'factor': 2.4749999046, 'item_level': 502, 'quality': 'epic'}
     },
     'heroic_talisman_of_bloodlust': {
         'stat': 'haste',
@@ -77,7 +77,7 @@ allowed_procs = {
         'duration': 10,
         'proc_name': 'Talisman of Bloodlust',
         'behaviours': {'default': 'talisman_of_bloodlust'},
-        'scaling': {'factor': 2.9700000286, 'item_level': 535, 'quality': 'epic'}
+        'scaling': {'factor': 2.9700000286, 'item_level': 535, 'quality': 'epic'} # Needs verification
     },
     'talisman_of_bloodlust': {
         'stat': 'haste',
@@ -85,7 +85,7 @@ allowed_procs = {
         'duration': 10,
         'proc_name': 'Talisman of Bloodlust',
         'behaviours': {'default': 'talisman_of_bloodlust'},
-        'scaling': {'factor': 2.9700000286, 'item_level': 522, 'quality': 'epic'}
+        'scaling': {'factor': 2.9700000286, 'item_level': 522, 'quality': 'epic'} # Needs verification
     },
     'lfr_talisman_of_bloodlust': {
         'stat': 'haste',
@@ -93,31 +93,34 @@ allowed_procs = {
         'duration': 10,
         'proc_name': 'Talisman of Bloodlust',
         'behaviours': {'default': 'talisman_of_bloodlust'},
-        'scaling': {'factor': 2.9700000286, 'item_level': 502, 'quality': 'epic'}
+        'scaling': {'factor': 2.9700000286, 'item_level': 502, 'quality': 'epic'} # Needs verification
     },
     'heroic_renatakis_soul_charm': {
         'stat': 'agi',
         'value': 7525,
         'duration': 20,
         'proc_name': 'Renatakis Sould Charm',
+        'max_stacks': 20,
         'behaviours': {'default': 'renatakis_soul_charm'},
-        'scaling': {'factor': 2.9700000286, 'item_level': 535, 'quality': 'epic'}
+        'scaling': {'factor': 0.4499999881*5, 'item_level': 535, 'quality': 'epic'}
     },
     'renatakis_soul_charm': {
         'stat': 'agi',
         'value': 6665,
         'duration': 20,
         'proc_name': 'Renatakis Sould Charm',
+        'max_stacks': 20,
         'behaviours': {'default': 'renatakis_soul_charm'},
-        'scaling': {'factor': 2.9700000286, 'item_level': 522, 'quality': 'epic'}
+        'scaling': {'factor': 0.4499999881*5, 'item_level': 522, 'quality': 'epic'}
     },
     'lfr_renatakis_soul_charm': {
         'stat': 'agi',
         'value': 5535,
         'duration': 20,
         'proc_name': 'Renatakis Sould Charm',
+        'max_stacks': 20,
         'behaviours': {'default': 'renatakis_soul_charm'},
-        'scaling': {'factor': 2.9700000286, 'item_level': 502, 'quality': 'epic'}
+        'scaling': {'factor': 0.4499999881*5, 'item_level': 502, 'quality': 'epic'}
     },
     
     #5.0-5.1

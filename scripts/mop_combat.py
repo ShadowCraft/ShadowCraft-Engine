@@ -42,6 +42,7 @@ test_buffs = buffs.Buffs(
 # Set up weapons.
 test_mh = stats.Weapon(10478.5, 2.6, 'fist', 'dancing_steel')
 test_oh = stats.Weapon(10478.5, 2.6, 'fist', 'dancing_steel')
+#test_oh = stats.Weapon(7254.0, 1.8, 'dagger', 'dancing_steel')
 
 # Set up procs.
 test_procs = procs.ProcsList( ('heroic_bottle_of_infinite_stars', 2), ('heroic_terror_in_the_mists', 2) )
@@ -128,6 +129,7 @@ total_dps = sum(entry[1] for entry in dps_breakdown.items())
 
 # Compute weapon type modifier.
 weapon_type_mod = calculator.get_oh_weapon_modifier()
+talent_ranks = calculator.get_talents_ranking()
 
 def max_length(dict_list):
     max_len = 0
@@ -158,6 +160,7 @@ dicts_for_pretty_print = [
     mh_enchants_and_dps_ep_values,
     oh_enchants_and_dps_ep_values,
     trinkets_ep_value,
+    talent_ranks,
 ]
 pretty_print(dicts_for_pretty_print)
 pretty_print([dps_breakdown], total_sum=total_dps, show_percent=True)

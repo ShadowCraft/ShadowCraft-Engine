@@ -22,6 +22,7 @@ class DamageCalculator(object):
     TARGET_BASE_ARMOR_VALUES = {88:11977., 93:24835.}
     GLANCE_RATE = .24
     GLANCE_MULTIPLIER = .75
+    AOE_TARGET_CAP = 20
 
     # Override this in your class specfic subclass to list appropriate stats
     # possible values are agi, str, spi, int, white_hit, spell_hit, yellow_hit,

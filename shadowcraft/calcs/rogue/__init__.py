@@ -52,7 +52,7 @@ class RogueDamageCalculator(DamageCalculator):
         # unless otherwise stated.
         self.spell_scaling_for_level = self.tools.get_spell_scaling('rogue', self.level)
         self.bs_bonus_dmg =     self.get_factor(0.3070000112) # 30
-        self.dsp_bonus_dmg =    self.get_factor(0.5199999809) # 123503
+        self.dsp_bonus_dmg =    self.get_factor(0.4490000010) # 123503
         self.mut_bonus_dmg =    self.get_factor(0.1790000051) # 1920, 17065
         self.ss_bonus_dmg =     self.get_factor(0.1780000031) # 535
         self.ambush_bonus_dmg = self.get_factor(0.5000000000) # 3612
@@ -65,7 +65,7 @@ class RogueDamageCalculator(DamageCalculator):
         self.rup_bonus_dmg =    self.get_factor(0.0260000005) # 586 - 'unknown' field
         self.evis_base_dmg =    self.get_factor(0.5929999948,  1.0000000000) # 622
         self.evis_bonus_dmg =   self.get_factor(0.7860000134) # 622 - 'unknown' field
-        self.env_base_dmg =     self.get_factor(0.3852000118) # 22420
+        self.env_base_dmg =     self.get_factor(0.3849999905) # 22420
         self.ct_base_dmg =      self.get_factor(0.4760000110) # 150471
         self.fok_base_dmg =     self.get_factor(1.0000000000, 0.4000000060) # 44107
         self.st_base_dmg =      self.get_factor(1.0000000000) # 127100
@@ -351,7 +351,7 @@ class RogueDamageCalculator(DamageCalculator):
     def envenom_damage(self, ap, cp, mastery=None):
         mult, crit_mult = self.get_modifiers('spell', 'executioner', 'potent_poisons', mastery=mastery)
 
-        damage = (self.env_base_dmg * cp + .112 * cp * ap) * mult
+        damage = (self.env_base_dmg * cp + 0.134 * cp * ap) * mult
         crit_damage = damage * crit_mult
 
         return damage, crit_damage

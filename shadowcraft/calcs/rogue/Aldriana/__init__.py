@@ -88,6 +88,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if list is None:
             list = [
                 'nightstalker',
+                'marked_for_death',
                 'shadow_focus',
                 'anticipation',
                 'subterfuge',
@@ -232,9 +233,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.bonus_energy_regen -= 20. / self.settings.shiv_interval
         if self.race.arcane_torrent:
             self.bonus_energy_regen += 15. / (120 + self.settings.response_time)
-
+            
         self.set_openers()
-
+        
         self.base_stats = {
             'agi': self.stats.agi + self.buffs.buff_agi() + self.race.racial_agi,
             'ap': self.stats.ap + 2 * self.level - 30,
@@ -422,9 +423,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         opener_cd = [10, 20][self.settings.opener_name == 'garrote']
         if self.settings.use_opener == 'always':
             opener_spacing = (self.get_spell_cd('vanish') + self.settings.response_time)
-            if self.race.shadowmeld and self.settings.is_subtlety_rogue():
-                shadowmeld_spacing = self.get_spell_cd('shadowmeld') + self.settings.response_time
-                opener_spacing = 1. / (1 / opener_spacing + 1 / shadowmeld_spacing)
             total_openers_per_second = (1. + math.floor((self.settings.duration - opener_cd) / opener_spacing)) / self.settings.duration
         elif self.settings.use_opener == 'opener':
             total_openers_per_second = 1. / self.settings.duration
@@ -432,7 +430,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         else:
             total_openers_per_second = 0
             opener_spacing = None
-        self.total_openers_per_second = total_openers_per_second
+        
+        if self.settings.is_subtlety_rogue():
+            self.total_openers_per_second = 0
+        else:
+            self.total_openers_per_second = total_openers_per_second
         self.swing_reset_spacing = opener_spacing
 
     def get_bonus_energy_from_openers(self, *cycle_abilities):
@@ -460,7 +462,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         average_ap = current_stats['ap'] + 2 * current_stats['agi'] + self.base_strength
         average_ap *= self.buffs.attack_power_multiplier()
         if self.settings.is_combat_rogue():
-            average_ap *= 1.35
+            average_ap *= 1.30
 
         damage_breakdown = {}
         
@@ -625,10 +627,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     def update_with_shadow_blades(self, attacks_per_second, shadow_blades_uptime):
         mh_sb_swings_per_second = attacks_per_second['mh_autoattacks'] * shadow_blades_uptime
         oh_sb_swings_per_second = attacks_per_second['oh_autoattacks'] * shadow_blades_uptime
-        #assumes AR is stacked with SB, should have better implementation later
-        if self.settings.is_combat_rogue():
-            mh_sb_swings_per_second = mh_sb_swings_per_second * 1.2
-            oh_sb_swings_per_second = oh_sb_swings_per_second * 1.2
         attacks_per_second['mh_autoattacks'] -= mh_sb_swings_per_second
         attacks_per_second['oh_autoattacks'] -= oh_sb_swings_per_second
         attacks_per_second['mh_shadow_blade'] = mh_sb_swings_per_second * self.strike_hit_chance
@@ -1222,7 +1220,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         energy_regen -= opener_net_cost * self.total_openers_per_second
         if self.talents.marked_for_death:
-            energy_regen -= 10 / 60 # 35-25
+            energy_regen -= 10. / 60 # 35-25
 
         attacks_per_second[self.settings.opener_name] = self.total_openers_per_second
 
@@ -1397,7 +1395,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         self.max_bandits_guile_buff = 1.3
 
-        self.base_cooldowns = {'ar':180, 'shb':180, 'ksp':120}
+        self.base_cooldowns = {'ar':self.get_spell_cd('adrenaline_rush'),
+                               'shb':self.get_spell_cd('shadow_blades'),
+                               'ksp':self.get_spell_cd('killing_spree')}
         self.ks_cd = 120
         self.base_revealing_strike_energy_cost = 32 + 8 / self.strike_hit_chance
         self.base_revealing_strike_energy_cost *= self.stats.gear_buffs.rogue_t13_2pc_cost_multiplier()
@@ -1451,7 +1451,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             stats, aps, crits, procs = self.determine_stats(self.combat_attack_counts_none)
             #rb_actual_cd(attacks_per_second, base_cds, avg_rb_effect=10)
             phases['none'] = (aps,
-                              self.rb_actual_cds(aps, cds)['ar'],
+                              self.rb_actual_cds(aps, cds)['ar'] + self.settings.response_time + 10./2, #rough accounting for KS+RB delay
                               self.update_with_bandits_guile(self.compute_damage(self.combat_attack_counts_none)) )
             self.ks_cd = cds['ksp'] + phases['buffer'][1] + phases['both'][1]
         
@@ -1479,7 +1479,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.ks_cd_extra = phases['ar'][1] + phases['sb'][1]
             stats, aps, crits, procs = self.determine_stats(self.combat_attack_counts_none)
             phases['none'] = (aps,
-                              self.rb_actual_cds(aps, cds)['ar'],
+                              self.rb_actual_cds(aps, cds)['ar'] + self.settings.response_time + 10./2, #rough accounting for KS+RB delay
                               self.update_with_bandits_guile(self.compute_damage(self.combat_attack_counts_none)) )
             
             #average it together
@@ -1608,7 +1608,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             average_pooling = max(0, (max_energy_while_pooling - min_energy_while_pooling)) / 2
             rvs_interval += average_pooling / energy_regen
         if self.talents.marked_for_death:
-            energy_regen -= 10 / 60
+            energy_regen -= 10. / 60
         
         #Minicycle sizes and cpg_per_finisher stats
         if self.talents.anticipation:
@@ -1690,7 +1690,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.bandits_guile_multiplier = 1 + .1 * avg_stacks
         
         if not sb and not ar:
-            final_ks_cd = self.rb_actual_cd(attacks_per_second, self.ks_cd) + self.ks_cd_extra
+            final_ks_cd = self.rb_actual_cd(attacks_per_second, self.ks_cd) + self.ks_cd_extra / 2.
             if not self.settings.cycle.ksp_immediately:
                 final_ks_cd += (3 * time_at_level)/2 * (3 * time_at_level)/cycle_duration
             attacks_per_second['mh_killing_spree'] = 7 * self.strike_hit_chance / (final_ks_cd + self.settings.response_time)
@@ -1831,7 +1831,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         energy_regen = self.base_energy_regen * haste_multiplier + self.bonus_energy_regen
         if self.race.shadowmeld:
             energy_regen -= self.get_net_energy_cost(self.settings.opener_name) / (self.get_spell_cd('shadowmeld') + self.settings.response_time)
-
+        if self.talents.marked_for_death:
+            energy_regen -= 10. / 60 # 25-35 = 10
+            
         if self.settings.cycle.use_hemorrhage == 'always':
             cp_builder_energy_cost = self.base_hemo_cost
             modified_energy_regen = energy_regen + er_energy
@@ -1943,12 +1945,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         shadow_dance_extra_eviscerates = shadow_dance_eviscerates_for_period + shadow_dance_bonus_eviscerates - base_eviscerates_for_period - base_bonus_eviscerates
         shadow_dance_extra_ambushes = 5 / cp_per_ambush * shadow_dance_eviscerates_for_period
         shadow_dance_replaced_cp_builders = 5 * base_eviscerates_for_period
-
+        
         self.ambush_no_fw_rate = (shadow_dance_frequency + ambush_rate) / (shadow_dance_extra_ambushes + ambush_rate)
 
         attacks_per_second['cp_builder'] -= shadow_dance_replaced_cp_builders * shadow_dance_frequency
         attacks_per_second['ambush'] += shadow_dance_extra_ambushes * shadow_dance_frequency
         attacks_per_second['eviscerate'][5] += shadow_dance_extra_eviscerates * shadow_dance_frequency
+        if self.talents.marked_for_death:
+            attacks_per_second['eviscerate'][5] += 1. / 60
 
         self.find_weakness_uptime += (10 + shadow_dance_duration - self.settings.response_time) * shadow_dance_frequency
         # ShD formulae ends
