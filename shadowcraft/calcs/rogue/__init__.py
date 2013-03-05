@@ -114,7 +114,7 @@ class RogueDamageCalculator(DamageCalculator):
             base_modifier += self.assassination_mastery_conversion * self.stats.get_mastery_from_rating(kwargs['mastery'])
         # Assassasins's Resolve
         if self.settings.is_assassination_rogue() and (self.stats.mh.type == 'dagger'):
-            base_modifier *= 1.2
+            base_modifier *= 1.3
         # Sanguinary Vein
         kwargs.setdefault('is_bleeding', True)
         if kwargs['is_bleeding'] and self.settings.is_subtlety_rogue():
