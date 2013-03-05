@@ -290,7 +290,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         if self.stats.procs.heroic_matrix_restabilizer or self.stats.procs.matrix_restabilizer:
             self.set_matrix_restabilizer_stat(self.base_stats)
-        if self.stats.procs.heroic_rune_of_re_origination or self.stats.procs.rune_of_re_origination or self.stats.procs.lfr_rune_of_re_origination:
+        if self.stats.procs.heroic_rune_of_re_origination or self.stats.procs.thunder_rune_of_re_origination or self.stats.procs.rune_of_re_origination or self.stats.procs.lfr_rune_of_re_origination:
             self.set_re_origination_stat(self.base_stats)
         self.update_rppm_trinkets()
 
@@ -393,6 +393,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         except:
             'ignore-error'
         try:
+            self.stats.procs.thunder_rune_of_re_origination.buffs = buff_cache
+        except:
+            'ignore-error'
+        try:
             self.stats.procs.rune_of_re_origination.buffs = buff_cache
         except:
             'ignore-error'
@@ -406,10 +410,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #  if proc is rppm
         #    mod rppm by 1/(1.15^( (528-ItemLevel)/15 ))
         for entry in self.stats.procs.allowed_procs:
-            tmp_proc = proc_data.behaviours[ self.stats.procs.allowed_procs[entry]['behaviours']['default'] ]
-            if 'real_ppm' in tmp_proc:
-                if tmp_proc['real_ppm']:
-                    tmp_proc['ppm'] = 1/(1.15**((528-self.stats.procs.allowed_procs[entry]['scaling']['item_level'])/15.0)) * tmp_proc['base_ppm']
+            if self.stats.procs.allowed_procs[entry]['behaviours']['default'] == "rune_of_re_origination":
+                tmp_proc = proc_data.behaviours[ self.stats.procs.allowed_procs[entry]['behaviours']['default'] ]
+                if 'real_ppm' in tmp_proc:
+                    if tmp_proc['real_ppm']:
+                        tmp_proc['ppm'] = 1/(1.15**((528-self.stats.procs.allowed_procs[entry]['scaling']['item_level'])/15.0)) * tmp_proc['base_ppm']
         #mod_table = {541: 1.1288, 535: 1.0674, 528: 1.0000,
         #             522: 0.9456, 502: 0.7849, 463: 0.5457}
         
@@ -779,7 +784,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     def set_uptime(self, proc, attacks_per_second, crit_rates):
         procs_per_second = self.get_procs_per_second(proc, attacks_per_second, crit_rates)
-
+        print proc.proc_name, proc.value, "pps", procs_per_second, 1/procs_per_second, proc.ppm
         if proc.icd:
             proc.uptime = proc.duration / (proc.icd + 1. / procs_per_second)
         else:
@@ -1009,7 +1014,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                             current_stats[ e[0] ] += proc.uptime * e[1]
                     else:
                         current_stats[proc.stat] += proc.uptime * proc.value
-                    print proc.proc_name, proc.uptime
+                    print proc.proc_name, "uptime", proc.uptime
 
             if windsong_enchants:
                 proc = windsong_enchants[0]
