@@ -102,12 +102,6 @@ trinkets_list = [
     'terror_in_the_mists',
     'lfr_terror_in_the_mists',
     'relic_of_xuen',
-    #'windswept_pages',
-    #'jade_bandit_figurine',
-    #'hawkmasters_talon',
-    #'windswept_pages',
-    #'searing_words',
-    #'flashing_steel_talisman'
 ]
 trinkets_ep_value = calculator.get_other_ep(trinkets_list)
 trinkets_ep_value['heroic_rune_of_re_origination'] += 1657 * ep_values['agi']
@@ -131,11 +125,7 @@ trinkets_ep_value['heroic_terror_in_the_mists'] += 1300 * ep_values['agi']
 trinkets_ep_value['terror_in_the_mists'] += 1152 * ep_values['agi']
 trinkets_ep_value['lfr_terror_in_the_mists'] += 1021 * ep_values['agi']
 trinkets_ep_value['relic_of_xuen'] += 956 * ep_values['agi']
-#trinkets_ep_value['windswept_pages'] += 847 * ep_values['agi']
-#trinkets_ep_value['jade_bandit_figurine'] += 1079 * ep_values['agi']
-#trinkets_ep_value['hawkmasters_talon'] += 1079 * ep_values['agi']
-#trinkets_ep_value['searing_words'] += 509 * ep_values['crit'] + 338 * ep_values['haste']
-#trinkets_ep_value['flashing_steel_talisman'] += 847 * ep_values['haste']
+glyph_values = calculator.get_glyphs_ranking()
 
 # Compute DPS Breakdown.
 dps_breakdown = calculator.get_dps_breakdown()
@@ -174,6 +164,7 @@ dicts_for_pretty_print = [
     mh_enchants_and_dps_ep_values,
     oh_enchants_and_dps_ep_values,
     trinkets_ep_value,
+    glyph_values,
     talent_ranks,
 ]
 pretty_print(dicts_for_pretty_print)

@@ -656,7 +656,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     def get_mh_procs_per_second(self, proc, attacks_per_second, crit_rates):
         if proc.is_real_ppm():
-            return proc.proc_rate(haste=self.stats.get_haste_multiplier_from_rating(self.base_stats['haste']))
+            return proc.proc_rate(haste=self.stats.get_haste_multiplier_from_rating(self.get_heroism_haste_multiplier() * self.base_stats['haste']))
         triggers_per_second = 0
         if proc.procs_off_auto_attacks():
             if proc.procs_off_crit_only():
@@ -691,7 +691,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     def get_oh_procs_per_second(self, proc, attacks_per_second, crit_rates):
         if proc.is_real_ppm() and not proc.scaling:
-            return proc.proc_rate(haste=self.stats.get_haste_multiplier_from_rating(self.base_stats['haste']))
+            return proc.proc_rate(haste=self.stats.get_haste_multiplier_from_rating(self.get_heroism_haste_multiplier() * self.base_stats['haste']))
         elif proc.is_real_ppm():
             return 0
         triggers_per_second = 0
@@ -713,7 +713,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     def get_other_procs_per_second(self, proc, attacks_per_second, crit_rates):
         if proc.is_real_ppm() and not proc.scaling:
-            return proc.proc_rate(haste=self.stats.get_haste_multiplier_from_rating(self.base_stats['haste']))
+            return proc.proc_rate(haste=self.stats.get_haste_multiplier_from_rating(self.get_heroism_haste_multiplier() * self.base_stats['haste']))
         elif proc.is_real_ppm():
             return 0
         triggers_per_second = 0
@@ -1209,6 +1209,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         opener_net_cost = self.get_net_energy_cost(self.settings.opener_name)
         opener_net_cost *= self.get_shadow_focus_multiplier(opener_net_cost)
         opener_net_cost *= self.stats.gear_buffs.rogue_t13_2pc_cost_multiplier()
+        opener_net_cost *= self.stats.gear_buffs.rogue_t15_4pc_reduced_cost()
 
         if self.settings.opener_name == 'garrote':
             energy_regen += vw_energy_return * vw_proc_chance / self.settings.duration # Only the first tick at the start of the fight
@@ -1227,6 +1228,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         cpg_energy_cost = self.get_net_energy_cost(cpg)
         cpg_energy_cost *= self.stats.gear_buffs.rogue_t13_2pc_cost_multiplier()
+        cpg_energy_cost *= self.stats.gear_buffs.rogue_t15_4pc_reduced_cost()
 
         shadow_blades_uptime = self.get_shadow_blades_uptime()
 
@@ -1321,10 +1323,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         attacks_per_second['rupture'] = 1 / avg_cycle_length
 
-        energy_for_rupture = cpg_per_rupture * cpg_energy_cost + self.base_rupture_energy_cost - avg_rupture_size * self.relentless_strikes_energy_return_per_cp
+        energy_for_rupture = cpg_per_rupture * cpg_energy_cost + self.base_rupture_energy_cost*self.stats.gear_buffs.rogue_t15_4pc_reduced_cost() - avg_rupture_size * self.relentless_strikes_energy_return_per_cp
         energy_for_envenoms = energy_per_cycle - energy_for_rupture
 
         envenom_energy_cost = cpg_per_finisher * cpg_energy_cost + self.envenom_energy_cost - cp_per_finisher * self.relentless_strikes_energy_return_per_cp
+        envenom_energy_cost *= self.stats.gear_buffs.rogue_t15_4pc_reduced_cost()
         envenoms_per_cycle = energy_for_envenoms / envenom_energy_cost
 
         envenoms_per_second = envenoms_per_cycle / avg_cycle_length
@@ -1540,7 +1543,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         restless_blades_reduction = 2
         FINISHER_SIZE = 5
         ksp_buff = 0.5
-        gcd_latency = .05 #It's impossible to always attack on the GCD, lets assume there's always some gap (this value)
+        gcd_latency = .05 #It's impossible to always attack on the GCD, lets assume there's always some gap (this value is in seconds)
         
         if ar:
             self.attack_speed_increase *= 1.2
@@ -1772,6 +1775,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.base_backstab_energy_cost *= self.stats.gear_buffs.rogue_t13_2pc_cost_multiplier()
         self.base_ambush_energy_cost = 48 + 12 / self.strike_hit_chance
         self.base_ambush_energy_cost *= self.stats.gear_buffs.rogue_t13_2pc_cost_multiplier()
+        self.base_ambush_energy_cost *= self.stats.gear_buffs.rogue_t15_4pc_reduced_cost()
 
         self.base_energy_regen = 10.
 
@@ -1853,11 +1857,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                     cp_builder_energy_cost = backstab_energy_cost
                 energy_return_per_replaced_backstab = backstab_energy_cost - self.base_hemo_cost
                 modified_energy_regen = modified_energy_regen + energy_return_per_replaced_backstab / hemorrhage_interval
-
+        cp_builder_energy_cost *= self.stats.gear_buffs.rogue_t15_4pc_reduced_cost()
+            
         cp_builder_interval = cp_builder_energy_cost / modified_energy_regen
         cp_per_cp_builder = 1 + cp_builder_interval * hat_cp_gen
 
-        eviscerate_net_energy_cost = self.base_eviscerate_energy_cost - 5 * self.relentless_strikes_energy_return_per_cp
+        eviscerate_net_energy_cost = self.base_eviscerate_energy_cost*self.stats.gear_buffs.rogue_t15_4pc_reduced_cost() - 5 * self.relentless_strikes_energy_return_per_cp
         eviscerate_net_cp_cost = 5 - eviscerate_net_energy_cost * hat_cp_gen / modified_energy_regen
 
         cp_builders_per_eviscerate = eviscerate_net_cp_cost / cp_per_cp_builder
@@ -1896,13 +1901,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             ambush_cost = self.base_ambush_energy_cost * .75
         else:
             ambush_cost = self.base_ambush_energy_cost
+        ambush_cost *= self.stats.gear_buffs.rogue_t15_4pc_reduced_cost()
 
         cp_from_premeditation = 2.
         
         rupture_duration = 24 + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp() * 2 # 4 * 6 + tier bonus
         rupture_per_cycle = cycle_length / (rupture_duration + self.settings.response_time)
         
-        total_cost_of_extra_eviscerate = 5 * cp_builder_energy_cost + self.base_eviscerate_energy_cost - 5 * self.relentless_strikes_energy_return_per_cp
+        total_cost_of_extra_eviscerate = 5 * cp_builder_energy_cost + self.base_eviscerate_energy_cost*self.stats.gear_buffs.rogue_t15_4pc_reduced_cost() - 5 * self.relentless_strikes_energy_return_per_cp
 
         bonus_cp_per_cycle = (hat_cp_gen + ambush_rate * (cp_per_ambush + cp_from_premeditation)) * cycle_length
         bonus_cp_per_cycle += (modified_energy_regen * cycle_length) / total_cost_of_extra_eviscerate * 5 * sb_uptime
