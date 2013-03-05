@@ -117,7 +117,7 @@ class Proc(object):
             else:
                 return self.ppm * speed / 60.
         elif self.is_real_ppm():
-            return haste * self.ppm / 60
+            return haste * self.ppm / 60.
         else:
             return self.proc_chance
 

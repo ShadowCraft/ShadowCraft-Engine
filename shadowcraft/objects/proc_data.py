@@ -29,6 +29,15 @@ allowed_procs = {
         'behaviours': {'default': 'rune_of_re_origination'},
         'scaling': {'factor': 0.0, 'item_level': 535, 'quality': 'epic'}
     },
+    'thunder_rune_of_re_origination': {
+        'stat': 'multi',
+        'value': 0,
+        'buffs': ('none', 0),
+        'duration': 10,
+        'proc_name': 'Rune of Re-Origination',
+        'behaviours': {'default': 'rune_of_re_origination'},
+        'scaling': {'factor': 0.0, 'item_level': 528, 'quality': 'epic'}
+    },
     'rune_of_re_origination': {
         'stat': 'multi',
         'value': 0,
@@ -55,6 +64,14 @@ allowed_procs = {
         'behaviours': {'default': 'bad_juju'},
         'scaling': {'factor': 2.4749999046, 'item_level': 535, 'quality': 'epic'}
     },
+    'thunder_bad_juju': {
+        'stat': 'agi',
+        'value': 7757,
+        'duration': 20,
+        'proc_name': 'Bad Juju',
+        'behaviours': {'default': 'bad_juju'},
+        'scaling': {'factor': 2.4749999046, 'item_level': 528, 'quality': 'epic'}
+    },
     'bad_juju': {
         'stat': 'agi',
         'value': 7333,
@@ -75,33 +92,37 @@ allowed_procs = {
         'stat': 'haste',
         'value': 1736,
         'duration': 10,
+        'max_stacks': 5,
         'proc_name': 'Talisman of Bloodlust',
         'behaviours': {'default': 'talisman_of_bloodlust'},
-        'scaling': {'factor': 0.5189999938*2.5, 'item_level': 535, 'quality': 'epic'} # Needs verification
+        'scaling': {'factor': 0.5189999938, 'item_level': 535, 'quality': 'epic'} # Needs verification
     },
     'thunder_talisman_of_bloodlust': {
         'stat': 'haste',
         'value': 1627,
         'duration': 10,
+        'max_stacks': 5,
         'proc_name': 'Talisman of Bloodlust',
         'behaviours': {'default': 'talisman_of_bloodlust'},
-        'scaling': {'factor': 0.5189999938*2.5, 'item_level': 528, 'quality': 'epic'} # Needs verification
+        'scaling': {'factor': 0.5189999938, 'item_level': 528, 'quality': 'epic'} # Needs verification
     },
     'talisman_of_bloodlust': {
         'stat': 'haste',
         'value': 1538,
         'duration': 10,
+        'max_stacks': 5,
         'proc_name': 'Talisman of Bloodlust',
         'behaviours': {'default': 'talisman_of_bloodlust'},
-        'scaling': {'factor': 0.5189999938*2.5, 'item_level': 522, 'quality': 'epic'} # Needs verification
+        'scaling': {'factor': 0.5189999938, 'item_level': 522, 'quality': 'epic'} # Needs verification
     },
     'lfr_talisman_of_bloodlust': {
         'stat': 'haste',
         'value': 1277,
         'duration': 10,
+        'max_stacks': 5,
         'proc_name': 'Talisman of Bloodlust',
         'behaviours': {'default': 'talisman_of_bloodlust'},
-        'scaling': {'factor': 0.5189999938*2.5, 'item_level': 502, 'quality': 'epic'} # Needs verification
+        'scaling': {'factor': 0.5189999938, 'item_level': 502, 'quality': 'epic'} # Needs verification
     },
     'heroic_renatakis_soul_charm': {
         'stat': 'agi',
