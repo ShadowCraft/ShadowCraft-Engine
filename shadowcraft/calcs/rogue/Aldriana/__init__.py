@@ -784,7 +784,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     def set_uptime(self, proc, attacks_per_second, crit_rates):
         procs_per_second = self.get_procs_per_second(proc, attacks_per_second, crit_rates)
-        print proc.proc_name, proc.value, "pps", procs_per_second, 1/procs_per_second, proc.ppm
+
         if proc.icd:
             proc.uptime = proc.duration / (proc.icd + 1. / procs_per_second)
         else:
@@ -1014,7 +1014,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                             current_stats[ e[0] ] += proc.uptime * e[1]
                     else:
                         current_stats[proc.stat] += proc.uptime * proc.value
-                    print proc.proc_name, "uptime", proc.uptime
 
             if windsong_enchants:
                 proc = windsong_enchants[0]
