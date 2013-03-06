@@ -20,6 +20,15 @@ allowed_procs = {
         'behaviours': {'default': 'touch_of_the_grave'}
     },
     #5.2
+    'heroic_thunder_rune_of_re_origination': {
+        'stat': 'multi',
+        'value': 0,
+        'buffs': ('none', 0),
+        'duration': 10,
+        'proc_name': 'Rune of Re-Origination',
+        'behaviours': {'default': 'rune_of_re_origination'},
+        'scaling': {'factor': 0.0, 'item_level': 541, 'quality': 'epic'}
+    },
     'heroic_rune_of_re_origination': {
         'stat': 'multi',
         'value': 0,
@@ -56,6 +65,14 @@ allowed_procs = {
         'behaviours': {'default': 'rune_of_re_origination'},
         'scaling': {'factor': 0.0, 'item_level': 502, 'quality': 'epic'}
     },
+    'heroic_thunder_bad_juju': {
+        'stat': 'agi',
+        'value': 8279,
+        'duration': 20,
+        'proc_name': 'Bad Juju',
+        'behaviours': {'default': 'bad_juju'},
+        'scaling': {'factor': 2.4749999046, 'item_level': 541, 'quality': 'epic'}
+    },
     'heroic_bad_juju': {
         'stat': 'agi',
         'value': 8279,
@@ -87,6 +104,15 @@ allowed_procs = {
         'proc_name': 'Bad Juju',
         'behaviours': {'default': 'bad_juju'},
         'scaling': {'factor': 2.4749999046, 'item_level': 502, 'quality': 'epic'}
+    },
+    'heroic_thunder_talisman_of_bloodlust': {
+        'stat': 'haste',
+        'value': 1736,
+        'duration': 10,
+        'max_stacks': 5,
+        'proc_name': 'Talisman of Bloodlust',
+        'behaviours': {'default': 'talisman_of_bloodlust'},
+        'scaling': {'factor': 0.5189999938, 'item_level': 535, 'quality': 'epic'} # Needs verification
     },
     'heroic_talisman_of_bloodlust': {
         'stat': 'haste',
@@ -123,6 +149,14 @@ allowed_procs = {
         'proc_name': 'Talisman of Bloodlust',
         'behaviours': {'default': 'talisman_of_bloodlust'},
         'scaling': {'factor': 0.5189999938, 'item_level': 502, 'quality': 'epic'} # Needs verification
+    },
+    'heroic_thunder_renatakis_soul_charm': {
+        'stat': 'agi',
+        'value': 7525,
+        'duration': 20,
+        'proc_name': 'Renatakis Sould Charm',
+        'behaviours': {'default': 'renatakis_soul_charm'},
+        'scaling': {'factor': 0.4499999881*5.5, 'item_level': 535, 'quality': 'epic'}
     },
     'heroic_renatakis_soul_charm': {
         'stat': 'agi',

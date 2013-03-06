@@ -15,8 +15,8 @@ class Stats(object):
     crit_rating_conversion_values = {60:14.0, 70:22.0769, 80:45.906, 85:179.28, 90:600.0}
     haste_rating_conversion_values = {60:10.0, 70:15.7692, 80:32.79, 85:128.057, 90:425.0}
     mastery_rating_conversion_values = {60:14, 70:22.0769, 80:45.906, 85:179.28, 90:600.0}
-    pvp_power_rating_conversion_values = {60:1.0, 70:2.0, 80:4.0, 85:79.182, 90:265.0}
-    pvp_resil_rating_conversion_values = {60:1.0, 70:2.0, 80:4.0, 85:79.98, 90:310.0}
+    pvp_power_rating_conversion_values = {60:7.96, 70:12.55, 80:26.11, 85:79.12, 90:265.0}
+    pvp_resil_rating_conversion_values = {60:9.29, 70:14.65, 80:30.46, 85:92.31, 90:310.0}
 
     def __init__(self, mh, oh, procs, gear_buffs, str=0, agi=0, int=0, spirit=0, stam=0, ap=0, crit=0, hit=0, exp=0, haste=0, mastery=0, level=None, pvp_power=0, pvp_resil=0, pvp_target_armor=None):
         # This will need to be adjusted if at any point we want to support
@@ -106,7 +106,7 @@ class Stats(object):
     def get_pvp_resil_multiplier_from_rating(self, rating=None):
         if rating is None:
             rating = self.pvp_resil
-        return 1 - 0.99 ** ( rating / self.pvp_power_rating_conversion ) + .4 # .4 is base resil
+        return 0.6*(rating/(rating+11727)) + .4 # .4 is base resil
 
 class Weapon(object):
     allowed_melee_enchants = proc_data.allowed_melee_enchants

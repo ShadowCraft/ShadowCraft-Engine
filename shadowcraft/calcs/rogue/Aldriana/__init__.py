@@ -290,9 +290,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         if self.stats.procs.heroic_matrix_restabilizer or self.stats.procs.matrix_restabilizer:
             self.set_matrix_restabilizer_stat(self.base_stats)
-        if self.stats.procs.heroic_rune_of_re_origination or self.stats.procs.thunder_rune_of_re_origination or self.stats.procs.rune_of_re_origination or self.stats.procs.lfr_rune_of_re_origination:
+        if self.stats.procs.heroic_rune_of_re_origination or self.stats.procs.heroic_thunder_rune_of_re_origination:
             self.set_re_origination_stat(self.base_stats)
-        self.update_rppm_trinkets()
+        if self.stats.procs.thunder_rune_of_re_origination or self.stats.procs.rune_of_re_origination or self.stats.procs.lfr_rune_of_re_origination:
+            self.set_re_origination_stat(self.base_stats)
 
     def get_proc_damage_contribution(self, proc, proc_count, current_stats):
         if proc.stat == 'spell_damage':
@@ -386,8 +387,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             else:
                 buff_cache.append( (key, (total_stats) * 2) )
         
+        self.update_rppm_trinkets()
         # (extremely sloppy)
         #set buff amounts
+        try:
+            self.stats.procs.heroic_thunder_rune_of_re_origination.buffs = buff_cache
+        except:
+            'ignore-error'
         try:
             self.stats.procs.heroic_rune_of_re_origination.buffs = buff_cache
         except:
@@ -661,7 +667,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     def get_mh_procs_per_second(self, proc, attacks_per_second, crit_rates):
         if proc.is_real_ppm():
-            return proc.proc_rate(haste=self.stats.get_haste_multiplier_from_rating(self.get_heroism_haste_multiplier() * self.base_stats['haste']))
+            return proc.proc_rate(haste=self.get_heroism_haste_multiplier() * self.stats.get_haste_multiplier_from_rating(self.base_stats['haste']))
         triggers_per_second = 0
         if proc.procs_off_auto_attacks():
             if proc.procs_off_crit_only():
@@ -696,7 +702,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     def get_oh_procs_per_second(self, proc, attacks_per_second, crit_rates):
         if proc.is_real_ppm() and not proc.scaling:
-            return proc.proc_rate(haste=self.stats.get_haste_multiplier_from_rating(self.get_heroism_haste_multiplier() * self.base_stats['haste']))
+            return proc.proc_rate(haste=self.get_heroism_haste_multiplier() * self.stats.get_haste_multiplier_from_rating(self.base_stats['haste']))
         elif proc.is_real_ppm():
             return 0
         triggers_per_second = 0
@@ -718,7 +724,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     def get_other_procs_per_second(self, proc, attacks_per_second, crit_rates):
         if proc.is_real_ppm() and not proc.scaling:
-            return proc.proc_rate(haste=self.stats.get_haste_multiplier_from_rating(self.get_heroism_haste_multiplier() * self.base_stats['haste']))
+            return proc.proc_rate(haste=self.get_heroism_haste_multiplier() * self.stats.get_haste_multiplier_from_rating(self.base_stats['haste']))
         elif proc.is_real_ppm():
             return 0
         triggers_per_second = 0
