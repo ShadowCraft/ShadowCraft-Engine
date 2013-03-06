@@ -171,6 +171,7 @@ allowed_procs = {
         'duration': 20,
         'proc_name': 'Terror in the Mists',
         'behaviours': {'default': 'terror_in_the_mists'},
+        'upgradable': True,
         'scaling': {'factor': 2.9700000286, 'item_level': 509, 'quality': 'epic'}
     },
     'terror_in_the_mists': {
@@ -179,6 +180,7 @@ allowed_procs = {
         'duration': 20,
         'proc_name': 'Terror in the Mists',
         'behaviours': {'default': 'terror_in_the_mists'},
+        'upgradable': True,
         'scaling': {'factor': 2.9700000286, 'item_level': 496, 'quality': 'epic'}
     },
     'lfr_terror_in_the_mists': {
@@ -187,6 +189,7 @@ allowed_procs = {
         'duration': 20,
         'proc_name': 'Terror in the Mists',
         'behaviours': {'default': 'terror_in_the_mists'},
+        'upgradable': True,
         'scaling': {'factor': 2.9700000286, 'item_level': 483, 'quality': 'epic'}
     },
     'heroic_bottle_of_infinite_stars': {
@@ -195,6 +198,7 @@ allowed_procs = {
         'duration': 20,
         'proc_name': 'Full of Stars',
         'behaviours': {'default': 'bottle_of_infinite_stars'},
+        'upgradable': True,
         'scaling': {'factor': 1.4850000143, 'item_level': 502, 'quality': 'epic'}
     },
     'bottle_of_infinite_stars': {
@@ -203,6 +207,7 @@ allowed_procs = {
         'duration': 20,
         'proc_name': 'Full of Stars',
         'behaviours': {'default': 'bottle_of_infinite_stars'},
+        'upgradable': True,
         'scaling': {'factor': 1.4850000143, 'item_level': 489, 'quality': 'epic'}
     },
     'lfr_bottle_of_infinite_stars': {
@@ -211,6 +216,7 @@ allowed_procs = {
         'duration': 20,
         'proc_name': 'Full of Stars',
         'behaviours': {'default': 'bottle_of_infinite_stars'},
+        'upgradable': True,
         'scaling': {'factor': 1.4850000143, 'item_level': 476, 'quality': 'epic'}
     },
     'relic_of_xuen': {
@@ -219,6 +225,7 @@ allowed_procs = {
         'duration': 15,
         'proc_name': 'Relic of Xuen',
         'behaviours': {'default': 'relic_of_xuen'},
+        'upgradable': True,
         'scaling': {'factor': 1.5684000254, 'item_level': 476, 'quality': 'epic'}
     },
     'corens_cold_chromium_coaster': {
@@ -227,6 +234,7 @@ allowed_procs = {
         'duration': 10,
         'proc_name': 'Reflection of Torment',
         'behaviours': {'default': 'corens_cold_chromium_coaster'},
+        'upgradable': True,
         'scaling': {'factor': 5.9439997673, 'item_level': 470, 'quality': 'epic'}
     },
     'searing_words': {
@@ -235,6 +243,7 @@ allowed_procs = {
         'duration': 25,
         'proc_name': "Searing Words",
         'behaviours': {'default': 'searing_words'},
+        'upgradable': True,
         'scaling': {'factor': 1.9800000191, 'item_level': 463, 'quality': 'blue'}
     },
     'windswept_pages': {
@@ -243,6 +252,7 @@ allowed_procs = {
         'duration': 20,
         'proc_name': 'Windswept Pages',
         'behaviours': {'default': 'windswept_pages'},
+        'upgradable': True,
         'scaling': {'factor': 1.9800000191, 'item_level': 463, 'quality': 'blue'}
     },
     'zen_alchemist_stone': {
@@ -252,6 +262,7 @@ allowed_procs = {
         'duration': 15,
         'proc_name': 'Zen Alchemist Stone',
         'behaviours': {'default': 'zen_alchemist_stone'},
+        'upgradable': True,
         'scaling': {'factor': 2.6670000553, 'item_level': 458, 'quality': 'blue'}
     },
     'the_gloaming_blade': {
