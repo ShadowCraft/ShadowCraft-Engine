@@ -154,10 +154,10 @@ class DamageCalculator(object):
                 for enchant in getattr(self.stats, hand).allowed_melee_enchants:
                     if getattr(getattr(self.stats, hand), enchant):
                         old_enchant = enchant
+                getattr(self.stats, hand).del_enchant()
+                no_enchant_dps = self.get_dps()
+                no_enchant_normalize_dps = self.ep_helper(normalize_ep_stat)
                 for enchant in getattr(self.stats, hand).allowed_melee_enchants:
-                    getattr(self.stats, hand).del_enchant()
-                    no_enchant_dps = self.get_dps()
-                    no_enchant_normalize_dps = self.ep_helper(normalize_ep_stat)
                     getattr(self.stats, hand).set_enchant(enchant)
                     new_dps = self.get_dps()
                     if new_dps != no_enchant_dps:
@@ -327,7 +327,7 @@ class DamageCalculator(object):
                 base_dps = baseline_dps
                 base_normalize_dps = normalize_dps
             setattr(self.stats.gear_buffs, i, True)
-            if 'scaling' in self.stats.gear_buffs.activated_boosts[i]:
+            if 'upgradable' in self.stats.gear_buffs.activated_boosts[i] and self.stats.gear_buffs.activated_boosts[i]['upgradable'] == True and 'scaling' in self.stats.gear_buffs.activated_boosts[i]:
                 if self.stats.gear_buffs.activated_boosts[i]['scaling']['quality'] == 'blue':
                     max_upgrade_level = 1
                 else:
@@ -360,7 +360,7 @@ class DamageCalculator(object):
                     base_dps = baseline_dps
                     base_normalize_dps = normalize_dps
                 self.stats.procs.set_proc(i)
-                if getattr(self.stats.procs, i).scaling:
+                if getattr(self.stats.procs, i).upgradable and getattr(self.stats.procs, i).scaling:
                     if getattr(self.stats.procs, i).scaling['quality'] == 'blue':
                         max_upgrade_level = 1
                     else:

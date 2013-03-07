@@ -15,9 +15,13 @@ from shadowcraft.objects import glyphs
 
 from shadowcraft.core import i18n
 
+from time import clock
+
 # Set up language. Use 'en_US', 'es_ES', 'fr' for specific languages.
 test_language = 'local'
 i18n.set_language(test_language)
+
+start = clock()
 
 # Set up level/class/race
 test_level = 90
@@ -107,32 +111,7 @@ trinkets_list = [
     'lfr_terror_in_the_mists',
     'relic_of_xuen',
 ]
-trinkets_ep_value = calculator.get_other_ep(trinkets_list)
-trinkets_ep_value['heroic_rune_of_re_origination'] += 1657 * ep_values['agi']
-trinkets_ep_value['thunder_rune_of_re_origination'] += 1552 * ep_values['agi']
-trinkets_ep_value['rune_of_re_origination'] += 1467 * ep_values['agi']
-trinkets_ep_value['lfr_rune_of_re_origination'] += 1218 * ep_values['agi']
-trinkets_ep_value['heroic_bad_juju'] += .6 * 1657 * ep_values['mastery'] + .4 * 1657 * ep_values['haste']
-trinkets_ep_value['thunder_bad_juju'] += .6 * 1552 * ep_values['mastery'] + .4 * 1552 * ep_values['haste']
-trinkets_ep_value['bad_juju'] += .6 * 1467 * ep_values['mastery'] + .4 * 1467 * ep_values['haste']
-trinkets_ep_value['lfr_bad_juju'] += .6 * 1218 * ep_values['mastery'] + .4 * 1218 * ep_values['haste']
-trinkets_ep_value['heroic_talisman_of_bloodlust'] += 1657 * ep_values['agi']
-trinkets_ep_value['thunder_talisman_of_bloodlust'] += 1552 * ep_values['agi']
-trinkets_ep_value['talisman_of_bloodlust'] += 1467 * ep_values['agi']
-trinkets_ep_value['lfr_talisman_of_bloodlust'] += 1218 * ep_values['agi']
-trinkets_ep_value['heroic_renatakis_soul_charm'] += .6 * 1657 * ep_values['dodge_exp'] + .4 * 1657 * ep_values['haste']
-trinkets_ep_value['thunder_renatakis_soul_charm'] += .6 * 1552 * ep_values['dodge_exp'] + .4 * 1552 * ep_values['haste']
-trinkets_ep_value['renatakis_soul_charm'] += .6 * 1467 * ep_values['dodge_exp'] + .4 * 1467 * ep_values['haste']
-trinkets_ep_value['lfr_renatakis_soul_charm'] += .6 * 1218 * ep_values['dodge_exp'] + .4 * 1218 * ep_values['haste']
-trinkets_ep_value['vicious_talisman_of_the_shado-pan_assault'] += .6 *  1467 * ep_values['white_hit'] + .4 * 1467 * ep_values['haste']
-
-trinkets_ep_value['heroic_bottle_of_infinite_stars'] += 731 * ep_values['mastery'] + 487 * ep_values['haste']
-trinkets_ep_value['bottle_of_infinite_stars'] += 648 * ep_values['mastery'] + 431 * ep_values['haste']
-trinkets_ep_value['lfr_bottle_of_infinite_stars'] += 574 * ep_values['mastery'] + 382 * ep_values['haste']
-trinkets_ep_value['heroic_terror_in_the_mists'] += 1300 * ep_values['agi']
-trinkets_ep_value['terror_in_the_mists'] += 1152 * ep_values['agi']
-trinkets_ep_value['lfr_terror_in_the_mists'] += 1021 * ep_values['agi']
-trinkets_ep_value['relic_of_xuen'] += 956 * ep_values['agi']
+trinkets_ep_value = calculator.get_upgrades_ep(trinkets_list)
 glyph_values = calculator.get_glyphs_ranking()
 
 # Compute DPS Breakdown.
@@ -178,3 +157,4 @@ dicts_for_pretty_print = [
 pretty_print(dicts_for_pretty_print)
 pretty_print([dps_breakdown], total_sum=total_dps, show_percent=True)
 print ' ' * (max_length(dicts_for_pretty_print) + 1), total_dps, _("total damage per second.")
+print "Request time: %s sec" % (clock() - start)
