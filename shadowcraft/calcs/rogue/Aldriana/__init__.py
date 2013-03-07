@@ -1356,7 +1356,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         attacks_per_second['envenom'] = [finisher_chance * envenoms_per_second for finisher_chance in envenom_size_breakdown]
         if self.talents.marked_for_death:
-            attacks_per_second['envenom'][5] += 1 / 60
+            attacks_per_second['envenom'][5] += 1. / 60
 
         attacks_per_second['rupture_ticks'] = [0, 0, 0, 0, 0, 0]
         for i in xrange(1, 6):

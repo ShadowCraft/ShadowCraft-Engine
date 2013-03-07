@@ -109,10 +109,12 @@ trinkets_ep_value['jade_bandit_figurine'] += 1079 * ep_values['agi']
 trinkets_ep_value['hawkmasters_talon'] += 1079 * ep_values['agi']
 trinkets_ep_value['searing_words'] += 509 * ep_values['crit'] + 338 * ep_values['mastery']
 trinkets_ep_value['flashing_steel_talisman'] += 509 * ep_values['haste'] + 338 * ep_values['mastery']
+glyph_values = calculator.get_glyphs_ranking()
 
 # Compute DPS Breakdown.
 dps_breakdown = calculator.get_dps_breakdown()
 total_dps = sum(entry[1] for entry in dps_breakdown.items())
+talent_ranks = calculator.get_talents_ranking()
 
 def max_length(dict_list):
     max_len = 0
@@ -143,6 +145,8 @@ dicts_for_pretty_print = [
     mh_enchants_and_dps_ep_values,
     oh_enchants_and_dps_ep_values,
     trinkets_ep_value,
+    glyph_values,
+    talent_ranks,
 ]
 pretty_print(dicts_for_pretty_print)
 
