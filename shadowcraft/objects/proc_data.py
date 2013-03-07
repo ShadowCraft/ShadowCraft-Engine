@@ -19,6 +19,15 @@ allowed_procs = {
         'proc_name': 'Touch of the Grave',
         'behaviours': {'default': 'touch_of_the_grave'}
     },
+    'legendary_capacitive_meta': {
+        'stat':'spell_damage',
+        'value': 280,
+        'duration': 0,
+        'max_stacks': 0,
+        'proc_name': 'Lightning Strike (meta)',
+        'behaviours': {'default': 'legendary_capacitive_meta', 'assassination': 'legendary_capacitive_meta_mut',
+                       'combat': 'legendary_capacitive_meta_combat', 'subtlety': 'legendary_capacitive_meta_sub'}
+    },
     #5.2
     'heroic_thunder_rune_of_re_origination': {
         'stat': 'multi',
@@ -520,6 +529,30 @@ behaviours = {
     'touch_of_the_grave': {
         'icd': 20,
         'proc_chance': .20,
+        'trigger': 'all_attacks'
+    },
+    'legendary_capacitive_meta': {
+        'real_ppm':True,
+        'icd': 0,
+        'ppm': (21./5),
+        'trigger': 'all_attacks'
+    },
+    'legendary_capacitive_meta_mut': {
+        'real_ppm':True,
+        'icd': 0,
+        'ppm': (21./5) * 1.789,
+        'trigger': 'all_attacks'
+    },
+    'legendary_capacitive_meta_combat': {
+        'real_ppm':True,
+        'icd': 0,
+        'ppm': (21./5) * 1.136,
+        'trigger': 'all_attacks'
+    },
+    'legendary_capacitive_meta_sub': {
+        'real_ppm':True,
+        'icd': 0,
+        'ppm': (21./5) * 1.114,
         'trigger': 'all_attacks'
     },
     # weapon procs
