@@ -154,10 +154,10 @@ class DamageCalculator(object):
                 for enchant in getattr(self.stats, hand).allowed_melee_enchants:
                     if getattr(getattr(self.stats, hand), enchant):
                         old_enchant = enchant
+                getattr(self.stats, hand).del_enchant()
+                no_enchant_dps = self.get_dps()
+                no_enchant_normalize_dps = self.ep_helper(normalize_ep_stat)
                 for enchant in getattr(self.stats, hand).allowed_melee_enchants:
-                    getattr(self.stats, hand).del_enchant()
-                    no_enchant_dps = self.get_dps()
-                    no_enchant_normalize_dps = self.ep_helper(normalize_ep_stat)
                     getattr(self.stats, hand).set_enchant(enchant)
                     new_dps = self.get_dps()
                     if new_dps != no_enchant_dps:
