@@ -291,9 +291,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.base_rupture_energy_cost *= self.stats.gear_buffs.rogue_t13_2pc_cost_multiplier()
         self.base_eviscerate_energy_cost = self.get_net_energy_cost('eviscerate')
         self.base_eviscerate_energy_cost *= self.stats.gear_buffs.rogue_t13_2pc_cost_multiplier()
-
-        if self.stats.procs.heroic_matrix_restabilizer or self.stats.procs.matrix_restabilizer:
-            self.set_matrix_restabilizer_stat(self.base_stats)
+        
+        if 'heroic_matrix_restabilizer' in proc_data.allowed_procs:
+            if self.stats.procs.heroic_matrix_restabilizer or self.stats.procs.matrix_restabilizer:
+                self.set_matrix_restabilizer_stat(self.base_stats)
         if self.stats.procs.heroic_rune_of_re_origination or self.stats.procs.heroic_thunder_rune_of_re_origination:
             self.set_re_origination_stat(self.base_stats)
         if self.stats.procs.thunder_rune_of_re_origination or self.stats.procs.rune_of_re_origination or self.stats.procs.lfr_rune_of_re_origination:
@@ -316,15 +317,16 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         proc_value = proc.value
         # Vial of Shadows scales with AP.
-        vial_of_shadows_modifiers = {
-            'heroic_vial_of_shadows': 1.016,
-            'vial_of_shadows': .9,
-            'lfr_vial_of_shadows': .797
-            }
-        for i in vial_of_shadows_modifiers:
-            if proc is getattr(self.stats.procs, i):
-                average_ap = current_stats['ap'] + 2 * current_stats['agi'] + self.base_strength
-                proc_value += vial_of_shadows_modifiers[i] * average_ap
+        if 'heroic_vial_of_shadows' in proc_data.allowed_procs:
+            vial_of_shadows_modifiers = {
+                'heroic_vial_of_shadows': 1.016,
+                'vial_of_shadows': .9,
+                'lfr_vial_of_shadows': .797
+                }
+            for i in vial_of_shadows_modifiers:
+                if proc is getattr(self.stats.procs, i):
+                    average_ap = current_stats['ap'] + 2 * current_stats['agi'] + self.base_strength
+                    proc_value += vial_of_shadows_modifiers[i] * average_ap
         #280+75% AP
         if proc is getattr(self.stats.procs, 'legendary_capacitive_meta'):
             proc_value += (current_stats['ap'] + 2 * current_stats['agi'] + self.base_strength) * .75
@@ -887,10 +889,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 getattr(self.stats.procs, proc).behaviour_toggle = spec
 
         # Tie Nokaled to the MH (equipping it in the OH, as a rogue, is unlikely)
-        for i in ('', 'heroic_', 'lfr_'):
-            proc = getattr(self.stats.procs, ''.join((i, 'nokaled_the_elements_of_death')))
-            if proc:
-                setattr(proc, 'mh_only', True)
+        if 'nokaled_the_elements_of_death' in proc_data.allowed_procs:
+            for i in ('', 'heroic_', 'lfr_'):
+                proc = getattr(self.stats.procs, ''.join((i, 'nokaled_the_elements_of_death')))
+                if proc:
+                    setattr(proc, 'mh_only', True)
 
     def get_poison_counts(self, attacks_per_second):
         # Builds a phony 'poison' proc object to count triggers through the proc
@@ -975,7 +978,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         windsong_enchants = []
         weapon_enchants = set([])
-        for hand, enchant in [(x, y) for x in ('mh', 'oh') for y in ('landslide', 'hurricane', 'avalanche', 'windsong', 'dancing_steel', 'elemental_force')]:
+        for hand, enchant in [(x, y) for x in ('mh', 'oh') for y in ('windsong', 'dancing_steel', 'elemental_force')]:
             proc = getattr(getattr(self.stats, hand), enchant)
             if proc:
                 setattr(proc, '_'.join((hand, 'only')), True)
