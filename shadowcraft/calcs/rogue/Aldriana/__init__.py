@@ -1587,11 +1587,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         sinister_strike_energy_cost =  self.stats.gear_buffs.rogue_t15_4pc_modifier(is_sb=sb) * self.base_sinister_strike_energy_cost
         sinister_strike_energy_cost -= main_gauche_proc_rate * combat_potency_from_mg
         
-        if self.talents.anticipation:
-            energy_cap = 5 / cp_per_cpg * sinister_strike_energy_cost / gcd_size
-        else:
-            energy_cap = math.ceil(5 / cp_per_cpg) * sinister_strike_energy_cost / gcd_size
-        
         ## Base CPs and Attacks
         #Autoattacks
         mh_autoswing_type = 'mh_autoattacks'
@@ -1673,15 +1668,15 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         total_evis_per_second = energy_available_for_evis / total_eviscerate_cost
         evisc_actions_per_second = (total_evis_per_second * ss_per_finisher + total_evis_per_second) * gcd_size / self.strike_hit_chance
         attacks_per_second['sinister_strike'] = total_evis_per_second * ss_per_finisher
-        attacks_per_second['main_gauche'] += (attacks_per_second['sinister_strike'] + attacks_per_second['revealing_strike'] + total_evis_per_second + attacks_per_second['rupture']) * main_gauche_proc_rate
         #if GCD capped
         if evisc_actions_per_second > free_gcd:
             gcd_cap_mod = evisc_actions_per_second / free_gcd
             attacks_per_second['sinister_strike'] = attacks_per_second['sinister_strike'] / gcd_cap_mod
             total_evis_per_second = total_evis_per_second / gcd_cap_mod
+        attacks_per_second['main_gauche'] += (attacks_per_second['sinister_strike'] + attacks_per_second['revealing_strike'] + total_evis_per_second + attacks_per_second['rupture']) * main_gauche_proc_rate
         
         #attacks_per_second['eviscerate'] = [finisher_chance * total_evis_per_second for finisher_chance in finisher_size_breakdown]
-        attacks_per_second['eviscerate'] = [finisher_chance * total_evis_per_second for finisher_chance in [0,0,0,0,0,1]]
+        attacks_per_second['eviscerate'] = [0,0,0,0,0,total_evis_per_second]
         for opener, cps in [('ambush', 2), ('garrote', 1)]:
             if opener in attacks_per_second:
                 extra_finishers_per_second += attacks_per_second[opener] * cps / 5
@@ -1692,11 +1687,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attacks_per_second['sinister_strike'] += attacks_per_second['sinister_strike_base']
         
         #self.current_variables['cp_spent_on_damage_finishers_per_second'] = (attacks_per_second['rupture'] + total_evis_per_second) * cp_per_finisher
-        attacks_per_second['rupture_ticks'] = [0, 0, 0, 0, 0, 0]
-        for i in xrange(1, 6):
-            ticks_per_rupture = 2 * (1 + i + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp())
-            #attacks_per_second['rupture_ticks'][i] = ticks_per_rupture * attacks_per_second['rupture'] * finisher_size_breakdown[i]
-            attacks_per_second['rupture_ticks'][i] = ticks_per_rupture * attacks_per_second['rupture'] * [0,0,0,0,0,1][i]
+        ticks_per_rupture = 2 * (1 + 5 + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp())
+        attacks_per_second['rupture_ticks'] = [0, 0, 0, 0, 0, ticks_per_rupture * attacks_per_second['rupture']]
+        #for i in xrange(1, 6):
+            #ticks_per_rupture = 2 * (1 + i + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp())
+            ##attacks_per_second['rupture_ticks'][i] = ticks_per_rupture * attacks_per_second['rupture'] * finisher_size_breakdown[i]
+            #attacks_per_second['rupture_ticks'][i] = ticks_per_rupture * attacks_per_second['rupture'] * [0,0,0,0,0,1][i]
 
         if 'garrote' in attacks_per_second:
             attacks_per_second['garrote_ticks'] = 6 * attacks_per_second['garrote']
