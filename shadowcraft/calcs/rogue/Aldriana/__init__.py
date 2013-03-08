@@ -285,6 +285,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.dw_mh_hit_chance = self.dual_wield_mh_hit_chance()
         self.dw_oh_hit_chance = self.dual_wield_oh_hit_chance()
         self.strike_hit_chance = self.one_hand_melee_hit_chance()
+        self.off_hand_strike_hit_chance = self.off_hand_melee_hit_chance()
         self.poison_hit_chance = self.melee_spells_hit_chance()
         self.cast_spell_hit_chance = self.spell_hit_chance() # this is not for poisons
         self.base_rupture_energy_cost = self.get_net_energy_cost('rupture')
@@ -1578,13 +1579,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if sb:
             cp_per_cpg += 1
 
-        rupture_energy_cost =  self.stats.gear_buffs.rogue_t15_4pc_modifier(is_sb=sb) * self.base_rupture_energy_cost
+        rogue_t15_4pc_modifier = self.stats.gear_buffs.rogue_t15_4pc_modifier(is_sb=sb)
+        rupture_energy_cost =  rogue_t15_4pc_modifier * self.base_rupture_energy_cost
         rupture_energy_cost -= main_gauche_proc_rate * combat_potency_from_mg
-        eviscerate_energy_cost =  self.stats.gear_buffs.rogue_t15_4pc_modifier(is_sb=sb) * self.base_eviscerate_energy_cost
+        eviscerate_energy_cost =  rogue_t15_4pc_modifier * self.base_eviscerate_energy_cost
         eviscerate_energy_cost -= main_gauche_proc_rate * combat_potency_from_mg
-        revealing_strike_energy_cost =  self.stats.gear_buffs.rogue_t15_4pc_modifier(is_sb=sb) * self.base_revealing_strike_energy_cost
+        revealing_strike_energy_cost =  rogue_t15_4pc_modifier * self.base_revealing_strike_energy_cost
         revealing_strike_energy_cost -= main_gauche_proc_rate * combat_potency_from_mg
-        sinister_strike_energy_cost =  self.stats.gear_buffs.rogue_t15_4pc_modifier(is_sb=sb) * self.base_sinister_strike_energy_cost
+        sinister_strike_energy_cost =  rogue_t15_4pc_modifier * self.base_sinister_strike_energy_cost
         sinister_strike_energy_cost -= main_gauche_proc_rate * combat_potency_from_mg
         
         ## Base CPs and Attacks
@@ -1708,7 +1710,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if not self.settings.cycle.ksp_immediately:
                 final_ks_cd += (3 * time_at_level)/2 * (3 * time_at_level)/cycle_duration
             attacks_per_second['mh_killing_spree'] = 7 * self.strike_hit_chance / (final_ks_cd + self.settings.response_time)
-            attacks_per_second['oh_killing_spree'] = 7 * self.off_hand_melee_hit_chance() / (final_ks_cd + self.settings.response_time)
+            attacks_per_second['oh_killing_spree'] = 7 * self.off_hand_strike_hit_chance / (final_ks_cd + self.settings.response_time)
             bonus_mg_procs = attacks_per_second['mh_killing_spree'] * main_gauche_proc_rate
             attacks_per_second['main_gauche'] += bonus_mg_procs
         
