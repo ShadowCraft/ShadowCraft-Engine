@@ -14,10 +14,10 @@ class RogueDamageCalculator(DamageCalculator):
     # put the calculations in your object. But there are things - like
     # backstab damage as a function of AP - that (almost) any rogue damage
     # calculator will need to know, so things like that go here.
-
+    
+    normalize_ep_stat = 'ap' #use 'dps' to prevent normalization
     default_ep_stats = ['white_hit', 'yellow_hit', 'str', 'agi', 'haste',
         'crit', 'mastery', 'dodge_exp', 'spell_hit', 'spell_exp', 'pvp_power', 'ap']
-    normalize_ep_stat = 'ap' #use 'dps' to prevent normalization
     if normalize_ep_stat in default_ep_stats:
         default_ep_stats.remove(normalize_ep_stat)
     melee_attacks = ['mh_autoattack_hits', 'oh_autoattack_hits', 'mh_shadow_blade', 'oh_shadow_blade', 'autoattack', 'shadow_blades',

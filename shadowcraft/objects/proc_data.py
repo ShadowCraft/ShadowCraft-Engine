@@ -19,6 +19,22 @@ allowed_procs = {
         'proc_name': 'Touch of the Grave',
         'behaviours': {'default': 'touch_of_the_grave'}
     },
+    'swordguard_embroidery': {
+        'stat': 'ap',
+        'value': 'varies',
+        'duration': 15,
+        'proc_name': 'Swordguard Embroidery',
+        'behaviours': {'default': 'swordguard_embroidery'}
+    },
+    'legendary_capacitive_meta': {
+        'stat':'spell_damage',
+        'value': 280,
+        'duration': 0,
+        'max_stacks': 0,
+        'proc_name': 'Lightning Strike (meta)',
+        'behaviours': {'default': 'legendary_capacitive_meta', 'assassination': 'legendary_capacitive_meta_mut',
+                       'combat': 'legendary_capacitive_meta_combat', 'subtlety': 'legendary_capacitive_meta_sub'}
+    },
     #5.2
     'heroic_thunder_rune_of_re_origination': {
         'stat': 'multi',
@@ -307,130 +323,6 @@ allowed_procs = {
         'proc_name': 'The Deepest Night',
         'behaviours': {'default': 'the_gloaming_blade'}
     },
-
-
-    # Cata Items
-    'heroic_nokaled_the_elements_of_death': {
-        'stat': 'spell_damage',
-        'value': 10800,
-        'duration': 0,
-        'max_stacks': 0,
-        'proc_name': 'Iceblast Shadowblast Flameblast',
-        'behaviours': {'default': 'nokaled_the_elements_of_death'}
-    },
-    'heroic_starcatcher_compass': {
-        'stat': 'haste',
-        'value': 3278,
-        'duration': 20,
-        'proc_name': 'Velocity',
-        'behaviours': {'default': 'starcatcher_compass'}
-    },
-    'heroic_vial_of_shadows': {         # Name is a compromise to avoid conflicts
-        'stat': 'physical_damage',
-        'value': 17050.5,
-        'duration': 0,
-        'max_stacks': 0,
-        'proc_name': 'Lightning Strike (vial hc)',
-        'behaviours': {'default': 'vial_of_shadows'}
-    },
-    'heroic_wrath_of_unchaining': {
-        'stat': 'agi',
-        'value': 99,
-        'duration': 10,
-        'max_stacks': 10,
-        'proc_name': 'Combat Trance',
-        'behaviours': {'default': 'wrath_of_unchaining'}
-    },
-    'lfr_nokaled_the_elements_of_death': {
-        'stat': 'spell_damage',
-        'value': 8476,
-        'duration': 0,
-        'max_stacks': 0,
-        'proc_name': 'Iceblast Shadowblast Flameblast',
-        'behaviours': {'default': 'nokaled_the_elements_of_death'}
-    },
-    'lfr_starcatcher_compass': {
-        'stat': 'haste',
-        'value': 2573,
-        'duration': 20,
-        'proc_name': 'Velocity',
-        'behaviours': {'default': 'starcatcher_compass'}
-    },
-    'lfr_vial_of_shadows': {            # Name is a compromise to avoid conflicts
-        'stat': 'physical_damage',
-        'value': 13382.5,
-        'duration': 0,
-        'max_stacks': 0,
-        'proc_name': 'Lightning Strike (vial lfr)',
-        'behaviours': {'default': 'vial_of_shadows'}
-    },
-    'lfr_wrath_of_unchaining': {
-        'stat': 'agi',
-        'value': 78,
-        'duration': 10,
-        'max_stacks': 10,
-        'proc_name': 'Combat Trance',
-        'behaviours': {'default': 'wrath_of_unchaining'}
-    },
-    'heroic_matrix_restabilizer': {     # Proc_chance is a guess and should be verified.
-        'stat': 'weird_proc',
-        'value': 1834,
-        'duration': 30,
-        'proc_name': 'Matrix Restabilized',
-        'behaviours': {'default': 'matrix_restabilizer'}
-    },
-    'matrix_restabilizer': {            # Proc_chance is a guess and should be verified.
-        'stat': 'weird_proc',
-        'value': 1624,
-        'duration': 30,
-        'proc_name': 'Matrix Restabilized',
-        'behaviours': {'default': 'matrix_restabilizer'}
-    },
-    'nokaled_the_elements_of_death': {
-        'stat': 'spell_damage',
-        'value': 9567.5,
-        'duration': 0,
-        'max_stacks': 0,
-        'proc_name': 'Iceblast Shadowblast Flameblast',
-        'behaviours': {'default': 'nokaled_the_elements_of_death'}
-    },
-    'rogue_t11_4pc': {
-        'stat': 'weird_proc',
-        'value': 1,
-        'duration': 15,
-        'proc_name': 'Deadly Scheme',
-        'behaviours': {'default': 'rogue_t11_4pc'}
-    },
-    'starcatcher_compass': {
-        'stat': 'haste',
-        'value': 2904,
-        'duration': 20,
-        'proc_name': 'Velocity',
-        'behaviours': {'default': 'starcatcher_compass'}
-    },
-    'swordguard_embroidery': {
-        'stat': 'ap',
-        'value': 'varies',
-        'duration': 15,
-        'proc_name': 'Swordguard Embroidery',
-        'behaviours': {'default': 'swordguard_embroidery'}
-    },
-    'vial_of_shadows': {                # Name is a compromise to avoid conflicts
-        'stat': 'physical_damage',
-        'value': 15105.5,
-        'duration': 0,
-        'max_stacks': 0,
-        'proc_name': 'Lightning Strike (vial n)',
-        'behaviours': {'default': 'vial_of_shadows'}
-    },
-    'wrath_of_unchaining': {
-        'stat': 'agi',
-        'value': 88,
-        'duration': 10,
-        'max_stacks': 10,
-        'proc_name': 'Combat Trance',
-        'behaviours': {'default': 'wrath_of_unchaining'}
-    },
     'jaws_of_retribution': {            # Legendary proc stage 1
         'stat': 'agi',
         'value': 2,
@@ -454,31 +346,18 @@ allowed_procs = {
         'max_stacks': 50,
         'proc_name': 'Shadows of the Destroyer',
         'behaviours': {'default': 'rogue_t13_legendary_proc', 'assassination': 'rogue_t13_legendary_assassination', 'combat': 'rogue_t13_legendary_combat', 'subtlety': 'rogue_t13_legendary_subtlety'}
-    }
+    },
+    #Tier
+    'rogue_t11_4pc': {
+        'stat': 'weird_proc',
+        'value': 1,
+        'duration': 15,
+        'proc_name': 'Deadly Scheme',
+        'behaviours': {'default': 'rogue_t11_4pc'}
+    },
 }
 
 allowed_melee_enchants = {
-    'avalanche': {
-        'stat': 'spell_damage',
-        'value': 500,
-        'duration': 0,
-        'proc_name': 'Avalanche',
-        'behaviours': {'default': 'avalanche_melee', 'spell': 'avalanche_spell'}
-    },
-    'hurricane': {
-        'stat': 'haste',
-        'value': 450,
-        'duration': 12,
-        'proc_name': 'Hurricane',
-        'behaviours': {'default': 'hurricane_melee', 'spell': 'hurricane_spell'}
-    },
-    'landslide': {
-        'stat': 'ap',
-        'value': 1000,
-        'duration': 12,
-        'proc_name': 'Landslide',
-        'behaviours': {'default': 'landslide'}
-    },
     'windsong': {
         'stat': 'random',
         'stats': ('haste', 'mastery', 'crit'),
@@ -520,6 +399,30 @@ behaviours = {
     'touch_of_the_grave': {
         'icd': 20,
         'proc_chance': .20,
+        'trigger': 'all_attacks'
+    },
+    'legendary_capacitive_meta': {
+        'real_ppm':True,
+        'icd': 0,
+        'ppm': (21./5),
+        'trigger': 'all_attacks'
+    },
+    'legendary_capacitive_meta_mut': {
+        'real_ppm':True,
+        'icd': 0,
+        'ppm': (21./5) * 1.789,
+        'trigger': 'all_attacks'
+    },
+    'legendary_capacitive_meta_combat': {
+        'real_ppm':True,
+        'icd': 0,
+        'ppm': (21./5) * 1.136,
+        'trigger': 'all_attacks'
+    },
+    'legendary_capacitive_meta_sub': {
+        'real_ppm':True,
+        'icd': 0,
+        'ppm': (21./5) * 1.114,
         'trigger': 'all_attacks'
     },
     # weapon procs
