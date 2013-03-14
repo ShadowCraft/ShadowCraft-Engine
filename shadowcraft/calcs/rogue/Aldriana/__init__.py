@@ -983,22 +983,23 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         # once we figure the whole thing.
         for proc in ('jaws_of_retribution', 'maw_of_oblivion', 'fangs_of_the_father'):
             if getattr(self.stats.procs, proc):
-                if self.talents.is_assassination_rogue():
+                if self.settings.is_assassination_rogue():
                     spec = 'assassination'
-                elif self.talents.is_combat_rogue():
+                elif self.settings.is_combat_rogue():
                     spec = 'combat'
-                elif self.talents.is_subtlety_rogue():
+                elif self.settings.is_subtlety_rogue():
                     spec = 'subtlety'
                 getattr(self.stats.procs, proc).behaviour_toggle = spec
         
+        
         if getattr(self.stats.procs, 'legendary_capacitive_meta'):
-            if self.talents.is_assassination_rogue():
+            if self.settings.is_assassination_rogue():
                 spec = 'assassination'
-            elif self.talents.is_combat_rogue():
+            elif self.settings.is_combat_rogue():
                 spec = 'combat'
-            elif self.talents.is_subtlety_rogue():
+            elif self.settings.is_subtlety_rogue():
                 spec = 'subtlety'
-            getattr(self.stats.procs, proc).behaviour_toggle = spec
+            getattr(self.stats.procs, 'legendary_capacitive_meta').behaviour_toggle = spec
 
         # Tie Nokaled to the MH (equipping it in the OH, as a rogue, is unlikely)
         if 'nokaled_the_elements_of_death' in proc_data.allowed_procs:
@@ -1199,7 +1200,16 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.set_uptime(proc, attacks_per_second, crit_rates)
         
         return current_stats, attacks_per_second, crit_rates, damage_procs
+    
+    def compute_damage_from_aps(self, current_stats, attacks_per_second, crit_rates, damage_procs):
+        damage_breakdown = self.get_damage_breakdown(current_stats, attacks_per_second, crit_rates, damage_procs)
 
+        # Discard the crit component.
+        for key in damage_breakdown:
+            damage_breakdown[key] = damage_breakdown[key][0]
+
+        return damage_breakdown
+    
     def compute_damage(self, attack_counts_function):
         # TODO: Crit cap
         #
@@ -1532,7 +1542,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.max_bandits_guile_buff = 1.3
 
         self.base_cooldowns = {'ar':self.get_spell_cd('adrenaline_rush'),
-                               'shb':self.get_spell_cd('shadow_blades'),
                                'ksp':self.get_spell_cd('killing_spree')}
         self.ks_cd = 120
         self.base_revealing_strike_energy_cost = 32 + 8 / self.strike_hit_chance
@@ -1561,7 +1570,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             #                 damage_breakdown)
             phases['both'] = (aps,
                               min(ar_duration, self.get_shadow_blades_duration()),
-                              self.update_with_bandits_guile(self.compute_damage(self.combat_attack_counts_both)) )
+                              self.update_with_bandits_guile(self.compute_damage_from_aps(stats, aps, crits, procs)) )
         
             for e in cds:
                 cds[e] -= min(ar_duration, self.get_shadow_blades_duration()) / self.rb_cd_modifier(aps)
@@ -1572,12 +1581,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 stats, aps, crits, procs = self.determine_stats(self.combat_attack_counts_ar)
                 phases['buffer'] = (aps,
                                     abs(ar_duration - self.get_shadow_blades_duration()),
-                                    self.update_with_bandits_guile(self.compute_damage(self.combat_attack_counts_ar)) )
+                                    self.update_with_bandits_guile(self.compute_damage_from_aps(stats, aps, crits, procs)) )
             elif ar_duration < self.get_shadow_blades_duration():
                 stats, aps, crits, procs = self.determine_stats(self.combat_attack_counts_sb)
                 phases['buffer'] = (aps,
                                     abs(ar_duration - self.get_shadow_blades_duration()),
-                                    self.update_with_bandits_guile(self.compute_damage(self.combat_attack_counts_sb)) )
+                                    self.update_with_bandits_guile(self.compute_damage_from_aps(stats, aps, crits, procs)) )
             for e in cds:
                 cds[e] -= abs(ar_duration - self.get_shadow_blades_duration()) / self.rb_cd_modifier(aps)
             
@@ -1588,7 +1597,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             #rb_actual_cd(attacks_per_second, base_cds, avg_rb_effect=10)
             phases['none'] = (aps,
                               self.rb_actual_cds(aps, cds)['ar'] + self.settings.response_time + 10./2, #rough accounting for KS+RB delay
-                              self.update_with_bandits_guile(self.compute_damage(self.combat_attack_counts_none)) )
+                              self.update_with_bandits_guile(self.compute_damage_from_aps(stats, aps, crits, procs)) )
             self.ks_cd = cds['ksp'] + phases['buffer'][1] + phases['both'][1]
         
             #average it together
@@ -1598,7 +1607,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             stats, aps, crits, procs = self.determine_stats(self.combat_attack_counts_ar)
             phases['ar'] = (aps,
                             ar_duration,
-                            self.update_with_bandits_guile(self.compute_damage(self.combat_attack_counts_ar)) )
+                            self.update_with_bandits_guile(self.compute_damage_from_aps(stats, aps, crits, procs)) )
             for e in cds:
                 cds[e] -= ar_duration / self.rb_cd_modifier(aps)
             
@@ -1606,7 +1615,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             stats, aps, crits, procs = self.determine_stats(self.combat_attack_counts_sb)
             phases['sb'] = (aps,
                             self.get_shadow_blades_duration(),
-                            self.update_with_bandits_guile(self.compute_damage(self.combat_attack_counts_sb)) )
+                            self.update_with_bandits_guile(self.compute_damage_from_aps(stats, aps, crits, procs)) )
             for e in cds:
                 cds[e] -= self.get_shadow_blades_duration() / self.rb_cd_modifier(aps)
             
@@ -1616,7 +1625,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             stats, aps, crits, procs = self.determine_stats(self.combat_attack_counts_none)
             phases['none'] = (aps,
                               self.rb_actual_cds(aps, cds)['ar'] + self.settings.response_time + 10./2, #rough accounting for KS+RB delay
-                              self.update_with_bandits_guile(self.compute_damage(self.combat_attack_counts_none)) )
+                              self.update_with_bandits_guile(self.compute_damage_from_aps(stats, aps, crits, procs)) )
             
             #average it together
             total_duration = phases['ar'][1] + phases['sb'][1] + phases['none'][1]

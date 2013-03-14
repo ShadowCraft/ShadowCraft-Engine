@@ -49,21 +49,21 @@ test_oh = stats.Weapon(10478.5, 2.6, 'fist', 'dancing_steel')
 #test_oh = stats.Weapon(7254.0, 1.8, 'dagger', 'dancing_steel')
 
 # Set up procs.
-test_procs = procs.ProcsList( 'renatakis_soul_charm' )
+test_procs = procs.ProcsList('heroic_talisman_of_bloodlust', 'heroic_bad_juju', 'legendary_capacitive_meta')
 
 # Set up gear buffs.
-test_gear_buffs = stats.GearBuffs('rogue_t15_2pc', 'rogue_t15_4pc', 'leather_specialization', 'virmens_bite', 'virmens_bite_prepot', 'chaotic_metagem')
+test_gear_buffs = stats.GearBuffs('rogue_t15_2pc', 'rogue_t15_4pc', 'leather_specialization', 'virmens_bite', 'virmens_bite_prepot')
 
 # Set up a calcs object..
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          str=80,
-                         agi=19991,
-                         stam=25919,
-                         crit=3349,
-                         hit=2562,
-                         exp=2554,
-                         haste=11096,
-                         mastery=8682)
+                         agi=20131,
+                         stam=25454,
+                         crit=3278,
+                         hit=2557,
+                         exp=2549,
+                         haste=13206,
+                         mastery=6103)
 
 # Initialize talents..
 test_talents = talents.Talents('322213', test_class, test_level)
