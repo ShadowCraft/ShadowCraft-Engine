@@ -289,9 +289,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.poison_hit_chance = self.melee_spells_hit_chance()
         self.cast_spell_hit_chance = self.spell_hit_chance() # this is not for poisons
         self.base_rupture_energy_cost = self.get_net_energy_cost('rupture')
-        self.base_rupture_energy_cost *= self.stats.gear_buffs.rogue_t13_2pc_cost_multiplier()
         self.base_eviscerate_energy_cost = self.get_net_energy_cost('eviscerate')
-        self.base_eviscerate_energy_cost *= self.stats.gear_buffs.rogue_t13_2pc_cost_multiplier()
         
         if 'heroic_matrix_restabilizer' in proc_data.allowed_procs:
             if self.stats.procs.heroic_matrix_restabilizer or self.stats.procs.matrix_restabilizer:
@@ -393,9 +391,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         buff_cache = []
         for key in ('haste', 'mastery', 'crit'):
             if key != max_stat[0]:
-                buff_cache.append( (key, -1 * self.base_stats[key]) )
+                buff_cache.append( (key, -1. * .5 * self.base_stats[key]) ) #artificially reduced by 50%
             else:
-                buff_cache.append( (key, (total_stats) * 2) )
+                buff_cache.append( (key, (total_stats) * 2. * .5) ) #artificially reduced by 50%
         
         self.update_rppm_trinkets()
         # (extremely sloppy)
@@ -420,6 +418,41 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.stats.procs.lfr_rune_of_re_origination.buffs = buff_cache
         except:
             'ignore-error'
+            
+    def update_talisman_of_bloodlust(self, base_stats, attacks_per_second, crit_rates):
+        #2(ppm) * 1.22(haste) * 1.4(time since last chance) / 60 (sec per min)
+        chance_per_hit = proc_data.behaviours[ self.stats.procs.allowed_procs['talisman_of_bloodlust']['behaviours']['default'] ]['ppm']
+        chance_per_hit *= self.get_heroism_haste_multiplier() * self.stats.get_haste_multiplier_from_rating(self.base_stats['haste'])
+        if self.stats.procs.heroic_thunder_talisman_of_bloodlust:
+            chances = self.get_rppm_trinket_triggers_per_second(attacks_per_second, crit_rates, self.stats.procs.heroic_thunder_talisman_of_bloodlust)
+            chance_per_hit *= (1./chances) / 60
+            refresh_chance = 1 - (1-chance_per_hit) ** (chances * 10) #10 for the duration of the buff
+            bonus_uptime =  refresh_chance * .5 + (refresh_chance**2) + (refresh_chance**3) * 1.5 + (refresh_chance**4) * 2 + 1
+            self.stats.procs.heroic_thunder_talisman_of_bloodlust.value = bonus_uptime * self.stats.procs.heroic_thunder_talisman_of_bloodlust.base_value
+        elif self.stats.procs.heroic_talisman_of_bloodlust:
+            chances = self.get_rppm_trinket_triggers_per_second(attacks_per_second, crit_rates, self.stats.procs.heroic_talisman_of_bloodlust)
+            chance_per_hit *= (1./chances) / 60
+            refresh_chance = 1 - (1-chance_per_hit) ** (chances * 10) #10 for the duration of the buff
+            bonus_uptime =  refresh_chance * .5 + (refresh_chance**2) + (refresh_chance**3) * 1.5 + (refresh_chance**4) * 2 + 1
+            self.stats.procs.heroic_talisman_of_bloodlust.value = bonus_uptime * self.stats.procs.heroic_talisman_of_bloodlust.base_value
+        elif self.stats.procs.thunder_talisman_of_bloodlust:
+            chances = self.get_rppm_trinket_triggers_per_second(attacks_per_second, crit_rates, self.stats.procs.thunder_talisman_of_bloodlust)
+            chance_per_hit *= (1./chances) / 60
+            refresh_chance = 1 - (1-chance_per_hit) ** (chances * 10) #10 for the duration of the buff
+            bonus_uptime =  refresh_chance * .5 + (refresh_chance**2) + (refresh_chance**3) * 1.5 + (refresh_chance**4) * 2 + 1
+            self.stats.procs.thunder_talisman_of_bloodlust.value = bonus_uptime * self.stats.procs.thunder_talisman_of_bloodlust.base_value
+        elif self.stats.procs.talisman_of_bloodlust:
+            chances = self.get_rppm_trinket_triggers_per_second(attacks_per_second, crit_rates, self.stats.procs.talisman_of_bloodlust)
+            chance_per_hit *= (1./chances) / 60
+            refresh_chance = 1 - (1-chance_per_hit) ** (chances * 10) #10 for the duration of the buff
+            bonus_uptime =  refresh_chance * .5 + (refresh_chance**2) + (refresh_chance**3) * 1.5 + (refresh_chance**4) * 2 + 1
+            self.stats.procs.talisman_of_bloodlust.value = bonus_uptime * self.stats.procs.talisman_of_bloodlust.base_value
+        elif self.stats.procs.lfr_talisman_of_bloodlust:
+            chances = self.get_rppm_trinket_triggers_per_second(attacks_per_second, crit_rates, self.stats.procs.lfr_talisman_of_bloodlust)
+            chance_per_hit *= (1./chances) / 60
+            refresh_chance = 1 - (1-chance_per_hit) ** (chances * 10) #10 for the duration of the buff
+            bonus_uptime =  refresh_chance * .5 + (refresh_chance**2) + (refresh_chance**3) * 1.5 + (refresh_chance**4) * 2 + 1
+            self.stats.procs.lfr_talisman_of_bloodlust.value = bonus_uptime * self.stats.procs.lfr_talisman_of_bloodlust.base_value
     
     def update_rppm_trinkets(self):
         #for each active proc
@@ -673,6 +706,78 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 main_gauche_proc_rate = self.combat_mastery_conversion * self.stats.get_mastery_from_rating(kwargs['current_stats']['mastery']) * self.strike_hit_chance
             attacks_per_second['main_gauche'] = main_gauche_proc_rate * (attacks_per_second['mh_autoattack_hits'] + attacks_per_second['mh_shadow_blade'])
         
+    def get_rppm_trinket_triggers_per_second(self, attacks_per_second, crit_rates, proc):
+        triggers_per_second = 0
+        if proc.procs_off_auto_attacks():
+            if proc.procs_off_crit_only():
+                if 'mh_autoattacks' in attacks_per_second:
+                    triggers_per_second += attacks_per_second['mh_autoattacks'] * crit_rates['mh_autoattacks']
+            else:
+                if 'mh_autoattack_hits' in attacks_per_second:
+                    triggers_per_second += attacks_per_second['mh_autoattack_hits']
+        if proc.procs_off_strikes():
+            for ability in ('mutilate', 'dispatch', 'backstab', 'revealing_strike', 'sinister_strike', 'ambush', 'hemorrhage', 'mh_killing_spree', 'main_gauche', 'mh_shadow_blade', 'shuriken_toss'):
+                if ability == 'main_gauche' and not proc.procs_off_procced_strikes():
+                    pass
+                elif ability in attacks_per_second:
+                    if proc.procs_off_crit_only():
+                        triggers_per_second += attacks_per_second[ability] * crit_rates[ability]
+                    else:
+                        triggers_per_second += attacks_per_second[ability]
+            for ability in ('envenom', 'eviscerate'):
+                if ability in attacks_per_second:
+                    if proc.procs_off_crit_only():
+                        triggers_per_second += sum(attacks_per_second[ability]) * crit_rates[ability]
+                    else:
+                        triggers_per_second += sum(attacks_per_second[ability])
+        if proc.procs_off_apply_debuff() and not proc.procs_off_crit_only():
+            if 'rupture' in attacks_per_second:
+                triggers_per_second += attacks_per_second['rupture']
+            if 'garrote' in attacks_per_second:
+                triggers_per_second += attacks_per_second['garrote']
+            if 'hemorrhage_ticks' in attacks_per_second:
+                triggers_per_second += attacks_per_second['hemorrhage']
+        if proc.procs_off_auto_attacks():
+            if proc.procs_off_crit_only():
+                if 'oh_autoattacks' in attacks_per_second:
+                    triggers_per_second += attacks_per_second['oh_autoattacks'] * crit_rates['oh_autoattacks']
+            else:
+                if 'oh_autoattack_hits' in attacks_per_second:
+                    triggers_per_second += attacks_per_second['oh_autoattack_hits']
+        if proc.procs_off_strikes():
+            for ability in ('mutilate', 'oh_killing_spree', 'oh_shadow_blade'):
+                if ability in attacks_per_second:
+                    if proc.procs_off_crit_only():
+                        triggers_per_second += attacks_per_second[ability] * crit_rates[ability]
+                    else:
+                        triggers_per_second += attacks_per_second[ability]
+        if proc.procs_off_harmful_spells():
+            for ability in ('instant_poison', 'wound_poison', 'venomous_wounds'):
+                if ability in attacks_per_second:
+                    if proc.procs_off_crit_only():
+                        triggers_per_second += attacks_per_second[ability] * crit_rates[ability]
+                    else:
+                        triggers_per_second += attacks_per_second[ability]
+        if proc.procs_off_periodic_spell_damage():
+            if 'deadly_poison' in attacks_per_second:
+                if proc.procs_off_crit_only():
+                    triggers_per_second += attacks_per_second['deadly_poison'] * crit_rates['deadly_poison']
+                else:
+                    triggers_per_second += attacks_per_second['deadly_poison']
+        if proc.procs_off_bleeds():
+            if 'rupture_ticks' in attacks_per_second:
+                if proc.procs_off_crit_only():
+                    triggers_per_second += sum(attacks_per_second['rupture_ticks']) * crit_rates['rupture']
+                else:
+                    triggers_per_second += sum(attacks_per_second['rupture_ticks'])
+            if 'garrote_ticks' in attacks_per_second:
+                if proc.procs_off_crit_only():
+                    triggers_per_second += attacks_per_second['garrote_ticks'] * crit_rates['garrote']
+                else:
+                    triggers_per_second += attacks_per_second['garrote_ticks']
+            if 'hemorrhage_ticks' in attacks_per_second:
+                triggers_per_second += attacks_per_second['hemorrhage_ticks']
+        return triggers_per_second
 
     def get_mh_procs_per_second(self, proc, attacks_per_second, crit_rates):
         if proc.is_real_ppm():
@@ -762,10 +867,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 else:
                     triggers_per_second += attacks_per_second['garrote_ticks']
             if 'hemorrhage_ticks' in attacks_per_second:
-                if proc.procs_off_crit_only():
-                    triggers_per_second += attacks_per_second['hemorrhage_ticks'] * crit_rates['hemorrhage']
-                else:
-                    triggers_per_second += attacks_per_second['hemorrhage_ticks']
+                triggers_per_second += attacks_per_second['hemorrhage_ticks']
         if proc.is_ppm():
             if triggers_per_second == 0:
                 return 0
@@ -888,6 +990,15 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 elif self.talents.is_subtlety_rogue():
                     spec = 'subtlety'
                 getattr(self.stats.procs, proc).behaviour_toggle = spec
+        
+        if getattr(self.stats.procs, 'legendary_capacitive_meta'):
+            if self.talents.is_assassination_rogue():
+                spec = 'assassination'
+            elif self.talents.is_combat_rogue():
+                spec = 'combat'
+            elif self.talents.is_subtlety_rogue():
+                spec = 'subtlety'
+            getattr(self.stats.procs, proc).behaviour_toggle = spec
 
         # Tie Nokaled to the MH (equipping it in the OH, as a rogue, is unlikely)
         if 'nokaled_the_elements_of_death' in proc_data.allowed_procs:
@@ -1040,6 +1151,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 proc.ppm /= effective_ppm_multiplier
                 for stat in stats:
                     current_stats[stat] += proc.uptime * proc.value
+            
+            #Talisman of Bloodlust
+            if self.stats.procs.heroic_talisman_of_bloodlust or self.stats.procs.heroic_thunder_talisman_of_bloodlust:
+                self.update_talisman_of_bloodlust(current_stats, attacks_per_second, crit_rates)
+            if self.stats.procs.thunder_talisman_of_bloodlust or self.stats.procs.talisman_of_bloodlust or self.stats.procs.lfr_talisman_of_bloodlust:
+                self.update_talisman_of_bloodlust(current_stats, attacks_per_second, crit_rates)
 
             current_stats['agi'] *= self.agi_multiplier
             for stat in ('crit', 'haste', 'mastery'):
@@ -1549,8 +1666,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         haste_multiplier = self.stats.get_haste_multiplier_from_rating(current_stats['haste'])
 
-        attack_speed_multiplier = self.base_speed_multiplier * haste_multiplier
-        self.attack_speed_increase = attack_speed_multiplier
+        self.attack_speed_increase = self.base_speed_multiplier * haste_multiplier
 
         main_gauche_proc_rate = self.combat_mastery_conversion * self.stats.get_mastery_from_rating(current_stats['mastery']) * self.strike_hit_chance
 
@@ -1568,12 +1684,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if ar:
             self.attack_speed_increase *= 1.2
             self.base_energy_regen *= 2.0
-        gcd_size = 1.0
+        gcd_size = 1.0 + gcd_latency
         if self.glyphs.adrenaline_rush and ar:
             gcd_size -= .2
         if sb and self.stats.gear_buffs.rogue_t15_4pc:
             gcd_size -= .3
-        gcd_size = gcd_size + gcd_latency
         max_aps= 1. / gcd_size
         cp_per_cpg = 1.
         if sb:
@@ -1665,7 +1780,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         free_gcd = 1.
         free_gcd -= (1./snd_duration + attacks_per_second['sinister_strike_base'] + attacks_per_second['revealing_strike'] + extra_finishers_per_second) * gcd_size / self.strike_hit_chance
         if self.talents.marked_for_death:
-            free_gcd -= (1. / 60) * gcd_size / self.strike_hit_chance
+            free_gcd -= (1. / (60 + self.settings.response_time)) * gcd_size / self.strike_hit_chance
         energy_available_for_evis = energy_regen - energy_spent_on_snd - energy_spent_on_rupture
         total_evis_per_second = energy_available_for_evis / total_eviscerate_cost
         evisc_actions_per_second = (total_evis_per_second * ss_per_finisher + total_evis_per_second) * gcd_size / self.strike_hit_chance

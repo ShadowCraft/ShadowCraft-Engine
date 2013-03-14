@@ -94,6 +94,7 @@ trinkets_list = [
     'thunder_bad_juju',
     'bad_juju',
     'lfr_bad_juju',
+    'heroic_thunder_talisman_of_bloodlust',
     'heroic_talisman_of_bloodlust',
     'thunder_talisman_of_bloodlust',
     'talisman_of_bloodlust',

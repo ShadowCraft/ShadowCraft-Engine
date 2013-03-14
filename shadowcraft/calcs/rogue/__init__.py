@@ -17,7 +17,7 @@ class RogueDamageCalculator(DamageCalculator):
     
     normalize_ep_stat = 'ap' #use 'dps' to prevent normalization
     default_ep_stats = ['white_hit', 'yellow_hit', 'str', 'agi', 'haste',
-        'crit', 'mastery', 'dodge_exp', 'spell_hit', 'spell_exp', 'pvp_power', 'ap']
+        'crit', 'mastery', 'dodge_exp', 'spell_hit', 'spell_exp', 'ap']
     if normalize_ep_stat in default_ep_stats:
         default_ep_stats.remove(normalize_ep_stat)
     melee_attacks = ['mh_autoattack_hits', 'oh_autoattack_hits', 'mh_shadow_blade', 'oh_shadow_blade', 'autoattack', 'shadow_blades',
@@ -45,6 +45,8 @@ class RogueDamageCalculator(DamageCalculator):
         self.agi_per_crit = self.tools.get_agi_per_crit('rogue', self.level) * 100
         if self.race.epicurean:
             self.stats.agi += self.buffs.buff_agi(just_food=True)
+        if self.settings.is_pvp:
+            self.default_ep_stats.append('pvp_power')
 
         # These factors are taken from sc_spell_data.inc in SimulationCraft.
         # At some point we should automate the process to fetch them. Numbers

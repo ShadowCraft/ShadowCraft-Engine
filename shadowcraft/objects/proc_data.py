@@ -124,15 +124,17 @@ allowed_procs = {
     'heroic_thunder_talisman_of_bloodlust': {
         'stat': 'haste',
         'value': 1736,
+        'base_value': 1736,
         'duration': 10,
         'max_stacks': 5,
         'proc_name': 'Talisman of Bloodlust',
         'behaviours': {'default': 'talisman_of_bloodlust'},
-        'scaling': {'factor': 0.5189999938, 'item_level': 535, 'quality': 'epic'} # Needs verification
+        'scaling': {'factor': 0.5189999938, 'item_level': 541, 'quality': 'epic'} # Needs verification
     },
     'heroic_talisman_of_bloodlust': {
         'stat': 'haste',
         'value': 1736,
+        'base_value': 1736,
         'duration': 10,
         'max_stacks': 5,
         'proc_name': 'Talisman of Bloodlust',
@@ -142,6 +144,7 @@ allowed_procs = {
     'thunder_talisman_of_bloodlust': {
         'stat': 'haste',
         'value': 1627,
+        'base_value': 1627,
         'duration': 10,
         'max_stacks': 5,
         'proc_name': 'Talisman of Bloodlust',
@@ -151,6 +154,7 @@ allowed_procs = {
     'talisman_of_bloodlust': {
         'stat': 'haste',
         'value': 1538,
+        'base_value': 1538,
         'duration': 10,
         'max_stacks': 5,
         'proc_name': 'Talisman of Bloodlust',
@@ -160,6 +164,7 @@ allowed_procs = {
     'lfr_talisman_of_bloodlust': {
         'stat': 'haste',
         'value': 1277,
+        'base_value': 1277,
         'duration': 10,
         'max_stacks': 5,
         'proc_name': 'Talisman of Bloodlust',
@@ -168,15 +173,15 @@ allowed_procs = {
     },
     'heroic_thunder_renatakis_soul_charm': {
         'stat': 'agi',
-        'value': 7525,
+        'value': 8277.5,
         'duration': 20,
         'proc_name': 'Renatakis Sould Charm',
         'behaviours': {'default': 'renatakis_soul_charm'},
-        'scaling': {'factor': 0.4499999881*5.5, 'item_level': 535, 'quality': 'epic'}
+        'scaling': {'factor': 0.4499999881*5.5, 'item_level': 541, 'quality': 'epic'}
     },
     'heroic_renatakis_soul_charm': {
         'stat': 'agi',
-        'value': 7525,
+        'value': 8277.5,
         'duration': 20,
         'proc_name': 'Renatakis Sould Charm',
         'behaviours': {'default': 'renatakis_soul_charm'},
@@ -184,7 +189,7 @@ allowed_procs = {
     },
     'thunder_renatakis_soul_charm': {
         'stat': 'agi',
-        'value': 7050, #needs verification
+        'value': 7755, #needs verification
         'duration': 20,
         'proc_name': 'Renatakis Sould Charm',
         'behaviours': {'default': 'renatakis_soul_charm'},
@@ -192,7 +197,7 @@ allowed_procs = {
     },
     'renatakis_soul_charm': {
         'stat': 'agi',
-        'value': 6665,
+        'value': 7331.5,
         'duration': 20,
         'proc_name': 'Renatakis Sould Charm',
         'behaviours': {'default': 'renatakis_soul_charm'},
@@ -200,7 +205,7 @@ allowed_procs = {
     },
     'lfr_renatakis_soul_charm': {
         'stat': 'agi',
-        'value': 5535,
+        'value': 6088.5,
         'duration': 20,
         'proc_name': 'Renatakis Sould Charm',
         'behaviours': {'default': 'renatakis_soul_charm'},
@@ -448,32 +453,32 @@ behaviours = {
     'rune_of_re_origination': {
         'real_ppm': True,
         'icd': 22,
-        'ppm': 0.92,
-        'base_ppm': 0.92,
+        'ppm': 1.012,
+        'base_ppm': 1.012,
         'ppm_scale_constant': 528,
         'trigger': 'all_attacks'
     },
     'bad_juju': {
         'real_ppm':True,
         'icd': 0,
-        'ppm': 0.5,
-        'base_ppm': 0.5,
+        'ppm': 0.55,
+        'base_ppm': 0.55,
         'ppm_scale_constant': 528,
         'trigger': 'all_attacks'
     },
     'renatakis_soul_charm': {
         'real_ppm':True,
         'icd': 22,
-        'ppm': 0.56,
-        'base_ppm': 0.56,
+        'ppm': 0.616,
+        'base_ppm': 0.616,
         'ppm_scale_constant': 528,
         'trigger': 'all_attacks'
     },
     'talisman_of_bloodlust': {
         'real_ppm': True,
         'icd': 0,
-        'ppm': 3,
-        'base_ppm': 3,
+        'ppm': 3.3,
+        'base_ppm': 3.3,
         'ppm_scale_constant': 528,
         'trigger': 'all_attacks'
     },

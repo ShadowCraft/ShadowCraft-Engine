@@ -331,7 +331,7 @@ class CharacterData:
         lst = {'agi': 0, 'str':0, 'int':0, 'spirit':0, 'stam':0, 'crit':0, 'hit':0, 'exp':0, 'haste':0, 'mastery':0, 'ap':0, 'pvp_power':0, 'pvp_resil':0}
         reforge = ('none', 'none')
         reforgeID = None
-        gemColorToSocketColors = {u'RED': (u'RED'), u'YELLOW':(u'YELLOW'), u'BLUE':(u'BLUE'), u'META':(u'META'), u'COGWHEEL':(u'COGWHEEL'),
+        gemColorToSocketColors = {u'RED': (u'RED'), u'YELLOW':(u'YELLOW'), u'BLUE':(u'BLUE'), u'META':(u'META'), u'COGWHEEL':(u'COGWHEEL'), u'HYDRAULIC':(u'HYDRAULIC'),
                                   u'ORANGE':(u'RED', u'YELLOW'), u'PURPLE':(u'RED', u'BLUE'), u'GREEN':(u'YELLOW', u'BLUE')}
         verboseStatMap = {'Agility':'agi', 'Strength':'str', 'Stamina':'stam', 'Critical Strike':'crit', 'Hit':'hit',
                           'Expertise':'exp', 'Haste':'haste', 'Mastery':'mastery', 'Increased Critical Effect':'chaotic_metagem',
@@ -395,12 +395,13 @@ class CharacterData:
                                     self.verbose_print(tmpGem['data'][u'name'] + ' is a meta gem')
                     #add stats from socket bonuses
                     if socketBonusActivated == True and gemCount >= len(socketInfo[u'sockets']):
-                        for entry in socketInfo[u'socketBonus'].split(' and '): #similar to gem treatment... is there ever a socket bonus that gives multiple stats?
-                            tmpLst = entry.split(' ')
-                            tmpVal = int(tmpLst[0][1:])
-                            tmpStat = verboseStatMap[ ' '.join(tmpLst[1:]) ]
-                            lst[ tmpStat ] += tmpVal
-                            self.verbose_print('Socket bonus +' + str(tmpVal) + ' ' + tmpStat)
+                        if u'socketBonus' in socketInfo:
+                            for entry in socketInfo[u'socketBonus'].split(' and '): #similar to gem treatment... is there ever a socket bonus that gives multiple stats?
+                                tmpLst = entry.split(' ')
+                                tmpVal = int(tmpLst[0][1:])
+                                tmpStat = verboseStatMap[ ' '.join(tmpLst[1:]) ]
+                                lst[ tmpStat ] += tmpVal
+                                self.verbose_print('Socket bonus +' + str(tmpVal) + ' ' + tmpStat)
                     #add stats from enchants
                     if u'enchant' in params.keys():
                         if not type( CharacterData.enchants[ params[u'enchant'] ] ) == type(''):
