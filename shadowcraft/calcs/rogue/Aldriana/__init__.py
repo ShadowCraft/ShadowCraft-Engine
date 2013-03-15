@@ -422,7 +422,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     def update_talisman_of_bloodlust(self, base_stats, attacks_per_second, crit_rates):
         #2(ppm) * 1.22(haste) * 1.4(time since last chance) / 60 (sec per min)
         chance_per_hit = proc_data.behaviours[ self.stats.procs.allowed_procs['talisman_of_bloodlust']['behaviours']['default'] ]['ppm']
-        chance_per_hit *= self.get_heroism_haste_multiplier() * self.stats.get_haste_multiplier_from_rating(self.base_stats['haste'])
+        chance_per_hit *= self.buffs.spell_haste_multiplier() * self.get_heroism_haste_multiplier() * self.stats.get_haste_multiplier_from_rating(self.base_stats['haste'])
         if self.stats.procs.heroic_thunder_talisman_of_bloodlust:
             chances = self.get_rppm_trinket_triggers_per_second(attacks_per_second, crit_rates, self.stats.procs.heroic_thunder_talisman_of_bloodlust)
             chance_per_hit *= (1./chances) / 60
@@ -781,7 +781,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     def get_mh_procs_per_second(self, proc, attacks_per_second, crit_rates):
         if proc.is_real_ppm():
-            return proc.proc_rate(haste=self.get_heroism_haste_multiplier() * self.stats.get_haste_multiplier_from_rating(self.base_stats['haste']))
+            return proc.proc_rate(haste=self.buffs.spell_haste_multiplier() * self.get_heroism_haste_multiplier() * self.stats.get_haste_multiplier_from_rating(self.base_stats['haste']))
         triggers_per_second = 0
         if proc.procs_off_auto_attacks():
             if proc.procs_off_crit_only():
@@ -816,7 +816,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     def get_oh_procs_per_second(self, proc, attacks_per_second, crit_rates):
         if proc.is_real_ppm() and not proc.scaling:
-            return proc.proc_rate(haste=self.get_heroism_haste_multiplier() * self.stats.get_haste_multiplier_from_rating(self.base_stats['haste']))
+            return proc.proc_rate(haste=self.buffs.spell_haste_multiplier() * self.get_heroism_haste_multiplier() * self.stats.get_haste_multiplier_from_rating(self.base_stats['haste']))
         elif proc.is_real_ppm():
             return 0
         triggers_per_second = 0
@@ -838,7 +838,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     def get_other_procs_per_second(self, proc, attacks_per_second, crit_rates):
         if proc.is_real_ppm() and not proc.scaling:
-            return proc.proc_rate(haste=self.get_heroism_haste_multiplier() * self.stats.get_haste_multiplier_from_rating(self.base_stats['haste']))
+            return proc.proc_rate(haste=self.buffs.spell_haste_multiplier() * self.get_heroism_haste_multiplier() * self.stats.get_haste_multiplier_from_rating(self.base_stats['haste']))
         elif proc.is_real_ppm():
             return 0
         triggers_per_second = 0

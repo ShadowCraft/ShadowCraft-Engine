@@ -94,6 +94,9 @@ class Buffs(object):
 
     def melee_haste_multiplier(self):
         return [1, 1.1][self.melee_haste_buff]
+    
+    def spell_haste_multiplier(self):
+        return [1, 1.05][self.spell_haste_buff]
 
     def buff_str(self):
         return 0

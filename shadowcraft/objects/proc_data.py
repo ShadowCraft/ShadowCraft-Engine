@@ -83,7 +83,7 @@ allowed_procs = {
     },
     'heroic_thunder_bad_juju': {
         'stat': 'agi',
-        'value': 8279,
+        'value': 8754,
         'duration': 20,
         'proc_name': 'Bad Juju',
         'behaviours': {'default': 'bad_juju'},
@@ -123,8 +123,8 @@ allowed_procs = {
     },
     'heroic_thunder_talisman_of_bloodlust': {
         'stat': 'haste',
-        'value': 1736,
-        'base_value': 1736,
+        'value': 1836,
+        'base_value': 1836,
         'duration': 10,
         'max_stacks': 5,
         'proc_name': 'Talisman of Bloodlust',
@@ -173,7 +173,7 @@ allowed_procs = {
     },
     'heroic_thunder_renatakis_soul_charm': {
         'stat': 'agi',
-        'value': 8277.5,
+        'value': 8756,
         'duration': 20,
         'proc_name': 'Renatakis Sould Charm',
         'behaviours': {'default': 'renatakis_soul_charm'},

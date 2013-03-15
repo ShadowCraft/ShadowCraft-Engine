@@ -78,3 +78,11 @@ class Talents(object):
         for talent in self.class_talents[self.get_tier_for_talent(name)]:
             setattr(self, talent, False)
         setattr(self, name, True)
+    
+    def get_active_talents(self):
+        active_talents = []
+        for row in self.class_talents:
+            for talent in row:
+                if getattr(self, talent):
+                    active_talents.append(talent)
+        return active_talents

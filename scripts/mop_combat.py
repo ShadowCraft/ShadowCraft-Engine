@@ -36,6 +36,7 @@ test_buffs = buffs.Buffs(
         'mastery_buff',
         'melee_haste_buff',
         'attack_power_buff',
+        'spell_haste_buff',
         'armor_debuff',
         'physical_vulnerability_debuff',
         'spell_damage_debuff',
@@ -49,7 +50,7 @@ test_oh = stats.Weapon(10478.5, 2.6, 'fist', 'dancing_steel')
 #test_oh = stats.Weapon(7254.0, 1.8, 'dagger', 'dancing_steel')
 
 # Set up procs.
-test_procs = procs.ProcsList('heroic_talisman_of_bloodlust', 'heroic_bad_juju', 'legendary_capacitive_meta')
+test_procs = procs.ProcsList(('heroic_talisman_of_bloodlust', 0), ('heroic_bad_juju', 0), 'legendary_capacitive_meta')
 
 # Set up gear buffs.
 test_gear_buffs = stats.GearBuffs('rogue_t15_2pc', 'rogue_t15_4pc', 'leather_specialization', 'virmens_bite', 'virmens_bite_prepot')

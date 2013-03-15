@@ -32,6 +32,7 @@ test_buffs = buffs.Buffs(
         'mastery_buff',
         'melee_haste_buff',
         'attack_power_buff',
+        'spell_haste_buff',
         'armor_debuff',
         'physical_vulnerability_debuff',
         'spell_damage_debuff',

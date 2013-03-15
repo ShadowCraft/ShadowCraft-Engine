@@ -32,6 +32,7 @@ test_buffs = buffs.Buffs(
         'mastery_buff',
         'melee_haste_buff',
         'attack_power_buff',
+        'spell_haste_buff',
         'armor_debuff',
         'physical_vulnerability_debuff',
         'spell_damage_debuff',
@@ -44,10 +45,10 @@ test_mh = stats.Weapon(9243, 1.8, 'dagger', 'dancing_steel')
 test_oh = stats.Weapon(9243, 1.8, 'dagger', 'dancing_steel')
 
 # Set up procs.
-test_procs = procs.ProcsList( ('heroic_bad_juju', 2), ('heroic_talisman_of_bloodlust', 2), ('legendary_capacitive_meta', 0))
+test_procs = procs.ProcsList( ('heroic_bad_juju', 0), ('heroic_talisman_of_bloodlust', 0), 'legendary_capacitive_meta')
 
 # Set up gear buffs.
-test_gear_buffs = stats.GearBuffs('rogue_t15_2pc', 'rogue_t15_4pc', 'leather_specialization', 'virmens_bite', 'virmens_bite_prepot', 'chaotic_metagem')
+test_gear_buffs = stats.GearBuffs('rogue_t15_2pc', 'rogue_t15_4pc', 'leather_specialization', 'virmens_bite', 'virmens_bite_prepot')
 
 # Set up a calcs object..
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
