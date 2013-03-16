@@ -352,11 +352,6 @@ behaviours = {
         'proc_chance': .15,
         'trigger': 'all_attacks'
     },
-    'swordguard_embroidery': {
-        'icd': 55,
-        'proc_chance': .15,
-        'trigger': 'all_attacks'
-    },
     'vial_of_shadows': {                    # ICD should be verified.
         'icd': 25,
         'proc_chance': .15,

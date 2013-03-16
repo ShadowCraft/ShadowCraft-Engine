@@ -430,6 +430,11 @@ behaviours = {
         'ppm': (21./5) * 1.114,
         'trigger': 'all_attacks'
     },
+    'swordguard_embroidery': {
+        'icd': 55,
+        'proc_chance': .15,
+        'trigger': 'all_attacks'
+    },
     # weapon procs
     'dancing_steel': {
         'real_ppm':True,

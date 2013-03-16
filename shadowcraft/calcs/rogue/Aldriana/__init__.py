@@ -1741,7 +1741,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         #Base actions
         rvs_interval = rvs_duration
-        if self.settings.cycle.revealing_strike_pooling:
+        if self.settings.cycle.revealing_strike_pooling and not ar:
             min_energy_while_pooling = energy_regen * gcd_size
             max_energy_while_pooling = 80.
             average_pooling = max(0, (max_energy_while_pooling - min_energy_while_pooling)) / 2
