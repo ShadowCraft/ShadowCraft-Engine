@@ -301,19 +301,28 @@ class DamageCalculator(object):
         # This method computes ep for every other buff/proc not covered by
         # get_ep or get_weapon_ep. Weapon enchants, being tied to the
         # weapons they are on, are computed by get_weapon_ep.
-        ep_values = {}
-        baseline_dps = self.get_dps()
-        normalize_dps = self.ep_helper(normalize_ep_stat)
-
+        
+        active_procs_cache = []
+        active_gear_buffs_cache = []
         procs_list = []
         gear_buffs_list = []
         for i in list:
             if i in self.stats.procs.allowed_procs:
                 procs_list.append(i)
+                if getattr(self.stats.procs, i):
+                    active_procs_cache.append((i, getattr(self.stats.procs, i).upgrade_level))
+                    delattr(self.stats.procs, i)
             elif i in self.stats.gear_buffs.allowed_buffs:
                 gear_buffs_list.append(i)
+                if getattr(self.stats.gear_buffs, i):
+                    active_gear_buffs_cache.append((i, self.stats.gear_buffs.activated_boosts[i]['upgrade_level']))
+                    setattr(self.stats.gear_buffs, i, False)
             else:
                 ep_values[i] = _('not allowed')
+
+        ep_values = {}
+        baseline_dps = self.get_dps()
+        normalize_dps = self.ep_helper(normalize_ep_stat)
 
         for i in gear_buffs_list:
             ep_values[i] = []
@@ -382,6 +391,14 @@ class DamageCalculator(object):
                 # Data for these procs is not complete/correct
                 ep_values[i].append(_('not supported'))
                 delattr(self.stats.procs, i)
+
+        for proc in active_procs_cache:
+            self.stats.procs.set_proc(proc[0])
+            getattr(self.stats.procs, proc[0]).upgrade_level = proc[1]
+
+        for gear_buff in active_gear_buffs_cache:
+            setattr(self.stats.gear_buffs, gear_buff[0], True)
+            self.stats.gear_buffs.activated_boosts[gear_buff[0]]['upgrade_level'] = gear_buff[1]
 
         return ep_values
 
