@@ -328,7 +328,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                     proc_value += vial_of_shadows_modifiers[i] * average_ap
         #280+75% AP
         if proc is getattr(self.stats.procs, 'legendary_capacitive_meta'):
-            proc_value += (current_stats['ap'] + 2 * current_stats['agi'] + self.base_strength) * .75
+            proc_value = (current_stats['ap'] + 2 * current_stats['agi'] + self.base_strength) * .75 + 280
 
         average_hit = proc_value * multiplier
         average_damage = average_hit * (1 + crit_rate * (crit_multiplier - 1)) * proc_count

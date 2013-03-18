@@ -33,7 +33,8 @@ allowed_procs = {
         'max_stacks': 0,
         'proc_name': 'Lightning Strike (meta)',
         'behaviours': {'default': 'legendary_capacitive_meta', 'assassination': 'legendary_capacitive_meta_mut',
-                       'combat': 'legendary_capacitive_meta_combat', 'subtlety': 'legendary_capacitive_meta_sub'}
+                       'combat': 'legendary_capacitive_meta_combat', 'subtlety': 'legendary_capacitive_meta_sub'},
+        'scaling': {'factor': 0.0, 'item_level': 541, 'quality': 'epic'}
     },
     #5.2
     'heroic_thunder_rune_of_re_origination': {
