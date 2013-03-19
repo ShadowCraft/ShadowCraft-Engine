@@ -27,7 +27,7 @@ allowed_procs = {
         'behaviours': {'default': 'swordguard_embroidery'}
     },
     'legendary_capacitive_meta': {
-        'stat':'spell_damage',
+        'stat':'melee_spell_damage',
         'value': 280,
         'duration': 0,
         'max_stacks': 0,

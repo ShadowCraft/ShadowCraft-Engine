@@ -304,10 +304,17 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             multiplier = self.raid_settings_modifiers('spell')
             crit_multiplier = self.crit_damage_modifiers()
             crit_rate = self.spell_crit_rate(crit=current_stats['crit'])
+            hit_chance = self.cast_spell_hit_chance
         elif proc.stat == 'physical_damage':
             multiplier = self.raid_settings_modifiers('physical')
             crit_multiplier = self.crit_damage_modifiers()
             crit_rate = self.melee_crit_rate(agi=current_stats['agi'], crit=current_stats['crit'])
+            hit_chance = self.strike_hit_chance
+        elif proc.stat == 'melee_spell_damage':
+            multiplier = self.raid_settings_modifiers('spell')
+            crit_multiplier = self.crit_damage_modifiers()
+            crit_rate = self.melee_crit_rate(agi=current_stats['agi'], crit=current_stats['crit'])
+            hit_chance = self.strike_hit_chance
         else:
             return 0, 0
 
@@ -328,16 +335,17 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #280+75% AP
         if proc is getattr(self.stats.procs, 'legendary_capacitive_meta'):
             crit_rate = self.melee_crit_rate(agi=current_stats['agi'], crit=current_stats['crit'])
+            hit_chance = self.strike_hit_chance
             proc_value = average_ap * .75 + 280
 
-        average_hit = proc_value * multiplier
+        average_hit = proc_value * multiplier * hit_chance
         average_damage = average_hit * (1 + crit_rate * (crit_multiplier - 1)) * proc_count
         crit_contribution = average_hit * crit_multiplier * crit_rate * proc_count
         return average_damage, crit_contribution
 
     def append_damage_on_use(self, average_ap, current_stats, damage_breakdown):
         on_use_damage_list = []
-        for i in ('spell_damage', 'physical_damage'):
+        for i in ('spell_damage', 'physical_damage', 'melee_spell_damage'):
             on_use_damage_list += self.stats.gear_buffs.get_all_activated_boosts_for_stat(i)
         if self.race.rocket_barrage:
             rocket_barrage_dict = {'stat': 'spell_damage', 'cooldown': 120, 'name': 'Rocket Barrage'}
@@ -351,6 +359,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 crit_rate = self.melee_crit_rate(agi=current_stats['agi'], crit=current_stats['crit'])
                 hit_chance = self.strike_hit_chance
             elif item['stat'] == 'spell_damage':
+                modifier = self.raid_settings_modifiers('spell')
+                crit_multiplier = self.crit_damage_modifiers()
+                crit_rate = self.spell_crit_rate(crit=current_stats['crit'])
+                hit_chance = self.cast_spell_hit_chance
+            elif item['stat'] == 'melee_spell_damage':
                 modifier = self.raid_settings_modifiers('spell')
                 crit_multiplier = self.crit_damage_modifiers()
                 crit_rate = self.spell_crit_rate(crit=current_stats['crit'])
@@ -775,7 +788,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                     triggers_per_second += attacks_per_second['garrote_ticks'] * crit_rates['garrote']
                 else:
                     triggers_per_second += attacks_per_second['garrote_ticks']
-            if 'hemorrhage_ticks' in attacks_per_second:
+            if 'hemorrhage_ticks' in attacks_per_second and not proc.procs_off_crit_only():
                 triggers_per_second += attacks_per_second['hemorrhage_ticks']
         return triggers_per_second
 
@@ -866,7 +879,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                     triggers_per_second += attacks_per_second['garrote_ticks'] * crit_rates['garrote']
                 else:
                     triggers_per_second += attacks_per_second['garrote_ticks']
-            if 'hemorrhage_ticks' in attacks_per_second:
+            if 'hemorrhage_ticks' in attacks_per_second and not proc.procs_off_crit_only():
                 triggers_per_second += attacks_per_second['hemorrhage_ticks']
         if proc.is_ppm():
             if triggers_per_second == 0:
@@ -928,6 +941,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if proc.stat == 'spell_damage':
             attacks_per_second[proc.proc_name] += frequency * self.cast_spell_hit_chance
         elif proc.stat == 'physical_damage':
+            attacks_per_second[proc.proc_name] += frequency * self.strike_hit_chance
+        elif proc.stat == 'melee_spell_damage':
             attacks_per_second[proc.proc_name] += frequency * self.strike_hit_chance
 
     """
@@ -1075,7 +1090,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         for proc_info in self.stats.procs.get_all_procs_for_stat():
             if (proc_info.stat in current_stats or proc_info.stat == 'multi') and not proc_info.is_ppm():
                 active_procs.append(proc_info)
-            elif proc_info.stat in ('spell_damage', 'physical_damage'):
+            elif proc_info.stat in ('spell_damage', 'physical_damage', 'melee_spell_damage'):
                 damage_procs.append(proc_info)
             elif proc_info.stat == 'extra_weapon_damage':
                 weapon_damage_procs.append(proc_info)
