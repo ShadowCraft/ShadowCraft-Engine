@@ -299,7 +299,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.stats.procs.thunder_rune_of_re_origination or self.stats.procs.rune_of_re_origination or self.stats.procs.lfr_rune_of_re_origination:
             self.set_re_origination_stat(self.base_stats)
 
-    def get_proc_damage_contribution(self, proc, proc_count, current_stats):
+    def get_proc_damage_contribution(self, proc, proc_count, current_stats, average_ap):
         if proc.stat == 'spell_damage':
             multiplier = self.raid_settings_modifiers('spell')
             crit_multiplier = self.crit_damage_modifiers()
@@ -324,7 +324,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 }
             for i in vial_of_shadows_modifiers:
                 if proc is getattr(self.stats.procs, i):
-                    average_ap = current_stats['ap'] + 2 * current_stats['agi'] + self.base_strength
                     proc_value += vial_of_shadows_modifiers[i] * average_ap
         #280+75% AP
         if proc is getattr(self.stats.procs, 'legendary_capacitive_meta'):
@@ -639,7 +638,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if proc.proc_name not in damage_breakdown:
                 # Toss multiple damage procs with the same name (Avalanche):
                 # attacks_per_second is already being updated with that key.
-                damage_breakdown[proc.proc_name] = self.get_proc_damage_contribution(proc, attacks_per_second[proc.proc_name], current_stats)
+                damage_breakdown[proc.proc_name] = self.get_proc_damage_contribution(proc, attacks_per_second[proc.proc_name], current_stats, average_ap)
 
         self.append_damage_on_use(average_ap, current_stats, damage_breakdown)
 
