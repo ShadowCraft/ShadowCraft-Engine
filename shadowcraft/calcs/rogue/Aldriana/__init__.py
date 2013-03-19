@@ -328,7 +328,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #280+75% AP
         if proc is getattr(self.stats.procs, 'legendary_capacitive_meta'):
             crit_rate = self.melee_crit_rate(agi=current_stats['agi'], crit=current_stats['crit'])
-            proc_value = (current_stats['ap'] + 2 * current_stats['agi'] + self.base_strength) * .75 + 280
+            proc_value = average_ap * .75 + 280
 
         average_hit = proc_value * multiplier
         average_damage = average_hit * (1 + crit_rate * (crit_multiplier - 1)) * proc_count
@@ -1127,6 +1127,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 'haste': self.base_stats['haste'],
                 'mastery': self.base_stats['mastery']
             }
+            current_stats['agi'] *= self.agi_multiplier
 
             self.update_crit_rates_for_4pc_t11(attacks_per_second, crit_rates)
 
@@ -1159,7 +1160,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if self.stats.procs.thunder_talisman_of_bloodlust or self.stats.procs.talisman_of_bloodlust or self.stats.procs.lfr_talisman_of_bloodlust:
                 self.update_talisman_of_bloodlust(current_stats, attacks_per_second, crit_rates)
 
-            current_stats['agi'] *= self.agi_multiplier
             for stat in ('crit', 'haste', 'mastery'):
                 current_stats[stat] *= self.get_4pc_t12_multiplier()
 
