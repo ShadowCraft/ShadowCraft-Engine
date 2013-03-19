@@ -328,7 +328,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                     proc_value += vial_of_shadows_modifiers[i] * average_ap
         #280+75% AP
         if proc is getattr(self.stats.procs, 'legendary_capacitive_meta'):
-            proc_value += (current_stats['ap'] + 2 * current_stats['agi'] + self.base_strength) * .75
+            crit_rate = self.melee_crit_rate(agi=current_stats['agi'], crit=current_stats['crit'])
+            proc_value = (current_stats['ap'] + 2 * current_stats['agi'] + self.base_strength) * .75 + 280
 
         average_hit = proc_value * multiplier
         average_damage = average_hit * (1 + crit_rate * (crit_multiplier - 1)) * proc_count
@@ -1660,7 +1661,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             elif key in ('autoattack', 'instant_poison', 'deadly_poison', 'main_gauche'):
                 damage_breakdown[key] *= self.bandits_guile_multiplier * self.ksp_multiplier
             else:
-                damage_breakdown[key] *= self.ksp_multiplier
+                damage_breakdown[key] *= self.bandits_guile_multiplier * self.ksp_multiplier
                 
         return damage_breakdown
     
