@@ -1858,7 +1858,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     def rb_actual_cd(self, attacks_per_second, base_cd, avg_rb_effect=10):
         final_cd = base_cd
         #if it's best to always use 5CP finishers as combat now, it should continue to be so, this is simpler
-        offensive_finisher_rate = attacks_per_second['eviscerate'][5] + attacks_per_second['rupture']
+        offensive_finisher_rate = attacks_per_second['eviscerate'][5]
+        if 'rupture' in attacks_per_second:
+            offensive_finisher_rate += attacks_per_second['rupture']
         #should never happen, catch error just in case
         if offensive_finisher_rate != 0:
             final_cds = base_cd * (1 - avg_rb_effect / (1. / offensive_finisher_rate + avg_rb_effect))
@@ -1866,7 +1868,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     
     def rb_cd_modifier(self, attacks_per_second, avg_rb_effect=10):
         #if it's best to always use 5CP finishers as combat now, it should continue to be so, this is simpler
-        offensive_finisher_rate = attacks_per_second['eviscerate'][5] + attacks_per_second['rupture']
+        offensive_finisher_rate = attacks_per_second['eviscerate'][5]
+        if 'rupture' in attacks_per_second:
+            offensive_finisher_rate += attacks_per_second['rupture']
         if offensive_finisher_rate != 0:
             #should never happen, catch error just in case
             return (1 - avg_rb_effect / (1. / offensive_finisher_rate + avg_rb_effect))
