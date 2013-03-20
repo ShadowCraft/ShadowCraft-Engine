@@ -406,9 +406,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         buff_cache = []
         for key in ('haste', 'mastery', 'crit'):
             if key != max_stat[0]:
-                buff_cache.append( (key, -1. * .5 * self.base_stats[key]) ) #artificially reduced by 50%
+                buff_cache.append( (key, -1. * self.base_stats[key]) )
             else:
-                buff_cache.append( (key, (total_stats) * 2. * .5) ) #artificially reduced by 50%
+                buff_cache.append( (key, (total_stats) * 2.) )
         
         self.update_rppm_trinkets()
         # (extremely sloppy)
@@ -1191,7 +1191,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 self.set_uptime(proc, attacks_per_second, crit_rates)
                 if proc.stat == 'multi':
                     for e in proc.buffs:
-                        current_stats[ e[0] ] += proc.uptime * e[1]
                         if proc.stat == 'agi':
                             current_stats[ e[0] ] += proc.uptime * e[1] * self.agi_multiplier
                         elif proc.stat in ('crit', 'haste', 'mastery'):
