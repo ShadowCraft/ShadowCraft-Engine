@@ -270,6 +270,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                     self.base_stats[stat] += (boost['value'] * boost['duration']) * 1.0 / self.settings.duration
 
         self.agi_multiplier = self.buffs.stat_multiplier() * self.stats.gear_buffs.leather_specialization_multiplier()
+        if self.settings.is_subtlety_rogue():
+            self.agi_multiplier *= 1.30
 
         self.base_strength = self.stats.str + self.buffs.buff_str() + self.race.racial_str
         self.base_strength *= self.buffs.stat_multiplier()
@@ -1861,7 +1863,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     def rb_actual_cds(self, attacks_per_second, base_cds, avg_rb_effect=10):
         final_cds = {}
         #if it's best to always use 5CP finishers as combat now, it should continue to be so, this is simpler
-        offensive_finisher_rate = attacks_per_second['eviscerate'][5] + attacks_per_second['rupture']
+        offensive_finisher_rate = attacks_per_second['eviscerate'][5]
+        if 'rupture' in attacks_per_second:
+            offensive_finisher_rate += attacks_per_second['rupture']
         #should never happen, catch error just in case
         if offensive_finisher_rate != 0:
             for cd_name in base_cds:
@@ -1938,8 +1942,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.base_ambush_energy_cost *= self.stats.gear_buffs.rogue_t15_4pc_reduced_cost()
 
         self.base_energy_regen = 10.
-
-        self.agi_multiplier *= 1.30
 
         damage_breakdown = self.compute_damage(self.subtlety_attack_counts_backstab)
 
