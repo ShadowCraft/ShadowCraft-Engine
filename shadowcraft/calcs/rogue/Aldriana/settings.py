@@ -3,12 +3,13 @@ from shadowcraft.core import exceptions
 class Settings(object):
     # Settings object for AldrianasRogueDamageCalculator.
 
-    def __init__(self, cycle, time_in_execute_range=.35, tricks_on_cooldown=True, response_time=.5, dmg_poison='dp', utl_poison=None,
+    def __init__(self, cycle, time_in_execute_range=.35, tricks_on_cooldown=True, response_time=.5, latency=.05, dmg_poison='dp', utl_poison=None,
                  duration=300, use_opener='always', opener_name='default', is_pvp=False, stormlash=False, shiv_interval=0):
         self.cycle = cycle
         self.time_in_execute_range = time_in_execute_range
         self.tricks_on_cooldown = tricks_on_cooldown
         self.response_time = response_time
+        self.latency = latency
         self.dmg_poison = dmg_poison
         self.utl_poison = utl_poison
         self.duration = duration
