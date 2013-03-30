@@ -34,6 +34,9 @@ class RogueDamageCalculator(DamageCalculator):
     assassination_mastery_conversion = .035
     combat_mastery_conversion = .02
     subtlety_mastery_conversion = .03
+    
+    passive_assassasins_resolve = 1.25
+    passive_sanguinary_veins = 1.2
 
     def __setattr__(self, name, value):
         object.__setattr__(self, name, value)
@@ -116,11 +119,11 @@ class RogueDamageCalculator(DamageCalculator):
             base_modifier += self.assassination_mastery_conversion * self.stats.get_mastery_from_rating(kwargs['mastery'])
         # Assassasins's Resolve
         if self.settings.is_assassination_rogue() and (self.stats.mh.type == 'dagger'):
-            base_modifier *= 1.25
+            base_modifier *= self.passive_assassasins_resolve
         # Sanguinary Vein
         kwargs.setdefault('is_bleeding', True)
         if kwargs['is_bleeding'] and self.settings.is_subtlety_rogue():
-            base_modifier *= 1.2
+            base_modifier *= passive_sanguinary_veins
         # Raid modifiers
         kwargs.setdefault('armor', None)
         ability_type_check = 0
@@ -443,7 +446,7 @@ class RogueDamageCalculator(DamageCalculator):
         }
         return formulas[name]
 
-    def get_spell_stats(self, ability):
+    def get_spell_stats(self, ability, hit_chance=1.0, cost_mod=1.0):
         base_cost = {
             'ambush':              (60, 'strike'),
             'backstab':            (35, 'strike'),

@@ -44,7 +44,7 @@ allowed_procs = {
         'duration': 10,
         'proc_name': 'Rune of Re-Origination',
         'behaviours': {'default': 'rune_of_re_origination'},
-        'scaling': {'factor': 0.0, 'item_level': 541, 'quality': 'epic'}
+        'scaling': {'factor': 0.0, 'item_level': 541, 'quality': 'epic'},
     },
     'heroic_rune_of_re_origination': {
         'stat': 'multi',
@@ -53,7 +53,7 @@ allowed_procs = {
         'duration': 10,
         'proc_name': 'Rune of Re-Origination',
         'behaviours': {'default': 'rune_of_re_origination'},
-        'scaling': {'factor': 0.0, 'item_level': 535, 'quality': 'epic'}
+        'scaling': {'factor': 0.0, 'item_level': 535, 'quality': 'epic'},
     },
     'thunder_rune_of_re_origination': {
         'stat': 'multi',
@@ -62,7 +62,7 @@ allowed_procs = {
         'duration': 10,
         'proc_name': 'Rune of Re-Origination',
         'behaviours': {'default': 'rune_of_re_origination'},
-        'scaling': {'factor': 0.0, 'item_level': 528, 'quality': 'epic'}
+        'scaling': {'factor': 0.0, 'item_level': 528, 'quality': 'epic'},
     },
     'rune_of_re_origination': {
         'stat': 'multi',

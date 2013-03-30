@@ -111,7 +111,17 @@ class Proc(object):
             return True
         else:
             return False
-
+    
+    def is_trinket(self):
+        if self.rppm_trinket:
+            return True
+        return False
+        
+    def rppm_proc_rate(self, haste=1.):
+        if self.is_real_ppm():
+            return haste * self.ppm
+        raise InvalidProcException(_('Invalid proc handling for proc {proc}').format(proc=self.proc_name))
+    
     def proc_rate(self, speed=None, haste=1.0):
         if self.is_ppm():
             if speed is None:
