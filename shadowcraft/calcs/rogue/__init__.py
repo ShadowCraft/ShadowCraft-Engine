@@ -37,6 +37,8 @@ class RogueDamageCalculator(DamageCalculator):
     
     passive_assassasins_resolve = 1.25
     passive_sanguinary_veins = 1.2
+    passive_vitality_ap = 1.3
+    passive_vitality_energy = 1.2
 
     def __setattr__(self, name, value):
         object.__setattr__(self, name, value)
@@ -448,39 +450,39 @@ class RogueDamageCalculator(DamageCalculator):
 
     def get_spell_stats(self, ability, hit_chance=1.0, cost_mod=1.0):
         base_cost = {
-            'ambush':              (60, 'strike'),
-            'backstab':            (35, 'strike'),
-            'dispatch':            (30, 'strike'),
-            'envenom':             (35, 'strike'),
-            'eviscerate':          (35, 'strike'),
-            'garrote':             (45, 'strike'),
-            'hemorrhage':          (30, 'strike'),
-            'mutilate':            (55, 'strike'),
-            'recuperate':          (30, 'buff'),
-            'revealing_strike':    (40, 'strike'),
-            'rupture':             (25, 'strike'),
-            'sinister_strike':     (40, 'strike'),
-            'slice_and_dice':      (25, 'buff'),
-            'tricks_of_the_trade': (15, 'buff'),
-            'shuriken_toss':       (20, 'strike'),
-            # 'crimson_tempest':     (35, 'strike'),
-            # 'deadly_throw':        (35, 'strike'),
-            # 'expose_armor':        (25, 'strike'),
-            # 'feint':               (20, 'buff'),
-            # 'fan_of_knives':       (35, 'point_blank'),
-            # 'blind':               (15, 'debuff'),
-            # 'burst_of_speed':      (60, 'buff'),
-            # 'cheap_shot':          (40, 'debuff'),
-            # 'dismantle':           (25, 'debuff'),
-            # 'distract':            (30, 'debuff'),
-            # 'gouge':               (45, 'debuff'),
-            # 'kick':                (15, 'debuff'),
-            # 'kidney_shot':         (25, 'debuff'),
-            # 'sap':                 (35, 'debuff'),
-            # 'shiv':                (20, 'strike'),
+            'ambush':              (60., 'strike'),
+            'backstab':            (35., 'strike'),
+            'dispatch':            (30., 'strike'),
+            'envenom':             (35., 'strike'),
+            'eviscerate':          (35., 'strike'),
+            'garrote':             (45., 'strike'),
+            'hemorrhage':          (30., 'strike'),
+            'mutilate':            (55., 'strike'),
+            'recuperate':          (30., 'buff'),
+            'revealing_strike':    (40., 'strike'),
+            'rupture':             (25., 'strike'),
+            'sinister_strike':     (40., 'strike'),
+            'slice_and_dice':      (25., 'buff'),
+            'tricks_of_the_trade': (15., 'buff'),
+            'shuriken_toss':       (20., 'strike'),
+            # 'crimson_tempest':     (35., 'strike'),
+            # 'deadly_throw':        (35., 'strike'),
+            # 'expose_armor':        (25., 'strike'),
+            # 'feint':               (20., 'buff'),
+            # 'fan_of_knives':       (35., 'point_blank'),
+            # 'blind':               (15., 'debuff'),
+            # 'burst_of_speed':      (60., 'buff'),
+            # 'cheap_shot':          (40., 'debuff'),
+            # 'dismantle':           (25., 'debuff'),
+            # 'distract':            (30., 'debuff'),
+            # 'gouge':               (45., 'debuff'),
+            # 'kick':                (15., 'debuff'),
+            # 'kidney_shot':         (25., 'debuff'),
+            # 'sap':                 (35., 'debuff'),
+            'shiv':                (20., 'strike'),
         }
         if ability == 'tricks_of_the_trade' and self.glyphs.tricks_of_the_trade:
-            return 
+            return (0, 'buff')
         return base_cost[ability]
     
     def get_spell_cd(self, ability):

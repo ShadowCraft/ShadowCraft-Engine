@@ -18,7 +18,7 @@ class Settings(object):
         self.is_pvp = is_pvp
         self.use_stormlash = stormlash
         self.shiv_interval = int(shiv_interval)
-        self.adv_params = adv_params #TODO
+        self.adv_params = self.interpret_adv_params(adv_params)
         if self.shiv_interval < 10 and not self.shiv_interval == 0:
             self.shiv_interval = 10
         allowed_openers_per_spec = {
@@ -42,7 +42,18 @@ class Settings(object):
 
     def get_spec(self):
         return self.cycle._cycle_type
-
+    
+    def interpret_adv_params(self, s=""):
+        data = {}
+        if s != "" and s:
+            for e in s.split(';'):
+                tmp = e.split(':')
+                try:
+                    data[tmp[0].strip().lower()] = tmp[1].strip().lower() #strip() and lower() needed to prevent some input errors
+                except:
+                    raise exceptions.InvalidInputException(_('Advanced Parameter' + e + ' found corrupt. Properly structure params and try again.'))
+        return data
+    
     def is_assassination_rogue(self):
         return self.get_spec() == 'assassination'
 

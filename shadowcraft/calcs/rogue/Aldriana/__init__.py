@@ -225,15 +225,17 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     def set_constants(self):
         # General setup that we'll use in all 3 cycles.
         self.bonus_energy_regen = 0
-        if self.settings.tricks_on_cooldown and not self.glyphs.tricks_of_the_trade:
-            self.bonus_energy_regen -= 15. / (30 + self.settings.response_time)
+        if self.settings.tricks_on_cooldown:
+            self.bonus_energy_regen -= self.get_spell_stats('tricks_of_the_trade')[0] / (30 + self.settings.response_time)
         if self.settings.shiv_interval != 0:
-            self.bonus_energy_regen -= 20. / self.settings.shiv_interval
+            self.bonus_energy_regen -= self.get_spell_stats('shiv')[0] / self.settings.shiv_interval
         if self.race.arcane_torrent:
             self.bonus_energy_regen += 15. / (120 + self.settings.response_time)
             
         self.set_openers()
         
+        if self.settings.adv_params != {}:
+            self.load_from_advanced_parameters()
         self.base_stats = {
             'agi': self.stats.agi + self.buffs.buff_agi() + self.race.racial_agi,
             'ap': self.stats.ap + 2 * self.level - 30,
@@ -241,7 +243,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             'haste': self.stats.haste,
             'mastery': self.stats.mastery + self.buffs.buff_mast()
         }
-
+        
         for boost in self.race.get_racial_stat_boosts():
             if boost['stat'] in self.base_stats:
                 self.base_stats[boost['stat']] += boost['value'] * boost['duration'] * 1.0 / (boost['cooldown'] + self.settings.response_time)
@@ -269,6 +271,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.agi_multiplier = self.buffs.stat_multiplier() * self.stats.gear_buffs.leather_specialization_multiplier()
         if self.settings.is_subtlety_rogue():
             self.agi_multiplier *= 1.30
+        if 'agi_mod' in self.settings.adv_params:
+            self.agi_multiplier *= self.settings.adv_params['agi_mod']
 
         self.base_strength = self.stats.str + self.buffs.buff_str() + self.race.racial_str
         self.base_strength *= self.buffs.stat_multiplier()
@@ -302,7 +306,44 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.set_re_origination_stat(self.base_stats)
         if self.stats.procs.thunder_rune_of_re_origination or self.stats.procs.rune_of_re_origination or self.stats.procs.lfr_rune_of_re_origination:
             self.set_re_origination_stat(self.base_stats)
-
+    
+    def load_from_advanced_parameters(self):
+        self.stats.agi += self.get_adv_param('agi_bonus')
+        self.stats.agi_mod = self.get_adv_param('agi_mod')
+        self.stats.ap += self.get_adv_param('ap_bonus')
+        self.stats.ap_mod = self.get_adv_param('ap_mod')
+        self.stats.crit += self.get_adv_param('crit_bonus')
+        self.stats.crit_mod = self.get_adv_param('crit_mod')
+        self.stats.haste += self.get_adv_param('haste_bonus')
+        self.stats.haste_mod = self.get_adv_param('haste_mod')
+        self.stats.mastery += self.get_adv_param('mastery_bonus')
+        self.stats.mastery_mod = self.get_adv_param('mastery_mod')
+        self.stats.hit += self.get_adv_param('hit_bonus')
+        self.stats.hit_mod = self.get_adv_param('hit_mod')
+        self.stats.exp += self.get_adv_param('exp_bonus')
+        self.stats.exp_mod = self.get_adv_param('exp_mod')
+        
+        self.stats.haste_bonus = self.get_adv_param('haste_buff')
+        self.stats.damage_mod = self.get_adv_param('damage_mod')
+    
+    def set_adv_param(self, type, val):
+        return
+    
+    def get_adv_param(self, type):
+        if type in self.settings.adv_params:
+            return int(self.settings.adv_params[type])
+        elif 'damage_mod' == type:
+            return 1.
+        elif 'haste_buff' == type:
+            return 1.
+        elif '_bonus' in type:
+            return 0
+        elif '_mod' in type:
+            return 1.
+        elif '_val' in type:
+            return -1
+        raise exceptions.InvalidInputException(_('Improperly defined parameter type: '+type))
+    
     def get_proc_damage_contribution(self, proc, proc_count, current_stats, average_ap):
         if proc.stat == 'spell_damage':
             multiplier = self.raid_settings_modifiers('spell')
@@ -529,7 +570,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         average_ap = current_stats['ap'] + 2 * current_stats['agi'] + self.base_strength
         average_ap *= self.buffs.attack_power_multiplier()
         if self.settings.is_combat_rogue():
-            average_ap *= 1.30
+            average_ap *= self.passive_vitality_ap
 
         damage_breakdown = {}
         
@@ -630,10 +671,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             damage_breakdown['hemorrhage_dot'] = dps_from_hit_hemo[0] + dps_from_crit_hemo[0], dps_from_hit_hemo[1] + dps_from_crit_hemo[1]
 
         if self.settings.use_stormlash:
-            stormlash_mod_table = {'mh_autoattacks': .4 * (self.stats.mh.speed / 2.6),
-                     'oh_autoattacks': .4 * (self.stats.mh.speed / 2.6) * .5, 
+            stormlash_mod_table = {'mh_autoattack_hits': .4 * (self.stats.mh.speed / 2.6),
+                     'oh_autoattack_hits': .2 * (self.stats.mh.speed / 2.6), 
                      'mh_shadow_blade': .4 * (self.stats.mh.speed / 2.6), 
-                     'oh_shadow_blade': .4 * (self.stats.mh.speed / 2.6) * .5, 
+                     'oh_shadow_blade': .2 * (self.stats.mh.speed / 2.6), 
                      'sinister_strike': .5}
             if self.settings.use_stormlash == 'True':
                 self.settings.use_stormlash = 1
@@ -1146,14 +1187,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         for _loop in range(20):
             current_stats = {
-                'agi': self.base_stats['agi'],
+                'agi': self.base_stats['agi'] * self.agi_multiplier,
                 'ap': self.base_stats['ap'],
                 'crit': self.base_stats['crit'],
                 'haste': self.base_stats['haste'],
                 'mastery': self.base_stats['mastery']
             }
-            current_stats['agi'] *= self.agi_multiplier
-
 
             for proc in damage_procs:
                 if not proc.icd:
@@ -1560,16 +1599,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                                'ksp':self.get_spell_cd('killing_spree')}
         self.ks_cd = 120
         self.base_revealing_strike_energy_cost = 32 + 8 / self.geometric_strike_chance
-        self.base_revealing_strike_energy_cost *= self.stats.gear_buffs.rogue_t13_2pc_cost_multiplier()
         self.base_sinister_strike_energy_cost = 32 + 8 / self.geometric_strike_chance
-        self.base_sinister_strike_energy_cost *= self.stats.gear_buffs.rogue_t13_2pc_cost_multiplier()
 
         self.base_energy_regen = 12.
         if self.settings.cycle.blade_flurry:
             self.base_energy_regen *= .8
             
         ar_duration = 15
-        ar_duration += self.stats.gear_buffs.rogue_t13_4pc * 3
         sb_dur = self.get_shadow_blades_duration()
         restless_blades_reduction = 2
         self.ksp_buff = 0.5
@@ -1734,27 +1770,26 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         sinister_strike_energy_cost -= main_gauche_proc_rate * combat_potency_from_mg
         
         ## Base CPs and Attacks
-        #Autoattacks
-        mh_autoswing_type = 'mh_autoattacks'
-        oh_autoswing_type = 'oh_autoattacks'
+        #Autoattacks and SB swings
         if sb:
-            mh_autoswing_type = 'mh_shadow_blade'
-            oh_autoswing_type = 'oh_shadow_blade'
-        attacks_per_second[mh_autoswing_type] = self.attack_speed_increase / self.stats.mh.speed
-        attacks_per_second[oh_autoswing_type] = self.attack_speed_increase / self.stats.oh.speed
-        if not ar and not sb:
-            if self.swing_reset_spacing is not None:
-                attacks_per_second['mh_autoattacks'] *= (1 - max((1 - .5 * self.stats.mh.speed / self.attack_speed_increase), 0) / self.swing_reset_spacing)
-                attacks_per_second['oh_autoattacks'] *= (1 - max((1 - .5 * self.stats.oh.speed / self.attack_speed_increase), 0) / self.swing_reset_spacing)
-        if not sb:
-            attacks_per_second['mh_autoattack_hits'] = attacks_per_second[mh_autoswing_type] * self.dw_mh_hit_chance
-            attacks_per_second['oh_autoattack_hits'] = attacks_per_second[oh_autoswing_type] * self.dw_oh_hit_chance
-            attacks_per_second['main_gauche'] = attacks_per_second['mh_autoattack_hits'] * main_gauche_proc_rate
-        else:
+            attacks_per_second['mh_shadow_blade'] = self.attack_speed_increase / self.stats.mh.speed
+            attacks_per_second['oh_shadow_blade'] = self.attack_speed_increase / self.stats.oh.speed
             attacks_per_second['main_gauche'] = attacks_per_second['mh_shadow_blade'] * main_gauche_proc_rate
+            combat_potency_regen = attacks_per_second['oh_shadow_blade'] * combat_potency_regen_per_oh
+        else:
+            attacks_per_second['mh_autoattacks'] = self.attack_speed_increase / self.stats.mh.speed
+            attacks_per_second['oh_autoattacks'] = self.attack_speed_increase / self.stats.oh.speed
+            if not ar:
+                if self.swing_reset_spacing is not None:
+                    attacks_per_second['mh_autoattacks'] *= (1 - max((1 - .5 * self.stats.mh.speed / self.attack_speed_increase), 0) / self.swing_reset_spacing)
+                    attacks_per_second['oh_autoattacks'] *= (1 - max((1 - .5 * self.stats.oh.speed / self.attack_speed_increase), 0) / self.swing_reset_spacing)
+            attacks_per_second['mh_autoattack_hits'] = attacks_per_second['mh_autoattacks'] * self.dw_mh_hit_chance
+            attacks_per_second['oh_autoattack_hits'] = attacks_per_second['oh_autoattacks'] * self.dw_oh_hit_chance
+            attacks_per_second['main_gauche'] = attacks_per_second['mh_autoattack_hits'] * main_gauche_proc_rate
+            combat_potency_regen = attacks_per_second['oh_autoattack_hits'] * combat_potency_regen_per_oh
+            
         #Base energy
         bonus_energy_from_openers = self.get_bonus_energy_from_openers('sinister_strike', 'revealing_strike')
-        combat_potency_regen = attacks_per_second[oh_autoswing_type] * combat_potency_regen_per_oh
         combat_potency_regen += combat_potency_from_mg * attacks_per_second['main_gauche']
         if self.settings.opener_name in ('ambush', 'garrote'):
             attacks_per_second[self.settings.opener_name] = self.total_openers_per_second
@@ -1787,7 +1822,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         ss_per_snd = (total_eviscerate_cost - cp_per_finisher * self.relentless_strikes_energy_return_per_cp + 25) / sinister_strike_energy_cost
         snd_size = ss_per_snd * (cp_per_cpg + extra_cp_chance)
-        snd_base_cost = 25 * self.stats.gear_buffs.rogue_t13_2pc_cost_multiplier()
+        snd_base_cost = 25
         snd_cost = ss_per_snd / (cp_per_cpg + extra_cp_chance) * sinister_strike_energy_cost + snd_base_cost - snd_size * self.relentless_strikes_energy_return_per_cp
         snd_duration = self.get_snd_length(snd_size)
         energy_spent_on_snd = snd_cost / (snd_duration - self.settings.response_time)

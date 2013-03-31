@@ -106,7 +106,7 @@ class Stats(object):
     def get_pvp_resil_multiplier_from_rating(self, rating=None):
         if rating is None:
             rating = self.pvp_resil
-        return 0.6*(rating/(rating+11727)) + .4 # .4 is base resil
+        return 0.6*(rating/(rating+11727)) + .65 # .4 is base resil
 
 class Weapon(object):
     allowed_melee_enchants = proc_data.allowed_melee_enchants
