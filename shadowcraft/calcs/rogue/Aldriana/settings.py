@@ -3,7 +3,7 @@ from shadowcraft.core import exceptions
 class Settings(object):
     # Settings object for AldrianasRogueDamageCalculator.
 
-    def __init__(self, cycle, time_in_execute_range=.35, tricks_on_cooldown=True, response_time=.5, latency=.05, dmg_poison='dp', utl_poison=None,
+    def __init__(self, cycle, time_in_execute_range=.35, tricks_on_cooldown=True, response_time=.5, latency=.025, dmg_poison='dp', utl_poison=None,
                  duration=300, use_opener='always', opener_name='default', is_pvp=False, stormlash=False, shiv_interval=0, adv_params=None):
         self.cycle = cycle
         self.time_in_execute_range = time_in_execute_range
@@ -32,7 +32,7 @@ class Settings(object):
         if opener_name == 'default':
             default_openers = {
                 'assassination': 'ambush',
-                'combat': 'sinister_strike',
+                'combat': 'ambush',
                 'subtlety': 'ambush'}
             self.opener_name = default_openers[self.get_spec()]
         if dmg_poison not in (None, 'dp', 'wp'):

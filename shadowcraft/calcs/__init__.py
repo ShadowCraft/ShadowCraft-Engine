@@ -23,7 +23,7 @@ class DamageCalculator(object):
     GLANCE_RATE = .24
     GLANCE_MULTIPLIER = .75
     AOE_TARGET_CAP = 20
-
+    
     # Override this in your class specfic subclass to list appropriate stats
     # possible values are agi, str, spi, int, white_hit, spell_hit, yellow_hit,
     # haste, crit, mastery, dodge_exp, parry_exp, oh_dodge_exp, mh_dodge_exp,
@@ -35,8 +35,6 @@ class DamageCalculator(object):
     def __init__(self, stats, talents, glyphs, buffs, race, settings=None, level=85, target_level=None, char_class='rogue'):
         self.tools = class_data.Util()
         self.stats = stats
-        for e in self.stats.__dict__:
-            print e
         self.talents = talents
         self.glyphs = glyphs
         self.buffs = buffs

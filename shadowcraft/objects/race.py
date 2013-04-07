@@ -27,19 +27,20 @@ class Race(object):
         return 1 + 0.25 * ap + .429 * spfi + self.level * 2 + int * 0.50193
 
     racial_stat_offset = {
-        "human":        (0, 0, 0, 0, 0),
-        "night_elf":    (-4, 4, 0, 0, 0),
-        "dwarf":        (5, -4, 1, -1, -1),
-        "gnome":        (-5, 2, 0, 3, 0),
-        "draenei":      (1, -3, 0, 0, 2),
-        "worgen":       (3, 2, 0, -4, -1),
-        "pandaren":     (0, -2, 1, -1, 2),
-        "orc":          (3, -3, 1, -3, 2),
-        "undead":       (-1, -2, 0, -2, 5),
-        "tauren":       (5, -4, 1, -4, 2),
-        "troll":        (1, 2, 0, -4, 1),
-        "blood_elf":    (-3, 2, 0, 3, -2),
-        "goblin":       (-3, 2, 0, 3, -2),
+        "human":        ( 0,  0,  0,  0,  0),
+        "night_elf":    (-4,  4,  0,  0,  0),
+        "dwarf":        ( 5, -4,  1, -1, -1),
+        "gnome":        (-5,  2,  0,  3,  0),
+        "draenei":      ( 1, -3,  0,  0,  2),
+        "worgen":       ( 3,  2,  0, -4, -1),
+        "pandaren":     ( 0, -2,  1, -1,  2),
+        "orc":          ( 3, -3,  1, -3,  2),
+        "undead":       (-1, -2,  0, -2,  5),
+        "tauren":       ( 5, -4,  1, -4,  2),
+        "troll":        ( 1,  2,  0, -4,  1),
+        "blood_elf":    (-3,  2,  0,  3, -2),
+        "goblin":       (-3,  2,  0,  3, -2),
+        "none":         ( 0,  0,  0,  0,  0),
     }
 
     allowed_racials = frozenset([
@@ -94,7 +95,8 @@ class Race(object):
         "troll":        ["regeneration", "beast_slaying", "ranged_specialization", "berserking"],
         "blood_elf":    ["arcane_torrent"],
         "goblin":       ["rocket_barrage", "time_is_money"],
-        "pandaren":     ["epicurean"]
+        "pandaren":     ["epicurean"],
+        "none":         [],
     }
 
     #Note this allows invalid class-race combos
