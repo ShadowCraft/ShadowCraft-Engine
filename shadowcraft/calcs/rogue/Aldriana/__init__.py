@@ -1242,12 +1242,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                         if proc.stat == 'agi':
                             current_stats[ e[0] ] += proc.uptime * e[1] * self.agi_multiplier
                         else:
-                            current_stats[ e[0] ] += proc.uptime * e[1] * self.get_stat_mod(stat)
+                            current_stats[ e[0] ] += proc.uptime * e[1] * self.get_stat_mod(e[0])
                 else:
                     if proc.stat == 'agi':
                         current_stats[proc.stat] += proc.uptime * proc.value * self.agi_multiplier
                     else:
-                        current_stats[proc.stat] += proc.uptime * proc.value * self.get_stat_mod(stat)
+                        current_stats[proc.stat] += proc.uptime * proc.value * self.get_stat_mod(proc.stat)
 
         attacks_per_second, crit_rates = attack_counts_function(current_stats)
 
@@ -1448,59 +1448,55 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             base_cp_per_cpg = 1
             mutilate_extra_cp_chance = 0 # never using mutilate, so no extra cp chance
 
-        if self.talents.anticipation:
-            cp_per_cpg = self.get_cp_per_cpg(1, seal_fate_proc_rate, shadow_blades_uptime, mutilate_extra_cp_chance)
-            cp_distribution, rupture_sizes, avg_cp_per_cpg = self.get_cp_distribution_for_cycle(cp_per_cpg, finisher_size)
+        # This should be handled by the cp_distribution method or something
+        # alike. For now, let's have each sub-distribution computed here.
+        # If we find out a different set of finisher sizes can output a
+        # higher dps, perhaps we'll need to let that be configurable by the
+        # user.
+        cp_distribution = {}
+        rupture_sizes = [0, 0, 0, 0, 0, 0]
+        avg_cp_per_cpg = 0
+        uptime_and_dists_tuples = []
+        if cpg == 'mutilate':
+            for blindside, shadow_blades in [(x, y) for x in (True, False) for y in (True, False)]:
+                # blindside uptime as the amount of connecting cpgs that get 'turned' into dipatches
+                if blindside and shadow_blades:
+                    uptime = shadow_blades_uptime * dispatch_as_cpg_chance
+                    cp_per_cpg = self.get_cp_per_cpg(1, dsp_seal_fate_proc_rate, 1)
+                    current_finisher_size = finisher_size
+                elif blindside and not shadow_blades:
+                    uptime = dispatch_as_cpg_chance - shadow_blades_uptime * dispatch_as_cpg_chance
+                    cp_per_cpg = self.get_cp_per_cpg(1, dsp_seal_fate_proc_rate)
+                    current_finisher_size = finisher_size + 1
+                elif not blindside and shadow_blades:
+                    uptime = shadow_blades_uptime - shadow_blades_uptime * dispatch_as_cpg_chance
+                    cp_per_cpg = self.get_cp_per_cpg(base_cp_per_cpg, mut_seal_fate_proc_rate, 1)
+                    current_finisher_size = finisher_size - 1
+                elif not blindside and not shadow_blades:
+                    uptime = 1 - shadow_blades_uptime - dispatch_as_cpg_chance + shadow_blades_uptime * dispatch_as_cpg_chance
+                    cp_per_cpg = self.get_cp_per_cpg(base_cp_per_cpg, mut_seal_fate_proc_rate)
+                    current_finisher_size = finisher_size
+                dists = self.get_cp_distribution_for_cycle(cp_per_cpg, current_finisher_size)
+                uptime_and_dists_tuples.append((uptime, dists))
         else:
-            # This should be handled by the cp_distribution method or something
-            # alike. For now, let's have each sub-distribution computed here.
-            # If we find out a different set of finisher sizes can output a
-            # higher dps, perhaps we'll need to let that be configurable by the
-            # user.
-            cp_distribution = {}
-            rupture_sizes = [0, 0, 0, 0, 0, 0]
-            avg_cp_per_cpg = 0
-            uptime_and_dists_tuples = []
-            if cpg == 'mutilate':
-                for blindside, shadow_blades in [(x, y) for x in (True, False) for y in (True, False)]:
-                    # blindside uptime as the amount of connecting cpgs that get 'turned' into dipatches
-                    if blindside and shadow_blades:
-                        uptime = shadow_blades_uptime * dispatch_as_cpg_chance
-                        cp_per_cpg = self.get_cp_per_cpg(1, dsp_seal_fate_proc_rate, 1)
-                        current_finisher_size = finisher_size
-                    elif blindside and not shadow_blades:
-                        uptime = dispatch_as_cpg_chance - shadow_blades_uptime * dispatch_as_cpg_chance
-                        cp_per_cpg = self.get_cp_per_cpg(1, dsp_seal_fate_proc_rate)
-                        current_finisher_size = finisher_size + 1
-                    elif not blindside and shadow_blades:
-                        uptime = shadow_blades_uptime - shadow_blades_uptime * dispatch_as_cpg_chance
-                        cp_per_cpg = self.get_cp_per_cpg(base_cp_per_cpg, mut_seal_fate_proc_rate, 1)
-                        current_finisher_size = finisher_size - 1
-                    elif not blindside and not shadow_blades:
-                        uptime = 1 - shadow_blades_uptime - dispatch_as_cpg_chance + shadow_blades_uptime * dispatch_as_cpg_chance
-                        cp_per_cpg = self.get_cp_per_cpg(base_cp_per_cpg, mut_seal_fate_proc_rate)
-                        current_finisher_size = finisher_size
-                    dists = self.get_cp_distribution_for_cycle(cp_per_cpg, current_finisher_size)
-                    uptime_and_dists_tuples.append((uptime, dists))
-            else:
-                for shadow_blades in (True, False):
-                    if shadow_blades:
-                        uptime = shadow_blades_uptime
-                        cp_per_cpg = self.get_cp_per_cpg(base_cp_per_cpg, seal_fate_proc_rate, 1)
-                        current_finisher_size = finisher_size - 1
-                    elif not shadow_blades:
-                        uptime = 1 - shadow_blades_uptime
-                        cp_per_cpg = self.get_cp_per_cpg(base_cp_per_cpg, seal_fate_proc_rate)
-                        current_finisher_size = finisher_size
-                    dists = self.get_cp_distribution_for_cycle(cp_per_cpg, current_finisher_size)
-                    uptime_and_dists_tuples.append((uptime, dists))
+            for shadow_blades in (True, False):
+                if shadow_blades:
+                    uptime = shadow_blades_uptime
+                    cp_per_cpg = self.get_cp_per_cpg(base_cp_per_cpg, seal_fate_proc_rate, 1)
+                    current_finisher_size = finisher_size - 1
+                elif not shadow_blades:
+                    uptime = 1 - shadow_blades_uptime
+                    cp_per_cpg = self.get_cp_per_cpg(base_cp_per_cpg, seal_fate_proc_rate)
+                    current_finisher_size = finisher_size
+                dists = self.get_cp_distribution_for_cycle(cp_per_cpg, current_finisher_size)
+                uptime_and_dists_tuples.append((uptime, dists))
 
-            for uptime, dists in uptime_and_dists_tuples:
-                for i in dists[0]:
-                    cp_distribution.setdefault(i, 0)
-                    cp_distribution[i] += dists[0][i] * uptime
-                rupture_sizes = [i + j * uptime for i, j in zip(rupture_sizes, dists[1])]
-                avg_cp_per_cpg += dists[2] * uptime
+        for uptime, dists in uptime_and_dists_tuples:
+            for i in dists[0]:
+                cp_distribution.setdefault(i, 0)
+                cp_distribution[i] += dists[0][i] * uptime
+            rupture_sizes = [i + j * uptime for i, j in zip(rupture_sizes, dists[1])]
+            avg_cp_per_cpg += dists[2] * uptime
 
         avg_rupture_size = sum([i * rupture_sizes[i] for i in xrange(6)])
         avg_rupture_length = 4. * (1 + avg_rupture_size + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp())
@@ -1518,9 +1514,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             cpg_per_finisher += cpgs * probability
             cp_per_finisher += cps * probability
             envenom_size_breakdown[cps] += probability
-
-        if self.talents.anticipation:
-            cpg_per_finisher = cpg_per_rupture # Blindside's seal fate is not computed in the cp dist.
 
         attacks_per_second['rupture'] = 1 / avg_cycle_length
 
@@ -1573,11 +1566,123 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 attack_speed_multiplier=attack_speed_multiplier)
 
         return attacks_per_second, crit_rates
+    
+    def assassination_attack_counts_anticipation(self, current_stats, cpg, finisher_size):
+        attacks_per_second = {}
+        crit_rates = self.get_crit_rates(current_stats)
+
+        haste_multiplier = self.stats.get_haste_multiplier_from_rating(current_stats['haste']) * self.true_haste_mod
+
+        energy_regen = self.base_energy_regen * haste_multiplier
+        energy_regen += self.bonus_energy_regen
+
+        vw_energy_return = 10
+        vw_proc_chance = .75
+        vw_energy_per_bleed_tick = vw_energy_return * vw_proc_chance
+
+        blindside_proc_rate = [0, .3 * self.strike_hit_chance][cpg == 'mutilate']
+        dispatch_as_cpg_chance = blindside_proc_rate / (1 + blindside_proc_rate)
+
+        opener_net_cost = self.get_net_energy_cost(self.settings.opener_name)
+        opener_net_cost *= self.get_shadow_focus_multiplier(opener_net_cost)
+
+        if self.settings.opener_name == 'garrote':
+            # Only the first tick at the start of the fight. Not precise but better than nothing.
+            energy_regen += vw_energy_return * vw_proc_chance / self.settings.duration
+            attacks_per_second['venomous_wounds'] = vw_proc_chance / self.settings.duration
+
+        energy_regen -= opener_net_cost * self.total_openers_per_second
+
+        attacks_per_second[self.settings.opener_name] = self.total_openers_per_second
+
+        energy_regen_with_rupture = energy_regen + 0.5 * vw_energy_per_bleed_tick
+
+        attack_speed_multiplier = self.base_speed_multiplier * haste_multiplier
+        self.attack_speed_increase = attack_speed_multiplier
+
+        shadow_blades_uptime = self.get_shadow_blades_uptime()
+                
+        blindside_cost = 0
+        mutilate_cost = self.get_spell_stats('mutilate')[0]
+        if cpg == 'mutilate':
+            cpg_energy_cost = blindside_cost + mutilate_cost
+            cpg_energy_cost *= self.stats.gear_buffs.rogue_t15_4pc_reduced_cost()
+        else:
+            cpg_energy_cost = 30
+        mutilate_cps = 3 - (1 - crit_rates['mutilate']) ** 2 # 1 - (1 - crit_rates['mutilate']) ** 2   is for 
+        dispatch_cps = 1 + crit_rates['dispatch']
+        if cpg == 'mutilate':
+            avg_cp_per_cpg = mutilate_cps + dispatch_cps * blindside_proc_rate
+        else:
+            avg_cp_per_cpg = dispatch_cps
+            
+        cp_per_finisher = 5
+        avg_rupture_length = 4. * (1 + cp_per_finisher + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp())
+        rupture_sizes = [0,0,0,0,0,1]
+        avg_wait_to_strike_connect = 1 / self.geometric_strike_chance - 1
+        avg_gap = 0 + .5 * (avg_wait_to_strike_connect + .5 * self.settings.response_time)
+        avg_cycle_length = avg_gap + avg_rupture_length
+        energy_per_cycle = avg_rupture_length * energy_regen_with_rupture + avg_gap * energy_regen
+
+        cpg_per_finisher = cp_per_finisher / avg_cp_per_cpg
+
+        attacks_per_second['rupture'] = 1 / avg_cycle_length
+        
+        energy_for_rupture = cpg_per_finisher * cpg_energy_cost + self.base_rupture_energy_cost*self.stats.gear_buffs.rogue_t15_4pc_reduced_cost()
+        energy_for_rupture -= cp_per_finisher * self.relentless_strikes_energy_return_per_cp
+        energy_for_envenoms = energy_per_cycle - energy_for_rupture
+
+        envenom_energy_cost = cpg_per_finisher * cpg_energy_cost + self.envenom_energy_cost*self.stats.gear_buffs.rogue_t15_4pc_reduced_cost()
+        envenom_energy_cost -= cp_per_finisher * self.relentless_strikes_energy_return_per_cp
+        envenoms_per_cycle = energy_for_envenoms / envenom_energy_cost
+
+        envenoms_per_second = envenoms_per_cycle / avg_cycle_length
+        cpgs_per_second = envenoms_per_second * cpg_per_finisher + attacks_per_second['rupture'] * cpg_per_finisher
+        if cpg in attacks_per_second:
+            attacks_per_second[cpg] += cpgs_per_second
+        else:
+            attacks_per_second[cpg] = cpgs_per_second
+        if cpg == 'mutilate':
+            attacks_per_second['mutilate'] *= 1 - dispatch_as_cpg_chance
+            attacks_per_second['dispatch'] = cpgs_per_second * dispatch_as_cpg_chance
+        if self.settings.opener_name == 'mutilate':
+            attacks_per_second['mutilate'] += self.total_openers_per_second
+            attacks_per_second['dispatch'] += self.total_openers_per_second * blindside_proc_rate
+
+        #attacks_per_second['envenom'] = [finisher_chance * envenoms_per_second for finisher_chance in envenom_size_breakdown]
+        attacks_per_second['envenom'] = [0, 0, 0, 0, 0, envenoms_per_second]
+
+        rupture_ticks_per_second = 2 * (1 + 5 + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp()) / avg_cycle_length #5 since all 5CP ruptures
+        attacks_per_second['rupture_ticks'] = [0, 0, 0, 0, 0, rupture_ticks_per_second] #ticks_per_rupture * attacks_per_second['rupture'] * rupture_sizes[5]
+
+        if 'venomous_wounds' in attacks_per_second:
+            attacks_per_second['venomous_wounds'] += rupture_ticks_per_second * vw_proc_chance * self.poison_hit_chance
+        else:
+            attacks_per_second['venomous_wounds'] = rupture_ticks_per_second * vw_proc_chance * self.poison_hit_chance
+
+        if 'garrote' in attacks_per_second:
+            attacks_per_second['garrote_ticks'] = 6 * attacks_per_second['garrote']
+        for opener, cps in [('ambush', 2), ('garrote', 1)]:
+            if opener in attacks_per_second:
+                if opener == 'ambush':
+                    cps += crit_rates[opener]
+                extra_finishers_per_second = attacks_per_second[opener] * cps / 5
+                attacks_per_second['envenom'][5] += extra_finishers_per_second
+
+        self.update_with_autoattack_passives(attacks_per_second,
+                shadow_blades_uptime=shadow_blades_uptime,
+                attack_speed_multiplier=attack_speed_multiplier)
+
+        return attacks_per_second, crit_rates
 
     def assassination_attack_counts_non_execute(self, current_stats):
+        if self.talents.anticipation:
+            return self.assassination_attack_counts_anticipation(current_stats, 'mutilate', self.settings.cycle.min_envenom_size_non_execute)
         return self.assassination_attack_counts(current_stats, 'mutilate', self.settings.cycle.min_envenom_size_non_execute)
 
     def assassination_attack_counts_execute(self, current_stats):
+        if self.talents.anticipation:
+            return self.assassination_attack_counts_anticipation(current_stats, 'dispatch', self.settings.cycle.min_envenom_size_non_execute)
         return self.assassination_attack_counts(current_stats, 'dispatch', self.settings.cycle.min_envenom_size_execute)
 
     ###########################################################################
