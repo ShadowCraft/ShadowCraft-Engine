@@ -75,7 +75,7 @@ class RogueDamageCalculator(DamageCalculator):
         self.env_base_dmg =     self.get_factor(0.3849999905) # 22420
         self.ct_base_dmg =      self.get_factor(0.4760000110) # 150471
         self.fok_base_dmg =     self.get_factor(1.0000000000, 0.4000000060) # 44107
-        self.st_base_dmg =      self.get_factor(1.0000000000) # 127100
+        self.st_base_dmg =      self.get_factor(2.0000000000) # 127100
         self.vw_percentage_dmg = .160 # spellID 79136 (was .168)
         self.dp_percentage_dmg = .213 # spellID 2818
         self.wp_percentage_dmg = .120 # spellID 8680
@@ -125,7 +125,7 @@ class RogueDamageCalculator(DamageCalculator):
         # Sanguinary Vein
         kwargs.setdefault('is_bleeding', True)
         if kwargs['is_bleeding'] and self.settings.is_subtlety_rogue():
-            base_modifier *= passive_sanguinary_veins
+            base_modifier *= self.passive_sanguinary_veins
         # Raid modifiers
         kwargs.setdefault('armor', None)
         ability_type_check = 0
@@ -356,11 +356,11 @@ class RogueDamageCalculator(DamageCalculator):
         return damage, crit_damage
 
     def envenom_damage(self, ap, cp, mastery=None):
-        mult, crit_mult = self.get_modifiers('spell', 'executioner', 'potent_poisons', mastery=mastery)
+        mult, crit_mult = self.get_modifiers('spell', 'potent_poisons', mastery=mastery)
 
         damage = (self.env_base_dmg * cp + 0.134 * cp * ap) * mult
         crit_damage = damage * crit_mult
-
+        
         return damage, crit_damage
 
     def fan_of_knives_damage(self, ap, armor=None, is_bleeding=True):
@@ -411,7 +411,7 @@ class RogueDamageCalculator(DamageCalculator):
         # TODO verify data
         mult, crit_mult = self.get_modifiers('physical', is_bleeding=is_bleeding)
         
-        damage = (self.st_base_dmg + .3 * ap) * mult
+        damage = (self.st_base_dmg + .6 * ap) * mult
         crit_damage = damage * crit_mult
         
         return damage, crit_damage
@@ -450,40 +450,42 @@ class RogueDamageCalculator(DamageCalculator):
 
     def get_spell_stats(self, ability, hit_chance=1.0, cost_mod=1.0):
         base_cost = {
-            'ambush':              (60., 'strike'),
-            'backstab':            (35., 'strike'),
-            'dispatch':            (30., 'strike'),
-            'envenom':             (35., 'strike'),
-            'eviscerate':          (35., 'strike'),
-            'garrote':             (45., 'strike'),
-            'hemorrhage':          (30., 'strike'),
-            'mutilate':            (55., 'strike'),
-            'recuperate':          (30., 'buff'),
-            'revealing_strike':    (40., 'strike'),
-            'rupture':             (25., 'strike'),
-            'sinister_strike':     (40., 'strike'),
-            'slice_and_dice':      (25., 'buff'),
-            'tricks_of_the_trade': (15., 'buff'),
-            'shuriken_toss':       (20., 'strike'),
-            # 'crimson_tempest':     (35., 'strike'),
-            # 'deadly_throw':        (35., 'strike'),
-            # 'expose_armor':        (25., 'strike'),
-            # 'feint':               (20., 'buff'),
-            # 'fan_of_knives':       (35., 'point_blank'),
-            # 'blind':               (15., 'debuff'),
-            # 'burst_of_speed':      (60., 'buff'),
-            # 'cheap_shot':          (40., 'debuff'),
-            # 'dismantle':           (25., 'debuff'),
-            # 'distract':            (30., 'debuff'),
-            # 'gouge':               (45., 'debuff'),
-            # 'kick':                (15., 'debuff'),
-            # 'kidney_shot':         (25., 'debuff'),
-            # 'sap':                 (35., 'debuff'),
-            'shiv':                (20., 'strike'),
+            'ambush':              (60, 'strike'),
+            'backstab':            (35, 'strike'),
+            'dispatch':            (30, 'strike'),
+            'envenom':             (35, 'strike'),
+            'eviscerate':          (35, 'strike'),
+            'garrote':             (45, 'strike'),
+            'hemorrhage':          (30, 'strike'),
+            'mutilate':            (55, 'strike'),
+            'recuperate':          (30, 'buff'),
+            'revealing_strike':    (40, 'strike'),
+            'rupture':             (25, 'strike'),
+            'sinister_strike':     (40, 'strike'),
+            'slice_and_dice':      (25, 'buff'),
+            'tricks_of_the_trade': (15, 'buff'),
+            'shuriken_toss':       (40, 'strike'),
+            # 'crimson_tempest':     (35, 'strike'),
+            # 'deadly_throw':        (35, 'strike'),
+            # 'expose_armor':        (25, 'strike'),
+            # 'feint':               (20, 'buff'),
+            # 'fan_of_knives':       (35, 'point_blank'),
+            # 'blind':               (15, 'debuff'),
+            # 'burst_of_speed':      (60, 'buff'),
+            # 'cheap_shot':          (40, 'debuff'),
+            # 'dismantle':           (25, 'debuff'),
+            # 'distract':            (30, 'debuff'),
+            # 'gouge':               (45, 'debuff'),
+            # 'kick':                (15, 'debuff'),
+            # 'kidney_shot':         (25, 'debuff'),
+            # 'sap':                 (35, 'debuff'),
+            'shiv':                (20, 'strike'),
         }
         if ability == 'tricks_of_the_trade' and self.glyphs.tricks_of_the_trade:
             return (0, 'buff')
-        return base_cost[ability]
+        cost = base_cost[ability][0] * cost_mod
+        final_cost = cost * .8 + cost * .2 / hit_chance
+        return (final_cost, base_cost[ability][1])
     
     def get_spell_cd(self, ability):
         base_cd = {

@@ -1595,38 +1595,37 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         attacks_per_second[self.settings.opener_name] = self.total_openers_per_second
 
-        energy_regen_with_rupture = energy_regen + 0.5 * vw_energy_per_bleed_tick
-
         attack_speed_multiplier = self.base_speed_multiplier * haste_multiplier
         self.attack_speed_increase = attack_speed_multiplier
 
         shadow_blades_uptime = self.get_shadow_blades_uptime()
                 
         blindside_cost = 0
-        mutilate_cost = self.get_spell_stats('mutilate')[0]
+        mutilate_cost = self.get_spell_stats('mutilate', cost_mod=self.stats.gear_buffs.rogue_t15_4pc_reduced_cost(),
+                                             hit_chance=self.geometric_strike_chance)[0]
         if cpg == 'mutilate':
             cpg_energy_cost = blindside_cost + mutilate_cost
-            cpg_energy_cost *= self.stats.gear_buffs.rogue_t15_4pc_reduced_cost()
         else:
             cpg_energy_cost = 30
         mutilate_cps = 3 - (1 - crit_rates['mutilate']) ** 2 # 1 - (1 - crit_rates['mutilate']) ** 2   is for 
         dispatch_cps = 1 + crit_rates['dispatch']
         if cpg == 'mutilate':
-            avg_cp_per_cpg = mutilate_cps + dispatch_cps * blindside_proc_rate
+            avg_cp_per_cpg = mutilate_cps + dispatch_cps * blindside_proc_rate + shadow_blades_uptime * (1+blindside_proc_rate)
         else:
-            avg_cp_per_cpg = dispatch_cps
+            avg_cp_per_cpg = dispatch_cps + shadow_blades_uptime 
             
         cp_per_finisher = 5
-        avg_rupture_length = 4. * (1 + cp_per_finisher + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp())
-        rupture_sizes = [0,0,0,0,0,1]
+        avg_rupture_length = 4. * (6 + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp()) # 1+5 since all 5CP ruptures
         avg_wait_to_strike_connect = 1 / self.geometric_strike_chance - 1
         avg_gap = 0 + .5 * (avg_wait_to_strike_connect + .5 * self.settings.response_time)
         avg_cycle_length = avg_gap + avg_rupture_length
-        energy_per_cycle = avg_rupture_length * energy_regen_with_rupture + avg_gap * energy_regen
-
-        cpg_per_finisher = cp_per_finisher / avg_cp_per_cpg
-
         attacks_per_second['rupture'] = 1 / avg_cycle_length
+        rupture_ticks_per_second = 2 * (6 + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp()) / avg_cycle_length # 1+5 since all 5CP ruptures
+        attacks_per_second['rupture_ticks'] = [0, 0, 0, 0, 0, rupture_ticks_per_second]
+        
+        energy_regen_with_rupture = energy_regen + attacks_per_second['rupture_ticks'][5] * vw_energy_per_bleed_tick
+        energy_per_cycle = avg_rupture_length * energy_regen_with_rupture + avg_gap * energy_regen
+        cpg_per_finisher = cp_per_finisher / avg_cp_per_cpg
         
         energy_for_rupture = cpg_per_finisher * cpg_energy_cost + self.base_rupture_energy_cost*self.stats.gear_buffs.rogue_t15_4pc_reduced_cost()
         energy_for_rupture -= cp_per_finisher * self.relentless_strikes_energy_return_per_cp
@@ -1643,17 +1642,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         else:
             attacks_per_second[cpg] = cpgs_per_second
         if cpg == 'mutilate':
-            attacks_per_second['mutilate'] *= 1 - dispatch_as_cpg_chance
-            attacks_per_second['dispatch'] = cpgs_per_second * dispatch_as_cpg_chance
+            attacks_per_second['dispatch'] = cpgs_per_second * blindside_proc_rate
         if self.settings.opener_name == 'mutilate':
             attacks_per_second['mutilate'] += self.total_openers_per_second
             attacks_per_second['dispatch'] += self.total_openers_per_second * blindside_proc_rate
 
         #attacks_per_second['envenom'] = [finisher_chance * envenoms_per_second for finisher_chance in envenom_size_breakdown]
         attacks_per_second['envenom'] = [0, 0, 0, 0, 0, envenoms_per_second]
-
-        rupture_ticks_per_second = 2 * (1 + 5 + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp()) / avg_cycle_length #5 since all 5CP ruptures
-        attacks_per_second['rupture_ticks'] = [0, 0, 0, 0, 0, rupture_ticks_per_second] #ticks_per_rupture * attacks_per_second['rupture'] * rupture_sizes[5]
 
         if 'venomous_wounds' in attacks_per_second:
             attacks_per_second['venomous_wounds'] += rupture_ticks_per_second * vw_proc_chance * self.poison_hit_chance
@@ -1666,13 +1661,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if opener in attacks_per_second:
                 if opener == 'ambush':
                     cps += crit_rates[opener]
-                extra_finishers_per_second = attacks_per_second[opener] * cps / 5
-                attacks_per_second['envenom'][5] += extra_finishers_per_second
-
+                attacks_per_second['envenom'][5] += attacks_per_second[opener] * cps / 5
+        attacks_per_second['envenom'][5] += 1. / 180 #shoddy handling of Vendetta + SB stacking. Needs better implementation.
+        
         self.update_with_autoattack_passives(attacks_per_second,
                 shadow_blades_uptime=shadow_blades_uptime,
                 attack_speed_multiplier=attack_speed_multiplier)
-
+        
+        #print attacks_per_second
         return attacks_per_second, crit_rates
 
     def assassination_attack_counts_non_execute(self, current_stats):

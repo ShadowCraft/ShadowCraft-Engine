@@ -44,7 +44,7 @@ class DamageCalculator(object):
         self.target_level = [target_level, level + 3][target_level is None]
         self.level_difference = max(self.target_level - level, 0)
         self.level = level
-        if self.stats.gear_buffs.mixology and self.buffs.agi_flask:
+        if self.stats.gear_buffs.mixology and (self.buffs.agi_flask or self.buffs.agi_flask_mop):
             self.stats.agi += self.stats.gear_buffs.tradeskill_bonus()
         if self.stats.gear_buffs.master_of_anatomy:
             self.stats.crit += self.stats.gear_buffs.tradeskill_bonus('master_of_anatomy')

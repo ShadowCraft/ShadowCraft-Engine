@@ -25,48 +25,52 @@ start = clock()
 
 # Set up level/class/race
 test_level = 90
-test_race = race.Race('pandaren')
+test_race = race.Race('worgen')
 test_class = 'rogue'
 
 # Set up buffs.
 test_buffs = buffs.Buffs(
-        'short_term_haste_buff',
-        'stat_multiplier_buff',
-        'crit_chance_buff',
-        'mastery_buff',
-        'melee_haste_buff',
-        'attack_power_buff',
-        'spell_haste_buff',
-        'armor_debuff',
-        'physical_vulnerability_debuff',
-        'spell_damage_debuff',
-        'agi_flask_mop',
-        'food_300_agi'
+        #'short_term_haste_buff',
+        #'stat_multiplier_buff',
+        #'crit_chance_buff',
+        #'mastery_buff',
+        'melee_haste_buff', #all rogues bring this
+        #'attack_power_buff',
+        #'spell_haste_buff',
+        #'armor_debuff',
+        #'physical_vulnerability_debuff',
+        'spell_damage_debuff', #all rogues bring this
+        #'agi_flask_mop',
+        #'food_300_agi'
     )
 
 # Set up weapons.
-test_mh = stats.Weapon(9243, 1.8, 'dagger', 'dancing_steel')
-test_oh = stats.Weapon(9243, 1.8, 'dagger', 'dancing_steel')
+#test_mh = stats.Weapon(9243, 1.8, 'dagger', 'dancing_steel')
+#test_oh = stats.Weapon(9243, 1.8, 'dagger', 'dancing_steel')
+test_mh = stats.Weapon(7600.5, 1.8, 'dagger', 'dancing_steel')
+test_oh = stats.Weapon(7600.5, 1.8, 'dagger', 'dancing_steel')
 
 # Set up procs.
-test_procs = procs.ProcsList( ('heroic_bad_juju', 0), ('heroic_talisman_of_bloodlust', 0), 'legendary_capacitive_meta')
+#test_procs = procs.ProcsList( ('heroic_bad_juju', 0), ('heroic_talisman_of_bloodlust', 0), 'legendary_capacitive_meta')
+test_procs = procs.ProcsList( ('vicious_talisman_of_the_shado-pan_assault', 0), ('lfr_talisman_of_bloodlust', 0))
 
 # Set up gear buffs.
-test_gear_buffs = stats.GearBuffs('rogue_t15_2pc', 'rogue_t15_4pc', 'leather_specialization', 'virmens_bite', 'virmens_bite_prepot')
+#test_gear_buffs = stats.GearBuffs('rogue_t15_2pc', 'rogue_t15_4pc', 'leather_specialization', 'virmens_bite', 'virmens_bite_prepot')
+test_gear_buffs = stats.GearBuffs('rogue_t14_2pc', 'leather_specialization', 'chaotic_metagem')
 
 # Set up a calcs object..
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          str=80,
-                         agi=21900,
-                         stam=25999,
-                         crit=4645,
-                         hit=2668,
-                         exp=2550,
-                         haste=4644,
-                         mastery=11099)
+                         agi=17268,
+                         stam=20042,
+                         crit=2946,
+                         hit=3026,
+                         exp=2149,
+                         haste=4616,
+                         mastery=6468)
 
 # Initialize talents..
-test_talents = talents.Talents('322210', test_class, test_level)
+test_talents = talents.Talents('322213', test_class, test_level)
 
 # Set up glyphs.
 glyph_list = ['recuperate', 'sprint'] #just to have something
@@ -80,6 +84,14 @@ test_settings = settings.Settings(test_cycle, response_time=.5, duration=360, dm
 
 # Build a DPS object.
 calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_glyphs, test_buffs, test_race, test_settings, test_level)
+
+# Compute DPS Breakdown.
+dps_breakdown = calculator.get_dps_breakdown()
+total_dps = sum(entry[1] for entry in dps_breakdown.items())
+non_execute_breakdown = calculator.assassination_dps_breakdown_non_execute()
+non_execute_total = sum(entry[1] for entry in non_execute_breakdown.items())
+execute_breakdown = calculator.assassination_dps_breakdown_execute()
+execute_total = sum(entry[1] for entry in execute_breakdown.items())
 
 # Compute EP values.
 ep_values = calculator.get_ep()
@@ -117,9 +129,6 @@ trinkets_list = [
 #trinkets_ep_value['flashing_steel_talisman'] += 509 * ep_values['haste'] + 338 * ep_values['mastery']
 #glyph_values = calculator.get_glyphs_ranking()
 
-# Compute DPS Breakdown.
-dps_breakdown = calculator.get_dps_breakdown()
-total_dps = sum(entry[1] for entry in dps_breakdown.items())
 talent_ranks = calculator.get_talents_ranking()
 
 def max_length(dict_list):
@@ -162,14 +171,10 @@ print ''
 print "Request time: %s sec" % (clock() - start)
 
 
-non_execute_breakdown = calculator.assassination_dps_breakdown_non_execute()
-non_execute_total = sum(entry[1] for entry in non_execute_breakdown.items())
 print 'non-execute breakdown: '
 pretty_print([non_execute_breakdown], total_sum=non_execute_total, show_percent=True)
 print ' ' * (max_length([non_execute_breakdown]) + 1), non_execute_total, _("total damage per second.")
 
-execute_breakdown = calculator.assassination_dps_breakdown_execute()
-execute_total = sum(entry[1] for entry in execute_breakdown.items())
 print 'execute breakdown: '
 pretty_print([execute_breakdown], total_sum=execute_total, show_percent=True)
 print ' ' * (max_length([execute_breakdown]) + 1), execute_total, _("total damage per second.")
