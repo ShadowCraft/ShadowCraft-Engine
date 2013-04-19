@@ -45,6 +45,7 @@ class Settings(object):
     
     def interpret_adv_params(self, s=""):
         data = {}
+        max_effects = 10
         if s != "" and s:
             for e in s.split(';'):
                 tmp = e.split(':')

@@ -717,7 +717,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     def get_net_energy_cost(self, ability):
         stats = self.get_spell_stats(ability)
-        hit_chance = (1, self.strike_hit_chance)[stats[1] == 'strike']
+        hit_chance = (1, self.geometric_strike_chance)[stats[1] == 'strike']
         return stats[0] * (.8 + .2 / hit_chance)
 
     def get_activated_uptime(self, duration, cooldown, use_response_time=True):
@@ -1395,6 +1395,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         crit_rates = self.get_crit_rates(current_stats)
 
         haste_multiplier = self.stats.get_haste_multiplier_from_rating(current_stats['haste']) * self.true_haste_mod
+        ability_cost_modifier = self.stats.gear_buffs.rogue_t15_4pc_reduced_cost()
 
         energy_regen = self.base_energy_regen * haste_multiplier
         energy_regen += self.bonus_energy_regen
@@ -1411,7 +1412,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         opener_net_cost = self.get_net_energy_cost(self.settings.opener_name)
         opener_net_cost *= self.get_shadow_focus_multiplier(opener_net_cost)
-        opener_net_cost *= self.stats.gear_buffs.rogue_t15_4pc_reduced_cost()
+        opener_net_cost *= ability_cost_modifier
 
         if self.settings.opener_name == 'garrote':
             energy_regen += vw_energy_return * vw_proc_chance / self.settings.duration # Only the first tick at the start of the fight
@@ -1517,11 +1518,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         attacks_per_second['rupture'] = 1 / avg_cycle_length
 
-        energy_for_rupture = cpg_per_rupture * cpg_energy_cost + self.base_rupture_energy_cost*self.stats.gear_buffs.rogue_t15_4pc_reduced_cost() - avg_rupture_size * self.relentless_strikes_energy_return_per_cp
+        energy_for_rupture = cpg_per_rupture * cpg_energy_cost + self.get_spell_stats('rupture',  hit_chance=self.geometric_strike_chance, cost_mod=ability_cost_modifier)[0]
+        energy_for_rupture -= avg_rupture_size * self.relentless_strikes_energy_return_per_cp
         energy_for_envenoms = energy_per_cycle - energy_for_rupture
 
-        envenom_energy_cost = cpg_per_finisher * cpg_energy_cost + self.envenom_energy_cost - cp_per_finisher * self.relentless_strikes_energy_return_per_cp
-        envenom_energy_cost *= self.stats.gear_buffs.rogue_t15_4pc_reduced_cost()
+        envenom_energy_cost = cpg_per_finisher * cpg_energy_cost + self.get_spell_stats('envenom',  hit_chance=self.geometric_strike_chance, cost_mod=ability_cost_modifier)[0]
+        envenom_energy_cost -= cp_per_finisher * self.relentless_strikes_energy_return_per_cp
         envenoms_per_cycle = energy_for_envenoms / envenom_energy_cost
 
         envenoms_per_second = envenoms_per_cycle / avg_cycle_length
@@ -1572,6 +1574,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         crit_rates = self.get_crit_rates(current_stats)
 
         haste_multiplier = self.stats.get_haste_multiplier_from_rating(current_stats['haste']) * self.true_haste_mod
+        ability_cost_modifier = self.stats.gear_buffs.rogue_t15_4pc_reduced_cost()
 
         energy_regen = self.base_energy_regen * haste_multiplier
         energy_regen += self.bonus_energy_regen
@@ -1601,13 +1604,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         shadow_blades_uptime = self.get_shadow_blades_uptime()
                 
         blindside_cost = 0
-        mutilate_cost = self.get_spell_stats('mutilate', cost_mod=self.stats.gear_buffs.rogue_t15_4pc_reduced_cost(),
-                                             hit_chance=self.geometric_strike_chance)[0]
+        mutilate_cost = self.get_spell_stats('mutilate', cost_mod=ability_cost_modifier, hit_chance=self.geometric_strike_chance)[0]
+        
         if cpg == 'mutilate':
             cpg_energy_cost = blindside_cost + mutilate_cost
         else:
             cpg_energy_cost = 30
-        mutilate_cps = 3 - (1 - crit_rates['mutilate']) ** 2 # 1 - (1 - crit_rates['mutilate']) ** 2   is for 
+        mutilate_cps = 3 - (1 - crit_rates['mutilate']) ** 2 # 1 - (1 - crit_rates['mutilate']) ** 2 is the Seal Fate CP
         dispatch_cps = 1 + crit_rates['dispatch']
         if cpg == 'mutilate':
             avg_cp_per_cpg = mutilate_cps + dispatch_cps * blindside_proc_rate + shadow_blades_uptime * (1+blindside_proc_rate)
@@ -1627,11 +1630,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         energy_per_cycle = avg_rupture_length * energy_regen_with_rupture + avg_gap * energy_regen
         cpg_per_finisher = cp_per_finisher / avg_cp_per_cpg
         
-        energy_for_rupture = cpg_per_finisher * cpg_energy_cost + self.base_rupture_energy_cost*self.stats.gear_buffs.rogue_t15_4pc_reduced_cost()
+        energy_for_rupture = cpg_per_finisher * cpg_energy_cost + self.get_spell_stats('rupture',  hit_chance=self.geometric_strike_chance, cost_mod=ability_cost_modifier)[0]
         energy_for_rupture -= cp_per_finisher * self.relentless_strikes_energy_return_per_cp
         energy_for_envenoms = energy_per_cycle - energy_for_rupture
 
-        envenom_energy_cost = cpg_per_finisher * cpg_energy_cost + self.envenom_energy_cost*self.stats.gear_buffs.rogue_t15_4pc_reduced_cost()
+        envenom_energy_cost = cpg_per_finisher * cpg_energy_cost + self.get_spell_stats('envenom',  hit_chance=self.geometric_strike_chance, cost_mod=ability_cost_modifier)[0]
         envenom_energy_cost -= cp_per_finisher * self.relentless_strikes_energy_return_per_cp
         envenoms_per_cycle = energy_for_envenoms / envenom_energy_cost
 
