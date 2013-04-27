@@ -73,7 +73,7 @@ test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
 test_talents = talents.Talents('322213', test_class, test_level)
 
 # Set up glyphs.
-glyph_list = ['recuperate', 'sprint'] #just to have something
+glyph_list = ['recuperate', 'sprint', 'vendetta'] #just to have something
 test_glyphs = glyphs.Glyphs(test_class, *glyph_list)
 
 # Set up settings.
@@ -129,7 +129,7 @@ trinkets_list = [
 #trinkets_ep_value['flashing_steel_talisman'] += 509 * ep_values['haste'] + 338 * ep_values['mastery']
 #glyph_values = calculator.get_glyphs_ranking()
 
-talent_ranks = calculator.get_talents_ranking()
+#talent_ranks = calculator.get_talents_ranking()
 
 def max_length(dict_list):
     max_len = 0
@@ -161,7 +161,7 @@ dicts_for_pretty_print = [
     #oh_enchants_and_dps_ep_values,
     #trinkets_ep_value,
     #glyph_values,
-    talent_ranks,
+    #talent_ranks,
 ]
 pretty_print(dicts_for_pretty_print)
 

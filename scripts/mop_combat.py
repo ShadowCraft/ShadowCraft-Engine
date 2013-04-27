@@ -62,7 +62,7 @@ test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          stam=25454,
                          crit=3278,
                          hit=2557,
-                         exp=2550,
+                         exp=2549,
                          haste=13206,
                          mastery=6103)
 
@@ -76,7 +76,7 @@ test_glyphs = glyphs.Glyphs(test_class, *glyph_list)
 # Set up settings.
 test_cycle = settings.CombatCycle(stack_cds=True)
 test_settings = settings.Settings(test_cycle, response_time=.5, duration=360, dmg_poison='dp', utl_poison='lp', is_pvp=False, stormlash=1,
-                                  adv_params="", tricks_on_cooldown=False, latency=.025)
+                                  adv_params="", tricks_on_cooldown=False, latency=.025, merge_damage=True)
 
 # Build a DPS object.
 calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_glyphs, test_buffs, test_race, test_settings, test_level)
@@ -86,7 +86,7 @@ dps_breakdown = calculator.get_dps_breakdown()
 total_dps = sum(entry[1] for entry in dps_breakdown.items())
 
 # Compute EP values.
-ep_values = calculator.get_ep()
+ep_values = calculator.get_ep(baseline_dps=total_dps)
 #tier_ep_values = calculator.get_other_ep(['rogue_t14_4pc', 'rogue_t14_2pc', 'rogue_t15_4pc', 'rogue_t15_2pc'])
 #mh_enchants_and_dps_ep_values, oh_enchants_and_dps_ep_values = calculator.get_weapon_ep(dps=True, enchants=True)
 

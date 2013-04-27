@@ -16,8 +16,8 @@ class RogueDamageCalculator(DamageCalculator):
     # calculator will need to know, so things like that go here.
     
     normalize_ep_stat = 'ap' #use 'dps' to prevent normalization
-    default_ep_stats = ['white_hit', 'yellow_hit', 'str', 'agi', 'haste',
-        'crit', 'mastery', 'dodge_exp', 'spell_hit', 'spell_exp', 'ap']
+    # removed default_ep_stats: 'str', 'spell_hit', 'spell_exp'
+    default_ep_stats = ['white_hit', 'yellow_hit', 'agi', 'haste', 'crit', 'mastery', 'dodge_exp', 'ap']
     if normalize_ep_stat in default_ep_stats:
         default_ep_stats.remove(normalize_ep_stat)
     melee_attacks = ['mh_autoattack_hits', 'oh_autoattack_hits', 'mh_shadow_blade', 'oh_shadow_blade', 'autoattack', 'shadow_blades',
@@ -39,7 +39,40 @@ class RogueDamageCalculator(DamageCalculator):
     passive_sanguinary_veins = 1.2
     passive_vitality_ap = 1.3
     passive_vitality_energy = 1.2
-
+    
+    ability_info = {
+            'ambush':              (60, 'strike'),
+            'backstab':            (35, 'strike'),
+            'dispatch':            (30, 'strike'),
+            'envenom':             (35, 'strike'),
+            'eviscerate':          (35, 'strike'),
+            'garrote':             (45, 'strike'),
+            'hemorrhage':          (30, 'strike'),
+            'mutilate':            (55, 'strike'),
+            'recuperate':          (30, 'buff'),
+            'revealing_strike':    (40, 'strike'),
+            'rupture':             (25, 'strike'),
+            'sinister_strike':     (40, 'strike'),
+            'slice_and_dice':      (25, 'buff'),
+            'tricks_of_the_trade': (15, 'buff'),
+            'shuriken_toss':       (40, 'strike'),
+            'shiv':                (20, 'strike'),
+    }
+    ability_cds = {
+            'tricks_of_the_trade': 30,
+            'blind':               90,
+            'kick':                15,
+            'kidney_shot':         20,
+            'shiv':                8,
+            'vanish':              120,
+            'shadow_blades':       180,
+            'vendetta':            120,
+            'adrenaline_rush':     180,
+            'killing_spree':       120,
+            'shadow_dance':        60,
+            'shadowmeld':          120,
+        }
+    
     def __setattr__(self, name, value):
         object.__setattr__(self, name, value)
         if name == 'level':
@@ -48,6 +81,8 @@ class RogueDamageCalculator(DamageCalculator):
     def _set_constants_for_level(self):
         super(RogueDamageCalculator, self)._set_constants_for_level()
         self.agi_per_crit = self.tools.get_agi_per_crit('rogue', self.level) * 100
+        # We only check race here (instead of calcs) because we can assume it's an agi food buff and it applies to every possible rogue calc
+        # Otherwise we would be obligated to have a series of conditions to check for classes
         if self.race.epicurean:
             self.stats.agi += self.buffs.buff_agi(just_food=True)
         if self.settings.is_pvp:
@@ -76,7 +111,7 @@ class RogueDamageCalculator(DamageCalculator):
         self.ct_base_dmg =      self.get_factor(0.4760000110) # 150471
         self.fok_base_dmg =     self.get_factor(1.0000000000, 0.4000000060) # 44107
         self.st_base_dmg =      self.get_factor(2.0000000000) # 127100
-        self.vw_percentage_dmg = .160 # spellID 79136 (was .168)
+        self.vw_percentage_dmg = .160 # spellID 79136
         self.dp_percentage_dmg = .213 # spellID 2818
         self.wp_percentage_dmg = .120 # spellID 8680
         self.ip_percentage_dmg = .109 # spellID 113780
@@ -425,7 +460,6 @@ class RogueDamageCalculator(DamageCalculator):
         return damage, crit_damage
     
     def get_formula(self, name):
-        # TODO: Not finished
         formulas = {
             'backstab':              self.backstab_damage,
             'hemorrhage':            self.hemorrhage_damage,
@@ -449,60 +483,18 @@ class RogueDamageCalculator(DamageCalculator):
         return formulas[name]
 
     def get_spell_stats(self, ability, hit_chance=1.0, cost_mod=1.0):
-        base_cost = {
-            'ambush':              (60, 'strike'),
-            'backstab':            (35, 'strike'),
-            'dispatch':            (30, 'strike'),
-            'envenom':             (35, 'strike'),
-            'eviscerate':          (35, 'strike'),
-            'garrote':             (45, 'strike'),
-            'hemorrhage':          (30, 'strike'),
-            'mutilate':            (55, 'strike'),
-            'recuperate':          (30, 'buff'),
-            'revealing_strike':    (40, 'strike'),
-            'rupture':             (25, 'strike'),
-            'sinister_strike':     (40, 'strike'),
-            'slice_and_dice':      (25, 'buff'),
-            'tricks_of_the_trade': (15, 'buff'),
-            'shuriken_toss':       (40, 'strike'),
-            # 'crimson_tempest':     (35, 'strike'),
-            # 'deadly_throw':        (35, 'strike'),
-            # 'expose_armor':        (25, 'strike'),
-            # 'feint':               (20, 'buff'),
-            # 'fan_of_knives':       (35, 'point_blank'),
-            # 'blind':               (15, 'debuff'),
-            # 'burst_of_speed':      (60, 'buff'),
-            # 'cheap_shot':          (40, 'debuff'),
-            # 'dismantle':           (25, 'debuff'),
-            # 'distract':            (30, 'debuff'),
-            # 'gouge':               (45, 'debuff'),
-            # 'kick':                (15, 'debuff'),
-            # 'kidney_shot':         (25, 'debuff'),
-            # 'sap':                 (35, 'debuff'),
-            'shiv':                (20, 'strike'),
-        }
         if ability == 'tricks_of_the_trade' and self.glyphs.tricks_of_the_trade:
             return (0, 'buff')
-        cost = base_cost[ability][0] * cost_mod
+        
+        if self.ability_info[ability][1] == 'buff':
+            hit_chance = 1. # Buffs can't be dodged, override any hit chance that was mistakenly thrown at the method.
+        cost = self.ability_info[ability][0] * cost_mod
         final_cost = cost * .8 + cost * .2 / hit_chance
-        return (final_cost, base_cost[ability][1])
+        
+        return (final_cost, self.ability_info[ability][1])
     
     def get_spell_cd(self, ability):
-        base_cd = {
-            'tricks_of_the_trade': 30,
-            'blind':               90,
-            'kick':                15,
-            'kidney_shot':         20,
-            'shiv':                8,
-            'vanish':              120,
-            'shadow_blades':       180,
-            'vendetta':            120,
-            'adrenaline_rush':     180,
-            'killing_spree':       120,
-            'shadow_dance':        60,
-            'shadowmeld':          120,
-        }
-        return base_cd[ability]
+        return self.ability_cds[ability]
 
     def melee_crit_rate(self, agi=None, crit=None):
         if agi == None:

@@ -114,7 +114,7 @@ class DamageCalculator(object):
 
         return dps
 
-    def get_ep(self, ep_stats=None, normalize_ep_stat=None):
+    def get_ep(self, ep_stats=None, normalize_ep_stat=None, baseline_dps=None):
         if not normalize_ep_stat:
             normalize_ep_stat = self.normalize_ep_stat
         if not ep_stats:
@@ -122,7 +122,8 @@ class DamageCalculator(object):
         ep_values = {}
         for stat in ep_stats:
             ep_values[stat] = 0
-        baseline_dps = self.get_dps()
+        if baseline_dps == None:
+            baseline_dps = self.get_dps()
         if normalize_ep_stat == 'dps':
             normalize_dps_difference = 1.
         else:
@@ -434,6 +435,7 @@ class DamageCalculator(object):
     def get_talents_ranking(self, list=None):
         talents_ranking = {}
         #self.talents = talents.Talents('000000', self.char_class, self.level)
+        active_tals = self.talents.get_active_talents() #save talents for the end
         self.talents.reset_talents()
         baseline_dps = self.get_dps()
         talent_list = []
@@ -452,7 +454,11 @@ class DamageCalculator(object):
             except:
                 talents_ranking[talent] = _('not implemented')
             setattr(self.talents, talent, not getattr(self.talents, talent))
-
+        
+        #bring back the original talents!
+        for t in active_tals:
+            self.talents.set_talent(t)
+        
         return talents_ranking
 
     def get_dps(self):

@@ -4,7 +4,7 @@ class Settings(object):
     # Settings object for AldrianasRogueDamageCalculator.
 
     def __init__(self, cycle, time_in_execute_range=.35, tricks_on_cooldown=True, response_time=.5, latency=.025, dmg_poison='dp', utl_poison=None,
-                 duration=300, use_opener='always', opener_name='default', is_pvp=False, stormlash=False, shiv_interval=0, adv_params=None):
+                 duration=300, use_opener='always', opener_name='default', is_pvp=False, stormlash=False, shiv_interval=0, adv_params=None, merge_damage=True):
         self.cycle = cycle
         self.time_in_execute_range = time_in_execute_range
         self.tricks_on_cooldown = tricks_on_cooldown
@@ -17,7 +17,8 @@ class Settings(object):
         self.opener_name = opener_name
         self.is_pvp = is_pvp
         self.use_stormlash = stormlash
-        self.shiv_interval = int(shiv_interval)
+        self.merge_damage = merge_damage
+        self.shiv_interval = float(shiv_interval)
         self.adv_params = self.interpret_adv_params(adv_params)
         if self.shiv_interval < 10 and not self.shiv_interval == 0:
             self.shiv_interval = 10
@@ -45,12 +46,16 @@ class Settings(object):
     
     def interpret_adv_params(self, s=""):
         data = {}
-        max_effects = 10
+        max_effects = 8
+        current_effects = 0
         if s != "" and s:
             for e in s.split(';'):
                 tmp = e.split(':')
                 try:
-                    data[tmp[0].strip().lower()] = tmp[1].strip().lower() #strip() and lower() needed to prevent some input errors
+                    data[tmp[0].strip().lower()] = tmp[1].strip().lower() #strip() and lower() needed so that everyone is on the same page
+                    current_effects += 1
+                    if current_effects == max_effects:
+                        return data
                 except:
                     raise exceptions.InvalidInputException(_('Advanced Parameter' + e + ' found corrupt. Properly structure params and try again.'))
         return data
@@ -110,7 +115,7 @@ class CombatCycle(Cycle):
         self.ksp_immediately = bool(ksp_immediately) # Determines whether to KSp the instant it comes off cool or wait until Bandit's Guile stacks up.'
         self.revealing_strike_pooling = bool(revealing_strike_pooling)
         self.bf_targets = bf_targets # The number of targets BF hits
-        self.stack_cds = bool(stack_cds)
+        self.stack_cds = bool(stack_cds) # This refers specifically to stacking SB and AR
 
 class SubtletyCycle(Cycle):
     _cycle_type = 'subtlety'
