@@ -453,72 +453,28 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         buff_cache = []
         for key in ('haste', 'mastery', 'crit'):
             if key != max_stat[0]:
-                buff_cache.append( (key, -1. * self.base_stats[key] / 2) )
+                buff_cache.append( (key, -1. * self.base_stats[key]) )
             else:
-                buff_cache.append( (key, (total_stats)) )
-        
-        self.update_rppm_trinkets()
+                buff_cache.append( (key, (total_stats) * 2) )
+       
         # (extremely sloppy)
         #set buff amounts
         if self.stats.procs.heroic_thunder_rune_of_re_origination:
             self.stats.procs.heroic_thunder_rune_of_re_origination.buffs = buff_cache
+            self.stats.procs.heroic_thunder_rune_of_re_origination.set_rune_of_reorigination_rppm()
         if self.stats.procs.heroic_rune_of_re_origination:
             self.stats.procs.heroic_rune_of_re_origination.buffs = buff_cache
+            self.stats.procs.heroic_rune_of_re_origination.set_rune_of_reorigination_rppm()
         if self.stats.procs.thunder_rune_of_re_origination:
             self.stats.procs.thunder_rune_of_re_origination.buffs = buff_cache
+            self.stats.procs.thunder_rune_of_re_origination.set_rune_of_reorigination_rppm()
         if self.stats.procs.rune_of_re_origination:
             self.stats.procs.rune_of_re_origination.buffs = buff_cache
+            self.stats.procs.rune_of_re_origination.set_rune_of_reorigination_rppm()
         if self.stats.procs.lfr_rune_of_re_origination:
             self.stats.procs.lfr_rune_of_re_origination.buffs = buff_cache
-            
-    def update_talisman_of_bloodlust(self, base_stats, attacks_per_second, crit_rates):
-        #2(ppm) * 1.22(haste) * 1.4(time since last chance) / 60 (sec per min)
-        chance_per_hit = proc_data.behaviours[ self.stats.procs.allowed_procs['talisman_of_bloodlust']['behaviours']['default'] ]['ppm']
-        chance_per_hit *= self.buffs.spell_haste_multiplier() * self.true_haste_mod * self.stats.get_haste_multiplier_from_rating(self.base_stats['haste'])
-        if self.stats.procs.heroic_thunder_talisman_of_bloodlust:
-            chances = self.get_rppm_trinket_triggers_per_second(attacks_per_second, crit_rates, self.stats.procs.heroic_thunder_talisman_of_bloodlust)
-            chance_per_hit *= (1./chances) / 60
-            refresh_chance = 1 - (1-chance_per_hit) ** (chances * 10) #10 for the duration of the buff
-            bonus_uptime =  refresh_chance * .5 + (refresh_chance**2) + (refresh_chance**3) * 1.5 + (refresh_chance**4) * 2 + 1
-            self.stats.procs.heroic_thunder_talisman_of_bloodlust.value = bonus_uptime * self.stats.procs.heroic_thunder_talisman_of_bloodlust.base_value
-        elif self.stats.procs.heroic_talisman_of_bloodlust:
-            chances = self.get_rppm_trinket_triggers_per_second(attacks_per_second, crit_rates, self.stats.procs.heroic_talisman_of_bloodlust)
-            chance_per_hit *= (1./chances) / 60
-            refresh_chance = 1 - (1-chance_per_hit) ** (chances * 10) #10 for the duration of the buff
-            bonus_uptime =  refresh_chance * .5 + (refresh_chance**2) + (refresh_chance**3) * 1.5 + (refresh_chance**4) * 2 + 1
-            self.stats.procs.heroic_talisman_of_bloodlust.value = bonus_uptime * self.stats.procs.heroic_talisman_of_bloodlust.base_value
-        elif self.stats.procs.thunder_talisman_of_bloodlust:
-            chances = self.get_rppm_trinket_triggers_per_second(attacks_per_second, crit_rates, self.stats.procs.thunder_talisman_of_bloodlust)
-            chance_per_hit *= (1./chances) / 60
-            refresh_chance = 1 - (1-chance_per_hit) ** (chances * 10) #10 for the duration of the buff
-            bonus_uptime =  refresh_chance * .5 + (refresh_chance**2) + (refresh_chance**3) * 1.5 + (refresh_chance**4) * 2 + 1
-            self.stats.procs.thunder_talisman_of_bloodlust.value = bonus_uptime * self.stats.procs.thunder_talisman_of_bloodlust.base_value
-        elif self.stats.procs.talisman_of_bloodlust:
-            chances = self.get_rppm_trinket_triggers_per_second(attacks_per_second, crit_rates, self.stats.procs.talisman_of_bloodlust)
-            chance_per_hit *= (1./chances) / 60
-            refresh_chance = 1 - (1-chance_per_hit) ** (chances * 10) #10 for the duration of the buff
-            bonus_uptime =  refresh_chance * .5 + (refresh_chance**2) + (refresh_chance**3) * 1.5 + (refresh_chance**4) * 2 + 1
-            self.stats.procs.talisman_of_bloodlust.value = bonus_uptime * self.stats.procs.talisman_of_bloodlust.base_value
-        elif self.stats.procs.lfr_talisman_of_bloodlust:
-            chances = self.get_rppm_trinket_triggers_per_second(attacks_per_second, crit_rates, self.stats.procs.lfr_talisman_of_bloodlust)
-            chance_per_hit *= (1./chances) / 60
-            refresh_chance = 1 - (1-chance_per_hit) ** (chances * 10) #10 for the duration of the buff
-            bonus_uptime =  refresh_chance * .5 + (refresh_chance**2) + (refresh_chance**3) * 1.5 + (refresh_chance**4) * 2 + 1
-            self.stats.procs.lfr_talisman_of_bloodlust.value = bonus_uptime * self.stats.procs.lfr_talisman_of_bloodlust.base_value
-    
-    def update_rppm_trinkets(self):
-        #for each active proc
-        #  if proc is rppm
-        #    mod rppm by 1/(1.15^( (528-ItemLevel)/15 ))
-        for entry in self.stats.procs.allowed_procs:
-            if self.stats.procs.allowed_procs[entry]['behaviours']['default'] == "rune_of_re_origination":
-                tmp_proc = proc_data.behaviours[ self.stats.procs.allowed_procs[entry]['behaviours']['default'] ]
-                if 'real_ppm' in tmp_proc:
-                    if tmp_proc['real_ppm']:
-                        tmp_proc['ppm'] = 1/(1.15**((528-self.stats.procs.allowed_procs[entry]['scaling']['item_level'])/15.0)) * tmp_proc['base_ppm']
-        #mod_table = {541: 1.1288, 535: 1.0674, 528: 1.0000,
-        #             522: 0.9456, 502: 0.7849, 463: 0.5457}
-        
+            self.stats.procs.lfr_rune_of_re_origination.set_rune_of_reorigination_rppm()
+
     def set_openers(self):
         # Sets the swing_reset_spacing and total_openers_per_second variables.
         opener_cd = [10, 20][self.settings.opener_name == 'garrote']
@@ -969,11 +925,24 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     def set_uptime(self, proc, attacks_per_second, crit_rates):
         if proc.is_real_ppm():
-            #http://us.battle.net/wow/en/forum/topic/8197741003?page=4#79
-            #http://iam.yellingontheinternet.com/2012/10/16/theorycraft-101-how-to-compute-uptime-of-a-proc-based-buff/
+            #http://iam.yellingontheinternet.com/2013/04/12/theorycraft-201-advanced-rppm/
             haste = self.buffs.spell_haste_multiplier() * self.true_haste_mod * self.stats.get_haste_multiplier_from_rating(self.base_stats['haste'])
             #The 1.1307 is a value that increases the proc rate due to bad luck prevention. It /should/ be constant among all rppm proc styles
-            proc.uptime = 1 - math.e ** (-1 * haste * 1.1307 * proc.rppm_proc_rate() * proc.duration / 60)
+            if not proc.icd:
+                if proc.max_stacks <= 1:
+                    proc.uptime = 1.1307 * (1 - math.e ** (-1 * haste * proc.rppm_proc_rate() * proc.duration / 60))
+                else:
+                    print self.buffs.spell_haste_multiplier(), self.true_haste_mod, self.stats.get_haste_multiplier_from_rating(self.base_stats['haste'])
+                    lambd = haste * proc.rppm_proc_rate() * proc.duration / 60
+                    e_lambda = math.e ** lambd
+                    e_minus_lambda = math.e ** (-1 * lambd)
+                    proc.uptime = 1.1307 * (e_lambda - 1) * (1 - ((1 - e_minus_lambda) ** proc.max_stacks))
+                    print proc.proc_name, "uptime", proc.uptime
+                    print proc.proc_name, "value", proc.value
+                    print proc.uptime * proc.value
+            else:
+                mean_proc_time = 60. / (haste * proc.rppm_proc_rate()) + proc.icd - 10
+                proc.uptime = 1.1307 * proc.duration / mean_proc_time
         else:
             procs_per_second = self.get_procs_per_second(proc, attacks_per_second, crit_rates)
 
@@ -1234,12 +1203,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 for stat in stats:
                     current_stats[stat] += proc.uptime * proc.value * self.get_stat_mod(stat)
             
-            #Talisman of Bloodlust
-            if self.stats.procs.heroic_talisman_of_bloodlust or self.stats.procs.heroic_thunder_talisman_of_bloodlust:
-                self.update_talisman_of_bloodlust(current_stats, attacks_per_second, crit_rates)
-            if self.stats.procs.thunder_talisman_of_bloodlust or self.stats.procs.talisman_of_bloodlust or self.stats.procs.lfr_talisman_of_bloodlust:
-                self.update_talisman_of_bloodlust(current_stats, attacks_per_second, crit_rates)
-
             old_attacks_per_second = attacks_per_second
             attacks_per_second, crit_rates = attack_counts_function(current_stats)
 

@@ -150,6 +150,17 @@ class Proc(object):
             return False
         else:
             raise InvalidProcException(_('Invalid data for proc {proc}').format(proc=self.proc_name))
+    
+    # set the rune_of_reorigination_rppm value depending on item level
+    def set_rune_of_reorigination_rppm(self):
+        if self.proc_name != 'Rune of Re-Origination':
+            return False
+        item_level = self.scaling['item_level']
+        if self.scaling['quality'] == 'epic':
+            item_level += self.upgrade_level * 4
+        elif self.scaling['quality'] == 'blue':
+            item_level += self.upgrade_level * 8
+        self.ppm = 1/(1.15**((528-item_level)/15.0)) * self.base_ppm
 
 class ProcsList(object):
     allowed_procs = proc_data.allowed_procs

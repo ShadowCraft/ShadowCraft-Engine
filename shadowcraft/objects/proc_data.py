@@ -44,6 +44,7 @@ allowed_procs = {
         'duration': 10,
         'proc_name': 'Rune of Re-Origination',
         'behaviours': {'default': 'rune_of_re_origination'},
+        'upgradable': True,
         'scaling': {'factor': 0.0, 'item_level': 541, 'quality': 'epic'},
     },
     'heroic_rune_of_re_origination': {
@@ -53,6 +54,7 @@ allowed_procs = {
         'duration': 10,
         'proc_name': 'Rune of Re-Origination',
         'behaviours': {'default': 'rune_of_re_origination'},
+        'upgradable': True,
         'scaling': {'factor': 0.0, 'item_level': 535, 'quality': 'epic'},
     },
     'thunder_rune_of_re_origination': {
@@ -62,6 +64,7 @@ allowed_procs = {
         'duration': 10,
         'proc_name': 'Rune of Re-Origination',
         'behaviours': {'default': 'rune_of_re_origination'},
+        'upgradable': True,
         'scaling': {'factor': 0.0, 'item_level': 528, 'quality': 'epic'},
     },
     'rune_of_re_origination': {
@@ -71,6 +74,7 @@ allowed_procs = {
         'duration': 10,
         'proc_name': 'Rune of Re-Origination',
         'behaviours': {'default': 'rune_of_re_origination'},
+        'upgradable': True,
         'scaling': {'factor': 0.0, 'item_level': 522, 'quality': 'epic'}
     },
     'lfr_rune_of_re_origination': {
@@ -80,6 +84,7 @@ allowed_procs = {
         'duration': 10,
         'proc_name': 'Rune of Re-Origination',
         'behaviours': {'default': 'rune_of_re_origination'},
+        'upgradable': True,
         'scaling': {'factor': 0.0, 'item_level': 502, 'quality': 'epic'}
     },
     'heroic_thunder_bad_juju': {
@@ -88,6 +93,7 @@ allowed_procs = {
         'duration': 20,
         'proc_name': 'Bad Juju',
         'behaviours': {'default': 'bad_juju'},
+        'upgradable': True,
         'scaling': {'factor': 2.4749999046, 'item_level': 541, 'quality': 'epic'}
     },
     'heroic_bad_juju': {
@@ -96,6 +102,7 @@ allowed_procs = {
         'duration': 20,
         'proc_name': 'Bad Juju',
         'behaviours': {'default': 'bad_juju'},
+        'upgradable': True,
         'scaling': {'factor': 2.4749999046, 'item_level': 535, 'quality': 'epic'}
     },
     'thunder_bad_juju': {
@@ -104,6 +111,7 @@ allowed_procs = {
         'duration': 20,
         'proc_name': 'Bad Juju',
         'behaviours': {'default': 'bad_juju'},
+        'upgradable': True,
         'scaling': {'factor': 2.4749999046, 'item_level': 528, 'quality': 'epic'}
     },
     'bad_juju': {
@@ -112,6 +120,7 @@ allowed_procs = {
         'duration': 20,
         'proc_name': 'Bad Juju',
         'behaviours': {'default': 'bad_juju'},
+        'upgradable': True,
         'scaling': {'factor': 2.4749999046, 'item_level': 522, 'quality': 'epic'}
     },
     'lfr_bad_juju': {
@@ -120,6 +129,7 @@ allowed_procs = {
         'duration': 20,
         'proc_name': 'Bad Juju',
         'behaviours': {'default': 'bad_juju'},
+        'upgradable': True,
         'scaling': {'factor': 2.4749999046, 'item_level': 502, 'quality': 'epic'}
     },
     'heroic_thunder_talisman_of_bloodlust': {
@@ -130,7 +140,8 @@ allowed_procs = {
         'max_stacks': 5,
         'proc_name': 'Talisman of Bloodlust',
         'behaviours': {'default': 'talisman_of_bloodlust'},
-        'scaling': {'factor': 0.5189999938, 'item_level': 541, 'quality': 'epic'} # Needs verification
+        'upgradable': True,
+        'scaling': {'factor': 0.5189999938, 'item_level': 541, 'quality': 'epic'}
     },
     'heroic_talisman_of_bloodlust': {
         'stat': 'haste',
@@ -140,7 +151,8 @@ allowed_procs = {
         'max_stacks': 5,
         'proc_name': 'Talisman of Bloodlust',
         'behaviours': {'default': 'talisman_of_bloodlust'},
-        'scaling': {'factor': 0.5189999938, 'item_level': 535, 'quality': 'epic'} # Needs verification
+        'upgradable': True,
+        'scaling': {'factor': 0.5189999938, 'item_level': 535, 'quality': 'epic'}
     },
     'thunder_talisman_of_bloodlust': {
         'stat': 'haste',
@@ -150,7 +162,8 @@ allowed_procs = {
         'max_stacks': 5,
         'proc_name': 'Talisman of Bloodlust',
         'behaviours': {'default': 'talisman_of_bloodlust'},
-        'scaling': {'factor': 0.5189999938, 'item_level': 528, 'quality': 'epic'} # Needs verification
+        'upgradable': True,
+        'scaling': {'factor': 0.5189999938, 'item_level': 528, 'quality': 'epic'}
     },
     'talisman_of_bloodlust': {
         'stat': 'haste',
@@ -160,7 +173,8 @@ allowed_procs = {
         'max_stacks': 5,
         'proc_name': 'Talisman of Bloodlust',
         'behaviours': {'default': 'talisman_of_bloodlust'},
-        'scaling': {'factor': 0.5189999938, 'item_level': 522, 'quality': 'epic'} # Needs verification
+        'upgradable': True,
+        'scaling': {'factor': 0.5189999938, 'item_level': 522, 'quality': 'epic'}
     },
     'lfr_talisman_of_bloodlust': {
         'stat': 'haste',
@@ -170,7 +184,8 @@ allowed_procs = {
         'max_stacks': 5,
         'proc_name': 'Talisman of Bloodlust',
         'behaviours': {'default': 'talisman_of_bloodlust'},
-        'scaling': {'factor': 0.5189999938, 'item_level': 502, 'quality': 'epic'} # Needs verification
+        'upgradable': True,
+        'scaling': {'factor': 0.5189999938, 'item_level': 502, 'quality': 'epic'}
     },
     'heroic_thunder_renatakis_soul_charm': {
         'stat': 'agi',
@@ -178,6 +193,7 @@ allowed_procs = {
         'duration': 20,
         'proc_name': 'Renatakis Sould Charm',
         'behaviours': {'default': 'renatakis_soul_charm'},
+        'upgradable': True,
         'scaling': {'factor': 0.4499999881*5.5, 'item_level': 541, 'quality': 'epic'}
     },
     'heroic_renatakis_soul_charm': {
@@ -186,6 +202,7 @@ allowed_procs = {
         'duration': 20,
         'proc_name': 'Renatakis Sould Charm',
         'behaviours': {'default': 'renatakis_soul_charm'},
+        'upgradable': True,
         'scaling': {'factor': 0.4499999881*5.5, 'item_level': 535, 'quality': 'epic'}
     },
     'thunder_renatakis_soul_charm': {
@@ -194,6 +211,7 @@ allowed_procs = {
         'duration': 20,
         'proc_name': 'Renatakis Sould Charm',
         'behaviours': {'default': 'renatakis_soul_charm'},
+        'upgradable': True,
         'scaling': {'factor': 0.4499999881*5.5, 'item_level': 528, 'quality': 'epic'}
     },
     'renatakis_soul_charm': {
@@ -202,6 +220,7 @@ allowed_procs = {
         'duration': 20,
         'proc_name': 'Renatakis Sould Charm',
         'behaviours': {'default': 'renatakis_soul_charm'},
+        'upgradable': True,
         'scaling': {'factor': 0.4499999881*5.5, 'item_level': 522, 'quality': 'epic'}
     },
     'lfr_renatakis_soul_charm': {
@@ -210,6 +229,7 @@ allowed_procs = {
         'duration': 20,
         'proc_name': 'Renatakis Sould Charm',
         'behaviours': {'default': 'renatakis_soul_charm'},
+        'upgradable': True,
         'scaling': {'factor': 0.4499999881*5.5, 'item_level': 502, 'quality': 'epic'}
     },
     'vicious_talisman_of_the_shado-pan_assault': {
@@ -218,6 +238,8 @@ allowed_procs = {
         'duration': 20,
         'proc_name': 'Shado-Pan_Assault',
         'behaviours': {'default': 'vicious_talisman_of_the_shado-pan_assault'},
+        'upgradable': True,
+        'scaling': {'factor': 2.9700000286, 'item_level': 522, 'quality': 'epic'}
     },
     
     #5.0-5.1
