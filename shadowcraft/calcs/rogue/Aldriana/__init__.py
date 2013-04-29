@@ -932,14 +932,27 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 if proc.max_stacks <= 1:
                     proc.uptime = 1.1307 * (1 - math.e ** (-1 * haste * proc.rppm_proc_rate() * proc.duration / 60))
                 else:
-                    print self.buffs.spell_haste_multiplier(), self.true_haste_mod, self.stats.get_haste_multiplier_from_rating(self.base_stats['haste'])
-                    lambd = haste * proc.rppm_proc_rate() * proc.duration / 60
-                    e_lambda = math.e ** lambd
-                    e_minus_lambda = math.e ** (-1 * lambd)
-                    proc.uptime = 1.1307 * (e_lambda - 1) * (1 - ((1 - e_minus_lambda) ** proc.max_stacks))
-                    print proc.proc_name, "uptime", proc.uptime
-                    print proc.proc_name, "value", proc.value
-                    print proc.uptime * proc.value
+                    # if the trinket procs a haste buff, every new stack increases the chance to proc the next stack
+                    # else use the default method
+                    if proc.stat == 'haste':
+                        static_haste = self.buffs.spell_haste_multiplier() * self.true_haste_mod
+                        upt = 0.
+                        for stack in range(1,proc.max_stacks+1):
+                            # on max_stacks use the average of (max,max-1) so we are accounting in self-refresh at max_stacks
+                            if stack == proc.max_stacks:
+                                stack_size = stack - 0.5
+                            else:
+                                stack_size = stack - 1
+                            full_haste = self.stats.get_haste_multiplier_from_rating(self.base_stats['haste'] + proc.value * stack_size)
+                            lambd = static_haste * full_haste * proc.rppm_proc_rate() * proc.duration / 60
+                            base = 1 - math.e ** (-1 * lambd)
+                            upt += base ** stack
+                        proc.uptime = 1.1307 * upt
+                    else:	
+                        lambd = haste * proc.rppm_proc_rate() * proc.duration / 60
+                        e_lambda = math.e ** lambd
+                        e_minus_lambda = math.e ** (-1 * lambd)
+                        proc.uptime = 1.1307 * (e_lambda - 1) * (1 - ((1 - e_minus_lambda) ** proc.max_stacks))
             else:
                 mean_proc_time = 60. / (haste * proc.rppm_proc_rate()) + proc.icd - 10
                 proc.uptime = 1.1307 * proc.duration / mean_proc_time
