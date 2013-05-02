@@ -1824,7 +1824,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         combat_potency_from_mg = 15 * .2
         
         extra_cp_chance = .2 # Assume all casts during RvS
-        rvs_duration = 18
+        rvs_duration = 24
         restless_blades_reduction = 2
         FINISHER_SIZE = 5
         
@@ -2076,7 +2076,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         damage_breakdown = self.compute_damage(self.subtlety_attack_counts_backstab)
 
         armor_value = self.target_armor()
-        armor_reduction = 1 - .7
+        if self.settings.is_pvp:
+            armor_reduction = .5
+        else:
+            armor_reduction = 0 #100% armor ignore now
         find_weakness_damage_boost = self.armor_mitigation_multiplier(armor_reduction * armor_value) / self.armor_mitigation_multiplier(armor_value)
         find_weakness_multiplier = 1 + (find_weakness_damage_boost - 1) * self.find_weakness_uptime
         
