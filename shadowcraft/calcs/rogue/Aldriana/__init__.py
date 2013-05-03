@@ -2060,11 +2060,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         self.set_constants()
 
-        self.base_hemo_cost = 24 + 6 / self.geometric_strike_chance
+        cost_modifier = self.stats.gear_buffs.rogue_t15_4pc_reduced_cost()        
+        self.base_hemo_cost = self.get_spell_stats('hemorrhage', hit_chance=self.geometric_strike_chance, cost_mod=cost_modifier)[0]
+        self.base_st_cost = self.get_spell_stats('shuriken_toss', hit_chance=self.geometric_strike_chance, cost_mod=cost_modifier)[0]
+
         
-        self.base_st_cost = 16 + 4 / self.geometric_strike_chance
-        
-        self.base_backstab_energy_cost = 28 + 7 / self.geometric_strike_chance
+        self.base_backstab_energy_cost = self.get_spell_stats('backstab', hit_chance=self.geometric_strike_chance, cost_mod=cost_modifier)[0]
         self.base_ambush_energy_cost = 48 + 12 / self.geometric_strike_chance
         self.base_ambush_energy_cost *= self.stats.gear_buffs.rogue_t15_4pc_reduced_cost()
 
@@ -2152,7 +2153,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                     cp_builder_energy_cost = backstab_energy_cost
                 energy_return_per_replaced_backstab = backstab_energy_cost - self.base_hemo_cost
                 modified_energy_regen = modified_energy_regen + energy_return_per_replaced_backstab / hemorrhage_interval
-        cp_builder_energy_cost *= self.stats.gear_buffs.rogue_t15_4pc_reduced_cost()
             
         cp_builder_interval = cp_builder_energy_cost / modified_energy_regen
         cp_per_cp_builder = 1 + cp_builder_interval * hat_cp_gen
