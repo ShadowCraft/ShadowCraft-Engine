@@ -2157,7 +2157,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         cp_builder_interval = cp_builder_energy_cost / modified_energy_regen
         cp_per_cp_builder = 1 + cp_builder_interval * hat_cp_gen
 
-        eviscerate_net_energy_cost = self.base_eviscerate_energy_cost*self.stats.gear_buffs.rogue_t15_4pc_reduced_cost() - 5 * self.relentless_strikes_energy_return_per_cp
+        eviscerate_net_energy_cost = self.get_net_energy_cost('eviscerate') * self.stats.gear_buffs.rogue_t15_4pc_reduced_cost() - 5 * self.relentless_strikes_energy_return_per_cp
         eviscerate_net_cp_cost = 5 - eviscerate_net_energy_cost * hat_cp_gen / modified_energy_regen
 
         cp_builders_per_eviscerate = eviscerate_net_cp_cost / cp_per_cp_builder
@@ -2203,7 +2203,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         rupture_duration = 24 + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp() * 2 # 4 * 6 + tier bonus
         rupture_per_cycle = cycle_length / (rupture_duration + self.settings.response_time)
         
-        total_cost_of_extra_eviscerate = 5 * cp_builder_energy_cost + self.base_eviscerate_energy_cost*self.stats.gear_buffs.rogue_t15_4pc_reduced_cost() - 5 * self.relentless_strikes_energy_return_per_cp
+        total_cost_of_extra_eviscerate = 5 * cp_builder_energy_cost + self.get_net_energy_cost('eviscerate') * self.stats.gear_buffs.rogue_t15_4pc_reduced_cost() - 5 * self.relentless_strikes_energy_return_per_cp
 
         bonus_cp_per_cycle = (hat_cp_gen + ambush_rate * (cp_per_ambush + cp_from_premeditation)) * cycle_length
         bonus_cp_per_cycle += (modified_energy_regen * cycle_length) / total_cost_of_extra_eviscerate * 5 * sb_uptime
