@@ -1310,8 +1310,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         self.set_constants()
 
-        self.envenom_energy_cost = self.get_net_energy_cost('envenom')
-
         self.base_energy_regen = 10
         self.max_energy = 120.
         if self.stats.gear_buffs.rogue_pvp_4pc:
@@ -1604,7 +1602,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if cpg == 'mutilate':
             cpg_energy_cost = blindside_cost + mutilate_cost
         else:
-            cpg_energy_cost = 30
+            cpg_energy_cost = self.get_spell_stats('dispatch', cost_mod=ability_cost_modifier, hit_chance=self.geometric_strike_chance)[0]
         mutilate_cps = 3 - (1 - crit_rates['mutilate']) ** 2 # 1 - (1 - crit_rates['mutilate']) ** 2 is the Seal Fate CP
         dispatch_cps = 1 + crit_rates['dispatch']
         if cpg == 'mutilate':
@@ -1704,6 +1702,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         restless_blades_reduction = 2
         self.ksp_buff = 0.5
         self.revealing_strike_multiplier = 1.35
+        self.extra_cp_chance = .2 # Assume all casts during RvS
+        self.rvs_duration = 24
         
         cds = {'ar':self.get_spell_cd('adrenaline_rush'), #SB has the same CD, no need to calculate it as well
                'ksp':self.get_spell_cd('killing_spree')}
@@ -1822,10 +1822,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         combat_potency_regen_per_oh = 15 * .2 * self.stats.oh.speed / 1.4  # the new "normalized" formula
         combat_potency_from_mg = 15 * .2
-        
-        extra_cp_chance = .2 # Assume all casts during RvS
-        rvs_duration = 24
-        restless_blades_reduction = 2
         FINISHER_SIZE = 5
         
         if ar:
@@ -1886,7 +1882,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         energy_regen = self.base_energy_regen * haste_multiplier + self.bonus_energy_regen + combat_potency_regen + bonus_energy_from_openers
         
         #Base actions
-        rvs_interval = rvs_duration
+        rvs_interval = self.rvs_duration
         if self.settings.cycle.revealing_strike_pooling and not ar:
             min_energy_while_pooling = energy_regen * gcd_size
             max_energy_while_pooling = 80.
@@ -1895,9 +1891,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         #Minicycle sizes and cpg_per_finisher stats
         if self.talents.anticipation:
-            ss_per_finisher = FINISHER_SIZE / (cp_per_cpg + extra_cp_chance)
+            ss_per_finisher = FINISHER_SIZE / (cp_per_cpg + self.extra_cp_chance)
         else:
-            cp_per_ss = self.get_cp_per_cpg(1, extra_cp_chance)
+            cp_per_ss = self.get_cp_per_cpg(1, self.extra_cp_chance)
             ss_per_finisher = 4.3
             if sb:
                 ss_per_finisher = 2.64
@@ -1908,9 +1904,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         total_rupture_cost = energy_cost_per_cp + rupture_energy_cost - cp_per_finisher * self.relentless_strikes_energy_return_per_cp
 
         ss_per_snd = (total_eviscerate_cost - cp_per_finisher * self.relentless_strikes_energy_return_per_cp + 25) / sinister_strike_energy_cost
-        snd_size = ss_per_snd * (cp_per_cpg + extra_cp_chance)
+        snd_size = ss_per_snd * (cp_per_cpg + self.extra_cp_chance)
         snd_base_cost = 25
-        snd_cost = ss_per_snd / (cp_per_cpg + extra_cp_chance) * sinister_strike_energy_cost + snd_base_cost - snd_size * self.relentless_strikes_energy_return_per_cp
+        snd_cost = ss_per_snd / (cp_per_cpg + self.extra_cp_chance) * sinister_strike_energy_cost + snd_base_cost - snd_size * self.relentless_strikes_energy_return_per_cp
         snd_duration = self.get_snd_length(snd_size)
         energy_spent_on_snd = snd_cost / (snd_duration - self.settings.response_time)
         
@@ -2063,11 +2059,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         cost_modifier = self.stats.gear_buffs.rogue_t15_4pc_reduced_cost()        
         self.base_hemo_cost = self.get_spell_stats('hemorrhage', hit_chance=self.geometric_strike_chance, cost_mod=cost_modifier)[0]
         self.base_st_cost = self.get_spell_stats('shuriken_toss', hit_chance=self.geometric_strike_chance, cost_mod=cost_modifier)[0]
-
-        
         self.base_backstab_energy_cost = self.get_spell_stats('backstab', hit_chance=self.geometric_strike_chance, cost_mod=cost_modifier)[0]
-        self.base_ambush_energy_cost = 48 + 12 / self.geometric_strike_chance
-        self.base_ambush_energy_cost *= self.stats.gear_buffs.rogue_t15_4pc_reduced_cost()
+        self.sd_ambush_cost = self.get_spell_stats('ambush', hit_chance=self.geometric_strike_chance, cost_mod=cost_modifier)[0]
+        self.normal_ambush_cost = self.get_spell_stats('ambush', hit_chance=self.strike_hit_chance, cost_mod=cost_modifier)[0]
 
         self.base_energy_regen = 10.
         self.max_energy = 100.
@@ -2193,9 +2187,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         cp_per_ambush = 2.
         if self.talents.shadow_focus:
-            ambush_cost = self.base_ambush_energy_cost * .75
+            ambush_cost = self.normal_ambush_cost * .75
         else:
-            ambush_cost = self.base_ambush_energy_cost
+            ambush_cost = self.normal_ambush_cost
         ambush_cost *= self.stats.gear_buffs.rogue_t15_4pc_reduced_cost()
 
         cp_from_premeditation = 2.
@@ -2210,7 +2204,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         cp_used_on_buffs = snd_size * snd_per_cycle + rupture_per_cycle * 5.
         bonus_eviscerates = (bonus_cp_per_cycle - cp_used_on_buffs) / 5.
         energy_spent_on_bonus_finishers = 25 * snd_per_cycle + 35 * bonus_eviscerates - (snd_size * snd_per_cycle + 5 * bonus_eviscerates) * self.relentless_strikes_energy_return_per_cp
-        energy_spent_on_bonus_finishers += cycle_length * ambushes_from_vanish * ambush_cost + cycle_length * shadowmeld_ambushes * self.base_ambush_energy_cost
+        energy_spent_on_bonus_finishers += cycle_length * ambushes_from_vanish * ambush_cost + cycle_length * shadowmeld_ambushes * self.normal_ambush_cost
         energy_for_evis_spam = total_cycle_regen - energy_spent_on_bonus_finishers
         extra_eviscerates_per_cycle = energy_for_evis_spam / total_cost_of_extra_eviscerate
         
@@ -2228,7 +2222,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         shadow_dance_bonus_eviscerate_cost = shadow_dance_bonus_eviscerates * (35 - 5 * self.relentless_strikes_energy_return_per_cp)
         shadow_dance_available_energy = shadow_dance_duration * modified_energy_regen - shadow_dance_bonus_eviscerate_cost + 90
 
-        shadow_dance_eviscerate_cost = 5. / cp_per_ambush * (self.base_ambush_energy_cost - 20) + (35 - 5 * self.relentless_strikes_energy_return_per_cp)
+        shadow_dance_eviscerate_cost = 5. / cp_per_ambush * (self.sd_ambush_cost - 20) + (35 - 5 * self.relentless_strikes_energy_return_per_cp)
         shadow_dance_eviscerates_for_period = shadow_dance_available_energy / shadow_dance_eviscerate_cost
 
         base_bonus_cp_regen = shadow_dance_duration * hat_cp_gen
