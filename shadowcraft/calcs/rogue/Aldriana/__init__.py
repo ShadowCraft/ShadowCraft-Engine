@@ -980,6 +980,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             #http://us.battle.net/wow/en/forum/topic/8197741003?page=4#79
             haste = self.buffs.spell_haste_multiplier() * self.true_haste_mod * self.stats.get_haste_multiplier_from_rating(self.base_stats['haste'])
             #The 1.1307 is a value that increases the proc rate due to bad luck prevention. It /should/ be constant among all rppm proc styles
+            #print proc.rppm_proc_rate()
             frequency = haste * 1.1307 * proc.rppm_proc_rate() / 60
         else:
             if proc.icd:

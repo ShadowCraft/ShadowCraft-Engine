@@ -119,7 +119,7 @@ trinkets_list = [
     'lfr_terror_in_the_mists',
     'relic_of_xuen',
 ]
-trinkets_ep_value = calculator.get_upgrades_ep(trinkets_list)
+#trinkets_ep_value = calculator.get_upgrades_ep(trinkets_list)
 #glyph_values = calculator.get_glyphs_ranking()
 
 # Compute weapon type modifier.
@@ -154,7 +154,7 @@ dicts_for_pretty_print = [
     #tier_ep_values,
     #mh_enchants_and_dps_ep_values,
     #oh_enchants_and_dps_ep_values,
-    trinkets_ep_value,
+    #trinkets_ep_value,
     #glyph_values,
     #talent_ranks,
 ]

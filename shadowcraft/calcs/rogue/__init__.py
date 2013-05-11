@@ -269,7 +269,7 @@ class RogueDamageCalculator(DamageCalculator):
         mult, crit_mult = self.get_modifiers('physical', armor=armor, is_bleeding=is_bleeding)
 
         dagger_bonus = [1, 1.447][self.stats.mh.type == 'dagger']
-        percentage_damage_bonus = 3.45 * dagger_bonus
+        percentage_damage_bonus = 3.25 * dagger_bonus
 
         damage = percentage_damage_bonus * (weapon_damage + self.ambush_bonus_dmg) * mult
         crit_damage = damage * crit_mult
