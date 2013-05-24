@@ -454,6 +454,7 @@ class DamageCalculator(object):
                 base_normalize_dps = normalize_dps
             setattr(self.stats.gear_buffs, i, True)
             boost = self.stats.gear_buffs.activated_boosts[i]
+            boost['upgrade_level'] = 0
             if 'upgradable' in boost and boost['upgradable'] == True and 'scaling' in boost:
                 if self.stats.gear_buffs.activated_boosts[i]['scaling']['quality'] == 'blue':
                     level_steps = 8
@@ -493,6 +494,7 @@ class DamageCalculator(object):
                     base_normalize_dps = normalize_dps
                 self.stats.procs.set_proc(i)
                 proc = getattr(self.stats.procs, i)
+                proc.upgrade_level = 0
                 if proc.upgradable and proc.scaling:
                     if proc.scaling['quality'] == 'blue':
                         level_steps = 8

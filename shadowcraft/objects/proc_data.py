@@ -191,7 +191,7 @@ allowed_procs = {
         'stat': 'agi',
         'value': 8756,
         'duration': 20,
-        'proc_name': 'Renatakis Sould Charm',
+        'proc_name': 'Renatakis Soul Charm',
         'behaviours': {'default': 'renatakis_soul_charm'},
         'upgradable': True,
         'scaling': {'factor': 0.4499999881*5.5, 'item_level': 541, 'quality': 'epic'}
@@ -200,7 +200,7 @@ allowed_procs = {
         'stat': 'agi',
         'value': 8277.5,
         'duration': 20,
-        'proc_name': 'Renatakis Sould Charm',
+        'proc_name': 'Renatakis Soul Charm',
         'behaviours': {'default': 'renatakis_soul_charm'},
         'upgradable': True,
         'scaling': {'factor': 0.4499999881*5.5, 'item_level': 535, 'quality': 'epic'}
@@ -209,7 +209,7 @@ allowed_procs = {
         'stat': 'agi',
         'value': 7755, #needs verification
         'duration': 20,
-        'proc_name': 'Renatakis Sould Charm',
+        'proc_name': 'Renatakis Soul Charm',
         'behaviours': {'default': 'renatakis_soul_charm'},
         'upgradable': True,
         'scaling': {'factor': 0.4499999881*5.5, 'item_level': 528, 'quality': 'epic'}
@@ -218,7 +218,7 @@ allowed_procs = {
         'stat': 'agi',
         'value': 7331.5,
         'duration': 20,
-        'proc_name': 'Renatakis Sould Charm',
+        'proc_name': 'Renatakis Soul Charm',
         'behaviours': {'default': 'renatakis_soul_charm'},
         'upgradable': True,
         'scaling': {'factor': 0.4499999881*5.5, 'item_level': 522, 'quality': 'epic'}
@@ -227,7 +227,7 @@ allowed_procs = {
         'stat': 'agi',
         'value': 6088.5,
         'duration': 20,
-        'proc_name': 'Renatakis Sould Charm',
+        'proc_name': 'Renatakis Soul Charm',
         'behaviours': {'default': 'renatakis_soul_charm'},
         'upgradable': True,
         'scaling': {'factor': 0.4499999881*5.5, 'item_level': 502, 'quality': 'epic'}
