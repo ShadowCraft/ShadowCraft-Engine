@@ -461,7 +461,7 @@ class DamageCalculator(object):
                     max_upgrade_level = 1
                 else:
                     level_steps = 4
-                    max_upgrade_level = 2
+                    max_upgrade_level = 4
                 item_level = boost['scaling']['item_level']
                 scale_factor = self.tools.get_random_prop_point(item_level, boost['scaling']['quality'])
             else:
@@ -501,7 +501,7 @@ class DamageCalculator(object):
                         max_upgrade_level = 1
                     else:
                         level_steps = 4
-                        max_upgrade_level = 2
+                        max_upgrade_level = 4
                     item_level = proc.scaling['item_level']
                     if proc.proc_name == 'Rune of Re-Origination':
                         scale_factor = 1/(1.15**((528-item_level)/15.0)) * proc.base_ppm
