@@ -95,7 +95,7 @@ execute_total = sum(entry[1] for entry in execute_breakdown.items())
 
 # Compute EP values.
 ep_values = calculator.get_ep()
-#tier_ep_values = calculator.get_other_ep(['rogue_t14_4pc', 'rogue_t14_2pc', 'rogue_t15_4pc', 'rogue_t15_2pc'])
+tier_ep_values = calculator.get_other_ep(['rogue_t14_4pc', 'rogue_t14_2pc', 'rogue_t15_4pc', 'rogue_t15_2pc', 'rogue_t16_2pc', 'rogue_t16_4pc'])
 #mh_enchants_and_dps_ep_values, oh_enchants_and_dps_ep_values = calculator.get_weapon_ep(dps=True, enchants=True)
 
 trinkets_list = [
@@ -156,7 +156,7 @@ def pretty_print(dict_list, total_sum = 1., show_percent=False):
 
 dicts_for_pretty_print = [
     ep_values,
-    #tier_ep_values,
+    tier_ep_values,
     #mh_enchants_and_dps_ep_values,
     #oh_enchants_and_dps_ep_values,
     #trinkets_ep_value,

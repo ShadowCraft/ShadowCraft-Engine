@@ -212,6 +212,8 @@ class GearBuffs(object):
         'rogue_t14_4pc',                # Shadow Blades by +12s
         'rogue_t15_2pc',                # Extra CP per finisher (max of 6)
         'rogue_t15_4pc',                # Abilities cast during Shadow Blades cost 40% less
+        'rogue_t16_2pc',                # Stacking energy cost reduction (up to 5, up to 5 stacks) on NEXT RvS cast, Seal Fate Proc, or HAT proc
+        'rogue_t16_4pc',                # 10% KS damage every time it hits, stacking mastery during vendetta (250 mastery, up to 20 stacks), every 5th backstab is an ambush
         'mixology',
         'master_of_anatomy'
     ]
@@ -310,7 +312,19 @@ class GearBuffs(object):
         if self.rogue_t15_4pc and is_sb:
             return .6 # 1 - .4
         return 1
-
+    
+    def rogue_t16_2pc_bonus(self):
+        if self.rogue_t16_2pc:
+            return True
+        else:
+            return False
+    
+    def rogue_t16_4pc_bonus(self):
+        if self.rogue_t16_4pc:
+            return True
+        else:
+            return False
+    
     def leather_specialization_multiplier(self):
         if self.leather_specialization:
             return 1.05

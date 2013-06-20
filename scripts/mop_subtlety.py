@@ -77,7 +77,7 @@ calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_glyph
 
 # Compute EP values.
 ep_values = calculator.get_ep()
-tier_ep_values = calculator.get_other_ep(['rogue_t14_4pc', 'rogue_t14_2pc', 'rogue_t15_4pc', 'rogue_t15_2pc'])
+tier_ep_values = calculator.get_other_ep(['rogue_t14_4pc', 'rogue_t14_2pc', 'rogue_t15_4pc', 'rogue_t15_2pc', 'rogue_t16_2pc', 'rogue_t16_4pc'])
 
 trinkets_list = [
     #5.2
