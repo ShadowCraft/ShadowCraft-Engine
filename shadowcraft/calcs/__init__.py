@@ -614,8 +614,8 @@ class DamageCalculator(object):
         # damage value.
         return damage * self.armor_mitigation_multiplier(armor)
 
-    def melee_hit_chance(self, base_miss_chance, dodgeable, parryable, weapon_type, blockable=False):
-        hit_chance = self.stats.get_melee_hit_from_rating() + self.race.get_racial_hit() + self.get_melee_hit_from_talents()
+    def melee_hit_chance(self, base_miss_chance, dodgeable, parryable, weapon_type, blockable=False, bonus_hit=0):
+        hit_chance = self.stats.get_melee_hit_from_rating() + self.race.get_racial_hit() + self.get_melee_hit_from_talents() + self.hit_chance_bonus
         miss_chance = max(base_miss_chance - hit_chance, 0)
 
         # Expertise represented as the reduced chance to be dodged, not true "Expertise".
@@ -641,13 +641,13 @@ class DamageCalculator(object):
 
         return (1 - (miss_chance + dodge_chance + parry_chance)) * (1 - block_chance)
 
-    def melee_spells_hit_chance(self):
+    def melee_spells_hit_chance(self, bonus_hit=0):
         hit_chance = self.melee_hit_chance(self.base_one_hand_miss_rate, dodgeable=False, parryable=False, weapon_type=None)
         if self.calculating_ep == 'yellow_hit':
             hit_chance -= self.stats.get_melee_hit_from_rating(1)
         return hit_chance
 
-    def one_hand_melee_hit_chance(self, dodgeable=True, parryable=False, weapon=None):
+    def one_hand_melee_hit_chance(self, dodgeable=True, parryable=False, weapon=None, bonus_hit=0):
         # Most attacks by DPS aren't parryable due to positional negation. But
         # if you ever want to attacking from the front, you can just set that
         # to True.
@@ -660,7 +660,7 @@ class DamageCalculator(object):
             hit_chance -= self.stats.get_expertise_from_rating(1)
         return hit_chance
 
-    def off_hand_melee_hit_chance(self, dodgeable=True, parryable=False, weapon=None):
+    def off_hand_melee_hit_chance(self, dodgeable=True, parryable=False, weapon=None, bonus_hit=0):
         # Most attacks by DPS aren't parryable due to positional negation. But
         # if you ever want to attacking from the front, you can just set that
         # to True.
@@ -673,7 +673,7 @@ class DamageCalculator(object):
             hit_chance -= self.stats.get_expertise_from_rating(1)
         return hit_chance
 
-    def dual_wield_mh_hit_chance(self, dodgeable=True, parryable=False):
+    def dual_wield_mh_hit_chance(self, dodgeable=True, parryable=False, bonus_hit=0):
         # Most attacks by DPS aren't parryable due to positional negation. But
         # if you ever want to attacking from the front, you can just set that
         # to True.
@@ -682,7 +682,7 @@ class DamageCalculator(object):
             hit_chance -= self.stats.get_expertise_from_rating(1)
         return hit_chance
 
-    def dual_wield_oh_hit_chance(self, dodgeable=True, parryable=False):
+    def dual_wield_oh_hit_chance(self, dodgeable=True, parryable=False, bonus_hit=0):
         # Most attacks by DPS aren't parryable due to positional negation. But
         # if you ever want to attacking from the front, you can just set that
         # to True.
@@ -691,13 +691,13 @@ class DamageCalculator(object):
             hit_chance -= self.stats.get_expertise_from_rating(1)
         return hit_chance
 
-    def dual_wield_hit_chance(self, dodgeable, parryable, weapon_type):
+    def dual_wield_hit_chance(self, dodgeable, parryable, weapon_type, bonus_hit=0):
         hit_chance = self.melee_hit_chance(self.base_dw_miss_rate, dodgeable, parryable, weapon_type)
         if self.calculating_ep in ('yellow_hit', 'spell_hit', 'white_hit'):
             hit_chance -= self.stats.get_melee_hit_from_rating(1)
         return hit_chance
 
-    def spell_hit_chance(self):
+    def spell_hit_chance(self, bonus_hit=0):
         hit_chance = 1 - max(self.base_spell_miss_rate - self.stats.get_spell_hit_from_rating() - self.get_spell_hit_from_talents() - self.race.get_racial_hit(), 0)
         if self.calculating_ep in ('yellow_hit', 'spell_hit', 'spell_exp'):
             hit_chance -= self.stats.get_spell_hit_from_rating(1, 0)

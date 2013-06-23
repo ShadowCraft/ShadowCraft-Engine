@@ -323,6 +323,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.damage_mod = self.get_adv_param('damage_mod')
         
         self.major_cd_delay = self.get_adv_param('major_cd_delay')
+        self.hit_chance_bonus = self.get_adv_param('hit_chance_bonus')
     
     def get_stat_mod(self, stat):
         if stat == 'ap':
@@ -678,6 +679,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             nightstalker_percent = self.total_openers_per_second / (attacks_per_second[self.settings.opener_name])
             modifier = 1 + nightstalker_mod * nightstalker_percent
             damage_breakdown[self.settings.opener_name] = tuple([i * modifier for i in damage_breakdown[self.settings.opener_name]])
+            
+        if self.damage_mod != 1:
+            for key in damage_breakdown:
+                damage_breakdown[key] *= self.damage_mod
 
         return damage_breakdown
 
@@ -1128,11 +1133,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     
     def determine_stats(self, attack_counts_function):
         current_stats = {
-            'agi': self.base_stats['agi'] * self.agi_multiplier,
-            'ap': self.base_stats['ap'],
-            'crit': self.base_stats['crit'],
-            'haste': self.base_stats['haste'],
-            'mastery': self.base_stats['mastery']
+            'agi': self.base_stats['agi'] * self.agi_multiplier * self.stats.agi_mod,
+            'ap': self.base_stats['ap'] * self.stats.ap_mod,
+            'crit': self.base_stats['crit'] * self.stats.crit_mod,
+            'haste': self.base_stats['haste'] * self.stats.haste_mod,
+            'mastery': self.base_stats['mastery'] * self.stats.mastery_mod
         }
         self.current_variables = {}
 
@@ -1191,11 +1196,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         for _loop in range(20):
             current_stats = {
-                'agi': self.base_stats['agi'] * self.agi_multiplier,
-                'ap': self.base_stats['ap'],
-                'crit': self.base_stats['crit'],
-                'haste': self.base_stats['haste'],
-                'mastery': self.base_stats['mastery']
+                'agi': self.base_stats['agi'] * self.agi_multiplier * self.stats.agi_mod,
+                'ap': self.base_stats['ap'] * self.stats.ap_mod,
+                'crit': self.base_stats['crit'] * self.stats.crit_mod,
+                'haste': self.base_stats['haste'] * self.stats.haste_mod,
+                'mastery': self.base_stats['mastery'] * self.stats.mastery_mod
             }
             
             if self.stats.gear_buffs.rogue_t16_4pc_bonus() and self.settings.is_assassination_rogue():
@@ -1215,7 +1220,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                     average_stacks = self.vendetta_duration / (1 / ability_count)/2
                 else:
                     average_stacks = (time_to_max * 20) / 2 + (20 * (self.vendetta_duration-time_to_max))
-                current_stats['mastery'] += average_stacks * 250 * self.vendetta_uptime
+                current_stats['mastery'] += (average_stacks * 250 * self.vendetta_uptime) * self.stats.mastery_mod
 
             for proc in damage_procs:
                 if not proc.icd:
@@ -1460,7 +1465,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             mutilate_extra_cp_chance = 0 # never using mutilate, so no extra cp chance
         
         if self.stats.gear_buffs.rogue_t16_2pc_bonus():
-            cpg_energy_cost -= 20 * seal_fate_proc_rate
+            cpg_energy_cost -= 20 * seal_fate_proc_rate * self.strike_hit_chance
 
         # This should be handled by the cp_distribution method or something
         # alike. For now, let's have each sub-distribution computed here.
@@ -1636,7 +1641,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             seal_fate_proc_rate *= blindside_proc_rate
             seal_fate_proc_rate += 1 - (1 - crit_rates['mutilate']) ** 2
         if self.stats.gear_buffs.rogue_t16_2pc_bonus():
-            cpg_energy_cost -= 20 * seal_fate_proc_rate
+            cpg_energy_cost -= 20 * seal_fate_proc_rate * self.strike_hit_chance
             
         cp_per_finisher = 5
         avg_rupture_length = 4. * (6 + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp()) # 1+5 since all 5CP ruptures
@@ -1888,7 +1893,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         sinister_strike_energy_cost =  self.get_spell_stats('sinister_strike', hit_chance=self.geometric_strike_chance, cost_mod=cost_modifier)[0]
         sinister_strike_energy_cost -= cost_reducer
         if self.stats.gear_buffs.rogue_t16_2pc_bonus():
-            sinister_strike_energy_cost -= 10 * self.extra_cp_chance
+            sinister_strike_energy_cost -= 10 * self.extra_cp_chance * self.strike_hit_chance
         
         ## Base CPs and Attacks
         #Autoattacks and SB swings
@@ -2166,7 +2171,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.talents.marked_for_death:
             energy_regen -= 10. / 60 # 25-35 = 10
         if self.stats.gear_buffs.rogue_t16_2pc_bonus():
-            energy_regen += 3 * hat_cp_gen
+            energy_regen += 3 * hat_cp_gen * self.strike_hit_chance
             
         if self.settings.cycle.use_hemorrhage == 'always':
             cp_builder_energy_cost = self.base_hemo_cost
