@@ -215,11 +215,12 @@ class GearBuffs(object):
         'rogue_t16_2pc',                # Stacking energy cost reduction (up to 5, up to 5 stacks) on NEXT RvS cast, Seal Fate Proc, or HAT proc
         'rogue_t16_4pc',                # 10% KS damage every time it hits, stacking mastery during vendetta (250 mastery, up to 20 stacks), every 5th backstab is an ambush
         'mixology',
-        'master_of_anatomy'
+        'master_of_anatomy',
+        'trinket_cd_reducer',          # Increases CD recovery rate by [.31027/.33422/.39164/.44203]%  (lfr/flex/normal/heroic)
     ]
 
     allowed_buffs = frozenset(other_gear_buffs + activated_boosts.keys())
-
+    
     def __init__(self, *args):
         for arg in args:
             if not isinstance(arg, (list,tuple)):
@@ -330,6 +331,16 @@ class GearBuffs(object):
             return 1.05
         else:
             return 1
+        
+    def get_trinket_cd_reducer(self, level=None):
+        trinket_cd_reducer_table = {'lfr':.31027, 'flex':.33422, 'normal':.39164, 'heroic':.44203}
+        trinket_cd_reducer_value = .44203
+        
+        if level:
+            trinket_cd_reducer_value = trinket_cd_reducer_table[level]
+        if self.trinket_cd_reducer:
+            return 1 / (1 + trinket_cd_reducer_value) # heroic datamined value by default
+        return 1
 
     def tradeskill_bonus(self, tradeskill='base'):
         # Hardcoded to use maxed tradeskills for the character level.

@@ -36,6 +36,63 @@ allowed_procs = {
                        'combat': 'legendary_capacitive_meta_combat', 'subtlety': 'legendary_capacitive_meta_sub'},
         'scaling': {'factor': 0.0, 'item_level': 541, 'quality': 'epic'}
     },
+    '5.4_20s_agi_proc (1)':{
+        'stat': 'agi',
+        'value': 11759,
+        'duration': 20,
+        'proc_name': 'Trinket 1 Proc',
+        'behaviours': {'default': 'proc_1'},
+        'upgradable': True,
+        'scaling': {'factor': 2.4749999046, 'item_level': 541, 'quality': 'epic'}
+    },
+    '5.4_20s_agi_proc (1) alone':{
+        'stat': 'agi',
+        'value': 11759,
+        'duration': 20,
+        'proc_name': 'Trinket 1 Proc',
+        'behaviours': {'default': 'proc_1'},
+        'upgradable': True,
+        'scaling': {'factor': 2.4749999046, 'item_level': 541, 'quality': 'epic'}
+    },
+    '5.4_single_target_damage_proc (2)':{
+        'stat': 'physical_damage',
+        'value': 0, #17050.5,
+        'duration': 0,
+        'max_stacks': 0,
+        'proc_name': 'Trinket 2 Proc',
+        'upgradable': True,
+        'behaviours': {'default': 'proc_2'}
+    },
+    '5.4 (3)':{
+        'stat': 'physical_damage',
+        'value': 0, #17050.5,
+        'duration': 0,
+        'max_stacks': 0,
+        'proc_name': 'Trinket 3 Proc',
+        'upgradable': True,
+        'behaviours': {'default': 'proc_3'}
+    
+    },
+    '5.4 (4)':{
+        'stat': 'agi',
+        'value': 21380,
+        'duration': 20,
+        'proc_name': 'Trinket 4 Proc',
+        'behaviours': {'default': 'proc_4'},
+        'upgradable': True,
+        'scaling': {'factor': 2.4749999046, 'item_level': 541, 'quality': 'epic'}
+    
+    },
+    '5.4 (5)':{
+        'stat': 'mastery',
+        'value': 11759,
+        'duration': 20,
+        'proc_name': 'Trinket 5 Proc',
+        'behaviours': {'default': 'proc_5'},
+        'upgradable': True,
+        'scaling': {'factor': 2.4749999046, 'item_level': 541, 'quality': 'epic'}
+    
+    },
     #5.2
     'heroic_thunder_rune_of_re_origination': {
         'stat': 'multi',

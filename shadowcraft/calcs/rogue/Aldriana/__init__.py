@@ -670,7 +670,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if proc.proc_name not in damage_breakdown:
                 # Toss multiple damage procs with the same name (Avalanche):
                 # attacks_per_second is already being updated with that key.
-                damage_breakdown[proc.proc_name] = self.get_proc_damage_contribution(proc, attacks_per_second[proc.proc_name], current_stats, average_ap)
+                damage_breakdown[proc.proc_name] = self.get_proc_damage_contribution(proc, attacks_per_second[proc.proc_name], current_stats, average_ap, damage_breakdown)
 
         self.append_damage_on_use(average_ap, current_stats, damage_breakdown)
 
@@ -1206,10 +1206,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if self.stats.gear_buffs.rogue_t16_4pc_bonus() and self.settings.is_assassination_rogue():
                 #20 stacks of 250 mastery, lasts 5 seconds
                 ability_count = 0
-                for key in ('mh_mutilate', 'oh_mutilate', 'dispatch', 'envenom', 'rupture'):
+                for key in ('mutilate', 'dispatch', 'envenom'):
                     if key in attacks_per_second:
                         if key in ('envenom'):
                             ability_count += sum(attacks_per_second[key])
+                        elif key == 'mutilate':
+                            ability_count += 2 * attacks_per_second[key]
                         else:
                             ability_count += attacks_per_second[key]
                 if 1 / ability_count < 5:
@@ -1219,7 +1221,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 if time_to_max > self.vendetta_duration:
                     average_stacks = self.vendetta_duration / (1 / ability_count)/2
                 else:
-                    average_stacks = (time_to_max * 20) / 2 + (20 * (self.vendetta_duration-time_to_max))
+                    average_stacks = ((time_to_max * 20) / 2 + (20 * (self.vendetta_duration-time_to_max))) / self.vendetta_duration
                 current_stats['mastery'] += (average_stacks * 250 * self.vendetta_uptime) * self.stats.mastery_mod
 
             for proc in damage_procs:

@@ -42,7 +42,10 @@ class DamageCalculator(object):
         self.char_class = char_class
         self.settings = settings
         self.target_level = [target_level, level + 3][target_level is None]
-        self.level_difference = max(self.target_level - level, 0)
+        if self.settings.is_pvp:
+            self.level_difference = 0
+        else:
+            self.level_difference = max(self.target_level - level, 0)
         self.level = level
         if self.stats.gear_buffs.mixology and (self.buffs.agi_flask or self.buffs.agi_flask_mop):
             self.stats.agi += self.stats.gear_buffs.tradeskill_bonus()
@@ -50,6 +53,8 @@ class DamageCalculator(object):
             self.stats.crit += self.stats.gear_buffs.tradeskill_bonus('master_of_anatomy')
         if self.race.race_name == 'undead':
             self.stats.procs.set_proc('touch_of_the_grave')
+        if '5.4_cd_reducer_trinket' == getattr(self.stats.procs, '5.4_cd_reducer_trinket') or self.stats.get_trinket_cd_reducer():
+            print 'update cd reducer trinket details'
         self._set_constants_for_class()
         
         if self.settings.is_pvp:
