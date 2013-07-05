@@ -1467,7 +1467,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             mutilate_extra_cp_chance = 0 # never using mutilate, so no extra cp chance
         
         if self.stats.gear_buffs.rogue_t16_2pc_bonus():
-            cpg_energy_cost -= 20 * seal_fate_proc_rate * self.strike_hit_chance
+            cpg_energy_cost -= 6 * seal_fate_proc_rate * self.strike_hit_chance
 
         # This should be handled by the cp_distribution method or something
         # alike. For now, let's have each sub-distribution computed here.
@@ -1643,7 +1643,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             seal_fate_proc_rate *= blindside_proc_rate
             seal_fate_proc_rate += 1 - (1 - crit_rates['mutilate']) ** 2
         if self.stats.gear_buffs.rogue_t16_2pc_bonus():
-            cpg_energy_cost -= 20 * seal_fate_proc_rate * self.strike_hit_chance
+            cpg_energy_cost -= 6 * seal_fate_proc_rate * self.strike_hit_chance
             
         cp_per_finisher = 5
         avg_rupture_length = 4. * (6 + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp()) # 1+5 since all 5CP ruptures
@@ -1895,7 +1895,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         sinister_strike_energy_cost =  self.get_spell_stats('sinister_strike', hit_chance=self.geometric_strike_chance, cost_mod=cost_modifier)[0]
         sinister_strike_energy_cost -= cost_reducer
         if self.stats.gear_buffs.rogue_t16_2pc_bonus():
-            sinister_strike_energy_cost -= 10 * self.extra_cp_chance * self.strike_hit_chance
+            sinister_strike_energy_cost -= 15 * self.extra_cp_chance * self.strike_hit_chance
         
         ## Base CPs and Attacks
         #Autoattacks and SB swings
@@ -2173,7 +2173,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.talents.marked_for_death:
             energy_regen -= 10. / 60 # 25-35 = 10
         if self.stats.gear_buffs.rogue_t16_2pc_bonus():
-            energy_regen += 3 * hat_cp_gen * self.strike_hit_chance
+            energy_regen += 2 * hat_cp_gen * self.strike_hit_chance
             
         if self.settings.cycle.use_hemorrhage == 'always':
             cp_builder_energy_cost = self.base_hemo_cost
@@ -2297,7 +2297,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         self.find_weakness_uptime += (10 + shadow_dance_duration - self.settings.response_time) * shadow_dance_frequency
         if self.stats.gear_buffs.rogue_t16_4pc_bonus():
-            self.find_weakness_uptime = .9 # BIG TODO
+            self.find_weakness_uptime = .4 # BIG TODO
         # ShD formulae ends
 
         attacks_per_second['rupture_ticks'] = (0, 0, 0, 0, 0, .5)

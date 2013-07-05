@@ -53,8 +53,8 @@ class DamageCalculator(object):
             self.stats.crit += self.stats.gear_buffs.tradeskill_bonus('master_of_anatomy')
         if self.race.race_name == 'undead':
             self.stats.procs.set_proc('touch_of_the_grave')
-        if '5.4_cd_reducer_trinket' == getattr(self.stats.procs, '5.4_cd_reducer_trinket') or self.stats.get_trinket_cd_reducer():
-            print 'update cd reducer trinket details'
+        #if '5.4_cd_reducer_trinket' == getattr(self.stats.procs, '5.4_cd_reducer_trinket') or self.stats.get_trinket_cd_reducer():
+        #    print 'update cd reducer trinket details'
         self._set_constants_for_class()
         
         if self.settings.is_pvp:

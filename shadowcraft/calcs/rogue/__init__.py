@@ -493,8 +493,15 @@ class RogueDamageCalculator(DamageCalculator):
         
         return (final_cost, self.ability_info[ability][1])
     
-    def get_spell_cd(self, ability):
-        return self.ability_cds[ability]
+    def get_spell_cd(self, ability, cd_reducer=False):
+        cd_reduction_table = ['vanish', 'shadow_blades', 'cloak_of_shadows',
+                              'vendetta',
+                              'adrenaline_rush', 'killing_spree',
+                              'shadow_dance']
+        if ability in cd_reduction_table:
+            return self.ability_cds[ability] * self.stats.gear_buffs.get_trinket_cd_reducer()
+        else:
+            return self.ability_cds[ability]
 
     def melee_crit_rate(self, agi=None, crit=None):
         if agi == None:
