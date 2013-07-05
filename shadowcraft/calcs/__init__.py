@@ -314,6 +314,7 @@ class DamageCalculator(object):
         active_gear_buffs_cache = []
         procs_list = []
         gear_buffs_list = []
+        ep_values = {}
         for i in list:
             if i in self.stats.procs.allowed_procs:
                 procs_list.append(i)
@@ -328,7 +329,6 @@ class DamageCalculator(object):
             else:
                 ep_values[i] = _('not allowed')
 
-        ep_values = {}
         baseline_dps = self.get_dps()
         normalize_dps = self.ep_helper(normalize_ep_stat)
 
@@ -423,6 +423,7 @@ class DamageCalculator(object):
         active_gear_buffs_cache = []
         procs_list = []
         gear_buffs_list = []
+        ep_values = {}
         for i in list:
             if i in self.stats.procs.allowed_procs:
                 procs_list.append(i)
@@ -437,7 +438,6 @@ class DamageCalculator(object):
             else:
                 ep_values[i] = _('not allowed')
 
-        ep_values = {}
         baseline_dps = self.get_dps()
         normalize_dps = self.ep_helper(normalize_ep_stat)
 
