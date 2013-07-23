@@ -52,7 +52,7 @@ class RogueDamageCalculator(DamageCalculator):
             'recuperate':          (30, 'buff'),
             'revealing_strike':    (40, 'strike'),
             'rupture':             (25, 'strike'),
-            'sinister_strike':     (40, 'strike'),
+            'sinister_strike':     (50, 'strike'),
             'slice_and_dice':      (25, 'buff'),
             'tricks_of_the_trade': (15, 'buff'),
             'shuriken_toss':       (40, 'strike'),
@@ -105,7 +105,7 @@ class RogueDamageCalculator(DamageCalculator):
         self.garrote_base_dmg = self.get_factor(0.1180000007) # 280
         self.rup_base_dmg =     self.get_factor(0.1850000024) # 586
         self.rup_bonus_dmg =    self.get_factor(0.0260000005) # 586 - 'unknown' field
-        self.evis_base_dmg =    self.get_factor(0.5929999948,  1.0000000000) # 622
+        self.evis_base_dmg =    self.get_factor(0.5336999953,  1.0000000000) # 622
         self.evis_bonus_dmg =   self.get_factor(0.7860000134) # 622 - 'unknown' field
         self.env_base_dmg =     self.get_factor(0.3849999905) # 22420
         self.ct_base_dmg =      self.get_factor(0.4760000110) # 150471
@@ -202,7 +202,7 @@ class RogueDamageCalculator(DamageCalculator):
         weapon_damage = self.get_weapon_damage('mh', ap)
         mult, crit_mult = self.get_modifiers('physical', armor=armor, is_bleeding=is_bleeding)
 
-        damage = 2.75 * (weapon_damage + self.bs_bonus_dmg) * mult
+        damage = 3.15 * (weapon_damage + self.bs_bonus_dmg) * mult
         crit_damage = damage * crit_mult
 
         return damage, crit_damage
@@ -238,7 +238,7 @@ class RogueDamageCalculator(DamageCalculator):
         weapon_damage = self.get_weapon_damage('mh', ap)
         mult, crit_mult = self.get_modifiers('physical', armor=armor, is_bleeding=is_bleeding)
 
-        damage = 1.45 * (weapon_damage + self.ss_bonus_dmg) * mult
+        damage = 1.9 * (weapon_damage + self.ss_bonus_dmg) * mult
         crit_damage = damage * crit_mult
 
         return damage, crit_damage
@@ -247,7 +247,7 @@ class RogueDamageCalculator(DamageCalculator):
         weapon_damage = self.get_weapon_damage('mh', ap)
         mult, crit_mult = self.get_modifiers('physical', armor=armor, is_bleeding=is_bleeding)
 
-        percentage_damage_bonus = [1.4, 2.03][self.stats.mh.type == 'dagger']
+        percentage_damage_bonus = [1.6, 2.32][self.stats.mh.type == 'dagger']
         damage = percentage_damage_bonus * weapon_damage * mult
         crit_damage = damage * crit_mult
 
@@ -385,7 +385,7 @@ class RogueDamageCalculator(DamageCalculator):
     def eviscerate_damage(self, ap, cp, armor=None, mastery=None, is_bleeding=True):
         mult, crit_mult = self.get_modifiers('physical', 'executioner', mastery=mastery, armor=armor, is_bleeding=is_bleeding)
 
-        damage = (self.evis_base_dmg + self.evis_bonus_dmg * cp + .20 * cp * ap) * mult
+        damage = (self.evis_base_dmg + self.evis_bonus_dmg * cp + 0.225 * cp * ap) * mult
         crit_damage = damage * crit_mult
         
         return damage, crit_damage
@@ -493,7 +493,7 @@ class RogueDamageCalculator(DamageCalculator):
         
         return (final_cost, self.ability_info[ability][1])
     
-    def get_spell_cd(self, ability, cd_reducer=False):
+    def get_spell_cd(self, ability):
         cd_reduction_table = ['vanish', 'shadow_blades', 'cloak_of_shadows',
                               'vendetta',
                               'adrenaline_rush', 'killing_spree',

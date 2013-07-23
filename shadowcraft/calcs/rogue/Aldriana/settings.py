@@ -114,7 +114,7 @@ class CombatCycle(Cycle):
     def __init__(self, use_rupture=True, ksp_immediately=True, revealing_strike_pooling=True, blade_flurry=False, stack_cds=True, bf_targets=1):
         self.blade_flurry = bool(blade_flurry)
         self.use_rupture = bool(use_rupture)
-        self.ksp_immediately = bool(ksp_immediately) # Determines whether to KSp the instant it comes off cool or wait until Bandit's Guile stacks up.'
+        self.ksp_immediately = bool(ksp_immediately) # Determines whether to KSp the instant it comes off cool or wait until Bandit's Guile stacks up.
         self.revealing_strike_pooling = bool(revealing_strike_pooling)
         self.bf_targets = bf_targets # The number of targets BF hits
         self.stack_cds = bool(stack_cds) # This refers specifically to stacking SB and AR
@@ -124,4 +124,7 @@ class SubtletyCycle(Cycle):
 
     def __init__(self, raid_crits_per_second, use_hemorrhage='24'):
         self.raid_crits_per_second = raid_crits_per_second
-        self.use_hemorrhage = use_hemorrhage # Allowed values are 'always' (main CP generator), 'never' (default to backstab), or a number denoting the interval in seconds between applications.
+        self.use_hemorrhage = use_hemorrhage # Allowed values are 'always' (main CP generator),
+                                                                 #'never' (default to backstab),
+                                                                 # or a number denoting the interval in seconds between applications
+        self.stack_cds = bool(stack_cds) #For stacking Shadow Dance with Shadow Blades

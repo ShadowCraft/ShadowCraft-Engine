@@ -252,7 +252,7 @@ class GearBuffs(object):
         else:
             return 1
     
-    def rogue_pvp_4pc(self):
+    def rogue_pvp_4pc_extra_energy(self):
         if self.rogue_pvp_4pc:
             return 30
         return 0
