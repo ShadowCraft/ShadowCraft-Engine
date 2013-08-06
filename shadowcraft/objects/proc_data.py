@@ -489,25 +489,29 @@ behaviours = {
     'legendary_capacitive_meta': {
         'real_ppm':True,
         'icd': 0,
-        'ppm': (21./5),
+        'ppm': (19.27/5),
+        'haste_scales': True,
         'trigger': 'all_attacks'
     },
     'legendary_capacitive_meta_mut': {
         'real_ppm':True,
         'icd': 0,
-        'ppm': (21./5) * 1.789,
+        'ppm': (19.27/5) * 1.789,
+        'haste_scales': True,
         'trigger': 'all_attacks'
     },
     'legendary_capacitive_meta_combat': {
         'real_ppm':True,
         'icd': 0,
-        'ppm': (21./5) * 1.136,
+        'ppm': (19.27/5) * 1.136,
+        'haste_scales': True,
         'trigger': 'all_attacks'
     },
     'legendary_capacitive_meta_sub': {
         'real_ppm':True,
         'icd': 0,
-        'ppm': (21./5) * 1.114,
+        'ppm': (19.27/5) * 1.114,
+        'haste_scales': True,
         'trigger': 'all_attacks'
     },
     'swordguard_embroidery': {
@@ -519,27 +523,28 @@ behaviours = {
     'dancing_steel': {
         'real_ppm':True,
         'icd': 0,
-        'ppm': 2,
+        'ppm': 2.53,
         'trigger': 'all_melee_attacks'
     },
     'windsong': {
         'real_ppm':True,
         'icd': 0,
-        'ppm': 2,
+        'ppm': 2.2,
         'trigger': 'all_attacks'
     },
     'elemental_force': {
         'real_ppm':True,
         'icd': 0,
-        'ppm': 10,
+        'ppm': 9.17,
+        'haste_scales': True,
         'trigger': 'all_attacks'
     },
     #5.2 Procs
     'rune_of_re_origination': {
         'real_ppm': True,
         'icd': 22,
-        'ppm': 1.012,
-        'base_ppm': 1.012,
+        'ppm': 1.012*1.1,
+        'base_ppm': 1.012*1.1,
         'ppm_scale_constant': 528,
         'trigger': 'all_attacks'
     },
@@ -554,16 +559,16 @@ behaviours = {
     'renatakis_soul_charm': {
         'real_ppm':True,
         'icd': 22,
-        'ppm': 0.616,
-        'base_ppm': 0.616,
+        'ppm': 0.7,
+        'base_ppm': 0.7,
         'ppm_scale_constant': 528,
         'trigger': 'all_attacks'
     },
     'talisman_of_bloodlust': {
         'real_ppm': True,
         'icd': 0,
-        'ppm': 3.3,
-        'base_ppm': 3.3,
+        'ppm': 3.5,
+        'base_ppm': 3.5,
         'ppm_scale_constant': 528,
         'trigger': 'all_attacks'
     },

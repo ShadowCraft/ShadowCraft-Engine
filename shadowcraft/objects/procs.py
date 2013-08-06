@@ -39,7 +39,7 @@ class Proc(object):
             else:
                 raise InvalidProcException(_('Behaviour \'{behaviour}\' is not defined for {proc}').format(proc=self.proc_name, behaviour=value))
 
-    def _set_behaviour(self, icd, trigger, proc_chance=False, ppm=False, on_crit=False, on_procced_strikes=True, real_ppm=False, base_ppm=None, ppm_scale_constant=None):
+    def _set_behaviour(self, icd, trigger, proc_chance=False, ppm=False, on_crit=False, on_procced_strikes=True, real_ppm=False, base_ppm=None, ppm_scale_constant=None, haste_scales=False):
         # This could be merged with __setattr__; its sole purpose is
         # to clearly surface the parameters passed with the behaviours.
         self.proc_chance = proc_chance
@@ -49,6 +49,7 @@ class Proc(object):
         self.ppm = ppm
         self.base_ppm = base_ppm
         self.real_ppm = real_ppm
+        self.haste_scales = haste_scales
         self.ppm_scale_constant = ppm_scale_constant
         self.on_procced_strikes = on_procced_strikes  # Main Gauche and its kin
 
@@ -114,6 +115,11 @@ class Proc(object):
     
     def is_trinket(self):
         if self.rppm_trinket:
+            return True
+        return False
+    
+    def if_haste_scales(self):
+        if self.haste_scales:
             return True
         return False
         

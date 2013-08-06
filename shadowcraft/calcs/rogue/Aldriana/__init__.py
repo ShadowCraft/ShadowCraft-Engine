@@ -935,7 +935,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     def set_uptime(self, proc, attacks_per_second, crit_rates):
         if proc.is_real_ppm():
             #http://iam.yellingontheinternet.com/2013/04/12/theorycraft-201-advanced-rppm/
-            haste = self.buffs.spell_haste_multiplier() * self.true_haste_mod * self.stats.get_haste_multiplier_from_rating(self.base_stats['haste'])
+            haste = self.buffs.spell_haste_multiplier() * self.true_haste_mod
+            if proc.haste_scales:
+                haste *= self.stats.get_haste_multiplier_from_rating(self.base_stats['haste'])
             #The 1.1307 is a value that increases the proc rate due to bad luck prevention. It /should/ be constant among all rppm proc styles
             if not proc.icd:
                 if proc.max_stacks <= 1:
@@ -952,8 +954,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                                 stack_size = stack - 0.5
                             else:
                                 stack_size = stack - 1
-                            full_haste = self.stats.get_haste_multiplier_from_rating(self.base_stats['haste'] + proc.value * stack_size)
-                            lambd = static_haste * full_haste * proc.rppm_proc_rate() * proc.duration / 60
+                            if proc.haste_scales:
+                                full_haste = self.stats.get_haste_multiplier_from_rating(self.base_stats['haste'] + proc.value * stack_size)
+                                lambd = static_haste * full_haste * proc.rppm_proc_rate() * proc.duration / 60
+                            else:
+                                lambd = static_haste * proc.rppm_proc_rate() * proc.duration / 60
                             base = 1 - math.e ** (-1 * lambd)
                             upt += base ** stack
                         proc.uptime = 1.1307 * upt
@@ -1798,7 +1803,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             phases['none'] = (self.rb_actual_cds(aps, cds)['ar'] + self.settings.response_time + self.major_cd_delay + 5.5 + self.combat_phase_buffer, #rough accounting for KS+RB delay
                               self.update_with_bandits_guile(self.compute_damage_from_aps(stats, aps, crits, procs)) )
             
-            total_duration = phases['ar'][0] + phases['sb'][0] + phases['none'][0]
+            total_duration = phases['ar'][0] + phases['sb'][0] + phases['none'][0] 
         #average it together
         damage_breakdown = self.average_damage_breakdowns(phases, denom = total_duration)
         
@@ -2008,7 +2013,15 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         avg_stacks = (3 * time_at_level + 45) / cycle_duration #45 is the duration (15s) multiplied by the stack power (30% BG)
         self.bandits_guile_multiplier = 1 + .1 * avg_stacks
         
-        if ar and sb or (ar or sb) and not self.settings.cycle.stack_cds:
+        if not sb and not ar:
+            final_ks_cd = self.rb_actual_cd(attacks_per_second, self.tmp_phase_length)
+            if not self.settings.cycle.ksp_immediately:
+                final_ks_cd += (3 * time_at_level)/2 * (3 * time_at_level)/cycle_duration
+            attacks_per_second['mh_killing_spree'] = 7 * self.strike_hit_chance / (final_ks_cd + self.settings.response_time)
+            attacks_per_second['oh_killing_spree'] = 7 * self.off_hand_strike_hit_chance / (final_ks_cd + self.settings.response_time)
+            attacks_per_second['main_gauche'] += attacks_per_second['mh_killing_spree'] * main_gauche_proc_rate
+        
+        if (ar or sb) and not self.settings.cycle.stack_cds:
             approx_time_to_empty = 100 / sinister_strike_energy_cost
             approx_time_to_empty += (energy_regen * approx_time_to_empty) / sinister_strike_energy_cost
             if approx_time_to_empty > self.combat_phase_buffer:
