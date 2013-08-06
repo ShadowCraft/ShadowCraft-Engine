@@ -319,6 +319,7 @@ class DamageCalculator(object):
         active_gear_buffs_cache = []
         procs_list = []
         gear_buffs_list = []
+        ep_values = {}
         for i in list:
             if i in self.stats.procs.allowed_procs:
                 procs_list.append(i)
@@ -333,7 +334,6 @@ class DamageCalculator(object):
             else:
                 ep_values[i] = _('not allowed')
 
-        ep_values = {}
         baseline_dps = self.get_dps()
         normalize_dps = self.ep_helper(normalize_ep_stat)
 
@@ -428,6 +428,7 @@ class DamageCalculator(object):
         active_gear_buffs_cache = []
         procs_list = []
         gear_buffs_list = []
+        ep_values = {}
         for i in list:
             if i in self.stats.procs.allowed_procs:
                 procs_list.append(i)
@@ -442,7 +443,6 @@ class DamageCalculator(object):
             else:
                 ep_values[i] = _('not allowed')
 
-        ep_values = {}
         baseline_dps = self.get_dps()
         normalize_dps = self.ep_helper(normalize_ep_stat)
 
@@ -459,13 +459,14 @@ class DamageCalculator(object):
                 base_normalize_dps = normalize_dps
             setattr(self.stats.gear_buffs, i, True)
             boost = self.stats.gear_buffs.activated_boosts[i]
+            boost['upgrade_level'] = 0
             if 'upgradable' in boost and boost['upgradable'] == True and 'scaling' in boost:
                 if self.stats.gear_buffs.activated_boosts[i]['scaling']['quality'] == 'blue':
                     level_steps = 8
                     max_upgrade_level = 1
                 else:
                     level_steps = 4
-                    max_upgrade_level = 2
+                    max_upgrade_level = 4
                 item_level = boost['scaling']['item_level']
                 scale_factor = self.tools.get_random_prop_point(item_level, boost['scaling']['quality'])
             else:
@@ -498,13 +499,14 @@ class DamageCalculator(object):
                     base_normalize_dps = normalize_dps
                 self.stats.procs.set_proc(i)
                 proc = getattr(self.stats.procs, i)
+                proc.upgrade_level = 0
                 if proc.upgradable and proc.scaling:
                     if proc.scaling['quality'] == 'blue':
                         level_steps = 8
                         max_upgrade_level = 1
                     else:
                         level_steps = 4
-                        max_upgrade_level = 2
+                        max_upgrade_level = 4
                     item_level = proc.scaling['item_level']
                     if proc.proc_name == 'Rune of Re-Origination':
                         scale_factor = 1/(1.15**((528-item_level)/15.0)) * proc.base_ppm

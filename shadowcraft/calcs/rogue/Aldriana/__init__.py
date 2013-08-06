@@ -446,22 +446,24 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #http://blue.mmo-champion.com/topic/254470-ptr-class-and-set-bonus-issues-part-iii/#post953
         max_stat = ('stat', 0)
         total_stats = 0
-        for key in self.base_stats:
+        # doesnt include the mastery raid buff
+        base_stats['mastery'] -= self.buffs.buff_mast() * self.stats.mastery_mod
+        for key in base_stats:
             if key in ('haste', 'mastery', 'crit'):
-                if (self.base_stats[key] > max_stat[1]):
-                    max_stat = (key, self.base_stats[key])
-        for key in self.base_stats:
+                if (base_stats[key] > max_stat[1]):
+                    max_stat = (key, base_stats[key])
+        for key in base_stats:
             if key in ('haste', 'mastery', 'crit') and key != max_stat[0]:
-                total_stats += self.base_stats[key]
+                total_stats += base_stats[key]
                 
         
         buff_cache = []
         for key in ('haste', 'mastery', 'crit'):
             if key != max_stat[0]:
-                buff_cache.append( (key, -1. * self.base_stats[key]) )
+                buff_cache.append( (key, -1. * base_stats[key]) )
             else:
                 buff_cache.append( (key, (total_stats) * 2) )
-       
+
         # (extremely sloppy)
         #set buff amounts
         if self.stats.procs.heroic_thunder_rune_of_re_origination:
