@@ -238,7 +238,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         # TODO verify if the numbers are correct
         # VERIFY: ingame it looks like that the crit multiplier is more around 8% instead of 7% for 553 ilvl
         # maybe 3.5% crit multiplier is rounded to 4 and then doubled through the 200% crit damage...
-        # VERIFY: ingame it looks like the multiplier is rounded for haste and mastery
         # VERIFY: tooltip of the item only shows multiplier for haste and mastery
         self.amplify_crit_damage = 0.
         self.amplify_stats = 1.
@@ -251,8 +250,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                     item_level += proc.upgrade_level * 4
                 elif proc.scaling['quality'] == 'blue':
                     item_level += proc.upgrade_level * 8
-                self.amplify_crit_damage = 0.0008850000 * self.tools.get_random_prop_point(item_level, proc.scaling['quality']) / 100
-                self.amplify_stats += 2 * self.amplify_crit_damage
+                scale_value = self.tools.get_random_prop_point(item_level, proc.scaling['quality'])
+                self.amplify_crit_damage = 0.0008850000 * scale_value / 100
+                amp_stats = round(0.0017700000 * scale_value)
+                self.amplify_stats += amp_stats / 100
                 break
         
         self.load_from_advanced_parameters()
@@ -261,8 +262,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             'agi': (self.stats.agi + self.buffs.buff_agi() + self.race.racial_agi) * self.stats.agi_mod,
             'ap': (self.stats.ap + 2 * self.level - 30) * self.stats.ap_mod,
             'crit': (self.stats.crit) * self.stats.crit_mod,
-            'haste': (self.stats.haste) * self.stats.haste_mod * self.amplify_stats,
-            'mastery': (self.stats.mastery + self.buffs.buff_mast()) * self.stats.mastery_mod * self.amplify_stats,
+            'haste': (self.stats.haste) * self.stats.haste_mod,
+            'mastery': (self.stats.mastery + self.buffs.buff_mast()) * self.stats.mastery_mod,
         }
         
         for boost in self.race.get_racial_stat_boosts():

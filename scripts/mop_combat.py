@@ -87,7 +87,7 @@ total_dps = sum(entry[1] for entry in dps_breakdown.items())
 
 # Compute EP values.
 ep_values = calculator.get_ep(baseline_dps=total_dps)
-tier_ep_values = calculator.get_other_ep(['rogue_t14_4pc', 'rogue_t14_2pc', 'rogue_t15_4pc', 'rogue_t15_2pc', 'rogue_t16_2pc', 'rogue_t16_4pc','fury_of_xuen'])
+tier_ep_values = calculator.get_other_ep(['rogue_t14_4pc', 'rogue_t14_2pc', 'rogue_t15_4pc', 'rogue_t15_2pc', 'rogue_t16_2pc', 'rogue_t16_4pc'])
 #mh_enchants_and_dps_ep_values, oh_enchants_and_dps_ep_values = calculator.get_weapon_ep(dps=True, enchants=True)
 
 trinkets_list = [
@@ -124,6 +124,7 @@ trinkets_list = [
     'lfr_thoks_tail_tip',
     'timeless_discipline_of_xuen',
     'discipline_of_xuen',
+    'fury_of_xuen',
     #5.2
     'heroic_thunder_rune_of_re_origination',
     'heroic_rune_of_re_origination',
