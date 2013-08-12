@@ -45,8 +45,8 @@ test_buffs = buffs.Buffs(
     )
 
 # Set up weapons.
-test_mh = stats.Weapon(17821, 2.6, 'axe', 'dancing_steel')
-test_oh = stats.Weapon(17821, 2.6, 'axe', 'dancing_steel')
+test_mh = stats.Weapon(17821.1909174, 2.6, 'axe', 'dancing_steel')
+test_oh = stats.Weapon(17821.1909174, 2.6, 'axe', 'dancing_steel')
 #test_oh = stats.Weapon(7254.0, 1.8, 'dagger', 'dancing_steel')
 
 # Set up procs.
@@ -58,16 +58,16 @@ test_gear_buffs = stats.GearBuffs('rogue_t16_2pc', 'rogue_t16_4pc', 'leather_spe
 # Set up a calcs object..
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          str=80,
-                         agi=23131,
-                         stam=25454,
-                         crit=5278,
-                         hit=3216,
-                         exp=2559,
-                         haste=17206,
-                         mastery=8103)
+                         agi=25882,
+                         stam=35869,
+                         crit=3851,
+                         hit=2606,
+                         exp=2548,
+                         haste=17771,
+                         mastery=8774)
 
 # Initialize talents..
-test_talents = talents.Talents('322213', test_class, test_level)
+test_talents = talents.Talents('332213', test_class, test_level)
 
 # Set up glyphs.
 glyph_list = ['recuperate', 'adrenaline_rush']
