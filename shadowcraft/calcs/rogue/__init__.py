@@ -36,8 +36,8 @@ class RogueDamageCalculator(DamageCalculator):
     subtlety_mastery_conversion = .03
     
     passive_assassasins_resolve = 1.25
-    passive_sanguinary_veins = 1.2
-    passive_vitality_ap = 1.3
+    passive_sanguinary_veins = 1.25
+    passive_vitality_ap = 1.40
     passive_vitality_energy = 1.2
     
     ability_info = {
@@ -202,7 +202,7 @@ class RogueDamageCalculator(DamageCalculator):
         weapon_damage = self.get_weapon_damage('mh', ap)
         mult, crit_mult = self.get_modifiers('physical', armor=armor, is_bleeding=is_bleeding)
 
-        damage = 3.15 * (weapon_damage + self.bs_bonus_dmg) * mult
+        damage = 3.80 * (weapon_damage + self.bs_bonus_dmg) * mult
         crit_damage = damage * crit_mult
 
         return damage, crit_damage
@@ -211,7 +211,7 @@ class RogueDamageCalculator(DamageCalculator):
         weapon_damage = self.get_weapon_damage('mh', ap)
         mult, crit_mult = self.get_modifiers('physical', armor=armor)
 
-        damage = 4.6 * (weapon_damage + self.dsp_bonus_dmg) * mult
+        damage = 6.45 * (weapon_damage + self.dsp_bonus_dmg) * mult
         crit_damage = damage * crit_mult
 
         return damage, crit_damage
@@ -220,7 +220,7 @@ class RogueDamageCalculator(DamageCalculator):
         mh_weapon_damage = self.get_weapon_damage('mh', ap)
         mult, crit_mult = self.get_modifiers('physical', armor=armor)
 
-        mh_damage = 2.0 * (mh_weapon_damage + self.mut_bonus_dmg) * mult
+        mh_damage = 2.8 * (mh_weapon_damage + self.mut_bonus_dmg) * mult
         crit_mh_damage = mh_damage * crit_mult
 
         return mh_damage, crit_mh_damage
@@ -229,7 +229,7 @@ class RogueDamageCalculator(DamageCalculator):
         oh_weapon_damage = self.get_weapon_damage('oh', ap)
         mult, crit_mult = self.get_modifiers('physical', armor=armor)
 
-        oh_damage = 2.0 * (self.oh_penalty() * oh_weapon_damage + self.mut_bonus_dmg) * mult
+        oh_damage = 2.8 * (self.oh_penalty() * oh_weapon_damage + self.mut_bonus_dmg) * mult
         crit_oh_damage = oh_damage * crit_mult
 
         return oh_damage, crit_oh_damage
@@ -238,7 +238,7 @@ class RogueDamageCalculator(DamageCalculator):
         weapon_damage = self.get_weapon_damage('mh', ap)
         mult, crit_mult = self.get_modifiers('physical', armor=armor, is_bleeding=is_bleeding)
 
-        damage = 1.9 * (weapon_damage + self.ss_bonus_dmg) * mult
+        damage = 2.4 * (weapon_damage + self.ss_bonus_dmg) * mult
         crit_damage = damage * crit_mult
 
         return damage, crit_damage
@@ -280,7 +280,7 @@ class RogueDamageCalculator(DamageCalculator):
         weapon_damage = self.get_weapon_damage('mh', ap, is_normalized=False)
         mult, crit_mult = self.get_modifiers('physical', armor=armor)
 
-        damage = 1.35 * weapon_damage * mult
+        damage = 1.60 * weapon_damage * mult
         crit_damage = damage * crit_mult
 
         return damage, crit_damage
@@ -401,7 +401,7 @@ class RogueDamageCalculator(DamageCalculator):
     def fan_of_knives_damage(self, ap, armor=None, is_bleeding=True):
         mult, crit_mult = self.get_modifiers('physical', armor=armor, is_bleeding=is_bleeding)
         
-        damage = (self.fok_base_dmg + .14 * ap) * mult
+        damage = (self.fok_base_dmg + .175 * ap) * mult
         crit_damage = damage * crit_mult
         
         return damage, crit_damage
