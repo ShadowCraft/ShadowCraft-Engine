@@ -2115,7 +2115,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.stats.gear_buffs.rogue_pvp_4pc_extra_energy():
             self.max_energy += 30
 
-        damage_breakdown = self.compute_damage(self.subtlety_attack_counts_backstab)
+        damage_breakdown = self.compute_damage(self.subtlety_attack_counts)
 
         armor_value = self.target_armor()
         if self.settings.is_pvp:
@@ -2142,9 +2142,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         return damage_breakdown
 
-    def subtlety_attack_counts_backstab(self, current_stats):
+    def subtlety_attack_counts(self, current_stats):
         attacks_per_second = {}
         crit_rates = self.get_crit_rates(current_stats)
+        self.find_weakness_uptime = .1
+        self.ambush_no_fw_rate = .2
         
         #haste and attack speed
         haste_multiplier = self.stats.get_haste_multiplier_from_rating(current_stats['haste']) * self.true_haste_mod
@@ -2162,8 +2164,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         hat_cp_per_second = 1. / (2 + 1. / hat_triggers_per_second)
         er_energy = 8. / 2 #8 energy every 2 seconds
         fw_duration = 10 #17.5s
-        attacks_per_second['eviscerate'] = 0
-        shd_cd = 60 + self.settings.response_time + self.settings.adv_params['major_cd_delay']
+        attacks_per_second['eviscerate'] = [0,0,0,0,0,0]
+        attacks_per_second['rupture_ticks'] = [0,0,0,0,0,0]
+        shd_cd = 60 + self.settings.response_time + self.major_cd_delay
         cp_per_ambush = 2
         cp_per_cpg = 1
         if self.settings.cycle.stack_cds:
@@ -2178,12 +2181,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         ##calculations dependent on energy regen
         typical_cycle_size = self.base_backstab_energy_cost * 5 + 10. #net eviscerate cost
-        typical_cycle_length = dummy_size / energy_regen
-        shd_cycle_size = 40 * 2.5 + 10 #(40 energy per ambush) * (2.5 ambushes till 5CP) + 10 energy for the finisher
+        typical_cycle_length = typical_cycle_size / energy_regen
+        shd_cycle_size = 40 * 2 + 10 #(40 energy per ambush) * (2.5 ambushes till 5CP) + 10 energy for the finisher
         shd_cycle_length = shd_cycle_size / energy_regen
         shd_cycle_gcds = 3.5
         #calc energy for Shadow Dance
-        shd_energy = (self.max_energy - 10) + energy_regen * 8 #lasts 8s
+        shd_energy = (self.max_energy - 10) + energy_regen * 8 #lasts 8s, assume we pool to ~10 energy below max
         
         ##start consuming energy
         #base energy reductions
@@ -2202,6 +2205,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second['hemorrhage'] = hemo_per_second
         #rupture
         attacks_per_second['rupture'] = 1. / 24
+        attacks_per_second['rupture_ticks'][5] = .5
         base_cp_per_second -= 5. / 24
         energy_regen -= 10. / 24
         #no need to add slice and dice to attacks per second
@@ -2220,26 +2224,31 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if shd_cycles_per_shd * shd_cycle_gcds > 8:
             'GCD capped error to be handled later'
             'also convert to discrete formula'
-        attacks_per_second['ambush'] = 2.5 * shd_cycles_per_shd
-        attacks_per_second['eviscerate'] += shd_cycles_per_shd
+        attacks_per_second['ambush'] = 2 * shd_cycles_per_shd / shd_cd
+        attacks_per_second['eviscerate'][5] += shd_cycles_per_shd / shd_cd
         energy_regen -= shd_energy / shd_cd
+        #calculate percentage of ambushes with FW
+        #calculate percentage of eviscerates with FW
+        #calculate FW uptime overall
         
-        
-        
-        
-        
+        #allocate the remaining energy
+        filler_cycles_per_second = energy_regen / typical_cycle_size
+        attacks_per_second[cpg_name] = filler_cycles_per_second * 5
+        attacks_per_second['eviscerate'][5] += filler_cycles_per_second
         
         #Hemo ticks
         if 'hemorrhage' in attacks_per_second:
-            ticks_per_second = min(1. / 3, 8 / hemorrhage_interval)
+            ticks_per_second = min(1. / 3, 8. / float(self.settings.cycle.use_hemorrhage))
             attacks_per_second['hemorrhage_ticks'] = ticks_per_second
         
         self.update_with_autoattack_passives(attacks_per_second,
                 attack_speed_multiplier=attack_speed_multiplier)
-
+        
+        #print attacks_per_second
+        
         return attacks_per_second, crit_rates
 
-    def subtlety_attack_counts_backstab_old(self, current_stats):
+    def subtlety_attack_counts_old(self, current_stats):
         attacks_per_second = {}
         crit_rates = self.get_crit_rates(current_stats)
 

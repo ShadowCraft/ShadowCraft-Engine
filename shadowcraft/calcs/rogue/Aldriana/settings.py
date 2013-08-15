@@ -122,7 +122,7 @@ class CombatCycle(Cycle):
 class SubtletyCycle(Cycle):
     _cycle_type = 'subtlety'
 
-    def __init__(self, raid_crits_per_second, use_hemorrhage='24'):
+    def __init__(self, raid_crits_per_second, use_hemorrhage='24', stack_cds=True):
         self.raid_crits_per_second = raid_crits_per_second #used to calculate HAT procs per second.
         self.use_hemorrhage = use_hemorrhage # Allowed values are 'always' (main CP generator),
                                                                  #'never' (default to backstab),
