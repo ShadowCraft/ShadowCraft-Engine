@@ -53,8 +53,6 @@ class DamageCalculator(object):
             self.stats.crit += self.stats.gear_buffs.tradeskill_bonus('master_of_anatomy')
         if self.race.race_name == 'undead':
             self.stats.procs.set_proc('touch_of_the_grave')
-        #if '5.4_cd_reducer_trinket' == getattr(self.stats.procs, '5.4_cd_reducer_trinket') or self.stats.get_trinket_cd_reducer():
-        #    print 'update cd reducer trinket details'
         self._set_constants_for_class()
         
         if self.settings.is_pvp:
@@ -721,6 +719,9 @@ class DamageCalculator(object):
         # http://elitistjerks.com/f31/t13300-shaman_relentless_earthstorm_ele/#post404567
         base_modifier = 2
         crit_damage_modifier = self.stats.gear_buffs.metagem_crit_multiplier()
+        # TODO verify how the amplify trinket interacts with crit meta gem
+        if self.amplify_crit_damage:
+            crit_damage_modifier += self.amplify_crit_damage
         total_modifier = 1 + (base_modifier * crit_damage_modifier - 1) * crit_damage_bonus_modifier
         return total_modifier
 
@@ -749,3 +750,18 @@ class DamageCalculator(object):
         elif attack_kind == 'physical':
             armor_override = self.target_armor(armor)
             return self.buffs.physical_damage_multiplier() * self.armor_mitigation_multiplier(armor_override) * pvp_mod
+        
+    def get_trinket_cd_reducer(self):
+        trinket_cd_reducer_value = .0
+        prefixes = ('heroic_war_','heroic_','war_','','flex_','lfr_')
+        for prefix in prefixes:
+            proc = getattr(self.stats.procs, ''.join((prefix, 'assurance_of_consequence')))
+            if proc and proc.scaling:
+                item_level = proc.scaling['item_level']
+                if proc.scaling['quality'] == 'epic':
+                    item_level += proc.upgrade_level * 4
+                elif proc.scaling['quality'] == 'blue':
+                    item_level += proc.upgrade_level * 8
+                trinket_cd_reducer_value = 0.0098999999 / 100 * self.tools.get_random_prop_point(item_level, proc.scaling['quality'])
+                return 1 / (1 + trinket_cd_reducer_value)
+        return 1

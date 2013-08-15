@@ -105,8 +105,8 @@ class RogueDamageCalculator(DamageCalculator):
         self.garrote_base_dmg = self.get_factor(0.1180000007) # 280
         self.rup_base_dmg =     self.get_factor(0.1850000024) # 586
         self.rup_bonus_dmg =    self.get_factor(0.0260000005) # 586 - 'unknown' field
-        self.evis_base_dmg =    self.get_factor(0.5336999953,  1.0000000000) # 622
-        self.evis_bonus_dmg =   self.get_factor(0.7860000134) # 622 - 'unknown' field
+        self.evis_base_dmg =    self.get_factor(0.5339999795,  1.0000000000) # 622
+        self.evis_bonus_dmg =   self.get_factor(0.7070000172) # 622 - 'unknown' field
         self.env_base_dmg =     self.get_factor(0.3849999905) # 22420
         self.ct_base_dmg =      self.get_factor(0.4760000110) # 150471
         self.fok_base_dmg =     self.get_factor(1.0000000000, 0.4000000060) # 44107
@@ -385,7 +385,7 @@ class RogueDamageCalculator(DamageCalculator):
     def eviscerate_damage(self, ap, cp, armor=None, mastery=None, is_bleeding=True):
         mult, crit_mult = self.get_modifiers('physical', 'executioner', mastery=mastery, armor=armor, is_bleeding=is_bleeding)
 
-        damage = (self.evis_base_dmg + self.evis_bonus_dmg * cp + 0.225 * cp * ap) * mult
+        damage = (self.evis_base_dmg + self.evis_bonus_dmg * cp + 0.18 * cp * ap) * mult
         crit_damage = damage * crit_mult
         
         return damage, crit_damage
@@ -499,7 +499,7 @@ class RogueDamageCalculator(DamageCalculator):
                               'adrenaline_rush', 'killing_spree',
                               'shadow_dance']
         if ability in cd_reduction_table:
-            return self.ability_cds[ability] * self.stats.gear_buffs.get_trinket_cd_reducer()
+            return self.ability_cds[ability] * self.get_trinket_cd_reducer()
         else:
             return self.ability_cds[ability]
 

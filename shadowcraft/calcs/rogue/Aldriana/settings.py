@@ -4,7 +4,7 @@ class Settings(object):
     # Settings object for AldrianasRogueDamageCalculator.
 
     def __init__(self, cycle, time_in_execute_range=.35, tricks_on_cooldown=True, response_time=.5, latency=.025, dmg_poison='dp', utl_poison=None,
-                 duration=300, use_opener='always', opener_name='default', is_pvp=False, stormlash=False, shiv_interval=0, adv_params=None, merge_damage=True):
+                 duration=300, use_opener='always', opener_name='default', is_pvp=False, stormlash=False, shiv_interval=0, adv_params=None, merge_damage=True, num_boss_adds=0):
         self.cycle = cycle
         self.time_in_execute_range = time_in_execute_range
         self.tricks_on_cooldown = tricks_on_cooldown
@@ -18,6 +18,7 @@ class Settings(object):
         self.is_pvp = is_pvp
         self.use_stormlash = stormlash
         self.merge_damage = merge_damage
+        self.num_boss_adds = max(num_boss_adds, 0)
         self.shiv_interval = float(shiv_interval)
         self.adv_params = self.interpret_adv_params(adv_params)
         if self.shiv_interval < 10 and not self.shiv_interval == 0:
