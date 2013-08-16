@@ -417,7 +417,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if proc is getattr(self.stats.procs, 'fury_of_xuen'):
             crit_rate = self.melee_crit_rate(agi=current_stats['agi'], crit=current_stats['crit'])
             hit_chance = self.strike_hit_chance
-            proc_value = (average_ap * .20 + 1) * 10
+            proc_value = (average_ap * .20 + 1) * 10 * (1 + min(4., self.settings.num_boss_adds))
 
         average_hit = proc_value * multiplier * hit_chance
         average_damage = average_hit * (1 + crit_rate * (crit_multiplier - 1)) * proc_count
@@ -704,7 +704,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 for attack in damage_breakdown:
                     if attack not in ('deadly_instant_poison','multistrike'):
                         # does not do damage to your primary target, only adds
-                        dmg_cleave += damage_breakdown[attack][0] * proc_chance * self.settings.num_boss_adds
+                        dmg_cleave += damage_breakdown[attack][0] * proc_chance * min(5., self.settings.num_boss_adds)
                 damage_breakdown['cleave'] = (dmg_cleave,0.)
                 break
 
