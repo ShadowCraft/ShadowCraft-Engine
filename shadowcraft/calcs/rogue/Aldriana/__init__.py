@@ -850,7 +850,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                     else:
                         triggers_per_second += attacks_per_second[ability]
         if proc.procs_off_harmful_spells():
-            for ability in ('instant_poison', 'wound_poison', 'venomous_wounds'):
+            for ability in ('deadly_instant_poison', 'wound_poison', 'venomous_wounds'):
                 if ability in attacks_per_second:
                     if proc.procs_off_crit_only():
                         triggers_per_second += attacks_per_second[ability] * crit_rates[ability]
@@ -941,7 +941,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             return 0
         triggers_per_second = 0
         if proc.procs_off_harmful_spells():
-            for ability in ('instant_poison', 'wound_poison', 'venomous_wounds'):
+            for ability in ('deadly_instant_poison', 'wound_poison', 'venomous_wounds'):
                 if ability in attacks_per_second:
                     if proc.procs_off_crit_only():
                         triggers_per_second += attacks_per_second[ability] * crit_rates[ability]
