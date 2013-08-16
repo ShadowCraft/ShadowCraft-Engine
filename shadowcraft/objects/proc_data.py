@@ -728,7 +728,7 @@ behaviours = {
     'fury_of_xuen': {
         'real_ppm':True,
         'icd': 0,
-        'ppm': 1.5,
+        'ppm': 1.62,
         'haste_scales':True,
         'trigger': 'all_attacks'
     },

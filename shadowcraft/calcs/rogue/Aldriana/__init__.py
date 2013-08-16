@@ -417,7 +417,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if proc is getattr(self.stats.procs, 'fury_of_xuen'):
             crit_rate = self.melee_crit_rate(agi=current_stats['agi'], crit=current_stats['crit'])
             hit_chance = self.strike_hit_chance
-            proc_value = (average_ap * .40 + 1) * 10
+            proc_value = (average_ap * .20 + 1) * 10
 
         average_hit = proc_value * multiplier * hit_chance
         average_damage = average_hit * (1 + crit_rate * (crit_multiplier - 1)) * proc_count
