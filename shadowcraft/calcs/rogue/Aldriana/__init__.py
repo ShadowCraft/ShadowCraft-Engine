@@ -1278,7 +1278,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                     time_to_max = max_stacks * attack_spacing
                     time_at_max = max(0., self.vendetta_duration - time_to_max)
                     max_stacks_able_to_reach = min(self.vendetta_duration / attack_spacing, max_stacks)
-                    avg_stacks = max_stacks_able_to_reach / 2;
+                    avg_stacks = max_stacks_able_to_reach / 2
                     avg = time_to_max * avg_stacks + time_at_max * max_stacks + extra_duration * max_stacks_able_to_reach
                     res = avg * mas_per_stack / self.get_spell_cd('vendetta')
                 else:
