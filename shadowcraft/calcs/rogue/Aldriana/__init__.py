@@ -1988,23 +1988,21 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.talents.anticipation:
             ss_per_finisher = (FINISHER_SIZE - ruthlessness_value) / (cp_per_cpg + self.extra_cp_chance)
         else:
-            cp_per_ss = self.get_cp_per_cpg(1, self.extra_cp_chance)
-            ss_per_finisher = 4.1
+            #cp_per_ss = self.get_cp_per_cpg(1, self.extra_cp_chance)
+            ss_per_finisher = 3.742
             if sb:
-                ss_per_finisher = 2.24
-            #self.get_cp_distribution_for_cycle(cp_per_ss, FINISHER_SIZE)
-        cp_per_finisher = (FINISHER_SIZE - ruthlessness_value)
+                ss_per_finisher = 2
+        cp_per_finisher = FINISHER_SIZE
         energy_cost_per_cp = ss_per_finisher * sinister_strike_energy_cost
         total_eviscerate_cost = energy_cost_per_cp + eviscerate_energy_cost - cp_per_finisher * self.relentless_strikes_energy_return_per_cp
         total_rupture_cost = energy_cost_per_cp + rupture_energy_cost - cp_per_finisher * self.relentless_strikes_energy_return_per_cp
 
-        #ss_per_snd = (total_eviscerate_cost - cp_per_finisher * self.relentless_strikes_energy_return_per_cp + 25) / sinister_strike_energy_cost
-        ss_per_snd = 5
-        snd_size = ss_per_snd * (cp_per_cpg + self.extra_cp_chance)
+        ss_per_snd = ss_per_finisher
+        snd_size = FINISHER_SIZE
         snd_base_cost = 25
-        snd_cost = ss_per_snd / (cp_per_cpg + self.extra_cp_chance) * sinister_strike_energy_cost + snd_base_cost - snd_size * self.relentless_strikes_energy_return_per_cp
+        snd_cost = ss_per_snd * sinister_strike_energy_cost + snd_base_cost - snd_size * self.relentless_strikes_energy_return_per_cp
         snd_duration = self.get_snd_length(snd_size)
-        energy_spent_on_snd = snd_cost / (snd_duration - self.settings.response_time)
+        energy_spent_on_snd = snd_cost / snd_duration
         
         #Base Actions
         #marked for death CD
