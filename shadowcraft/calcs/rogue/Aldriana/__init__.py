@@ -1259,6 +1259,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             
             if self.stats.gear_buffs.rogue_t16_4pc_bonus() and self.settings.is_assassination_rogue():
                 #20 stacks of 250 mastery, lasts 5 seconds
+                mas_per_stack = 250.
+                max_stacks = 20.
+                buff_duration = 5.
+                extra_duration = buff_duration - self.settings.response_time
                 ability_count = 0
                 for key in ('mutilate', 'dispatch', 'envenom'):
                     if key in attacks_per_second:
@@ -1268,15 +1272,19 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                             ability_count += 2 * attacks_per_second[key]
                         else:
                             ability_count += attacks_per_second[key]
-                if 1 / ability_count < 5:
-                    time_to_max = 20 / ability_count
+                attack_spacing = 1 / ability_count
+                res = 0.
+                if attack_spacing < 5:
+                    time_to_max = max_stacks * attack_spacing
+                    time_at_max = max(0., self.vendetta_duration - time_to_max)
+                    max_stacks_able_to_reach = min(self.vendetta_duration / attack_spacing, max_stacks)
+                    avg_stacks = max_stacks_able_to_reach / 2;
+                    avg = time_to_max * avg_stacks + time_at_max * max_stacks + extra_duration * max_stacks_able_to_reach
+                    res = avg * mas_per_stack / self.get_spell_cd('vendetta')
                 else:
-                    time_to_max = 60 #placeholder
-                if time_to_max > self.vendetta_duration:
-                    average_stacks = self.vendetta_duration / (1 / ability_count)/2
-                else:
-                    average_stacks = (time_to_max * 20) / 2 + (20 * (self.vendetta_duration-time_to_max))
-                current_stats['mastery'] += (average_stacks * 250 / self.get_spell_cd('vendetta')) * self.stats.mastery_mod * self.amplify_stats
+                    uptime = buff_duration / attack_spacing
+                    res = self.vendetta_duration * uptime * mas_per_stack / self.get_spell_cd('vendetta')
+                current_stats['mastery'] += res * self.stats.mastery_mod * self.amplify_stats
 
             for proc in damage_procs:
                 if not proc.icd:
