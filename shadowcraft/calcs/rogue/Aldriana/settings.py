@@ -117,7 +117,6 @@ class CombatCycle(Cycle):
         self.use_rupture = bool(use_rupture)
         self.ksp_immediately = bool(ksp_immediately) # Determines whether to KSp the instant it comes off cool or wait until Bandit's Guile stacks up.
         self.revealing_strike_pooling = bool(revealing_strike_pooling)
-        self.bf_targets = bf_targets # The number of targets BF hits
         self.stack_cds = bool(stack_cds) # This refers specifically to stacking SB and AR
 
 class SubtletyCycle(Cycle):

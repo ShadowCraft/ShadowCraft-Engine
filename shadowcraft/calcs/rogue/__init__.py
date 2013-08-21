@@ -40,6 +40,8 @@ class RogueDamageCalculator(DamageCalculator):
     passive_vitality_ap = 1.40
     passive_vitality_energy = 1.2
     
+    cdg_finisher_modifier = 1.2
+    
     ability_info = {
             'ambush':              (60, 'strike'),
             'backstab':            (35, 'strike'),
@@ -161,6 +163,9 @@ class RogueDamageCalculator(DamageCalculator):
         kwargs.setdefault('is_bleeding', True)
         if kwargs['is_bleeding'] and self.settings.is_subtlety_rogue():
             base_modifier *= self.passive_sanguinary_veins
+        # Coup de Grace (baked in)        kwargs.setdefault('cdg', False)
+        if 'cdg' in args:
+            base_modifier *= self.cdg_finisher_modifier
         # Raid modifiers
         kwargs.setdefault('armor', None)
         ability_type_check = 0
@@ -383,7 +388,7 @@ class RogueDamageCalculator(DamageCalculator):
         return tick_damage, crit_tick_damage
 
     def eviscerate_damage(self, ap, cp, armor=None, mastery=None, is_bleeding=True):
-        mult, crit_mult = self.get_modifiers('physical', 'executioner', mastery=mastery, armor=armor, is_bleeding=is_bleeding)
+        mult, crit_mult = self.get_modifiers('physical', 'executioner', 'cdg', mastery=mastery, armor=armor, is_bleeding=is_bleeding)
 
         damage = (self.evis_base_dmg + self.evis_bonus_dmg * cp + 0.18 * cp * ap) * mult
         crit_damage = damage * crit_mult
@@ -391,7 +396,7 @@ class RogueDamageCalculator(DamageCalculator):
         return damage, crit_damage
 
     def envenom_damage(self, ap, cp, mastery=None):
-        mult, crit_mult = self.get_modifiers('spell', 'potent_poisons', mastery=mastery)
+        mult, crit_mult = self.get_modifiers('spell', 'potent_poisons', 'cdg', mastery=mastery)
 
         damage = (self.env_base_dmg * cp + 0.134 * cp * ap) * mult
         crit_damage = damage * crit_mult
