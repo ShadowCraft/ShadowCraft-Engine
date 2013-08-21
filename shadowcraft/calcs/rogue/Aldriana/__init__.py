@@ -417,7 +417,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if proc is getattr(self.stats.procs, 'fury_of_xuen'):
             crit_rate = self.melee_crit_rate(agi=current_stats['agi'], crit=current_stats['crit'])
             hit_chance = self.strike_hit_chance
-            proc_value = (average_ap * .40 + 1) * 10
+            proc_value = (average_ap * .20 + 1) * 10 * (1 + min(4., self.settings.num_boss_adds))
 
         average_hit = proc_value * multiplier * hit_chance
         average_damage = average_hit * (1 + crit_rate * (crit_multiplier - 1)) * proc_count
@@ -704,7 +704,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 for attack in damage_breakdown:
                     if attack not in ('deadly_instant_poison','multistrike'):
                         # does not do damage to your primary target, only adds
-                        dmg_cleave += damage_breakdown[attack][0] * proc_chance * self.settings.num_boss_adds
+                        dmg_cleave += damage_breakdown[attack][0] * proc_chance * min(5., self.settings.num_boss_adds)
                 damage_breakdown['cleave'] = (dmg_cleave,0.)
                 break
 
@@ -850,7 +850,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                     else:
                         triggers_per_second += attacks_per_second[ability]
         if proc.procs_off_harmful_spells():
-            for ability in ('instant_poison', 'wound_poison', 'venomous_wounds'):
+            for ability in ('deadly_instant_poison', 'wound_poison', 'venomous_wounds'):
                 if ability in attacks_per_second:
                     if proc.procs_off_crit_only():
                         triggers_per_second += attacks_per_second[ability] * crit_rates[ability]
@@ -941,7 +941,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             return 0
         triggers_per_second = 0
         if proc.procs_off_harmful_spells():
-            for ability in ('instant_poison', 'wound_poison', 'venomous_wounds'):
+            for ability in ('deadly_instant_poison', 'wound_poison', 'venomous_wounds'):
                 if ability in attacks_per_second:
                     if proc.procs_off_crit_only():
                         triggers_per_second += attacks_per_second[ability] * crit_rates[ability]
@@ -1259,6 +1259,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             
             if self.stats.gear_buffs.rogue_t16_4pc_bonus() and self.settings.is_assassination_rogue():
                 #20 stacks of 250 mastery, lasts 5 seconds
+                mas_per_stack = 250.
+                max_stacks = 20.
+                buff_duration = 5.
+                extra_duration = buff_duration - self.settings.response_time
                 ability_count = 0
                 for key in ('mutilate', 'dispatch', 'envenom'):
                     if key in attacks_per_second:
@@ -1268,15 +1272,19 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                             ability_count += 2 * attacks_per_second[key]
                         else:
                             ability_count += attacks_per_second[key]
-                if 1 / ability_count < 5:
-                    time_to_max = 20 / ability_count
+                attack_spacing = 1 / ability_count
+                res = 0.
+                if attack_spacing < 5:
+                    time_to_max = max_stacks * attack_spacing
+                    time_at_max = max(0., self.vendetta_duration - time_to_max)
+                    max_stacks_able_to_reach = min(self.vendetta_duration / attack_spacing, max_stacks)
+                    avg_stacks = max_stacks_able_to_reach / 2
+                    avg = time_to_max * avg_stacks + time_at_max * max_stacks + extra_duration * max_stacks_able_to_reach
+                    res = avg * mas_per_stack / self.get_spell_cd('vendetta')
                 else:
-                    time_to_max = 60 #placeholder
-                if time_to_max > self.vendetta_duration:
-                    average_stacks = self.vendetta_duration / (1 / ability_count)/2
-                else:
-                    average_stacks = (time_to_max * 20) / 2 + (20 * (self.vendetta_duration-time_to_max))
-                current_stats['mastery'] += (average_stacks * 250 / self.get_spell_cd('vendetta')) * self.stats.mastery_mod * self.amplify_stats
+                    uptime = buff_duration / attack_spacing
+                    res = self.vendetta_duration * uptime * mas_per_stack / self.get_spell_cd('vendetta')
+                current_stats['mastery'] += res * self.stats.mastery_mod * self.amplify_stats
 
             for proc in damage_procs:
                 if not proc.icd:
@@ -1980,23 +1988,21 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.talents.anticipation:
             ss_per_finisher = (FINISHER_SIZE - ruthlessness_value) / (cp_per_cpg + self.extra_cp_chance)
         else:
-            cp_per_ss = self.get_cp_per_cpg(1, self.extra_cp_chance)
-            ss_per_finisher = 4.1
+            #cp_per_ss = self.get_cp_per_cpg(1, self.extra_cp_chance)
+            ss_per_finisher = 3.742
             if sb:
-                ss_per_finisher = 2.24
-            #self.get_cp_distribution_for_cycle(cp_per_ss, FINISHER_SIZE)
-        cp_per_finisher = (FINISHER_SIZE - ruthlessness_value)
+                ss_per_finisher = 2
+        cp_per_finisher = FINISHER_SIZE
         energy_cost_per_cp = ss_per_finisher * sinister_strike_energy_cost
         total_eviscerate_cost = energy_cost_per_cp + eviscerate_energy_cost - cp_per_finisher * self.relentless_strikes_energy_return_per_cp
         total_rupture_cost = energy_cost_per_cp + rupture_energy_cost - cp_per_finisher * self.relentless_strikes_energy_return_per_cp
 
-        #ss_per_snd = (total_eviscerate_cost - cp_per_finisher * self.relentless_strikes_energy_return_per_cp + 25) / sinister_strike_energy_cost
-        ss_per_snd = 5
-        snd_size = ss_per_snd * (cp_per_cpg + self.extra_cp_chance)
+        ss_per_snd = ss_per_finisher
+        snd_size = FINISHER_SIZE
         snd_base_cost = 25
-        snd_cost = ss_per_snd / (cp_per_cpg + self.extra_cp_chance) * sinister_strike_energy_cost + snd_base_cost - snd_size * self.relentless_strikes_energy_return_per_cp
+        snd_cost = ss_per_snd * sinister_strike_energy_cost + snd_base_cost - snd_size * self.relentless_strikes_energy_return_per_cp
         snd_duration = self.get_snd_length(snd_size)
-        energy_spent_on_snd = snd_cost / (snd_duration - self.settings.response_time)
+        energy_spent_on_snd = snd_cost / snd_duration
         
         #Base Actions
         #marked for death CD

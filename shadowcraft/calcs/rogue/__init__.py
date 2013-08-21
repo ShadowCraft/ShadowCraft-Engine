@@ -503,7 +503,10 @@ class RogueDamageCalculator(DamageCalculator):
                               'vendetta',
                               'adrenaline_rush', 'killing_spree',
                               'shadow_dance']
-        if ability in cd_reduction_table:
+
+        if self.settings.is_combat_rogue() and ability == 'vanish': # not very elegant
+            return self.ability_cds[ability]
+        elif ability in cd_reduction_table:
             return self.ability_cds[ability] * self.get_trinket_cd_reducer()
         else:
             return self.ability_cds[ability]
