@@ -499,14 +499,12 @@ class RogueDamageCalculator(DamageCalculator):
         return (final_cost, self.ability_info[ability][1])
     
     def get_spell_cd(self, ability):
-        cd_reduction_table = ['vanish', 'shadow_blades', 'cloak_of_shadows',
-                              'vendetta',
-                              'adrenaline_rush', 'killing_spree',
-                              'shadow_dance']
-
-        if self.settings.is_combat_rogue() and ability == 'vanish': # not very elegant
-            return self.ability_cds[ability]
-        elif ability in cd_reduction_table:
+        cd_reduction_table = {'assassination': ['vanish', 'shadow_blades', 'vendetta'],
+                              'combat': ['shadow_blades', 'adrenaline_rush', 'killing_spree'],
+                              'subtlety': ['vanish', 'shadow_blades', 'shadow_dance']
+                             }#Cloak, Evasion, Sprint affect all 3 specs, not needed in list
+        
+        if ability in cd_reduction_table[self.settings.get_spec()]:
             return self.ability_cds[ability] * self.get_trinket_cd_reducer()
         else:
             return self.ability_cds[ability]

@@ -326,26 +326,26 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.set_re_origination_stat(self.base_stats)
     
     def load_from_advanced_parameters(self):
-        self.stats.agi += self.get_adv_param('agi_bonus') #agi
-        self.stats.agi_mod = self.get_adv_param('agi_mod')
-        self.stats.ap += self.get_adv_param('ap_bonus') #ap
-        self.stats.ap_mod = self.get_adv_param('ap_mod')
-        self.stats.crit += self.get_adv_param('crit_bonus') #crit rating
-        self.stats.crit_mod = self.get_adv_param('crit_mod')
-        self.stats.haste += self.get_adv_param('haste_bonus') #haste rating
-        self.stats.haste_mod = self.get_adv_param('haste_mod')
-        self.stats.mastery += self.get_adv_param('mastery_bonus') #mastery rating
-        self.stats.mastery_mod = self.get_adv_param('mastery_mod')
-        self.stats.hit += self.get_adv_param('hit_bonus') #hit rating
-        self.stats.hit_mod = self.get_adv_param('hit_mod')
-        self.stats.exp += self.get_adv_param('exp_bonus') #exp rating
-        self.stats.exp_mod = self.get_adv_param('exp_mod')
+        self.stats.agi += self.get_adv_param('agi_bonus', 0) #agi
+        self.stats.agi_mod = self.get_adv_param('agi_mod', 1.)
+        self.stats.ap += self.get_adv_param('ap_bonus', 0) #ap
+        self.stats.ap_mod = self.get_adv_param('ap_mod', 1.)
+        self.stats.crit += self.get_adv_param('crit_bonus', 0) #crit rating
+        self.stats.crit_mod = self.get_adv_param('crit_mod', 1.)
+        self.stats.haste += self.get_adv_param('haste_bonus', 0) #haste rating
+        self.stats.haste_mod = self.get_adv_param('haste_mod', 1.)
+        self.stats.mastery += self.get_adv_param('mastery_bonus', 0) #mastery rating
+        self.stats.mastery_mod = self.get_adv_param('mastery_mod', 1.)
+        self.stats.hit += self.get_adv_param('hit_bonus', 0) #hit rating
+        self.stats.hit_mod = self.get_adv_param('hit_mod', 1.)
+        self.stats.exp += self.get_adv_param('exp_bonus', 0) #exp rating
+        self.stats.exp_mod = self.get_adv_param('exp_mod', 1.)
         
-        self.true_haste_mod = self.get_adv_param('haste_buff')
-        self.damage_mod = self.get_adv_param('damage_mod')
+        self.true_haste_mod = self.get_adv_param('haste_buff', 1.)
+        self.damage_mod = self.get_adv_param('damage_mod', 1.)
         
-        self.major_cd_delay = self.get_adv_param('major_cd_delay')
-        self.hit_chance_bonus = self.get_adv_param('hit_chance_bonus')
+        self.major_cd_delay = self.get_adv_param('major_cd_delay', 0)
+        self.hit_chance_bonus = self.get_adv_param('hit_chance_bonus', 0)
     
     def get_stat_mod(self, stat):
         if stat == 'ap':
@@ -358,21 +358,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             return self.stats.mastery_mod
         return 1.
     
-    def get_adv_param(self, type):
+    def get_adv_param(self, type, default_val):
         if type in self.settings.adv_params:
             return float(self.settings.adv_params[type])
-        elif 'damage_mod' == type:
-            return 1.
-        elif 'haste_buff' == type:
-            return 1.
-        elif 'major_cd_delay' in type:
-            return 0
-        elif '_bonus' in type:
-            return 0
-        elif '_mod' in type:
-            return 1.
-        elif '_val' in type:
-            return -1
+        else:
+            return default_val
         raise exceptions.InvalidInputException(_('Improperly defined parameter type: '+type))
     
     def get_proc_damage_contribution(self, proc, proc_count, current_stats, average_ap, damage_breakdown):
@@ -2307,7 +2297,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         #t16 4pc
         if cpg_name == 'backstab' and self.stats.gear_buffs.rogue_t16_4pc:
-            self.find_weakness_uptime += fw_duration * .04 * attacks_per_second['backstab']
+            self.find_weakness_uptime += fw_duration * .04 * attacks_per_second['backstab'] * ((shd_cd - 8.) / shd_cd)
         
         #Hemo ticks
         if 'hemorrhage' in attacks_per_second:
