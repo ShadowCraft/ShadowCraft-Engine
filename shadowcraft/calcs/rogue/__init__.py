@@ -73,6 +73,8 @@ class RogueDamageCalculator(DamageCalculator):
             'killing_spree':       120,
             'shadow_dance':        60,
             'shadowmeld':          120,
+            'marked_for_death':    60,
+            'preparation':         360,
         }
     
     def __setattr__(self, name, value):
