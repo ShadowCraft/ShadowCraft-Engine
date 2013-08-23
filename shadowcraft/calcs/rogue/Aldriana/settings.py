@@ -51,6 +51,8 @@ class Settings(object):
         current_effects = 0
         if s != "" and s:
             for e in s.split(';'):
+                if ':' not in e:
+                    raise exceptions.InvalidInputException(_('Advanced Parameter' + e + ' found corrupt. Properly structure params and try again.'))
                 tmp = e.split(':')
                 try:
                     data[tmp[0].strip().lower()] = tmp[1].strip().lower() #strip() and lower() needed so that everyone is on the same page
