@@ -2211,7 +2211,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attacks_per_second['rupture_ticks'] = [0,0,0,0,0,0]
         attacks_per_second['backstab'] = 0
         attacks_per_second['hemorrhage'] = 0
-        shd_cd = 60 + self.settings.response_time + self.major_cd_delay
+        shd_cd = self.get_spell_cd('shadow_dance') + self.settings.response_time + self.major_cd_delay
         cp_per_ambush = 2
         cp_per_cpg = 1
         rupture_cd = 24
@@ -2277,6 +2277,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attacks_per_second['ambush'] = 2 * shd_cycles_per_shd / shd_cd
         attacks_per_second['eviscerate'][5] += shd_cycles_per_shd / shd_cd
         energy_regen -= shd_energy / shd_cd
+        shadowmeld_ambushes = 0.
         if self.race.shadowmeld:
             shadowmeld_ambushes = 1. / (self.get_spell_cd('shadowmeld') + self.settings.response_time)
             attacks_per_second['ambush'] += shadowmeld_ambushes
@@ -2300,8 +2301,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.find_weakness_uptime += fw_duration * .04 * attacks_per_second['backstab'] * ((shd_cd - 8.) / shd_cd)
         
         #Hemo ticks
-        if 'hemorrhage' in attacks_per_second:
-            ticks_per_second = min(1. / 3, 8. / float(self.settings.cycle.use_hemorrhage))
+        if 'hemorrhage' in attacks_per_second and self.settings.cycle.use_hemorrhage != 'never':
+            if self.settings.cycle.use_hemorrhage == 'always':
+                hemo_gap = 1 / attacks_per_second['hemorrhage']
+            else:
+                hemo_gap = float(self.settings.cycle.use_hemorrhage)
+            ticks_per_second = min(1. / 3, 8. / hemo_gap)
             attacks_per_second['hemorrhage_ticks'] = ticks_per_second
         
         self.update_with_autoattack_passives(attacks_per_second,
