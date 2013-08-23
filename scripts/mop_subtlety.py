@@ -70,7 +70,7 @@ test_glyphs = glyphs.Glyphs(test_class, *glyph_list)
 
 # Set up settings.
 test_cycle = settings.SubtletyCycle(5)
-test_settings = settings.Settings(test_cycle, response_time=.5, duration=360, dmg_poison='dp', utl_poison='lp', is_pvp=False)
+test_settings = settings.Settings(test_cycle, response_time=.5, duration=360, dmg_poison='dp', utl_poison='lp', is_pvp=False, adv_params="")
 
 # Build a DPS object.
 calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_glyphs, test_buffs, test_race, test_settings, test_level)
@@ -103,28 +103,28 @@ trinkets_list = [
     'lfr_terror_in_the_mists',
     'relic_of_xuen',
 ]
-trinkets_ep_value = calculator.get_other_ep(trinkets_list)
-trinkets_ep_value['heroic_rune_of_re_origination'] += 1657 * ep_values['agi']
-trinkets_ep_value['rune_of_re_origination'] += 1467 * ep_values['agi']
-trinkets_ep_value['lfr_rune_of_re_origination'] += 1218 * ep_values['agi']
-trinkets_ep_value['heroic_bad_juju'] += .6 * 1657 * ep_values['mastery'] + .4 * 1657 * ep_values['haste']
-trinkets_ep_value['bad_juju'] += .6 * 1467 * ep_values['mastery'] + .4 * 1467 * ep_values['haste']
-trinkets_ep_value['lfr_bad_juju'] += .6 * 1218 * ep_values['mastery'] + .4 * 1218 * ep_values['haste']
-trinkets_ep_value['heroic_talisman_of_bloodlust'] += 1657 * ep_values['agi']
-trinkets_ep_value['talisman_of_bloodlust'] += 1467 * ep_values['agi']
-trinkets_ep_value['lfr_talisman_of_bloodlust'] += 1218 * ep_values['agi']
-trinkets_ep_value['heroic_renatakis_soul_charm'] += .6 * 1657 * ep_values['dodge_exp'] + .4 * 1657 * ep_values['haste']
-trinkets_ep_value['renatakis_soul_charm'] += .6 * 1467 * ep_values['dodge_exp'] + .4 * 1467 * ep_values['haste']
-trinkets_ep_value['lfr_renatakis_soul_charm'] += .6 * 1218 * ep_values['dodge_exp'] + .4 * 1218 * ep_values['haste']
-trinkets_ep_value['vicious_talisman_of_the_shado-pan_assault']
+#trinkets_ep_value = calculator.get_other_ep(trinkets_list)
+#trinkets_ep_value['heroic_rune_of_re_origination'] += 1657 * ep_values['agi']
+#trinkets_ep_value['rune_of_re_origination'] += 1467 * ep_values['agi']
+#trinkets_ep_value['lfr_rune_of_re_origination'] += 1218 * ep_values['agi']
+#trinkets_ep_value['heroic_bad_juju'] += .6 * 1657 * ep_values['mastery'] + .4 * 1657 * ep_values['haste']
+#trinkets_ep_value['bad_juju'] += .6 * 1467 * ep_values['mastery'] + .4 * 1467 * ep_values['haste']
+#trinkets_ep_value['lfr_bad_juju'] += .6 * 1218 * ep_values['mastery'] + .4 * 1218 * ep_values['haste']
+#trinkets_ep_value['heroic_talisman_of_bloodlust'] += 1657 * ep_values['agi']
+#trinkets_ep_value['talisman_of_bloodlust'] += 1467 * ep_values['agi']
+#trinkets_ep_value['lfr_talisman_of_bloodlust'] += 1218 * ep_values['agi']
+#trinkets_ep_value['heroic_renatakis_soul_charm'] += .6 * 1657 * ep_values['dodge_exp'] + .4 * 1657 * ep_values['haste']
+#trinkets_ep_value['renatakis_soul_charm'] += .6 * 1467 * ep_values['dodge_exp'] + .4 * 1467 * ep_values['haste']
+#trinkets_ep_value['lfr_renatakis_soul_charm'] += .6 * 1218 * ep_values['dodge_exp'] + .4 * 1218 * ep_values['haste']
+#trinkets_ep_value['vicious_talisman_of_the_shado-pan_assault']
 
-trinkets_ep_value['heroic_bottle_of_infinite_stars'] += 731 * ep_values['mastery'] + 487 * ep_values['haste']
-trinkets_ep_value['bottle_of_infinite_stars'] += 648 * ep_values['mastery'] + 431 * ep_values['haste']
-trinkets_ep_value['lfr_bottle_of_infinite_stars'] += 574 * ep_values['mastery'] + 382 * ep_values['haste']
-trinkets_ep_value['heroic_terror_in_the_mists'] += 1300 * ep_values['agi']
-trinkets_ep_value['terror_in_the_mists'] += 1152 * ep_values['agi']
-trinkets_ep_value['lfr_terror_in_the_mists'] += 1021 * ep_values['agi']
-trinkets_ep_value['relic_of_xuen'] += 956 * ep_values['agi']
+#trinkets_ep_value['heroic_bottle_of_infinite_stars'] += 731 * ep_values['mastery'] + 487 * ep_values['haste']
+#trinkets_ep_value['bottle_of_infinite_stars'] += 648 * ep_values['mastery'] + 431 * ep_values['haste']
+#trinkets_ep_value['lfr_bottle_of_infinite_stars'] += 574 * ep_values['mastery'] + 382 * ep_values['haste']
+#trinkets_ep_value['heroic_terror_in_the_mists'] += 1300 * ep_values['agi']
+#trinkets_ep_value['terror_in_the_mists'] += 1152 * ep_values['agi']
+#trinkets_ep_value['lfr_terror_in_the_mists'] += 1021 * ep_values['agi']
+#trinkets_ep_value['relic_of_xuen'] += 956 * ep_values['agi']
 
 # Compute DPS Breakdown.
 dps_breakdown = calculator.get_dps_breakdown()
@@ -157,7 +157,7 @@ dicts_for_pretty_print = [
     ep_values,
     tier_ep_values,
     talent_ranks,
-    trinkets_ep_value,
+    #trinkets_ep_value,
     dps_breakdown
 ]
 pretty_print(dicts_for_pretty_print)
