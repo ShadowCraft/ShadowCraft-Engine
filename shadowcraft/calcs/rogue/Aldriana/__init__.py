@@ -327,25 +327,25 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     
     def load_from_advanced_parameters(self):
         self.stats.agi += self.get_adv_param('agi_bonus', 0) #agi
-        self.stats.agi_mod = self.get_adv_param('agi_mod', 1.)
+        self.stats.agi_mod = self.get_adv_param('agi_mod', 1., min_bound=.1, max_bound=3.)
         self.stats.ap += self.get_adv_param('ap_bonus', 0) #ap
-        self.stats.ap_mod = self.get_adv_param('ap_mod', 1.)
+        self.stats.ap_mod = self.get_adv_param('ap_mod', 1., min_bound=.1, max_bound=3.)
         self.stats.crit += self.get_adv_param('crit_bonus', 0) #crit rating
-        self.stats.crit_mod = self.get_adv_param('crit_mod', 1.)
+        self.stats.crit_mod = self.get_adv_param('crit_mod', 1., min_bound=.1, max_bound=3.)
         self.stats.haste += self.get_adv_param('haste_bonus', 0) #haste rating
-        self.stats.haste_mod = self.get_adv_param('haste_mod', 1.)
+        self.stats.haste_mod = self.get_adv_param('haste_mod', 1., min_bound=.1, max_bound=3.)
         self.stats.mastery += self.get_adv_param('mastery_bonus', 0) #mastery rating
-        self.stats.mastery_mod = self.get_adv_param('mastery_mod', 1.)
+        self.stats.mastery_mod = self.get_adv_param('mastery_mod', 1., min_bound=.1, max_bound=3.)
         self.stats.hit += self.get_adv_param('hit_bonus', 0) #hit rating
-        self.stats.hit_mod = self.get_adv_param('hit_mod', 1.)
+        self.stats.hit_mod = self.get_adv_param('hit_mod', 1., min_bound=.1, max_bound=3.)
         self.stats.exp += self.get_adv_param('exp_bonus', 0) #exp rating
-        self.stats.exp_mod = self.get_adv_param('exp_mod', 1.)
+        self.stats.exp_mod = self.get_adv_param('exp_mod', 1., min_bound=.1, max_bound=3.)
         
-        self.true_haste_mod = self.get_adv_param('haste_buff', 1.)
-        self.damage_mod = self.get_adv_param('damage_mod', 1.)
+        self.true_haste_mod = self.get_adv_param('haste_buff', 1., min_bound=.1, max_bound=3.)
+        self.damage_mod = self.get_adv_param('damage_mod', 1., min_bound=.1, max_bound=3.)
         
-        self.major_cd_delay = self.get_adv_param('major_cd_delay', 0)
-        self.hit_chance_bonus = self.get_adv_param('hit_chance_bonus', 0)
+        self.major_cd_delay = self.get_adv_param('major_cd_delay', 0, min_bound=0, max_bound=600)
+        self.hit_chance_bonus = self.get_adv_param('hit_chance_bonus', 0, min_bound=0, max_bound=1.0)
     
     def get_stat_mod(self, stat):
         if stat == 'ap':
@@ -358,9 +358,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             return self.stats.mastery_mod
         return 1.
     
-    def get_adv_param(self, type, default_val):
+    def get_adv_param(self, type, default_val, min_bound=-10000, max_bound=10000):
         if type in self.settings.adv_params:
-            return float(self.settings.adv_params[type])
+            return max(   min(float(self.settings.adv_params[type]), max_bound), min_bound   )
         else:
             return default_val
         raise exceptions.InvalidInputException(_('Improperly defined parameter type: '+type))
@@ -2409,7 +2409,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         total_cycle_regen = cycle_length * modified_energy_regen
 
         vanish_cooldown = self.get_spell_cd('vanish')
-        ambushes_from_vanish = (1. + 1. * self.talents.subterfuge) / (vanish_cooldown + self.settings.response_time) + 1. / (self.get_spell_cd('preparation'). + self.settings.response_time * 3)
+        ambushes_from_vanish = (1. + 1. * self.talents.subterfuge) / (vanish_cooldown + self.settings.response_time) + 1. / (self.get_spell_cd('preparation') + self.settings.response_time * 3)
         ambush_rate = ambushes_from_vanish
         self.find_weakness_uptime = (10 + 2.5 * self.talents.subterfuge) * ambushes_from_vanish
         shadowmeld_ambushes = 0
