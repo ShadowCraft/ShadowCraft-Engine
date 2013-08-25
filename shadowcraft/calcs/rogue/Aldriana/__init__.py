@@ -1035,6 +1035,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 frequency = haste * 1.1307 * proc.rppm_proc_rate() / 60
             else:
                 mean_proc_time = 60. / (haste * proc.rppm_proc_rate()) + proc.icd - min(proc.icd, 10)
+                if proc.max_stacks > 1: # just correct if you only do damage on max_stacks, e.g. legendary_capacitive_meta
+                    mean_proc_time *= proc.max_stacks
                 frequency = 1.1307 / mean_proc_time
         else:
             if proc.icd:

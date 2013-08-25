@@ -39,7 +39,7 @@ allowed_procs = {
         'stat':'melee_spell_damage',
         'value': 280,
         'duration': 0,
-        'max_stacks': 0,
+        'max_stacks': 5,
         'proc_name': 'Lightning Strike (meta)',
         'behaviours': {'default': 'legendary_capacitive_meta', 'assassination': 'legendary_capacitive_meta_mut',
                        'combat': 'legendary_capacitive_meta_combat', 'subtlety': 'legendary_capacitive_meta_sub'},
@@ -757,28 +757,28 @@ behaviours = {
     'legendary_capacitive_meta': {
         'real_ppm':True,
         'icd': 1,
-        'ppm': (19.27/5),
+        'ppm': 19.27,
         'haste_scales': True,
         'trigger': 'all_attacks'
     },
     'legendary_capacitive_meta_mut': {
         'real_ppm':True,
         'icd': 1,
-        'ppm': (19.27/5) * 1.789,
+        'ppm': 19.27 * 1.789,
         'haste_scales': True,
         'trigger': 'all_attacks'
     },
     'legendary_capacitive_meta_combat': {
         'real_ppm':True,
         'icd': 1,
-        'ppm': (19.27/5) * 1.136,
+        'ppm': 19.27 * 1.136,
         'haste_scales': True,
         'trigger': 'all_attacks'
     },
     'legendary_capacitive_meta_sub': {
         'real_ppm':True,
         'icd': 1,
-        'ppm': (19.27/5) * 1.114,
+        'ppm': 19.27 * 1.114,
         'haste_scales': True,
         'trigger': 'all_attacks'
     },
