@@ -1790,7 +1790,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.revealing_strike_multiplier = 1.35
         self.extra_cp_chance = .2 # Assume all casts during RvS
         self.rvs_duration = 24
-        self.combat_phase_buffer = 0
+        self.combat_phase_buffer = 5.5 #rough accounting for KS+RB delay
         
         cds = {'ar':self.get_spell_cd('adrenaline_rush')}
         
@@ -1824,7 +1824,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             #Phase 3: (not) AR (nor) SB
             self.tmp_phase_length = cds['ar'] #This is to approximate the value of a full energy bar to be used when not during AR or SB
             stats, aps, crits, procs = self.determine_stats(self.combat_attack_counts_none)
-            phases['none'] = (self.rb_actual_cds(aps, cds)['ar'] + self.settings.response_time + self.major_cd_delay + 5.5 + self.combat_phase_buffer, #rough accounting for KS+RB delay
+            phases['none'] = (self.rb_actual_cds(aps, cds)['ar'] + self.settings.response_time + self.major_cd_delay + self.combat_phase_buffer,
                               self.update_with_bandits_guile(self.compute_damage_from_aps(stats, aps, crits, procs)) )
             
             total_duration = phases['none'][0] + phases['buffer'][0] + phases['both'][0]
@@ -1846,7 +1846,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             #none
             self.tmp_phase_length = cds['ar'] #This is to approximate the value of a full energy bar to be used when not during AR or SB
             stats, aps, crits, procs = self.determine_stats(self.combat_attack_counts_none)
-            phases['none'] = (self.rb_actual_cds(aps, cds)['ar'] + self.settings.response_time + self.major_cd_delay + 5.5 + self.combat_phase_buffer, #rough accounting for KS+RB delay
+            phases['none'] = (self.rb_actual_cds(aps, cds)['ar'] + self.settings.response_time + self.major_cd_delay + self.combat_phase_buffer,
                               self.update_with_bandits_guile(self.compute_damage_from_aps(stats, aps, crits, procs)) )
             
             total_duration = phases['ar'][0] + phases['sb'][0] + phases['none'][0] 
@@ -2058,7 +2058,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.bandits_guile_multiplier = 1 + .1 * avg_stacks
         
         if not sb and not ar:
-            final_ks_cd = self.rb_actual_cd(attacks_per_second, self.tmp_phase_length)
+            final_ks_cd = self.rb_actual_cd(attacks_per_second, self.tmp_phase_length) + self.combat_phase_buffer + self.major_cd_delay
             if not self.settings.cycle.ksp_immediately:
                 final_ks_cd += (3 * time_at_level)/2 * (3 * time_at_level)/cycle_duration
             attacks_per_second['mh_killing_spree'] = 7 * self.strike_hit_chance / (final_ks_cd + self.settings.response_time)
@@ -2159,7 +2159,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             
         mos_value = .1
         self.vanish_rate = 1. / (self.get_spell_cd('vanish') + self.settings.response_time) + 1. / (self.get_spell_cd('preparation') + self.settings.response_time * 3) #vanish CD + Prep CD
-        mos_multiplier = 1. + mos_value * (6 + 3 * self.talents.subterfuge) * self.vanish_rate
+        mos_multiplier = 1. + mos_value * (6 + 3 * self.talents.subterfuge) * [1, 2][self.glyphs.vanish] * self.vanish_rate
 
         damage_breakdown = self.compute_damage(self.subtlety_attack_counts)
 

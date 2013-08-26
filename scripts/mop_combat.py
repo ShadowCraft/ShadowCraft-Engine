@@ -76,7 +76,7 @@ test_glyphs = glyphs.Glyphs(test_class, *glyph_list)
 # Set up settings.
 test_cycle = settings.CombatCycle(stack_cds=True)
 test_settings = settings.Settings(test_cycle, response_time=.5, duration=360, dmg_poison='dp', utl_poison='lp', is_pvp=False, stormlash=1,
-                                  adv_params="", tricks_on_cooldown=False, latency=.025, merge_damage=True, num_boss_adds=0.2) # 0.2 = 20% of the fight is an add present
+                                  adv_params="", tricks_on_cooldown=False, latency=.03, merge_damage=True, num_boss_adds=0.2) # 0.2 = 20% of the fight is an add present
 
 # Build a DPS object.
 calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_glyphs, test_buffs, test_race, test_settings, test_level)
@@ -156,7 +156,7 @@ trinkets_list = [
     'lfr_terror_in_the_mists',
     'relic_of_xuen',
 ]
-trinkets_ep_value = calculator.get_upgrades_ep_fast(trinkets_list)
+#trinkets_ep_value = calculator.get_upgrades_ep_fast(trinkets_list)
 #glyph_values = calculator.get_glyphs_ranking()
 
 # Compute weapon type modifier.
@@ -191,7 +191,7 @@ dicts_for_pretty_print = [
     tier_ep_values,
     #mh_enchants_and_dps_ep_values,
     #oh_enchants_and_dps_ep_values,
-    trinkets_ep_value,
+    #trinkets_ep_value,
     #glyph_values,
     #talent_ranks,
 ]
