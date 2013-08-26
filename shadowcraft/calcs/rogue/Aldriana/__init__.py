@@ -1002,7 +1002,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                     e_minus_lambda = math.e ** (-1 * lambd)
                     proc.uptime = 1.1307 * (e_lambda - 1) * (1 - ((1 - e_minus_lambda) ** proc.max_stacks))
             else:
-                mean_proc_time = 60. / (haste * proc.rppm_proc_rate()) + proc.icd - 10
+                mean_proc_time = 60. / (haste * proc.rppm_proc_rate()) + proc.icd - min(proc.icd, 10)
                 proc.uptime = 1.1307 * proc.duration / mean_proc_time
         else:
             procs_per_second = self.get_procs_per_second(proc, attacks_per_second, crit_rates)
@@ -1031,7 +1031,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 haste *= self.buffs.spell_haste_multiplier() * self.true_haste_mod * self.stats.get_haste_multiplier_from_rating(self.base_stats['haste'])
             #The 1.1307 is a value that increases the proc rate due to bad luck prevention. It /should/ be constant among all rppm proc styles
             #print proc.rppm_proc_rate()
-            frequency = haste * 1.1307 * proc.rppm_proc_rate() / 60
+            if not proc.icd:
+                frequency = haste * 1.1307 * proc.rppm_proc_rate() / 60
+            else:
+                mean_proc_time = 60. / (haste * proc.rppm_proc_rate()) + proc.icd - min(proc.icd, 10)
+                if proc.max_stacks > 1: # just correct if you only do damage on max_stacks, e.g. legendary_capacitive_meta
+                    mean_proc_time *= proc.max_stacks
+                frequency = 1.1307 / mean_proc_time
         else:
             if proc.icd:
                 frequency = 1. / (proc.icd + 0.5 / self.get_procs_per_second(proc, attacks_per_second, crit_rates))
@@ -1116,6 +1122,15 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             elif self.settings.is_subtlety_rogue():
                 spec = 'subtlety'
             getattr(self.stats.procs, 'legendary_capacitive_meta').behaviour_toggle = spec
+
+        if getattr(self.stats.procs, 'fury_of_xuen'):
+            if self.settings.is_assassination_rogue():
+                spec = 'assassination'
+            elif self.settings.is_combat_rogue():
+                spec = 'combat'
+            elif self.settings.is_subtlety_rogue():
+                spec = 'subtlety'
+            getattr(self.stats.procs, 'fury_of_xuen').behaviour_toggle = spec
 
         # Tie Nokaled to the MH (equipping it in the OH, as a rogue, is unlikely)
         if 'nokaled_the_elements_of_death' in proc_data.allowed_procs:
@@ -1245,35 +1260,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 'haste': self.base_stats['haste'] * self.stats.haste_mod * self.amplify_stats,
                 'mastery': self.base_stats['mastery'] * self.stats.mastery_mod * self.amplify_stats
             }
-            
-            if self.stats.gear_buffs.rogue_t16_4pc_bonus() and self.settings.is_assassination_rogue():
-                #20 stacks of 250 mastery, lasts 5 seconds
-                mas_per_stack = 250.
-                max_stacks = 20.
-                buff_duration = 5.
-                extra_duration = buff_duration - self.settings.response_time
-                ability_count = 0
-                for key in ('mutilate', 'dispatch', 'envenom'):
-                    if key in attacks_per_second:
-                        if key in ('envenom'):
-                            ability_count += sum(attacks_per_second[key])
-                        elif key == 'mutilate':
-                            ability_count += 2 * attacks_per_second[key]
-                        else:
-                            ability_count += attacks_per_second[key]
-                attack_spacing = 1 / ability_count
-                res = 0.
-                if attack_spacing < 5:
-                    time_to_max = max_stacks * attack_spacing
-                    time_at_max = max(0., self.vendetta_duration - time_to_max)
-                    max_stacks_able_to_reach = min(self.vendetta_duration / attack_spacing, max_stacks)
-                    avg_stacks = max_stacks_able_to_reach / 2
-                    avg = time_to_max * avg_stacks + time_at_max * max_stacks + extra_duration * max_stacks_able_to_reach
-                    res = avg * mas_per_stack / self.get_spell_cd('vendetta')
-                else:
-                    uptime = buff_duration / attack_spacing
-                    res = self.vendetta_duration * uptime * mas_per_stack / self.get_spell_cd('vendetta')
-                current_stats['mastery'] += res * self.stats.mastery_mod * self.amplify_stats
 
             for proc in damage_procs:
                 if not proc.icd:
@@ -1320,6 +1306,41 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                         current_stats[proc.stat] += proc.uptime * proc.value * self.get_stat_mod(proc.stat)
 
         attacks_per_second, crit_rates = attack_counts_function(current_stats)
+
+        # the t16 4pc do not need to be in the main loop because mastery for assa is just increased damage
+        # and has no impact on the cycle
+        if self.stats.gear_buffs.rogue_t16_4pc_bonus() and self.settings.is_assassination_rogue():
+            #20 stacks of 250 mastery, lasts 5 seconds
+            mas_per_stack = 250.
+            max_stacks = 20.
+            buff_duration = 5.
+            extra_duration = buff_duration - self.settings.response_time
+            ability_aps = 0
+            mutilate_aps = 0
+            for key in ('mutilate', 'dispatch', 'envenom'):
+                if key in attacks_per_second:
+                    if key in ('envenom'):
+                        ability_aps += sum(attacks_per_second[key])
+                    elif key == 'mutilate':
+                        ability_aps += attacks_per_second[key]
+                        mutilate_aps += attacks_per_second[key]
+                    else:
+                        ability_aps += attacks_per_second[key]
+            attack_spacing = 1 / ability_aps
+            # mutilate gives 2 stacks, so it needs to be included
+            avg_stacks_per_attack = 1 + mutilate_aps / ability_aps
+            res = 0.
+            if attack_spacing < 5:
+                time_to_max = max_stacks * attack_spacing / avg_stacks_per_attack
+                time_at_max = max(0., self.vendetta_duration - time_to_max)
+                max_stacks_able_to_reach = min(self.vendetta_duration / attack_spacing, max_stacks)
+                avg_stacks = max_stacks_able_to_reach / 2
+                avg = time_to_max * avg_stacks + time_at_max * max_stacks + extra_duration * max_stacks_able_to_reach
+                res = avg * mas_per_stack / self.get_spell_cd('vendetta')
+            else:
+                uptime = buff_duration / attack_spacing
+                res = self.vendetta_duration * uptime * mas_per_stack * avg_stacks_per_attack / self.get_spell_cd('vendetta')
+            current_stats['mastery'] += res * self.stats.mastery_mod * self.amplify_stats
 
         for proc in damage_procs:
             self.update_with_damaging_proc(proc, attacks_per_second, crit_rates)

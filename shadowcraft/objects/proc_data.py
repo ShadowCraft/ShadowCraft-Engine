@@ -31,14 +31,15 @@ allowed_procs = {
         'value': 1,
         'duration': 0,
         'proc_name': 'Fury of Xuen',
-        'behaviours': {'default': 'fury_of_xuen' },
+        'behaviours': {'default': 'fury_of_xuen', 'assassination': 'fury_of_xuen_mut',
+                       'combat': 'fury_of_xuen_combat', 'subtlety': 'fury_of_xuen_sub'},
         'scaling': {'factor': 0.0, 'item_level': 0, 'quality': 'epic'}
     },
     'legendary_capacitive_meta': {
         'stat':'melee_spell_damage',
         'value': 280,
         'duration': 0,
-        'max_stacks': 0,
+        'max_stacks': 5,
         'proc_name': 'Lightning Strike (meta)',
         'behaviours': {'default': 'legendary_capacitive_meta', 'assassination': 'legendary_capacitive_meta_mut',
                        'combat': 'legendary_capacitive_meta_combat', 'subtlety': 'legendary_capacitive_meta_sub'},
@@ -727,36 +728,57 @@ behaviours = {
     },
     'fury_of_xuen': {
         'real_ppm':True,
-        'icd': 0,
-        'ppm': 1.62,
-        'haste_scales':True,
+        'icd': 3,
+        'ppm': 1.74,
+        'haste_scales': True,
+        'trigger': 'all_attacks'
+    },
+    'fury_of_xuen_mut': {
+        'real_ppm':True,
+        'icd': 3,
+        'ppm': 1.74 * 1.55,
+        'haste_scales': True,
+        'trigger': 'all_attacks'
+    },
+    'fury_of_xuen_combat': {
+        'real_ppm':True,
+        'icd': 3,
+        'ppm': 1.74 * 1.15,
+        'haste_scales': True,
+        'trigger': 'all_attacks'
+    },
+    'fury_of_xuen_sub': {
+        'real_ppm':True,
+        'icd': 3,
+        'ppm': 1.74 * 1.00, # yes no modifier but check later again
+        'haste_scales': True,
         'trigger': 'all_attacks'
     },
     'legendary_capacitive_meta': {
         'real_ppm':True,
-        'icd': 0,
-        'ppm': (19.27/5),
+        'icd': 1,
+        'ppm': 19.27,
         'haste_scales': True,
         'trigger': 'all_attacks'
     },
     'legendary_capacitive_meta_mut': {
         'real_ppm':True,
-        'icd': 0,
-        'ppm': (19.27/5) * 1.789,
+        'icd': 1,
+        'ppm': 19.27 * 1.789,
         'haste_scales': True,
         'trigger': 'all_attacks'
     },
     'legendary_capacitive_meta_combat': {
         'real_ppm':True,
-        'icd': 0,
-        'ppm': (19.27/5) * 1.136,
+        'icd': 1,
+        'ppm': 19.27 * 1.136,
         'haste_scales': True,
         'trigger': 'all_attacks'
     },
     'legendary_capacitive_meta_sub': {
         'real_ppm':True,
-        'icd': 0,
-        'ppm': (19.27/5) * 1.114,
+        'icd': 1,
+        'ppm': 19.27 * 1.114,
         'haste_scales': True,
         'trigger': 'all_attacks'
     },
@@ -805,7 +827,7 @@ behaviours = {
     'ticking_ebon_detonator': {
         'real_ppm':True,
         'icd': 10,
-        'ppm': 1.01,
+        'ppm': 1.00,
         'trigger': 'all_attacks'
     },
     'thoks_tail_tip': {
