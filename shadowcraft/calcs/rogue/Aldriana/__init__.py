@@ -1946,7 +1946,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         #get_spell_stats(self, ability, hit_chance=1.0, cost_mod=1.0)
         rupture_energy_cost = self.get_spell_stats('rupture', hit_chance=self.geometric_strike_chance, cost_mod=cost_modifier)[0]
-        rupture_energy_cost -= cost_reducer
         eviscerate_energy_cost =  self.get_spell_stats('eviscerate', hit_chance=self.geometric_strike_chance, cost_mod=cost_modifier)[0]
         eviscerate_energy_cost -= cost_reducer
         revealing_strike_energy_cost =  self.get_spell_stats('revealing_strike', hit_chance=self.geometric_strike_chance, cost_mod=cost_modifier)[0]
@@ -2029,12 +2028,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         energy_spent_on_rupture = total_rupture_cost * attacks_per_second['rupture']
         
         #Base CPGs
-        attacks_per_second['sinister_strike_base'] = ss_per_snd / (snd_duration - self.settings.response_time) + attacks_per_second['rupture'] * ss_per_finisher
+        attacks_per_second['sinister_strike_base'] = ss_per_snd / snd_duration + attacks_per_second['rupture'] * ss_per_finisher
         attacks_per_second['revealing_strike'] = 1. / rvs_interval
         extra_finishers_per_second = attacks_per_second['revealing_strike'] / (5/cp_per_cpg)
         #Scaling CPGs
         free_gcd = 1./gcd_size
-        free_gcd -= 1./snd_duration + (attacks_per_second['sinister_strike_base'] + attacks_per_second['revealing_strike'] + extra_finishers_per_second) / self.geometric_strike_chance
+        free_gcd -= 1./snd_duration + (attacks_per_second['sinister_strike_base'] + attacks_per_second['revealing_strike'] + attacks_per_second['rupture'] + extra_finishers_per_second) / self.geometric_strike_chance
         if self.talents.marked_for_death:
             free_gcd -= (1. / marked_for_death_cd) / self.geometric_strike_chance
         energy_available_for_evis = energy_regen - energy_spent_on_snd - energy_spent_on_rupture
@@ -2050,7 +2049,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             total_evis_per_second = total_evis_per_second / gcd_cap_mod
         # Reintroduce flat gcds
         attacks_per_second['sinister_strike'] += attacks_per_second['sinister_strike_base']
-        attacks_per_second['main_gauche'] += (attacks_per_second['sinister_strike'] + attacks_per_second['revealing_strike'] + total_evis_per_second + attacks_per_second['rupture']) * main_gauche_proc_rate
+        attacks_per_second['main_gauche'] += (attacks_per_second['sinister_strike'] + attacks_per_second['revealing_strike'] + total_evis_per_second) * main_gauche_proc_rate
         
         #attacks_per_second['eviscerate'] = [finisher_chance * total_evis_per_second for finisher_chance in finisher_size_breakdown]
         attacks_per_second['eviscerate'] = [0,0,0,0,0,total_evis_per_second]
