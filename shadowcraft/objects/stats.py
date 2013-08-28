@@ -303,15 +303,15 @@ class GearBuffs(object):
         return 0
     
     def rogue_t15_4pc_reduced_cost(self, uptime= 12. / 180.): #This is for Mut/Sub calcs
-        cost_reduction = .4
+        cost_reduction = .15
         if self.rogue_t15_4pc:
             return 1. - (cost_reduction * uptime)
         return 1.
     
     def rogue_t15_4pc_modifier(self, is_sb=False): #This is for Combat calcs
         if self.rogue_t15_4pc and is_sb:
-            return .6 # 1 - .4
-        return 1
+            return .85 # 1 - .15
+        return 1.
     
     def rogue_t16_2pc_bonus(self):
         if self.rogue_t16_2pc:
