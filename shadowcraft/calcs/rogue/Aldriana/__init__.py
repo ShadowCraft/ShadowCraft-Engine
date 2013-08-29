@@ -1811,7 +1811,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.revealing_strike_multiplier = 1.35
         self.extra_cp_chance = .2 # Assume all casts during RvS
         self.rvs_duration = 24
-        self.combat_phase_buffer = 5.5 #rough accounting for KS+RB delay
+        self.combat_phase_buffer = 3.5 #rough accounting for KS+RB delay
         
         cds = {'ar':self.get_spell_cd('adrenaline_rush')}
         
@@ -2197,9 +2197,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 # Testing needed for physical damage procs.
                 damage_breakdown[key] *= find_weakness_multiplier
             if key == 'ambush':
-                damage_breakdown[key] *= ((1 - self.ambush_no_fw_rate) * find_weakness_damage_boost)
+                damage_breakdown[key] *= 1 + ((1 - self.ambush_no_fw_rate) * (1 - find_weakness_damage_boost))
             if key == 'backstab':
-                damage_breakdown[key] *= self.backstab_fw_rate * find_weakness_damage_boost
+                damage_breakdown[key] *= 1 + self.backstab_fw_rate * (1 - find_weakness_damage_boost)
             if key == 'rupture':
                 damage_breakdown[key] *= 1.5
             damage_breakdown[key] *= mos_multiplier
@@ -2251,10 +2251,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         ##calculations dependent on energy regen
         typical_cycle_size = self.base_backstab_energy_cost * 5 + 10. #net eviscerate cost
-        t16_cycle_size = typical_cycle_size * (1./.04) / 5 + 25 # 60-35 = 25, handles the energy shifted from 1 backstab to an ambush
+        if self.settings.cycle.use_hemorrhage == 'always':
+            typical_cycle_size = self.base_hemo_cost * 5 + 10. #net eviscerate cost
+        t16_cycle_size = typical_cycle_size * (1./.04) / 5 - 10 # 60-(35*2) = -10, handles the energy shifted from 2 backstabs to an ambush
         t16_cycle_length = t16_cycle_size / energy_regen
         typical_cycle_per_t16_cycle = t16_cycle_size / typical_cycle_size
-        shd_cycle_size = self.sd_ambush_cost * 2 + 10 #(40 energy per ambush) * (2.5 ambushes till 5CP) + 10 energy for the finisher
+        shd_cycle_size = self.sd_ambush_cost * 2.5 + 10 #(40 energy per ambush) * (2.5 ambushes till 5CP) + 10 energy for the finisher
         shd_cycle_gcds = 3
         #calc energy for Shadow Dance
         shd_energy = (self.max_energy - 10) + energy_regen * 8 #lasts 8s, assume we pool to ~10 energy below max
@@ -2279,7 +2281,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attacks_per_second['rupture'] = 1. / rupture_cd
         attacks_per_second['rupture_ticks'][5] = .5
         base_cp_per_second -= 5. / rupture_cd
-        energy_regen -= 10. / rupture_cd
         #no need to add slice and dice to attacks per second
         base_cp_per_second -= 5. / snd_cd
         
@@ -2303,7 +2304,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         #calculate shd ambush cycles
         shd_cycles_per_shd = shd_energy / shd_cycle_size # We would calculate GCD capping right after this if needed
-        attacks_per_second['ambush'] += 2 * shd_cycles_per_shd / shd_cd
+        attacks_per_second['ambush'] += 2.5 * shd_cycles_per_shd / shd_cd
         attacks_per_second['eviscerate'][5] += shd_cycles_per_shd / shd_cd
         energy_regen -= shd_energy / shd_cd
         #calculate percentage of ambushes with FW
@@ -2319,9 +2320,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #print 't16', energy_regen / t16_cycle_size
         #print 'no', energy_regen / typical_cycle_size
         #print 'filler_per_filler', typical_cycle_per_t16_cycle
-        if self.stats.gear_buffs.rogue_t16_4pc:
+        if self.stats.gear_buffs.rogue_t16_4pc and self.settings.cycle.use_hemorrhage != 'always':
             filler_cycles_per_second = energy_regen / t16_cycle_size
-            attacks_per_second[cpg_name] += typical_cycle_per_t16_cycle * filler_cycles_per_second * 5 - 1. / t16_cycle_length
+            attacks_per_second[cpg_name] += typical_cycle_per_t16_cycle * filler_cycles_per_second * 5 - 2. / t16_cycle_length
+            attacks_per_second['ambush'] += 1. / t16_cycle_length
             attacks_per_second['eviscerate'][5] += typical_cycle_per_t16_cycle * filler_cycles_per_second
         else:
             filler_cycles_per_second = energy_regen / typical_cycle_size
@@ -2344,186 +2346,4 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.update_with_autoattack_passives(attacks_per_second,
                 attack_speed_multiplier=attack_speed_multiplier)
                 
-        return attacks_per_second, crit_rates
-
-    def subtlety_attack_counts_old(self, current_stats):
-        attacks_per_second = {}
-        crit_rates = self.get_crit_rates(current_stats)
-
-        haste_multiplier = self.stats.get_haste_multiplier_from_rating(current_stats['haste']) * self.true_haste_mod
-
-        mastery_snd_speed = 1 + .4 * (1 + self.subtlety_mastery_conversion * self.stats.get_mastery_from_rating(current_stats['mastery']))
-
-        attack_speed_multiplier = self.base_speed_multiplier * haste_multiplier * mastery_snd_speed / 1.4
-        self.attack_speed_increase = attack_speed_multiplier
-
-        backstab_energy_cost = self.base_backstab_energy_cost
-        st_energy_cost = self.base_st_cost
-        
-        sb_uptime = self.get_shadow_blades_uptime()
-
-        hat_triggers_per_second = self.settings.cycle.raid_crits_per_second
-        hat_cp_gen = 1 / (2 + 1. / hat_triggers_per_second)
-        
-        energetic_recovery_val = 8
-        energetic_recovery_interval = 2
-        er_energy = energetic_recovery_val / energetic_recovery_interval
-        
-        energy_regen = self.base_energy_regen * haste_multiplier + self.bonus_energy_regen + self.max_energy / self.settings.duration
-        if self.race.shadowmeld:
-            energy_regen -= self.get_net_energy_cost(self.settings.opener_name) / (self.get_spell_cd('shadowmeld') + self.settings.response_time)
-        if self.talents.marked_for_death:
-            energy_regen -= 10. / self.get_spell_cd('marked_for_death') # 25-35 = 10
-        if self.stats.gear_buffs.rogue_t16_2pc_bonus():
-            energy_regen += 2 * hat_cp_gen * self.strike_hit_chance
-            
-        if self.settings.cycle.use_hemorrhage == 'always':
-            cp_builder_energy_cost = self.base_hemo_cost
-            modified_energy_regen = energy_regen + er_energy
-            hemorrhage_interval = cp_builder_energy_cost / modified_energy_regen
-        elif self.settings.cycle.use_hemorrhage == 'never':
-            if self.talents.shuriken_toss:
-                cp_builder_energy_cost = st_energy_cost
-            else:
-                cp_builder_energy_cost = backstab_energy_cost
-            modified_energy_regen = energy_regen + er_energy
-        else:
-            hemorrhage_interval = float(self.settings.cycle.use_hemorrhage)
-            modified_energy_regen = energy_regen + er_energy
-            backstab_interval = backstab_energy_cost / modified_energy_regen
-            if hemorrhage_interval <= backstab_interval:
-                raise InputNotModeledException(_('Interval between Hemorrhages cannot be lower than {interval} for this gearset').format(interval=backstab_interval))
-            else:
-                if self.talents.shuriken_toss:
-                    cp_builder_energy_cost = st_energy_cost
-                else:
-                    cp_builder_energy_cost = backstab_energy_cost
-                energy_return_per_replaced_backstab = backstab_energy_cost - self.base_hemo_cost
-                modified_energy_regen = modified_energy_regen + energy_return_per_replaced_backstab / hemorrhage_interval
-            
-        cp_builder_interval = cp_builder_energy_cost / modified_energy_regen
-        cp_per_cp_builder = 1 + cp_builder_interval * hat_cp_gen
-
-        eviscerate_net_energy_cost = self.get_net_energy_cost('eviscerate') * self.stats.gear_buffs.rogue_t15_4pc_reduced_cost() - 5 * self.relentless_strikes_energy_return_per_cp
-        eviscerate_net_cp_cost = 5 - eviscerate_net_energy_cost * hat_cp_gen / modified_energy_regen
-
-        cp_builders_per_eviscerate = eviscerate_net_cp_cost / cp_per_cp_builder
-        total_eviscerate_cost = eviscerate_net_energy_cost + cp_builders_per_eviscerate * cp_builder_energy_cost
-        total_eviscerate_duration = total_eviscerate_cost / modified_energy_regen
-
-        snd_build_time = total_eviscerate_duration / 1.5
-        snd_base_cost = 25
-        snd_build_energy_for_cp_builders = 5 * self.relentless_strikes_energy_return_per_cp + modified_energy_regen * snd_build_time - snd_base_cost
-        cp_builders_per_snd = snd_build_energy_for_cp_builders / cp_builder_energy_cost
-        hat_cp_per_snd = snd_build_time * hat_cp_gen
-        
-        if self.talents.anticipation:
-            snd_size = 5
-        else:
-            snd_size = hat_cp_per_snd + cp_builders_per_snd
-        snd_duration = self.get_snd_length(snd_size)
-        # snd_per_second = 1. / (snd_duration - self.settings.response_time)
-        # snd_net_energy_cost = 25 - snd_size * self.relentless_strikes_energy_return_per_cp
-        cycle_length = snd_duration
-        snd_per_cycle = 1.
-        total_cycle_regen = cycle_length * modified_energy_regen
-
-        vanish_cooldown = self.get_spell_cd('vanish')
-        ambushes_from_vanish = (1. + 1. * self.talents.subterfuge) / (vanish_cooldown + self.settings.response_time) + 1. / (self.get_spell_cd('preparation') + self.settings.response_time * 3)
-        ambush_rate = ambushes_from_vanish
-        self.find_weakness_uptime = (10 + 2.5 * self.talents.subterfuge) * ambushes_from_vanish
-        shadowmeld_ambushes = 0
-        if self.race.shadowmeld:
-            shadowmeld_ambushes = 1. / (self.get_spell_cd('shadowmeld') + self.settings.response_time)
-            self.find_weakness_uptime += 10 * shadowmeld_ambushes
-            ambush_rate += shadowmeld_ambushes
-
-        cp_per_ambush = 2.
-        if self.talents.shadow_focus:
-            ambush_cost = self.normal_ambush_cost * .75
-        else:
-            ambush_cost = self.normal_ambush_cost
-        ambush_cost *= self.stats.gear_buffs.rogue_t15_4pc_reduced_cost()
-
-        cp_from_premeditation = 2.
-        
-        rupture_duration = 24 + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp() * 2 # 4 * 6 + tier bonus
-        rupture_per_cycle = cycle_length / (rupture_duration + self.settings.response_time)
-        
-        total_cost_of_extra_eviscerate = 5 * cp_builder_energy_cost + self.get_net_energy_cost('eviscerate') * self.stats.gear_buffs.rogue_t15_4pc_reduced_cost() - 5 * self.relentless_strikes_energy_return_per_cp
-
-        bonus_cp_per_cycle = (hat_cp_gen + ambush_rate * (cp_per_ambush + cp_from_premeditation)) * cycle_length
-        bonus_cp_per_cycle += (modified_energy_regen * cycle_length) / total_cost_of_extra_eviscerate * 5 * sb_uptime
-        cp_used_on_buffs = snd_size * snd_per_cycle + rupture_per_cycle * 5.
-        bonus_eviscerates = (bonus_cp_per_cycle - cp_used_on_buffs) / 5.
-        energy_spent_on_bonus_finishers = 25 * snd_per_cycle + 35 * bonus_eviscerates - (snd_size * snd_per_cycle + 5 * bonus_eviscerates) * self.relentless_strikes_energy_return_per_cp
-        energy_spent_on_bonus_finishers += cycle_length * ambushes_from_vanish * ambush_cost + cycle_length * shadowmeld_ambushes * self.normal_ambush_cost
-        energy_for_evis_spam = total_cycle_regen - energy_spent_on_bonus_finishers
-        extra_eviscerates_per_cycle = energy_for_evis_spam / total_cost_of_extra_eviscerate
-        
-        attacks_per_second['rupture'] = 1. / (24 + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp() * 4)
-        attacks_per_second['cp_builder'] = 5 * extra_eviscerates_per_cycle / cycle_length
-        attacks_per_second['eviscerate'] = [0, 0, 0, 0, 0, (bonus_eviscerates + extra_eviscerates_per_cycle) / cycle_length]
-        attacks_per_second['ambush'] = ambush_rate
-
-        # ShD formulae starts
-        shadow_dance_duration = 8.
-        shadow_dance_frequency = 1. / (self.get_spell_cd('shadow_dance') + self.settings.response_time + self.major_cd_delay)
-
-        shadow_dance_bonus_cp_regen = shadow_dance_duration * hat_cp_gen + cp_from_premeditation
-        shadow_dance_bonus_eviscerates = shadow_dance_bonus_cp_regen / 5
-        shadow_dance_bonus_eviscerate_cost = shadow_dance_bonus_eviscerates * (35 - 5 * self.relentless_strikes_energy_return_per_cp)
-        shadow_dance_available_energy = shadow_dance_duration * modified_energy_regen - shadow_dance_bonus_eviscerate_cost + 90
-
-        shadow_dance_eviscerate_cost = 5. / cp_per_ambush * (self.sd_ambush_cost - 20) + (35 - 5 * self.relentless_strikes_energy_return_per_cp)
-        shadow_dance_eviscerates_for_period = shadow_dance_available_energy / shadow_dance_eviscerate_cost
-
-        base_bonus_cp_regen = shadow_dance_duration * hat_cp_gen
-        base_bonus_eviscerates = base_bonus_cp_regen / 5
-        base_bonus_eviscerate_cost = base_bonus_eviscerates * (35 - 5 * self.relentless_strikes_energy_return_per_cp)
-        base_available_energy = shadow_dance_duration * modified_energy_regen - base_bonus_eviscerate_cost
-
-        base_eviscerates_for_period = base_available_energy / total_cost_of_extra_eviscerate
-
-        shadow_dance_extra_eviscerates = shadow_dance_eviscerates_for_period + shadow_dance_bonus_eviscerates - base_eviscerates_for_period - base_bonus_eviscerates
-        shadow_dance_extra_ambushes = 5 / cp_per_ambush * shadow_dance_eviscerates_for_period
-        shadow_dance_replaced_cp_builders = 5 * base_eviscerates_for_period
-        
-        self.ambush_no_fw_rate = (shadow_dance_frequency + ambush_rate) / (shadow_dance_extra_ambushes + ambush_rate)
-
-        attacks_per_second['cp_builder'] -= shadow_dance_replaced_cp_builders * shadow_dance_frequency
-        attacks_per_second['ambush'] += shadow_dance_extra_ambushes * shadow_dance_frequency
-        attacks_per_second['eviscerate'][5] += shadow_dance_extra_eviscerates * shadow_dance_frequency
-        if self.talents.marked_for_death:
-            attacks_per_second['eviscerate'][5] += 1. / self.get_spell_cd('marked_for_death')
-
-        self.find_weakness_uptime += (10 + shadow_dance_duration - self.settings.response_time) * shadow_dance_frequency
-        if self.stats.gear_buffs.rogue_t16_4pc_bonus():
-            self.find_weakness_uptime = .4 # BIG TODO
-        # ShD formulae ends
-
-        attacks_per_second['rupture_ticks'] = (0, 0, 0, 0, 0, .5)
-
-        if self.settings.cycle.use_hemorrhage == 'always':
-            attacks_per_second['hemorrhage'] = attacks_per_second['cp_builder']
-        elif self.settings.cycle.use_hemorrhage == 'never':
-            if self.talents.shuriken_toss:
-                attacks_per_second['shuriken_toss'] = attacks_per_second['cp_builder']
-            else:
-                attacks_per_second['backstab'] = attacks_per_second['cp_builder']
-        else:
-            attacks_per_second['hemorrhage'] = 1. / hemorrhage_interval
-            if self.talents.shuriken_toss:
-                attacks_per_second['shuriken_toss'] = attacks_per_second['cp_builder'] - attacks_per_second['hemorrhage']
-            else:
-                attacks_per_second['backstab'] = attacks_per_second['cp_builder'] - attacks_per_second['hemorrhage']
-        del attacks_per_second['cp_builder']
-
-        if 'hemorrhage' in attacks_per_second:
-            ticks_per_second = min(1. / 3, 8 / hemorrhage_interval)
-            attacks_per_second['hemorrhage_ticks'] = ticks_per_second
-
-        self.update_with_autoattack_passives(attacks_per_second,
-                attack_speed_multiplier=attack_speed_multiplier)
-
         return attacks_per_second, crit_rates
