@@ -500,10 +500,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.stats.procs.lfr_rune_of_re_origination.set_rune_of_reorigination_rppm()
 
     def set_openers(self):
-        # Sets the swing_reset_spacing and total_openers_per_second variables.
-        opener_cd = [10, 20][self.settings.opener_name == 'garrote']
         if self.settings.is_subtlety_rogue():
             self.settings.use_opener = 'always' #Overrides setting. Using Ambush + Vanish on CD is critical.
+            self.settings.opener_name = 'ambush'
+        # Sets the swing_reset_spacing and total_openers_per_second variables.
+        opener_cd = [10, 20][self.settings.opener_name == 'garrote']
         if self.settings.use_opener == 'always':
             opener_spacing = (self.get_spell_cd('vanish') + self.settings.response_time)
             total_openers_per_second = (1. + math.floor((self.settings.duration - opener_cd) / opener_spacing)) / self.settings.duration
@@ -2179,7 +2180,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             
         mos_value = .1
         self.vanish_rate = 1. / (self.get_spell_cd('vanish') + self.settings.response_time) + 1. / (self.get_spell_cd('preparation') + self.settings.response_time * 3) #vanish CD + Prep CD
-        mos_multiplier = 1. + mos_value * (6 + 3 * self.talents.subterfuge) * [1, 2][self.glyphs.vanish] * self.vanish_rate
+        mos_multiplier = 1. + mos_value * (6 + 3 * self.talents.subterfuge * [1, 2][self.glyphs.vanish]) * self.vanish_rate
 
         damage_breakdown = self.compute_damage(self.subtlety_attack_counts)
 
@@ -2236,6 +2237,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         cp_per_cpg = 1
         rupture_cd = 24
         snd_cd = 36
+        base_cp_per_second = hat_cp_per_second + self.total_openers_per_second * 2
         if self.stats.gear_buffs.rogue_t15_2pc:
             rupture_cd += 4
             snd_cd += 6
@@ -2267,11 +2269,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.talents.marked_for_death:
             energy_regen -= 10. / marked_for_death_cd
             attacks_per_second['eviscerate'][5] += 1. / marked_for_death_cd
+        shadowmeld_ambushes = 0.
         if self.race.shadowmeld:
-            energy_regen -= self.get_net_energy_cost(self.settings.opener_name) / (self.get_spell_cd('shadowmeld') + self.settings.response_time)
+            shadowmeld_ambushes = 1. / (self.get_spell_cd('shadowmeld') + self.settings.response_time)
+            attacks_per_second['ambush'] += shadowmeld_ambushes
+            energy_regen -= self.normal_ambush_cost * shadowmeld_ambushes
+            base_cp_per_second += shadowmeld_ambushes * 2
            
         #base CPs, CPGs, and finishers 
-        base_cp_per_second = hat_cp_per_second
         if self.settings.cycle.use_hemorrhage != 'always' and self.settings.cycle.use_hemorrhage != 'never':
             hemo_per_second = 1. / float(self.settings.cycle.use_hemorrhage)
             energy_regen -= hemo_per_second
@@ -2284,11 +2289,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #no need to add slice and dice to attacks per second
         base_cp_per_second -= 5. / snd_cd
         
-        shadowmeld_ambushes = 0.
-        if self.race.shadowmeld:
-            shadowmeld_ambushes = 1. / (self.get_spell_cd('shadowmeld') + self.settings.response_time)
-            attacks_per_second['ambush'] += shadowmeld_ambushes
-            energy_regen -= self.normal_ambush_cost * shadowmeld_ambushes
         base_cp_per_second += self.vanish_rate * (2 + [0, 1][self.settings.cycle.stack_cds])
         if self.stats.gear_buffs.rogue_t16_4pc:
             base_cp_per_second += 1. / t16_cycle_length
