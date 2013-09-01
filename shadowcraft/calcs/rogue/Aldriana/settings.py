@@ -123,9 +123,9 @@ class CombatCycle(Cycle):
 class SubtletyCycle(Cycle):
     _cycle_type = 'subtlety'
 
-    def __init__(self, raid_crits_per_second, use_hemorrhage='24', stack_cds=True):
+    def __init__(self, raid_crits_per_second, use_hemorrhage='24', stack_cds='shd'):
         self.raid_crits_per_second = raid_crits_per_second #used to calculate HAT procs per second.
         self.use_hemorrhage = use_hemorrhage # Allowed values are 'always' (main CP generator),
                                                                  #'never' (default to backstab),
                                                                  # or a number denoting the interval in seconds between applications
-        self.stack_cds = bool(stack_cds) #For stacking Shadow Dance with Shadow Blades
+        self.stack_cds = stack_cds #Sets when ShD is cast: 'shd', 'fw', 'other'
