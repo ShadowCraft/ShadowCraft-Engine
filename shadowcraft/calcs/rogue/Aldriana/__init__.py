@@ -2174,13 +2174,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.shd_cd = self.get_spell_cd('shadow_dance') + self.settings.response_time + self.major_cd_delay
 
         cost_modifier = self.stats.gear_buffs.rogue_t15_4pc_reduced_cost()
-        if self.settings.cycle.stack_cds == 'shd':
+        if self.settings.cycle.sub_sb_timing == 'shd':
             shd_ambush_cost_modifier = self.stats.gear_buffs.rogue_t15_4pc_modifier()
-        else:
-            shd_ambush_cost_modifier = 1.
-        if self.settings.cycle.stack_cds == 'shd':
             backstab_cost_mod = self.stats.gear_buffs.rogue_t15_4pc_reduced_cost((self.get_shadow_blades_duration() - self.shd_duration) / self.get_spell_cd('shadow_blades'))
         else:
+            shd_ambush_cost_modifier = 1.
             backstab_cost_mod = cost_modifier / ((1 - self.shd_duration) / self.shd_cd)
         self.base_eviscerate_cost = self.get_spell_stats('eviscerate', hit_chance=self.geometric_strike_chance, cost_mod=cost_modifier)[0]
         self.base_rupture_cost = self.get_spell_stats('rupture', hit_chance=self.geometric_strike_chance, cost_mod=cost_modifier)[0]
@@ -2247,6 +2245,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attacks_per_second['backstab'] = 0
         attacks_per_second['hemorrhage'] = 0
         cp_per_ambush = 2
+        cp_per_shd_ambush = cp_per_ambush
         cp_per_cpg = 1
         rupture_cd = 24
         snd_cd = 36
@@ -2254,13 +2253,15 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.stats.gear_buffs.rogue_t15_2pc:
             rupture_cd += 4
             snd_cd += 6
-        if self.settings.cycle.stack_cds:
-            cp_per_ambush += 1
+        if self.settings.cycle.sub_sb_timing == 'shd':
+            cp_per_shd_ambush += 1. / 3
+            cp_per_cpg += (self.get_shadow_blades_duration() - self.shd_duration) / (self.get_spell_cd('shadow_blades') - 3. * self.shd_duration)
         else:
-            cp_per_cpg += self.get_shadow_blades_uptime()
+            cp_per_cpg += self.get_shadow_blades_duration() / (self.get_spell_cd('shadow_blades') - 3. * self.shd_duration)
                 
         #passive energy regen
         energy_regen = self.base_energy_regen * haste_multiplier + self.bonus_energy_regen + self.max_energy / self.settings.duration + er_energy
+        energy_regen += self.get_bonus_energy_from_openers('ambush')
         if self.stats.gear_buffs.rogue_t16_2pc_bonus():
             energy_regen += 2 * hat_cp_per_second * self.strike_hit_chance
         
@@ -2271,7 +2272,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         t16_cycle_size = typical_cycle_size * (1./.04) / 5 - 10 # 60-(35*2) = -10, handles the energy shifted from 2 backstabs to an ambush
         t16_cycle_length = t16_cycle_size / energy_regen
         typical_cycle_per_t16_cycle = t16_cycle_size / typical_cycle_size
-        shd_cycle_size = self.sd_ambush_cost * 2.5 + (self.base_eviscerate_cost - 25) #(40 energy per ambush) * (2.5 ambushes till 5CP) + 10 energy for the finisher
+        shd_cycle_size = self.sd_ambush_cost * (5. / cp_per_shd_ambush) + (self.base_eviscerate_cost - 25) #(40 energy per ambush) * (2.5 ambushes till 5CP) + 10 energy for the finisher
         shd_cycle_gcds = 3
         #calc energy for Shadow Dance
         shd_energy = (self.max_energy - 10) + energy_regen * self.shd_duration #lasts 8s, assume we pool to ~10 energy below max
@@ -2333,7 +2334,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         #calculate shd ambush cycles
         shd_cycles_per_shd = shd_energy / shd_cycle_size # We would calculate GCD capping right after this if needed
-        attacks_per_second['ambush'] += 2.5 * shd_cycles_per_shd / self.shd_cd
+        attacks_per_second['ambush'] += (5. / cp_per_shd_ambush) * shd_cycles_per_shd / self.shd_cd
         attacks_per_second['eviscerate'][5] += shd_cycles_per_shd / self.shd_cd
         energy_regen -= shd_energy / self.shd_cd
         #calculate percentage of ambushes with FW
@@ -2345,7 +2346,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #calculate FW uptime overall
         self.find_weakness_uptime = (fw_duration + 7.5) / self.shd_cd + fw_duration / self.get_spell_cd('shadowmeld') + fw_duration / self.get_spell_cd('vanish')
         #calculate percentage of autoattack time with FW
-        if self.settings.cycle.stack_cds == 'other':
+        if self.settings.cycle.sub_sb_timing == 'other':
             self.autoattack_fw_rate = (self.find_weakness_uptime * 180) / (180 - self.get_shadow_blades_duration())
         else:
             self.autoattack_fw_rate = (self.find_weakness_uptime * 180 - self.get_shadow_blades_duration()) / 180
