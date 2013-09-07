@@ -2266,9 +2266,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             energy_regen += 2 * hat_cp_per_second * self.strike_hit_chance
         
         ##calculations dependent on energy regen
-        typical_cycle_size = self.base_backstab_energy_cost * 5 + (self.base_eviscerate_cost - 25) #net eviscerate cost
+        typical_cycle_size = self.base_backstab_energy_cost * 5 / cp_per_cpg + (self.base_eviscerate_cost - 25) #net eviscerate cost
         if self.settings.cycle.use_hemorrhage == 'always':
-            typical_cycle_size = self.base_hemo_cost * 5 + (self.base_eviscerate_cost - 25) #net eviscerate cost
+            typical_cycle_size = self.base_hemo_cost * 5 / cp_per_cpg + (self.base_eviscerate_cost - 25) #net eviscerate cost
         t16_cycle_size = typical_cycle_size * (1./.04) / 5 - 10 # 60-(35*2) = -10, handles the energy shifted from 2 backstabs to an ambush
         t16_cycle_length = t16_cycle_size / energy_regen
         typical_cycle_per_t16_cycle = t16_cycle_size / typical_cycle_size
