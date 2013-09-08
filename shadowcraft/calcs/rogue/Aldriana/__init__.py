@@ -2253,11 +2253,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.stats.gear_buffs.rogue_t15_2pc:
             rupture_cd += 4
             snd_cd += 6
+        cpg_denom = self.get_spell_cd('shadow_blades') - (3. * self.shd_duration) - (1 + 3 * self.talents.subterfuge * [1, 2][self.glyphs.vanish]) * 1.5
+        if self.race.shadowmeld:
+            cpg_denom -= 1. / (self.get_spell_cd('shadowmeld') + self.settings.response_time)
         if self.settings.cycle.sub_sb_timing == 'shd':
             cp_per_shd_ambush += 1. / 3
-            cp_per_cpg += (self.get_shadow_blades_duration() - self.shd_duration) / (self.get_spell_cd('shadow_blades') - 3. * self.shd_duration)
+            cp_per_cpg += (self.get_shadow_blades_duration() - self.shd_duration) / cpg_denom
         else:
-            cp_per_cpg += self.get_shadow_blades_duration() / (self.get_spell_cd('shadow_blades') - 3. * self.shd_duration)
+            cp_per_cpg += self.get_shadow_blades_duration() / cpg_denom
                 
         #passive energy regen
         energy_regen = self.base_energy_regen * haste_multiplier + self.bonus_energy_regen + self.max_energy / self.settings.duration + er_energy
