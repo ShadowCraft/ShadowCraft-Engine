@@ -346,6 +346,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         self.major_cd_delay = self.get_adv_param('major_cd_delay', 0, min_bound=0, max_bound=600)
         self.hit_chance_bonus = self.get_adv_param('hit_chance_bonus', 0, min_bound=0, max_bound=1.0)
+        
+        self.get_version_number = self.get_adv_param('print_version', False, ignore_bounds=True)
     
     def get_stat_mod(self, stat):
         if stat == 'ap':
@@ -358,9 +360,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             return self.stats.mastery_mod
         return 1.
     
-    def get_adv_param(self, type, default_val, min_bound=-10000, max_bound=10000):
-        if type in self.settings.adv_params:
+    def get_adv_param(self, type, default_val, min_bound=-10000, max_bound=10000, ignore_bounds=False):
+        if type in self.settings.adv_params and not ignore_bounds:
             return max(   min(float(self.settings.adv_params[type]), max_bound), min_bound   )
+        elif type in self.settings.adv_params:
+            return self.settings.adv_params[type]
         else:
             return default_val
         raise exceptions.InvalidInputException(_('Improperly defined parameter type: '+type))
@@ -738,6 +742,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.damage_mod != 1:
             for key in damage_breakdown:
                 damage_breakdown[key] *= self.damage_mod
+                
+        if self.get_version_number:
+            damage_breakdown['version_' + self.GENERAL_VERSION_NUMBER] = [.0, 0]
 
         return damage_breakdown
 
@@ -2179,7 +2186,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             backstab_cost_mod = self.stats.gear_buffs.rogue_t15_4pc_reduced_cost((self.get_shadow_blades_duration() - self.shd_duration) / self.get_spell_cd('shadow_blades'))
         else:
             shd_ambush_cost_modifier = 1.
-            backstab_cost_mod = cost_modifier / ((1 - self.shd_duration) / self.shd_cd)
+            backstab_cost_mod = cost_modifier / ((self.shd_cd - self.shd_duration) / self.shd_cd)
         self.base_eviscerate_cost = self.get_spell_stats('eviscerate', hit_chance=self.geometric_strike_chance, cost_mod=cost_modifier)[0]
         self.base_rupture_cost = self.get_spell_stats('rupture', hit_chance=self.geometric_strike_chance, cost_mod=cost_modifier)[0]
         self.base_hemo_cost = self.get_spell_stats('hemorrhage', hit_chance=self.geometric_strike_chance, cost_mod=cost_modifier)[0]
@@ -2249,13 +2256,15 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         cp_per_cpg = 1
         rupture_cd = 24
         snd_cd = 36
+        shadow_blades_cd = self.get_spell_cd('shadow_blades')
         base_cp_per_second = hat_cp_per_second + self.total_openers_per_second * 2
         if self.stats.gear_buffs.rogue_t15_2pc:
             rupture_cd += 4
             snd_cd += 6
-        cpg_denom = self.get_spell_cd('shadow_blades') - (3. * self.shd_duration) - (1 + 3 * self.talents.subterfuge * [1, 2][self.glyphs.vanish]) * 1.5
+        cpg_denom = shadow_blades_cd - (shadow_blades_cd/self.shd_cd * self.shd_duration)
+        cpg_denom -= (1 + 3 * self.talents.subterfuge * [1, 2][self.glyphs.vanish]) * shadow_blades_cd/self.get_spell_cd('vanish')
         if self.race.shadowmeld:
-            cpg_denom -= 1. / (self.get_spell_cd('shadowmeld') + self.settings.response_time)
+            cpg_denom -= shadow_blades_cd / (self.get_spell_cd('shadowmeld') + self.settings.response_time)
         if self.settings.cycle.sub_sb_timing == 'shd':
             cp_per_shd_ambush += 1. / 3
             cp_per_cpg += (self.get_shadow_blades_duration() - self.shd_duration) / cpg_denom
@@ -2272,6 +2281,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         typical_cycle_size = self.base_backstab_energy_cost * 5 / cp_per_cpg + (self.base_eviscerate_cost - 25) #net eviscerate cost
         if self.settings.cycle.use_hemorrhage == 'always':
             typical_cycle_size = self.base_hemo_cost * 5 / cp_per_cpg + (self.base_eviscerate_cost - 25) #net eviscerate cost
+        
         t16_cycle_size = typical_cycle_size * (1./.04) / 5 - 10 # 60-(35*2) = -10, handles the energy shifted from 2 backstabs to an ambush
         t16_cycle_length = t16_cycle_size / energy_regen
         typical_cycle_per_t16_cycle = t16_cycle_size / typical_cycle_size
@@ -2379,5 +2389,5 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second['hemorrhage_ticks'] = ticks_per_second
         
         self.get_poison_counts(attacks_per_second)
-        
+                
         return attacks_per_second, crit_rates
