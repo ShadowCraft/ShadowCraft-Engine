@@ -617,7 +617,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         if 'mh_killing_spree' in attacks_per_second:
             mh_dmg = self.mh_killing_spree_damage(average_ap)
-            oh_dmg = self.oh_killing_spree_damage(average_ap)
+            if self.settings.cycle.weapon_swap:
+                oh_dmg = self.oh_killing_spree_damage_swap(average_ap)
+            else:
+                oh_dmg = self.oh_killing_spree_damage(average_ap)
             mh_killing_spree_dps = self.get_dps_contribution(mh_dmg, crit_rates['killing_spree'], attacks_per_second['mh_killing_spree'])
             oh_killing_spree_dps = self.get_dps_contribution(oh_dmg, crit_rates['killing_spree'], attacks_per_second['oh_killing_spree'])
             if self.settings.merge_damage:
@@ -742,12 +745,16 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.damage_mod != 1:
             for key in damage_breakdown:
                 damage_breakdown[key] *= self.damage_mod
-                
-        if self.get_version_number:
-            damage_breakdown['version_' + self.GENERAL_VERSION_NUMBER] = [.0, 0]
+        
+        self.add_exported_data(damage_breakdown)
 
         return damage_breakdown
-
+    
+    def add_exported_data(self, damage_breakdown):
+        #used explicitly to highjack data outputs to export additional data.
+        if self.get_version_number:
+            damage_breakdown['version_' + self.GENERAL_VERSION_NUMBER] = [.0, 0]
+        
     def get_net_energy_cost(self, ability):
         stats = self.get_spell_stats(ability)
         hit_chance = (1, self.geometric_strike_chance)[stats[1] == 'strike']

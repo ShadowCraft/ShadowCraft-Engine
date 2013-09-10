@@ -271,7 +271,7 @@ class RogueDamageCalculator(DamageCalculator):
         mult, crit_mult = self.get_modifiers('physical', armor=armor, is_bleeding=is_bleeding)
 
         dagger_bonus = [1, 1.447][self.stats.mh.type == 'dagger']
-        percentage_damage_bonus = 3.25 * dagger_bonus
+        percentage_damage_bonus = 3.65 * dagger_bonus
 
         damage = percentage_damage_bonus * (weapon_damage + self.ambush_bonus_dmg) * mult
         crit_damage = damage * crit_mult
@@ -315,6 +315,17 @@ class RogueDamageCalculator(DamageCalculator):
 
     def oh_killing_spree_damage(self, ap, armor=None):
         oh_weapon_damage = self.get_weapon_damage('oh', ap)
+        mult, crit_mult = self.get_modifiers('physical', armor=armor)
+
+        oh_damage = self.oh_penalty() * oh_weapon_damage * mult
+        crit_oh_damage = oh_damage * crit_mult
+
+        return oh_damage, crit_oh_damage
+    
+    def oh_killing_spree_damage_swap(self, ap, armor=None):
+        #if not getattr(self.stats, 'oh2'):
+        #    return self.oh_killing_spree_damage(ap, armor=armor)
+        oh_weapon_damage = self.get_weapon_damage('oh2', ap)
         mult, crit_mult = self.get_modifiers('physical', armor=armor)
 
         oh_damage = self.oh_penalty() * oh_weapon_damage * mult

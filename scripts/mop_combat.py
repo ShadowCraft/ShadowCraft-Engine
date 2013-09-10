@@ -45,12 +45,13 @@ test_buffs = buffs.Buffs(
     )
 
 # Set up weapons.
-test_mh = stats.Weapon(17821.1909174, 2.6, 'axe', 'dancing_steel')
-test_oh = stats.Weapon(17821.1909174, 2.6, 'axe', 'dancing_steel')
-#test_oh = stats.Weapon(7254.0, 1.8, 'dagger', 'dancing_steel')
+test_mh = stats.Weapon(18846.0, 2.6, 'axe', 'dancing_steel')
+#test_oh = stats.Weapon(18846.0, 2.6, 'axe', 'dancing_steel')
+test_oh2 = stats.Weapon(18846.0, 2.6, 'axe', 'dancing_steel')
+test_oh = stats.Weapon(13047.0, 1.8, 'dagger', 'dancing_steel')
 
 # Set up procs.
-test_procs = procs.ProcsList(('heroic_war_assurance_of_consequence', 0), ('heroic_war_haromms_talisman', 0), 'legendary_capacitive_meta', 'fury_of_xuen')
+test_procs = procs.ProcsList(('heroic_war_assurance_of_consequence', 2), ('heroic_war_haromms_talisman', 2), 'legendary_capacitive_meta', 'fury_of_xuen')
 
 # Set up gear buffs.
 test_gear_buffs = stats.GearBuffs('rogue_t16_2pc', 'rogue_t16_4pc', 'leather_specialization', 'virmens_bite', 'virmens_bite_prepot')
@@ -58,13 +59,13 @@ test_gear_buffs = stats.GearBuffs('rogue_t16_2pc', 'rogue_t16_4pc', 'leather_spe
 # Set up a calcs object..
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          str=80,
-                         agi=25882,
+                         agi=27882,
                          stam=35869,
                          crit=3851,
                          hit=2606,
                          exp=2548,
-                         haste=17771,
-                         mastery=8774)
+                         haste=18871,
+                         mastery=8574)
 
 # Initialize talents..
 test_talents = talents.Talents('332213', test_class, test_level)
@@ -74,7 +75,7 @@ glyph_list = ['recuperate', 'adrenaline_rush']
 test_glyphs = glyphs.Glyphs(test_class, *glyph_list)
 
 # Set up settings.
-test_cycle = settings.CombatCycle(stack_cds=True)
+test_cycle = settings.CombatCycle(stack_cds=True, weapon_swap=False)
 test_settings = settings.Settings(test_cycle, response_time=.5, duration=360, dmg_poison='dp', utl_poison='lp', is_pvp=False, stormlash=1,
                                   adv_params="", tricks_on_cooldown=False, latency=.03, merge_damage=True, num_boss_adds=0.2) # 0.2 = 20% of the fight is an add present
 
