@@ -47,7 +47,7 @@ test_buffs = buffs.Buffs(
 # Set up weapons.
 test_mh = stats.Weapon(18846.0, 2.6, 'axe', 'dancing_steel')
 #test_oh = stats.Weapon(18846.0, 2.6, 'axe', 'dancing_steel')
-test_oh2 = stats.Weapon(18846.0, 2.6, 'axe', 'dancing_steel')
+test_eoh = stats.Weapon(18846.0, 2.6, 'axe', 'dancing_steel')
 test_oh = stats.Weapon(13047.0, 1.8, 'dagger', 'dancing_steel')
 
 # Set up procs.
@@ -65,13 +65,14 @@ test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          hit=2606,
                          exp=2548,
                          haste=18871,
-                         mastery=8574)
+                         mastery=8574,
+                         eoh=test_eoh)
 
 # Initialize talents..
 test_talents = talents.Talents('332213', test_class, test_level)
 
 # Set up glyphs.
-glyph_list = ['recuperate', 'adrenaline_rush']
+glyph_list = ['recuperate']
 test_glyphs = glyphs.Glyphs(test_class, *glyph_list)
 
 # Set up settings.

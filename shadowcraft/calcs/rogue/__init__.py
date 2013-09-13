@@ -194,6 +194,15 @@ class RogueDamageCalculator(DamageCalculator):
 
         return damage, crit_damage
     
+    def eoh_damage(self, ap, armor=None, is_bleeding=True):
+        weapon_damage = self.get_weapon_damage('eoh', ap, is_normalized=False)
+        mult, crit_mult = self.get_modifiers('physical', armor=armor, is_bleeding=is_bleeding)
+
+        damage = self.oh_penalty() * weapon_damage * mult
+        crit_damage = damage * crit_mult
+
+        return damage, crit_damage
+    
     def mh_shuriken(self, ap, armor=None, is_bleeding=True):
         return .75 * mh_damage(ap, armor=armor, is_bleeding=is_bleeding)
     
@@ -325,7 +334,7 @@ class RogueDamageCalculator(DamageCalculator):
     def oh_killing_spree_damage_swap(self, ap, armor=None):
         #if not getattr(self.stats, 'oh2'):
         #    return self.oh_killing_spree_damage(ap, armor=armor)
-        oh_weapon_damage = self.get_weapon_damage('oh2', ap)
+        oh_weapon_damage = self.get_weapon_damage('eoh', ap)
         mult, crit_mult = self.get_modifiers('physical', armor=armor)
 
         oh_damage = self.oh_penalty() * oh_weapon_damage * mult

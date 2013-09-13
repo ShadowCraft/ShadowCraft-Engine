@@ -189,6 +189,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         crit_rates = {
             'mh_autoattacks': min(base_melee_crit_rate, self.dw_mh_hit_chance - self.GLANCE_RATE),
             'oh_autoattacks': min(base_melee_crit_rate, self.dw_oh_hit_chance - self.GLANCE_RATE),
+            'emh_autoattacks':min(base_melee_crit_rate, self.dw_mh_hit_chance - self.GLANCE_RATE),
+            'eoh_autoattacks':min(base_melee_crit_rate, self.dw_oh_hit_chance - self.GLANCE_RATE),
         }
         for attack in ('mh_shadow_blade', 'oh_shadow_blade', 'rupture_ticks', 'shuriken_toss'):
             crit_rates[attack] = base_melee_crit_rate
@@ -550,7 +552,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             average_ap *= self.passive_vitality_ap
 
         damage_breakdown = {}
-        
+                
         if 'mh_autoattacks' in attacks_per_second:
             # Assumes mh and oh attacks are both active at the same time. As they should always be.
             #
@@ -572,11 +574,23 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             else:
                 damage_breakdown['mh_autoattack'] = mh_dps_tuple[0], mh_dps_tuple[1]
                 damage_breakdown['oh_autoattack'] = oh_dps_tuple[0], oh_dps_tuple[1]
+                
+            if 'eoh_autoattacks' in attacks_per_second:
+                (eoh_base_damage, eoh_crit_damage) = self.eoh_damage(average_ap)
+                eoh_hit_rate = self.dw_oh_hit_chance - self.GLANCE_RATE - crit_rates['eoh_autoattacks']
+                average_eoh_hit = self.GLANCE_RATE * self.GLANCE_MULTIPLIER * eoh_base_damage + eoh_hit_rate * eoh_base_damage + crit_rates['eoh_autoattacks'] * eoh_crit_damage
+                crit_eoh_hit = crit_rates['eoh_autoattacks'] * eoh_crit_damage
+                eoh_dps_tuple = average_eoh_hit * attacks_per_second['eoh_autoattacks'], crit_eoh_hit * attacks_per_second['eoh_autoattacks']
+                
+                if self.settings.merge_damage:
+                    damage_breakdown['autoattack'] = damage_breakdown['autoattack'][0] + eoh_dps_tuple[0], damage_breakdown['autoattack'][1] + eoh_dps_tuple[1]
+                else:
+                    damage_breakdown['eoh_autoattack'] = eoh_dps_tuple[0], eoh_dps_tuple[1]
 
         for key in attacks_per_second.keys():
             if not attacks_per_second[key]:
                 del attacks_per_second[key]
-
+        
         if 'mutilate' in attacks_per_second:
             mh_dmg = self.mh_mutilate_damage(average_ap)
             oh_dmg = self.oh_mutilate_damage(average_ap)
@@ -801,85 +815,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second['oh_autoattack_hits'] = attacks_per_second['oh_autoattacks'] * self.dw_oh_hit_chance
         if not args or 'poisons' in args:
             self.get_poison_counts(attacks_per_second)
-        if self.settings.is_combat_rogue() and (not args or 'main_gauche' in args):
-            if 'main_gauche_proc_rate' in kwargs:
-                main_gauche_proc_rate = kwargs['main_gauche_proc_rate']
-            elif 'current_stats' in kwargs:
-                main_gauche_proc_rate = self.combat_mastery_conversion * self.stats.get_mastery_from_rating(kwargs['current_stats']['mastery']) * self.strike_hit_chance
-            attacks_per_second['main_gauche'] = main_gauche_proc_rate * (attacks_per_second['mh_autoattack_hits'] + attacks_per_second['mh_shadow_blade'])
-        
-    def get_rppm_trinket_triggers_per_second(self, attacks_per_second, crit_rates, proc):
-        triggers_per_second = 0
-        if proc.procs_off_auto_attacks():
-            if proc.procs_off_crit_only():
-                if 'mh_autoattacks' in attacks_per_second:
-                    triggers_per_second += attacks_per_second['mh_autoattacks'] * crit_rates['mh_autoattacks']
-            else:
-                if 'mh_autoattack_hits' in attacks_per_second:
-                    triggers_per_second += attacks_per_second['mh_autoattack_hits']
-        if proc.procs_off_strikes():
-            for ability in ('mutilate', 'dispatch', 'backstab', 'revealing_strike', 'sinister_strike', 'ambush', 'hemorrhage', 'mh_killing_spree', 'main_gauche', 'mh_shadow_blade', 'shuriken_toss'):
-                if ability == 'main_gauche' and not proc.procs_off_procced_strikes():
-                    pass
-                elif ability in attacks_per_second:
-                    if proc.procs_off_crit_only():
-                        triggers_per_second += attacks_per_second[ability] * crit_rates[ability]
-                    else:
-                        triggers_per_second += attacks_per_second[ability]
-            for ability in ('envenom', 'eviscerate'):
-                if ability in attacks_per_second:
-                    if proc.procs_off_crit_only():
-                        triggers_per_second += sum(attacks_per_second[ability]) * crit_rates[ability]
-                    else:
-                        triggers_per_second += sum(attacks_per_second[ability])
-        if proc.procs_off_apply_debuff() and not proc.procs_off_crit_only():
-            if 'rupture' in attacks_per_second:
-                triggers_per_second += attacks_per_second['rupture']
-            if 'garrote' in attacks_per_second:
-                triggers_per_second += attacks_per_second['garrote']
-            if 'hemorrhage_ticks' in attacks_per_second:
-                triggers_per_second += attacks_per_second['hemorrhage']
-        if proc.procs_off_auto_attacks():
-            if proc.procs_off_crit_only():
-                if 'oh_autoattacks' in attacks_per_second:
-                    triggers_per_second += attacks_per_second['oh_autoattacks'] * crit_rates['oh_autoattacks']
-            else:
-                if 'oh_autoattack_hits' in attacks_per_second:
-                    triggers_per_second += attacks_per_second['oh_autoattack_hits']
-        if proc.procs_off_strikes():
-            for ability in ('mutilate', 'oh_killing_spree', 'oh_shadow_blade'):
-                if ability in attacks_per_second:
-                    if proc.procs_off_crit_only():
-                        triggers_per_second += attacks_per_second[ability] * crit_rates[ability]
-                    else:
-                        triggers_per_second += attacks_per_second[ability]
-        if proc.procs_off_harmful_spells():
-            for ability in ('deadly_instant_poison', 'wound_poison', 'venomous_wounds'):
-                if ability in attacks_per_second:
-                    if proc.procs_off_crit_only():
-                        triggers_per_second += attacks_per_second[ability] * crit_rates[ability]
-                    else:
-                        triggers_per_second += attacks_per_second[ability]
-        if proc.procs_off_periodic_spell_damage():
-            if 'deadly_poison' in attacks_per_second:
-                if proc.procs_off_crit_only():
-                    triggers_per_second += attacks_per_second['deadly_poison'] * crit_rates['deadly_poison']
-                else:
-                    triggers_per_second += attacks_per_second['deadly_poison']
-        if proc.procs_off_bleeds():
-            if 'rupture_ticks' in attacks_per_second:
-                if proc.procs_off_crit_only():
-                    triggers_per_second += sum(attacks_per_second['rupture_ticks']) * crit_rates['rupture']
-                else:
-                    triggers_per_second += sum(attacks_per_second['rupture_ticks'])
-            if 'garrote_ticks' in attacks_per_second:
-                if proc.procs_off_crit_only():
-                    triggers_per_second += attacks_per_second['garrote_ticks'] * crit_rates['garrote']
-                else:
-                    triggers_per_second += attacks_per_second['garrote_ticks']
-            if 'hemorrhage_ticks' in attacks_per_second and not proc.procs_off_crit_only():
-                triggers_per_second += attacks_per_second['hemorrhage_ticks']
-        return triggers_per_second
 
     def get_mh_procs_per_second(self, proc, attacks_per_second, crit_rates):
         if proc.is_real_ppm():
@@ -926,9 +861,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if proc.procs_off_crit_only():
                 if 'oh_autoattacks' in attacks_per_second:
                     triggers_per_second += attacks_per_second['oh_autoattacks'] * crit_rates['oh_autoattacks']
+                if 'eoh_autoattacks' in attacks_per_second:
+                    triggers_per_second += attacks_per_second['eoh_autoattacks'] * crit_rates['eoh_autoattacks']
             else:
                 if 'oh_autoattack_hits' in attacks_per_second:
                     triggers_per_second += attacks_per_second['oh_autoattack_hits']
+                if 'eoh_autoattack_hits' in attacks_per_second:
+                    triggers_per_second += attacks_per_second['eoh_autoattack_hits']
         if proc.procs_off_strikes():
             for ability in ('mutilate', 'oh_killing_spree', 'oh_shadow_blade'):
                 if ability in attacks_per_second:
@@ -1988,6 +1927,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second['oh_autoattack_hits'] = attacks_per_second['oh_autoattacks'] * self.dw_oh_hit_chance
             attacks_per_second['main_gauche'] = attacks_per_second['mh_autoattack_hits'] * main_gauche_proc_rate
             combat_potency_regen = attacks_per_second['oh_autoattack_hits'] * combat_potency_regen_per_oh
+        if self.settings.cycle.weapon_swap and not (ar or sb):
+            combat_potency_regen *= 1. - 1. / (self.tmp_phase_length + self.combat_phase_buffer + self.major_cd_delay)
         
         #Base energy
         bonus_energy_from_openers = self.get_bonus_energy_from_openers('sinister_strike', 'revealing_strike')
@@ -2099,6 +2040,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second['mh_killing_spree'] = 7 * self.strike_hit_chance / (final_ks_cd + self.settings.response_time)
             attacks_per_second['oh_killing_spree'] = 7 * self.off_hand_strike_hit_chance / (final_ks_cd + self.settings.response_time)
             attacks_per_second['main_gauche'] += attacks_per_second['mh_killing_spree'] * main_gauche_proc_rate
+            
+            if not (ar or sb) and self.settings.cycle.weapon_swap:
+                attacks_per_second['eoh_autoattacks'] = math.floor(3. * self.attack_speed_increase / self.stats.eoh.speed) / final_ks_cd
+                attacks_per_second['eoh_autoattack_hits'] = attacks_per_second['eoh_autoattacks'] * self.dw_oh_hit_chance
+                attacks_per_second['mh_autoattack_hits'] *= 1. - (1. / final_ks_cd)
+                attacks_per_second['oh_autoattack_hits'] *= 1. - (4. / final_ks_cd)
+                attacks_per_second['mh_autoattacks'] *= 1. - (1. / final_ks_cd)
+                attacks_per_second['oh_autoattacks'] *= 1. - (4. / final_ks_cd)
         
         if (ar or sb) and not self.settings.cycle.stack_cds:
             approx_time_to_empty = 100 / sinister_strike_energy_cost

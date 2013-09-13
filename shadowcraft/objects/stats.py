@@ -19,7 +19,7 @@ class Stats(object):
     pvp_resil_rating_conversion_values = {60:9.29, 70:14.65, 80:30.46, 85:92.31, 90:310.0}
 
     def __init__(self, mh, oh, procs, gear_buffs, str=0, agi=0, int=0, spirit=0, stam=0, ap=0, crit=0, hit=0, exp=0, haste=0, mastery=0, level=None,
-                 pvp_power=0, pvp_resil=0, pvp_target_armor=None, mh2=None, oh2=None):
+                 pvp_power=0, pvp_resil=0, pvp_target_armor=None, emh=None, eoh=None):
         # This will need to be adjusted if at any point we want to support
         # other classes, but this is probably the easiest way to do it for
         # the moment.
@@ -36,8 +36,8 @@ class Stats(object):
         self.mastery = mastery
         self.mh = mh
         self.oh = oh
-        self.mh2 = mh2
-        self.oh2 = oh2
+        self.emh = emh
+        self.eoh = eoh
         self.procs = procs
         self.gear_buffs = gear_buffs
         self.level = level
