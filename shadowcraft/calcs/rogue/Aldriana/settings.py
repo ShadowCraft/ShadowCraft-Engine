@@ -4,7 +4,8 @@ class Settings(object):
     # Settings object for AldrianasRogueDamageCalculator.
 
     def __init__(self, cycle, time_in_execute_range=.35, tricks_on_cooldown=True, response_time=.5, latency=.03, dmg_poison='dp', utl_poison=None,
-                 duration=300, use_opener='always', opener_name='default', is_pvp=False, stormlash=False, shiv_interval=0, adv_params=None, merge_damage=True, num_boss_adds=0):
+                 duration=300, use_opener='always', opener_name='default', is_pvp=False, stormlash=False, shiv_interval=0, adv_params=None,
+                 merge_damage=True, num_boss_adds=0, feint_interval=0):
         self.cycle = cycle
         self.time_in_execute_range = time_in_execute_range
         self.tricks_on_cooldown = tricks_on_cooldown
@@ -17,6 +18,7 @@ class Settings(object):
         self.opener_name = opener_name
         self.is_pvp = is_pvp
         self.use_stormlash = stormlash
+        self.feint_interval = feint_interval
         self.merge_damage = merge_damage
         self.num_boss_adds = max(num_boss_adds, 0)
         self.shiv_interval = float(shiv_interval)
@@ -24,16 +26,16 @@ class Settings(object):
         if self.shiv_interval < 10 and not self.shiv_interval == 0:
             self.shiv_interval = 10
         allowed_openers_per_spec = {
-            'assassination': tuple(['mutilate']),
-            'combat': ('sinister_strike', 'revealing_strike'),
-            'subtlety': ()
+            'assassination': ('mutilate', 'dispatch', 'envenom'),
+            'combat': ('sinister_strike', 'revealing_strike', 'eviscerate'),
+            'subtlety': ('eviscerate')
         }
         allowed_openers = allowed_openers_per_spec[self.get_spec()] + ('ambush', 'garrote', 'default', 'cpg')
         if opener_name not in allowed_openers:
             raise exceptions.InvalidInputException(_('Opener {opener} is not allowed in {cycle} cycles.').format(opener=opener_name, cycle=self.get_spec()))
         if opener_name == 'default':
             default_openers = {
-                'assassination': 'ambush',
+                'assassination': 'mutilate',
                 'combat': 'ambush',
                 'subtlety': 'ambush'}
             self.opener_name = default_openers[self.get_spec()]

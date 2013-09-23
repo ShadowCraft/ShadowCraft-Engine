@@ -57,6 +57,7 @@ class RogueDamageCalculator(DamageCalculator):
             'tricks_of_the_trade': (15, 'buff'),
             'shuriken_toss':       (40, 'strike'),
             'shiv':                (20, 'strike'),
+            'feint':               (20, 'buff'),
     }
     ability_cds = {
             'tricks_of_the_trade': 30,
@@ -95,10 +96,10 @@ class RogueDamageCalculator(DamageCalculator):
         # in comments show the id for the spell effect, not the spell itself,
         # unless otherwise stated.
         self.spell_scaling_for_level = self.tools.get_spell_scaling('rogue', self.level)
-        self.bs_bonus_dmg =     self.get_factor(0.3070000112) # 30
-        self.dsp_bonus_dmg =    self.get_factor(0.4490000010) # 123503
-        self.mut_bonus_dmg =    self.get_factor(0.1790000051) # 1920, 17065
-        self.ss_bonus_dmg =     self.get_factor(0.1780000031) # 535
+        self.bs_bonus_dmg =     self.get_factor(0.3680000007) # 30
+        self.dsp_bonus_dmg =    self.get_factor(0.6290000081) # 123503
+        self.mut_bonus_dmg =    self.get_factor(0.2500000000) # 1920, 17065
+        self.ss_bonus_dmg =     self.get_factor(0.2249999940) # 535
         self.ambush_bonus_dmg = self.get_factor(0.5000000000) # 3612
         self.vw_base_dmg =      self.get_factor(0.5500000119) # 68389
         self.dp_base_dmg =      self.get_factor(0.6000000238) # 853
@@ -111,7 +112,7 @@ class RogueDamageCalculator(DamageCalculator):
         self.evis_bonus_dmg =   self.get_factor(0.7070000172) # 622 - 'unknown' field
         self.env_base_dmg =     self.get_factor(0.3849999905) # 22420
         self.ct_base_dmg =      self.get_factor(0.4760000110) # 150471
-        self.fok_base_dmg =     self.get_factor(1.0000000000, 0.4000000060) # 44107
+        self.fok_base_dmg =     self.get_factor(1.2500000000, 0.4000000060) # 44107
         self.st_base_dmg =      self.get_factor(2.0000000000) # 127100
         self.vw_percentage_dmg = .160 # spellID 79136
         self.dp_percentage_dmg = .213 # spellID 2818
