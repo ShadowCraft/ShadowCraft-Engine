@@ -28,7 +28,7 @@ class Settings(object):
         allowed_openers_per_spec = {
             'assassination': ('mutilate', 'dispatch', 'envenom'),
             'combat': ('sinister_strike', 'revealing_strike', 'eviscerate'),
-            'subtlety': ('eviscerate')
+            'subtlety': ()
         }
         allowed_openers = allowed_openers_per_spec[self.get_spec()] + ('ambush', 'garrote', 'default', 'cpg')
         if opener_name not in allowed_openers:
