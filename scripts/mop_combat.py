@@ -69,7 +69,7 @@ test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          eoh=test_eoh)
 
 # Initialize talents..
-test_talents = talents.Talents('132213', test_class, test_level)
+test_talents = talents.Talents('332213', test_class, test_level)
 
 # Set up glyphs.
 glyph_list = ['recuperate']
@@ -78,8 +78,8 @@ test_glyphs = glyphs.Glyphs(test_class, *glyph_list)
 # Set up settings.
 test_cycle = settings.CombatCycle(stack_cds=True, weapon_swap=False)
 test_settings = settings.Settings(test_cycle, response_time=.5, duration=360, dmg_poison='dp', utl_poison='lp', is_pvp=False, stormlash=1,
-                                  adv_params="", tricks_on_cooldown=False, latency=.03, merge_damage=True, use_opener='always', opener_name='eviscerate',
-                                  num_boss_adds=0.2) # 0.2 = 20% of the fight is an add present
+                                  tricks_on_cooldown=False, latency=.03, merge_damage=True, use_opener='always', opener_name='eviscerate',
+                                  num_boss_adds=0.2, adv_params="", feint_interval=50,) # 0.2 = 20% of the fight is an add present
 
 # Build a DPS object.
 calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_glyphs, test_buffs, test_race, test_settings, test_level)

@@ -226,6 +226,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     def set_constants(self):
         # General setup that we'll use in all 3 cycles.
+        self.load_from_advanced_parameters()
         self.bonus_energy_regen = 0
         if self.settings.tricks_on_cooldown:
             self.bonus_energy_regen -= self.get_spell_stats('tricks_of_the_trade')[0] / (30 + self.settings.response_time)
@@ -260,7 +261,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 self.amplify_stats += amp_stats / 100
                 break
         
-        self.load_from_advanced_parameters()
         self.true_haste_mod *= self.get_heroism_haste_multiplier()
         self.base_stats = {
             'agi': (self.stats.agi + self.buffs.buff_agi() + self.race.racial_agi) * self.stats.agi_mod,

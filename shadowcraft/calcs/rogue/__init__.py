@@ -35,8 +35,8 @@ class RogueDamageCalculator(DamageCalculator):
     combat_mastery_conversion = .02
     subtlety_mastery_conversion = .03
     
-    passive_assassasins_resolve = 1.25
-    passive_sanguinary_veins = 1.25
+    passive_assassasins_resolve = 1.20
+    passive_sanguinary_veins = 1.35
     passive_vitality_ap = 1.40
     passive_vitality_energy = 1.2
         
