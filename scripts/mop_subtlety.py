@@ -21,7 +21,7 @@ i18n.set_language(test_language)
 
 # Set up level/class/race
 test_level = 90
-test_race = race.Race('night_elf')
+test_race = race.Race('troll')
 test_class = 'rogue'
 
 # Set up buffs.
@@ -41,28 +41,29 @@ test_buffs = buffs.Buffs(
     )
 
 # Set up weapons.
-test_mh = stats.Weapon(6733, 1.8, 'dagger', 'dancing_steel')
-test_oh = stats.Weapon(6733, 1.8, 'dagger', 'dancing_steel')
+test_mh = stats.Weapon(13047.0, 1.8, 'dagger', 'dancing_steel')
+test_oh = stats.Weapon(13047.0, 1.8, 'dagger', 'dancing_steel')
 
 # Set up procs.
-test_procs = procs.ProcsList( ('heroic_bottle_of_infinite_stars', 2), ('relic_of_xuen', 2) )
+test_procs = procs.ProcsList(('heroic_war_assurance_of_consequence', 2), ('heroic_war_haromms_talisman', 2), 'legendary_capacitive_meta', 'fury_of_xuen' )
 
 # Set up gear buffs.
-test_gear_buffs = stats.GearBuffs('rogue_t14_2pc', 'rogue_t14_4pc', 'leather_specialization', 'virmens_bite', 'virmens_bite_prepot', 'chaotic_metagem')
+test_gear_buffs = stats.GearBuffs('rogue_t16_2pc', 'rogue_t15_2pc', 'leather_specialization', 'virmens_bite', 'virmens_bite_prepot', 'chaotic_metagem')
 
 # Set up a calcs object..
 #                       str,   agi, int, spirit, stam,  ap, crit,  hit,  exp,haste, mast,      mh,      oh,      procs,      gear_buffs
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          str=80,
-                         agi=18745,
-                         crit=4915,
-                         hit=2590,
-                         exp=2502,
-                         haste=6264,
-                         mastery=4100)
+                         agi=28882,
+                         stam=35869,
+                         crit=7751,
+                         hit=2606,
+                         exp=2548,
+                         haste=14671,
+                         mastery=6874,)
 
 # Initialize talents..
-test_talents = talents.Talents('022212', test_class, test_level)
+test_talents = talents.Talents('322212', test_class, test_level)
 
 # Set up glyphs.
 glyph_list = []
