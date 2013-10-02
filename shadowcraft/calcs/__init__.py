@@ -33,7 +33,7 @@ class DamageCalculator(object):
     normalize_ep_stat = None
 
     def __init__(self, stats, talents, glyphs, buffs, race, settings=None, level=85, target_level=None, char_class='rogue'):
-        self.GENERAL_VERSION_NUMBER = '5.4_9.24'
+        self.GENERAL_VERSION_NUMBER = '5.4_10.1'
         self.tools = class_data.Util()
         self.stats = stats
         self.talents = talents
