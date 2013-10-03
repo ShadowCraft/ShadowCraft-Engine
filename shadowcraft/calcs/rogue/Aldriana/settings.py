@@ -4,7 +4,7 @@ class Settings(object):
     # Settings object for AldrianasRogueDamageCalculator.
 
     def __init__(self, cycle, time_in_execute_range=.35, tricks_on_cooldown=True, response_time=.5, latency=.03, dmg_poison='dp', utl_poison=None,
-                 duration=300, use_opener='always', opener_name='default', is_pvp=False, stormlash=False, shiv_interval=0, adv_params=None,
+                 duration=300, use_opener='always', opener_name='default', is_pvp=False, stormlash=0, shiv_interval=0, adv_params=None,
                  merge_damage=True, num_boss_adds=0, feint_interval=0):
         self.cycle = cycle
         self.time_in_execute_range = time_in_execute_range
@@ -17,7 +17,7 @@ class Settings(object):
         self.use_opener = use_opener # Allowed values are 'always' (vanish/shadowmeld on cooldown), 'opener' (once per fight) and 'never'
         self.opener_name = opener_name
         self.is_pvp = is_pvp
-        self.use_stormlash = stormlash
+        self.use_stormlash = 1 * stormlash
         self.feint_interval = feint_interval
         self.merge_damage = merge_damage
         self.num_boss_adds = max(num_boss_adds, 0)
@@ -89,15 +89,13 @@ class AssassinationCycle(Cycle):
 
     allowed_values = (1, 2, 3, 4, 5)
 
-    def __init__(self, min_envenom_size_non_execute=4, min_envenom_size_execute=5, prioritize_rupture_uptime_non_execute=True, prioritize_rupture_uptime_execute=True, stack_cds=False):
+    def __init__(self, min_envenom_size_non_execute=4, min_envenom_size_execute=5, prioritize_rupture_uptime_non_execute=True, prioritize_rupture_uptime_execute=True):
         assert min_envenom_size_non_execute in self.allowed_values
         self.min_envenom_size_non_execute = min_envenom_size_non_execute
 
         assert min_envenom_size_execute in self.allowed_values
         self.min_envenom_size_execute = min_envenom_size_execute
         
-        self.stack_cds = stack_cds
-
         # There are two fundamental ways you can manage rupture; one is to
         # reapply with whatever CP you have as soon as you can after the old
         # rupture drops; we will call this priorotizing uptime over size.

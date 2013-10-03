@@ -351,6 +351,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.major_cd_delay = self.get_adv_param('major_cd_delay', 0, min_bound=0, max_bound=600)
         self.hit_chance_bonus = self.get_adv_param('hit_chance_bonus', 0, min_bound=0, max_bound=1.0)
         self.settings.feint_interval = self.get_adv_param('feint_interval', self.settings.feint_interval, min_bound=0, max_bound=600)
+        self.settings.use_stormlash = self.get_adv_param('stormlash_count', self.settings.use_stormlash, min_bound=0, max_bound=39)
         
         self.get_version_number = self.get_adv_param('print_version', False, ignore_bounds=True)
     
@@ -509,11 +510,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.stats.procs.lfr_rune_of_re_origination.set_rune_of_reorigination_rppm()
 
     def set_openers(self):
+        # Sets the swing_reset_spacing and total_openers_per_second variables.
+        opener_cd = [10, 20][self.settings.opener_name == 'garrote']
         if self.settings.is_subtlety_rogue():
             self.settings.use_opener = 'always' #Overrides setting. Using Ambush + Vanish on CD is critical.
             self.settings.opener_name = 'ambush'
-        # Sets the swing_reset_spacing and total_openers_per_second variables.
-        opener_cd = [10, 20][self.settings.opener_name == 'garrote']
+            opener_cd = 30
         if self.settings.use_opener == 'always':
             opener_spacing = (self.get_spell_cd('vanish') + self.settings.response_time)
             total_openers_per_second = (1. + math.floor((self.settings.duration - opener_cd) / opener_spacing)) / self.settings.duration
@@ -2152,6 +2154,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.max_energy += 30
         self.shd_duration = 8
         self.shd_cd = self.get_spell_cd('shadow_dance') + self.settings.response_time + self.major_cd_delay
+        self.settings.cycle.raid_crits_per_second = self.get_adv_param('hat_triggers_per_second', self.settings.cycle.raid_crits_per_second, min_bound=0, max_bound=600)
 
         cost_modifier = self.stats.gear_buffs.rogue_t15_4pc_reduced_cost()
         if self.settings.cycle.sub_sb_timing == 'shd':
@@ -2231,7 +2234,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         rupture_cd = 24
         snd_cd = 36
         shadow_blades_cd = self.get_spell_cd('shadow_blades')
-        base_cp_per_second = hat_cp_per_second + self.total_openers_per_second * 2
+        base_cp_per_second = hat_cp_per_second * (self.shd_cd-8.)/self.shd_cd + self.total_openers_per_second * 2
         if self.stats.gear_buffs.rogue_t15_2pc:
             rupture_cd += 4
             snd_cd += 6
@@ -2338,12 +2341,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 tmp_cp = 0
                 shd_eviscerates += 1. / self.shd_cd
             tmp_gcd += 1
-        shd_actions_per_cycle = (5. / 2 + 1)
-        shd_cycles_per_shd = min(shd_energy / shd_cycle_size, 8. / shd_actions_per_cycle) # We would calculate GCD capping right after this if needed
         attacks_per_second['ambush'] += shd_ambushes * ((self.settings.duration - fw_duration) / self.settings.duration)
         attacks_per_second['eviscerate'][5] += shd_eviscerates * ((self.settings.duration - fw_duration) / self.settings.duration)
-        #energy_regen -= shd_cycles_per_shd * (shd_ambushes * self.sd_ambush_cost + shd_eviscerates * self.base_eviscerate_cost) / self.shd_cd
-        energy_regen -= shd_cycles_per_shd * ((5. / cp_per_shd_ambush) * self.sd_ambush_cost + (self.base_eviscerate_cost-25)) / self.shd_cd
+        energy_regen -= energy_count / self.shd_cd * ((self.settings.duration - fw_duration) / self.settings.duration)
         #calculate percentage of ambushes with FW
         ambush_no_fw = shadowmeld_ambushes + 1. / self.shd_cd + self.total_openers_per_second
         self.ambush_no_fw_rate = ambush_no_fw / attacks_per_second['ambush']
