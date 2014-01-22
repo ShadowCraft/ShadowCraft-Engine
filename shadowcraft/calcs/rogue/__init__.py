@@ -15,11 +15,9 @@ class RogueDamageCalculator(DamageCalculator):
     # backstab damage as a function of AP - that (almost) any rogue damage
     # calculator will need to know, so things like that go here.
     
-    normalize_ep_stat = 'ap' #use 'dps' to prevent normalization
+    normalize_ep_stat = 'agi' #use 'dps' to prevent normalization
     # removed default_ep_stats: 'str', 'spell_hit', 'spell_exp'
-    default_ep_stats = ['white_hit', 'yellow_hit', 'agi', 'haste', 'crit', 'mastery', 'dodge_exp', 'ap']
-    if normalize_ep_stat in default_ep_stats:
-        default_ep_stats.remove(normalize_ep_stat)
+    default_ep_stats = ['agi', 'haste', 'crit', 'mastery', 'ap']
     melee_attacks = ['mh_autoattack_hits', 'oh_autoattack_hits', 'mh_shadow_blade', 'oh_shadow_blade', 'autoattack', 'shadow_blades',
                      'eviscerate', 'envenom', 'ambush', 'garrote',
                      'sinister_strike', 'revealing_strike', 'main_gauche', 'mh_killing_spree', 'oh_killing_spree',
@@ -84,6 +82,7 @@ class RogueDamageCalculator(DamageCalculator):
     def _set_constants_for_level(self):
         super(RogueDamageCalculator, self)._set_constants_for_level()
         self.agi_per_crit = self.tools.get_agi_per_crit('rogue', self.level) * 100
+        self.normalize_ep_stat = self.get_adv_param('norm_ep_stat', self.settings.default_ep_stat, ignore_bounds=True)
         # We only check race here (instead of calcs) because we can assume it's an agi food buff and it applies to every possible rogue calc
         # Otherwise we would be obligated to have a series of conditions to check for classes
         if self.race.epicurean:
@@ -95,6 +94,7 @@ class RogueDamageCalculator(DamageCalculator):
         # At some point we should automate the process to fetch them. Numbers
         # in comments show the id for the spell effect, not the spell itself,
         # unless otherwise stated.
+        # 1246.298583984375000
         self.spell_scaling_for_level = self.tools.get_spell_scaling('rogue', self.level)
         self.bs_bonus_dmg =     self.get_factor(0.3680000007) # 30
         self.dsp_bonus_dmg =    self.get_factor(0.6290000081) # 123503

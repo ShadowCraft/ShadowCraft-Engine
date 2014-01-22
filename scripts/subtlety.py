@@ -21,7 +21,7 @@ i18n.set_language(test_language)
 
 # Set up level/class/race
 test_level = 90
-test_race = race.Race('troll')
+test_race = race.Race('night_elf')
 test_class = 'rogue'
 
 # Set up buffs.
@@ -48,19 +48,16 @@ test_oh = stats.Weapon(13047.0, 1.8, 'dagger', 'dancing_steel')
 test_procs = procs.ProcsList(('heroic_war_assurance_of_consequence', 2), ('heroic_war_haromms_talisman', 2), 'legendary_capacitive_meta', 'fury_of_xuen' )
 
 # Set up gear buffs.
-test_gear_buffs = stats.GearBuffs('rogue_t16_2pc', 'rogue_t15_2pc', 'leather_specialization', 'virmens_bite', 'virmens_bite_prepot', 'chaotic_metagem')
+test_gear_buffs = stats.GearBuffs('rogue_t16_2pc', 'rogue_t15_2pc', 'leather_specialization', 'virmens_bite', 'virmens_bite_prepot')
 
 # Set up a calcs object..
-#                       str,   agi, int, spirit, stam,  ap, crit,  hit,  exp,haste, mast,      mh,      oh,      procs,      gear_buffs
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          str=80,
                          agi=28882,
                          stam=35869,
                          crit=7751,
-                         hit=2606,
-                         exp=2548,
                          haste=14671,
-                         mastery=6874,)
+                         mastery=6874)
 
 # Initialize talents..
 test_talents = talents.Talents('322212', test_class, test_level)
@@ -72,7 +69,7 @@ test_glyphs = glyphs.Glyphs(test_class, *glyph_list)
 # Set up settings.
 test_cycle = settings.SubtletyCycle(5, use_hemorrhage=24, sub_sb_timing='shd') #shd, fw, other
 test_settings = settings.Settings(test_cycle, response_time=.5, duration=360, dmg_poison='dp', utl_poison='lp', is_pvp=False,
-                                  stormlash=False, adv_params="")
+                                  stormlash=True, adv_params="")
 
 # Build a DPS object.
 calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_glyphs, test_buffs, test_race, test_settings, test_level)
@@ -82,51 +79,17 @@ ep_values = calculator.get_ep()
 tier_ep_values = calculator.get_other_ep(['rogue_t14_4pc', 'rogue_t14_2pc', 'rogue_t15_4pc', 'rogue_t15_2pc', 'rogue_t16_2pc', 'rogue_t16_4pc'])
 
 trinkets_list = [
-    #5.2
-    'heroic_rune_of_re_origination',
-    'rune_of_re_origination',
-    'lfr_rune_of_re_origination',
-    'heroic_bad_juju',
-    'bad_juju',
-    'lfr_bad_juju',
-    'heroic_talisman_of_bloodlust',
-    'talisman_of_bloodlust',
-    'lfr_talisman_of_bloodlust',
-    'heroic_renatakis_soul_charm',
-    'renatakis_soul_charm',
-    'lfr_renatakis_soul_charm',
-    'vicious_talisman_of_the_shado-pan_assault',
-    #5.0-5.1
-    'heroic_bottle_of_infinite_stars',
-    'bottle_of_infinite_stars',
-    'lfr_bottle_of_infinite_stars',
-    'heroic_terror_in_the_mists',
-    'terror_in_the_mists',
-    'lfr_terror_in_the_mists',
-    'relic_of_xuen',
+    #5.4
+    'heroic_war_assurance_of_consequence',
+    'heroic_war_haromms_talisman',
+    'heroic_war_sigil_of_rampage',
+    'heroic_sigil_of_rampage',
+    'heroic_war_ticking_ebon_detonator',
+    'heroic_war_thoks_tail_tip',
+    'timeless_discipline_of_xuen',
+    'discipline_of_xuen',
+    'fury_of_xuen',
 ]
-#trinkets_ep_value = calculator.get_other_ep(trinkets_list)
-#trinkets_ep_value['heroic_rune_of_re_origination'] += 1657 * ep_values['agi']
-#trinkets_ep_value['rune_of_re_origination'] += 1467 * ep_values['agi']
-#trinkets_ep_value['lfr_rune_of_re_origination'] += 1218 * ep_values['agi']
-#trinkets_ep_value['heroic_bad_juju'] += .6 * 1657 * ep_values['mastery'] + .4 * 1657 * ep_values['haste']
-#trinkets_ep_value['bad_juju'] += .6 * 1467 * ep_values['mastery'] + .4 * 1467 * ep_values['haste']
-#trinkets_ep_value['lfr_bad_juju'] += .6 * 1218 * ep_values['mastery'] + .4 * 1218 * ep_values['haste']
-#trinkets_ep_value['heroic_talisman_of_bloodlust'] += 1657 * ep_values['agi']
-#trinkets_ep_value['talisman_of_bloodlust'] += 1467 * ep_values['agi']
-#trinkets_ep_value['lfr_talisman_of_bloodlust'] += 1218 * ep_values['agi']
-#trinkets_ep_value['heroic_renatakis_soul_charm'] += .6 * 1657 * ep_values['dodge_exp'] + .4 * 1657 * ep_values['haste']
-#trinkets_ep_value['renatakis_soul_charm'] += .6 * 1467 * ep_values['dodge_exp'] + .4 * 1467 * ep_values['haste']
-#trinkets_ep_value['lfr_renatakis_soul_charm'] += .6 * 1218 * ep_values['dodge_exp'] + .4 * 1218 * ep_values['haste']
-#trinkets_ep_value['vicious_talisman_of_the_shado-pan_assault']
-
-#trinkets_ep_value['heroic_bottle_of_infinite_stars'] += 731 * ep_values['mastery'] + 487 * ep_values['haste']
-#trinkets_ep_value['bottle_of_infinite_stars'] += 648 * ep_values['mastery'] + 431 * ep_values['haste']
-#trinkets_ep_value['lfr_bottle_of_infinite_stars'] += 574 * ep_values['mastery'] + 382 * ep_values['haste']
-#trinkets_ep_value['heroic_terror_in_the_mists'] += 1300 * ep_values['agi']
-#trinkets_ep_value['terror_in_the_mists'] += 1152 * ep_values['agi']
-#trinkets_ep_value['lfr_terror_in_the_mists'] += 1021 * ep_values['agi']
-#trinkets_ep_value['relic_of_xuen'] += 956 * ep_values['agi']
 
 # Compute DPS Breakdown.
 dps_breakdown = calculator.get_dps_breakdown()

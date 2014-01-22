@@ -39,18 +39,18 @@ class Proc(object):
             else:
                 raise InvalidProcException(_('Behaviour \'{behaviour}\' is not defined for {proc}').format(proc=self.proc_name, behaviour=value))
 
-    def _set_behaviour(self, icd, trigger, proc_chance=False, ppm=False, on_crit=False, on_procced_strikes=True, real_ppm=False, base_ppm=None, ppm_scale_constant=None, haste_scales=False):
+    def _set_behaviour(self, icd, trigger, proc_chance=False, ppm=False, on_crit=False, on_procced_strikes=True, real_ppm=False,
+                       haste_scales=False, type='perc'):
         # This could be merged with __setattr__; its sole purpose is
         # to clearly surface the parameters passed with the behaviours.
         self.proc_chance = proc_chance
         self.trigger = trigger
+        self.type = type #types: 'perc', 'ppm', 'rppm'
         self.icd = icd
         self.on_crit = on_crit
         self.ppm = ppm
-        self.base_ppm = base_ppm
         self.real_ppm = real_ppm
         self.haste_scales = haste_scales
-        self.ppm_scale_constant = ppm_scale_constant
         self.on_procced_strikes = on_procced_strikes  # Main Gauche and its kin
 
     def procs_off_auto_attacks(self):
@@ -113,11 +113,6 @@ class Proc(object):
         else:
             return False
     
-    def is_trinket(self):
-        if self.rppm_trinket:
-            return True
-        return False
-    
     def if_haste_scales(self):
         if self.haste_scales:
             return True
@@ -140,6 +135,8 @@ class Proc(object):
             return self.proc_chance
 
     def is_ppm(self):
+        if self.type == 'ppm':
+            return True
         if self.proc_chance not in (False, None) and self.ppm == False:
             return False
         elif self.real_ppm == True:
@@ -149,24 +146,17 @@ class Proc(object):
         else:
             raise InvalidProcException(_('Invalid data for proc {proc}').format(proc=self.proc_name))
     
+    def is_rppm(self):
+        return is_real_ppm()
     def is_real_ppm(self):
+        if self.type == 'rppm':
+            return True
         if self.real_ppm == True and (self.ppm not in (False, None)):
             return True
         elif self.real_ppm in (False, None):
             return False
         else:
             raise InvalidProcException(_('Invalid data for proc {proc}').format(proc=self.proc_name))
-    
-    # set the rune_of_reorigination_rppm value depending on item level
-    def set_rune_of_reorigination_rppm(self):
-        if self.proc_name != 'Rune of Re-Origination':
-            return False
-        item_level = self.scaling['item_level']
-        if self.scaling['quality'] == 'epic':
-            item_level += self.upgrade_level * 4
-        elif self.scaling['quality'] == 'blue':
-            item_level += self.upgrade_level * 8
-        self.ppm = 1/(1.15**((528-item_level)/15.0)) * self.base_ppm
 
 class ProcsList(object):
     allowed_procs = proc_data.allowed_procs
@@ -202,6 +192,7 @@ class ProcsList(object):
     def set_swordguard_embroidery_value(self):
         proc = getattr(self, 'swordguard_embroidery')
         values = [
+            (100, 10000),
             (90, 4000),
             (85, 1000),
             (80, 400),
@@ -219,7 +210,13 @@ class ProcsList(object):
         for proc_name in self.allowed_procs:
             proc = getattr(self, proc_name)
             if proc:
-                if stat is None or proc.stat == stat:
+                if stat is None:
+                    procs.append(proc)
+                elif proc.stat == 'stats' and stat in proc.value:
+                    procs.append(proc)
+                elif proc.stat == 'highest' and stat in proc.value:
+                    procs.append(proc)
+                elif proc.stat == 'random' and stat in proc.value:
                     procs.append(proc)
 
         return procs
@@ -229,7 +226,7 @@ class ProcsList(object):
         for proc_name in self.allowed_procs:
             proc = getattr(self, proc_name)
             if proc:
-                if proc.stat in ('spell_damage', 'physical_damage'):
+                if proc.stat in ('spell_damage', 'physical_damage', 'melee_spell_damage'):
                     procs.append(proc)
 
         return procs

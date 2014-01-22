@@ -228,6 +228,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         # General setup that we'll use in all 3 cycles.
         self.load_from_advanced_parameters()
         self.bonus_energy_regen = 0
+        self.highest_primary_stat = 'agi'
         if self.settings.tricks_on_cooldown:
             self.bonus_energy_regen -= self.get_spell_stats('tricks_of_the_trade')[0] / (30 + self.settings.response_time)
         if self.settings.shiv_interval != 0:
@@ -244,9 +245,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         # VERIFY: ingame it looks like that the crit multiplier is more around 8% instead of 7% for 553 ilvl
         # maybe 3.5% crit multiplier is rounded to 4 and then doubled through the 200% crit damage...
         # VERIFY: tooltip of the item only shows multiplier for haste and mastery
-        self.amplify_crit_damage = 0.
-        self.amplify_stats = 1.
-        prefixes = ('heroic_war_','heroic_','war_','','flex_','lfr_')
+        #'heroic_','war_','','flex_','lfr_')
+        prefixes = ('heroic_war_', )
         for prefix in prefixes:
             proc = getattr(self.stats.procs, ''.join((prefix, 'thoks_tail_tip')))
             if proc and proc.scaling:
@@ -256,18 +256,19 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 elif proc.scaling['quality'] == 'blue':
                     item_level += proc.upgrade_level * 8
                 scale_value = self.tools.get_random_prop_point(item_level, proc.scaling['quality'])
-                self.amplify_crit_damage = 0.0008850000 * scale_value / 100
+                self.amplify_crit_bonus = 1 + 0.0008850000 * scale_value / 100
                 amp_stats = round(0.0017700000 * scale_value)
                 self.amplify_stats += amp_stats / 100
                 break
         
+        #only include if general multiplier applies to spec calculations 
         self.true_haste_mod *= self.get_heroism_haste_multiplier()
         self.base_stats = {
-            'agi': (self.stats.agi + self.buffs.buff_agi() + self.race.racial_agi) * self.stats.agi_mod,
-            'ap': (self.stats.ap + 2 * self.level - 30) * self.stats.ap_mod,
-            'crit': (self.stats.crit) * self.stats.crit_mod,
-            'haste': (self.stats.haste) * self.stats.haste_mod,
-            'mastery': (self.stats.mastery + self.buffs.buff_mast()) * self.stats.mastery_mod,
+            'agi': (self.stats.agi + self.buffs.buff_agi() + self.race.racial_agi),
+            'ap': (self.stats.ap + 2 * self.level - 30),
+            'crit': (self.stats.crit),
+            'haste': (self.stats.haste),
+            'mastery': (self.stats.mastery + self.buffs.buff_mast()),
         }
         
         for boost in self.race.get_racial_stat_boosts():
@@ -277,8 +278,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if getattr(self.stats.gear_buffs, 'synapse_springs'):
             self.stats.gear_buffs.activated_boosts['synapse_springs']['stat'] = 'agi'
         for proc in self.stats.procs.get_all_procs_for_stat('highest'):
-            if 'agi' in proc.stats:
-                proc.stat = 'agi'
+            if 'agi' in proc.value:
+                proc.stat = 'stats'
+                for e in proc.value:
+                    if proc.value[e] is not 'agi':
+                        proc.value[e] = 0
 
         for stat in self.base_stats:
             for boost in self.stats.gear_buffs.get_all_activated_boosts_for_stat(stat):
@@ -320,14 +324,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.off_hand_strike_hit_chance = self.off_hand_melee_hit_chance()
         self.poison_hit_chance = self.melee_spells_hit_chance()
         self.cast_spell_hit_chance = self.spell_hit_chance() # this is not for poisons
-        
-        if 'heroic_matrix_restabilizer' in proc_data.allowed_procs:
-            if self.stats.procs.heroic_matrix_restabilizer or self.stats.procs.matrix_restabilizer:
-                self.set_matrix_restabilizer_stat(self.base_stats)
-        if self.stats.procs.heroic_rune_of_re_origination or self.stats.procs.heroic_thunder_rune_of_re_origination:
-            self.set_re_origination_stat(self.base_stats)
-        if self.stats.procs.thunder_rune_of_re_origination or self.stats.procs.rune_of_re_origination or self.stats.procs.lfr_rune_of_re_origination:
-            self.set_re_origination_stat(self.base_stats)
     
     def load_from_advanced_parameters(self):
         self.stats.agi += self.get_adv_param('agi_bonus', 0) #agi
@@ -340,30 +336,30 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.stats.haste_mod = self.get_adv_param('haste_mod', 1., min_bound=.1, max_bound=3.)
         self.stats.mastery += self.get_adv_param('mastery_bonus', 0) #mastery rating
         self.stats.mastery_mod = self.get_adv_param('mastery_mod', 1., min_bound=.1, max_bound=3.)
-        self.stats.hit += self.get_adv_param('hit_bonus', 0) #hit rating
-        self.stats.hit_mod = self.get_adv_param('hit_mod', 1., min_bound=.1, max_bound=3.)
-        self.stats.exp += self.get_adv_param('exp_bonus', 0) #exp rating
-        self.stats.exp_mod = self.get_adv_param('exp_mod', 1., min_bound=.1, max_bound=3.)
+        
+        self.amplify_stats = self.get_adv_param('amplify_stats', 1., min_bound=.1, max_bound=3.)
+        self.amplify_crit_bonus = self.get_adv_param('crit_damage_mod', 1., min_bound=.1, max_bound=3.)
         
         self.true_haste_mod = self.get_adv_param('haste_buff', 1., min_bound=.1, max_bound=3.)
         self.damage_mod = self.get_adv_param('damage_mod', 1., min_bound=.1, max_bound=3.)
         
         self.major_cd_delay = self.get_adv_param('major_cd_delay', 0, min_bound=0, max_bound=600)
-        self.hit_chance_bonus = self.get_adv_param('hit_chance_bonus', 0, min_bound=0, max_bound=1.0)
         self.settings.feint_interval = self.get_adv_param('feint_interval', self.settings.feint_interval, min_bound=0, max_bound=600)
         self.settings.use_stormlash = self.get_adv_param('stormlash_count', self.settings.use_stormlash, min_bound=0, max_bound=39)
         
         self.get_version_number = self.get_adv_param('print_version', False, ignore_bounds=True)
     
     def get_stat_mod(self, stat):
+        if stat == 'agi':
+            return self.agi_multiplier
         if stat == 'ap':
             return self.stats.ap_mod
         if stat == 'crit':
-            return self.stats.crit_mod
+            return self.stats.crit_mod * self.amplify_stats
         if stat == 'haste':
-            return self.stats.haste_mod
+            return self.stats.haste_mod * self.amplify_stats
         if stat == 'mastery':
-            return self.stats.mastery_mod
+            return self.stats.mastery_mod * self.amplify_stats
         return 1.
     
     def get_adv_param(self, type, default_val, min_bound=-10000, max_bound=10000, ignore_bounds=False):
@@ -398,16 +394,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             crit_rate = 0
 
         proc_value = proc.value
-        # Vial of Shadows scales with AP.
-        if 'heroic_vial_of_shadows' in proc_data.allowed_procs:
-            vial_of_shadows_modifiers = {
-                'heroic_vial_of_shadows': 1.016,
-                'vial_of_shadows': .9,
-                'lfr_vial_of_shadows': .797
-                }
-            for i in vial_of_shadows_modifiers:
-                if proc is getattr(self.stats.procs, i):
-                    proc_value += vial_of_shadows_modifiers[i] * average_ap
         #280+75% AP
         if proc is getattr(self.stats.procs, 'legendary_capacitive_meta'):
             crit_rate = self.melee_crit_rate(agi=current_stats['agi'], crit=current_stats['crit'])
@@ -456,59 +442,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
             damage_breakdown[item['name']] = average_dps, crit_contribution
 
-    def set_matrix_restabilizer_stat(self, base_stats):
-        base_stats_for_matrix_restabilizer = {}
-        for key in self.base_stats:
-            if key in ('haste', 'mastery', 'crit'):
-                base_stats_for_matrix_restabilizer[key] = self.base_stats[key]
-        sorted_list = base_stats_for_matrix_restabilizer.keys()
-        sorted_list.sort(cmp=lambda b, a: cmp(base_stats_for_matrix_restabilizer[a], base_stats_for_matrix_restabilizer[b]))
-
-        if self.stats.procs.heroic_matrix_restabilizer:
-            self.stats.procs.heroic_matrix_restabilizer.stat = sorted_list[0]
-        if self.stats.procs.matrix_restabilizer:
-            self.stats.procs.matrix_restabilizer.stat = sorted_list[0]
-    
-    def set_re_origination_stat(self, base_stats):
-        #http://blue.mmo-champion.com/topic/254470-ptr-class-and-set-bonus-issues-part-iii/#post953
-        max_stat = ('stat', 0)
-        total_stats = 0
-        # doesnt include the mastery raid buff
-        base_stats['mastery'] -= self.buffs.buff_mast() * self.stats.mastery_mod * self.amplify_stats
-        for key in base_stats:
-            if key in ('haste', 'mastery', 'crit'):
-                if (base_stats[key] > max_stat[1]):
-                    max_stat = (key, base_stats[key])
-        for key in base_stats:
-            if key in ('haste', 'mastery', 'crit') and key != max_stat[0]:
-                total_stats += base_stats[key]
-                
-        
-        buff_cache = []
-        for key in ('haste', 'mastery', 'crit'):
-            if key != max_stat[0]:
-                buff_cache.append( (key, -1. * base_stats[key]) )
-            else:
-                buff_cache.append( (key, (total_stats) * 2) )
-
-        # (extremely sloppy)
-        #set buff amounts
-        if self.stats.procs.heroic_thunder_rune_of_re_origination:
-            self.stats.procs.heroic_thunder_rune_of_re_origination.buffs = buff_cache
-            self.stats.procs.heroic_thunder_rune_of_re_origination.set_rune_of_reorigination_rppm()
-        if self.stats.procs.heroic_rune_of_re_origination:
-            self.stats.procs.heroic_rune_of_re_origination.buffs = buff_cache
-            self.stats.procs.heroic_rune_of_re_origination.set_rune_of_reorigination_rppm()
-        if self.stats.procs.thunder_rune_of_re_origination:
-            self.stats.procs.thunder_rune_of_re_origination.buffs = buff_cache
-            self.stats.procs.thunder_rune_of_re_origination.set_rune_of_reorigination_rppm()
-        if self.stats.procs.rune_of_re_origination:
-            self.stats.procs.rune_of_re_origination.buffs = buff_cache
-            self.stats.procs.rune_of_re_origination.set_rune_of_reorigination_rppm()
-        if self.stats.procs.lfr_rune_of_re_origination:
-            self.stats.procs.lfr_rune_of_re_origination.buffs = buff_cache
-            self.stats.procs.lfr_rune_of_re_origination.set_rune_of_reorigination_rppm()
-
     def set_openers(self):
         # Sets the swing_reset_spacing and total_openers_per_second variables.
         opener_cd = [10, 20][self.settings.opener_name == 'garrote']
@@ -538,20 +471,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         else:
             energy_per_opener = self.get_net_energy_cost(self.settings.opener_name)
             return [-1, 1][self.talents.shadow_focus] * self.get_shadow_focus_multiplier() * energy_per_opener * self.total_openers_per_second
-
-    def get_t12_2p_damage(self, damage_breakdown):
-        crit_damage = 0
-        for key in damage_breakdown:
-            if key in ('mutilate', 'hemorrhage', 'dispatch', 'backstab', 'sinister_strike', 'revealing_strike', 'main_gauche', 'ambush', 'killing_spree', 'envenom', 'eviscerate', 'autoattack'):
-                average_damage, crit_contribution = damage_breakdown[key]
-                crit_damage += crit_contribution
-        for key in ('mut_munch', 'ksp_munch'):
-            if key in damage_breakdown:
-                average_damage, crit_contribution = damage_breakdown[key]
-                crit_damage -= crit_contribution
-                del damage_breakdown[key]
-
-        return crit_damage * self.stats.gear_buffs.rogue_t12_2pc_damage_bonus(), 0
 
     def get_damage_breakdown(self, current_stats, attacks_per_second, crit_rates, damage_procs):
         average_ap = current_stats['ap'] + 2 * current_stats['agi'] + current_stats['str']
@@ -692,7 +611,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             damage_breakdown['hemorrhage_dot'] = dps_from_hit_hemo[0] + dps_from_crit_hemo[0], dps_from_hit_hemo[1] + dps_from_crit_hemo[1]
             
         # multistrike
-        prefixes = ('heroic_war_','heroic_','war_','','flex_','lfr_')
+        prefixes = ('heroic_war_',)
         for prefix in prefixes:
             proc = getattr(self.stats.procs, ''.join((prefix, 'haromms_talisman')))
             if proc and proc.scaling:
@@ -830,8 +749,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.get_poison_counts(attacks_per_second)
 
     def get_mh_procs_per_second(self, proc, attacks_per_second, crit_rates):
-        if proc.is_real_ppm():
-            return proc.proc_rate(haste=self.buffs.spell_haste_multiplier() * self.true_haste_mod * self.stats.get_haste_multiplier_from_rating(self.base_stats['haste']))
         triggers_per_second = 0
         if proc.procs_off_auto_attacks():
             if proc.procs_off_crit_only():
@@ -865,10 +782,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         return triggers_per_second * proc.proc_rate(self.stats.mh.speed)
 
     def get_oh_procs_per_second(self, proc, attacks_per_second, crit_rates):
-        if proc.is_real_ppm() and not proc.scaling:
-            return proc.proc_rate(haste=self.buffs.spell_haste_multiplier() * self.true_haste_mod * self.stats.get_haste_multiplier_from_rating(self.base_stats['haste']))
-        elif proc.is_real_ppm():
-            return 0
         triggers_per_second = 0
         if proc.procs_off_auto_attacks():
             if proc.procs_off_crit_only():
@@ -891,10 +804,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         return triggers_per_second * proc.proc_rate(self.stats.oh.speed)
 
     def get_other_procs_per_second(self, proc, attacks_per_second, crit_rates):
-        if proc.is_real_ppm() and not proc.scaling:
-            return proc.proc_rate()
-        elif proc.is_real_ppm():
-            return 0
         triggers_per_second = 0
         if proc.procs_off_harmful_spells():
             for ability in ('deadly_instant_poison', 'wound_poison', 'venomous_wounds'):
@@ -952,7 +861,25 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             missing_stacks = proc.max_stacks * (proc.max_stacks + 1) / 2
             stack_time_lost = missing_stacks * time_for_one_stack
             proc.uptime = proc.max_stacks - stack_time_lost / self.settings.duration
-
+            
+    def set_rppm_uptime(self, proc):
+        #http://iam.yellingontheinternet.com/2013/04/12/theorycraft-201-advanced-rppm/
+        haste = 1.
+        if proc.haste_scales:
+            haste *= self.stats.get_haste_multiplier_from_rating(self.base_stats['haste']) * self.buffs.spell_haste_multiplier() * self.true_haste_mod
+        #The 1.1307 is a value that increases the proc rate due to bad luck prevention. It /should/ be constant among all rppm proc styles
+        if not proc.icd:
+            if proc.max_stacks <= 1:
+                proc.uptime = 1.1307 * (1 - math.e ** (-1 * haste * proc.rppm_proc_rate() * proc.duration / 60))
+            else:
+                lambd = haste * proc.rppm_proc_rate() * proc.duration / 60
+                e_lambda = math.e ** lambd
+                e_minus_lambda = math.e ** (-1 * lambd)
+                proc.uptime = 1.1307 * (e_lambda - 1) * (1 - ((1 - e_minus_lambda) ** proc.max_stacks))
+        else:
+            mean_proc_time = 60. / (haste * proc.rppm_proc_rate()) + proc.icd - min(proc.icd, 10)
+            proc.uptime = 1.1307 * proc.duration / mean_proc_time
+    
     def set_uptime(self, proc, attacks_per_second, crit_rates):
         if proc.is_real_ppm():
             #http://iam.yellingontheinternet.com/2013/04/12/theorycraft-201-advanced-rppm/
@@ -997,7 +924,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if proc.haste_scales:
                 haste *= self.buffs.spell_haste_multiplier() * self.true_haste_mod * self.stats.get_haste_multiplier_from_rating(self.base_stats['haste'])
             #The 1.1307 is a value that increases the proc rate due to bad luck prevention. It /should/ be constant among all rppm proc styles
-            #print proc.rppm_proc_rate()
             if not proc.icd:
                 frequency = haste * 1.1307 * proc.rppm_proc_rate() / 60
             else:
@@ -1046,20 +972,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 finisher_spacing = min(1 / sum(attacks_per_second[direct_damage_finisher]), t11_4pc_bonus.duration)
                 p = 1 - (1 - procs_per_second) ** finisher_spacing
                 crit_rates[direct_damage_finisher] = p + (1 - p) * crit_rates[direct_damage_finisher]
-
-    def get_4pc_t12_multiplier(self):
-        if self.settings.tricks_on_cooldown:
-            tricks_uptime = 30. / (30 + self.settings.response_time)
-            return 1 + self.stats.gear_buffs.rogue_t12_4pc_stat_bonus() * tricks_uptime / 3
-        else:
-            return 1.
-
-    def get_rogue_t13_legendary_combat_multiplier(self):
-        # This only deals with the SS/RvS damage increase.
-        if self.stats.gear_buffs.rogue_t13_legendary or self.stats.procs.jaws_of_retribution or self.stats.procs.maw_of_oblivion or self.stats.procs.fangs_of_the_father:
-            return 1.45
-        else:
-            return 1.
     
     def get_shadow_focus_multiplier(self):
         if self.talents.shadow_focus:
@@ -1067,20 +979,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         return 1.
 
     def setup_unique_procs(self):
-        # We need to set these behaviours before calling any other method.
-        # The stage 3 will very likely need a different set of behaviours
-        # once we figure the whole thing.
-        for proc in ('jaws_of_retribution', 'maw_of_oblivion', 'fangs_of_the_father'):
-            if getattr(self.stats.procs, proc):
-                if self.settings.is_assassination_rogue():
-                    spec = 'assassination'
-                elif self.settings.is_combat_rogue():
-                    spec = 'combat'
-                elif self.settings.is_subtlety_rogue():
-                    spec = 'subtlety'
-                getattr(self.stats.procs, proc).behaviour_toggle = spec
-        
-        
         if getattr(self.stats.procs, 'legendary_capacitive_meta'):
             if self.settings.is_assassination_rogue():
                 spec = 'assassination'
@@ -1157,52 +1055,76 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     def determine_stats(self, attack_counts_function):
         current_stats = {
             'str': self.base_strength,
-            'agi': self.base_stats['agi'] * self.agi_multiplier * self.stats.agi_mod,
+            'agi': self.base_stats['agi'] * self.agi_multiplier,
             'ap': self.base_stats['ap'] * self.stats.ap_mod,
-            'crit': self.base_stats['crit'] * self.stats.crit_mod,
+            'crit': self.base_stats['crit'] * self.stats.crit_mod * self.amplify_stats,
             'haste': self.base_stats['haste'] * self.stats.haste_mod * self.amplify_stats,
             'mastery': self.base_stats['mastery'] * self.stats.mastery_mod * self.amplify_stats
         }
         self.current_variables = {}
 
         active_procs = []
+        active_procs_perc = []
+        active_procs_ppm = []
+        active_procs_rppm = []
         damage_procs = []
         weapon_damage_procs = []
 
         self.setup_unique_procs()
 
         for proc_info in self.stats.procs.get_all_procs_for_stat():
-            if (proc_info.stat in current_stats or proc_info.stat == 'multi') and not proc_info.is_ppm():
-                active_procs.append(proc_info)
+            if (proc_info.stat == 'stats') and not proc_info.is_ppm():
+                if proc_info.is_real_ppm():
+                    active_procs_rppm.append(proc_info)
+                elif proc_info.is_ppm():
+                    active_procs_ppm.append(proc_info)
+                else:
+                    active_procs_perc.append(proc_info)
             elif proc_info.stat in ('spell_damage', 'physical_damage', 'melee_spell_damage'):
                 damage_procs.append(proc_info)
             elif proc_info.stat == 'extra_weapon_damage':
                 weapon_damage_procs.append(proc_info)
-
-        for proc in active_procs:
-            if proc.scaling is not None:
-                item_level = proc.scaling['item_level']
-                if proc.scaling['quality'] == 'epic':
-                    item_level += proc.upgrade_level * 4
-                elif proc.scaling['quality'] == 'blue':
-                    item_level += proc.upgrade_level * 8
-                proc.value = round(proc.scaling['factor'] * self.tools.get_random_prop_point(item_level, proc.scaling['quality']))
-
+                
+        #update proc values in each proc "folder"
+        for dict in (active_procs, active_procs_perc, active_procs_ppm, active_procs_rppm):
+            for proc in dict:
+                if proc.scaling is not None:
+                    item_level = proc.scaling['item_level']
+                    if proc.scaling['quality'] == 'epic':
+                        item_level += proc.upgrade_level * 4
+                    elif proc.scaling['quality'] == 'blue':
+                        item_level += proc.upgrade_level * 8
+                    for e in proc.value:
+                        proc.value[e] = round(proc.scaling['factor'] * self.tools.get_random_prop_point(item_level, proc.scaling['quality']))
+        
+        #calculate weapon procs
         windsong_enchants = []
         weapon_enchants = set([])
         for hand, enchant in [(x, y) for x in ('mh', 'oh') for y in ('windsong', 'dancing_steel', 'elemental_force')]:
             proc = getattr(getattr(self.stats, hand), enchant)
             if proc:
                 setattr(proc, '_'.join((hand, 'only')), True)
-                if (proc.stat in current_stats or proc.stat == 'multi'):
-                    active_procs.append(proc)
+                if (proc.stat in current_stats or proc.stat == 'stats'):
+                    if proc_info.is_real_ppm():
+                        active_procs_rppm.append(proc_info)
+                    elif proc_info.is_ppm():
+                        active_procs_ppm.append(proc_info)
+                    else:
+                        active_procs_perc.append(proc_info)
+                    #active_procs.append(proc)
                 elif enchant in ('avalanche', 'elemental_force'):
                     damage_procs.append(proc)
                 elif enchant == 'windsong':
                     windsong_enchants.append(proc)
-                elif proc.stat == 'highest' and 'agi' in proc.stats:
-                    proc.stat = 'agi'
-                    active_procs.append(proc)
+                elif proc.stat == 'highest' and 'agi' in proc.value:
+                    proc.stat = 'stats'
+                    if proc_info.is_real_ppm():
+                        active_procs_rppm.append(proc_info)
+                    elif proc_info.is_ppm():
+                        active_procs_ppm.append(proc_info)
+                    else:
+                        active_procs_perc.append(proc_info)
+                    #active_procs.append(proc)
 
                 if enchant not in weapon_enchants and enchant in ('hurricane', 'avalanche'):
                     weapon_enchants.add(enchant)
@@ -1215,63 +1137,77 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                         pass
                     elif enchant == 'avalanche':
                         damage_procs.append(spell_component)
-
+        
+        static_proc_stats = {
+            'str': 0,
+            'agi': 0,
+            'ap': 0,
+            'crit': 0,
+            'haste': 0,
+            'mastery': 0,
+        }
+        for proc in active_procs_rppm:
+            self.set_rppm_uptime(proc)
+            for e in proc.value:
+                static_proc_stats[ e ] += proc.uptime * proc.value[e] * self.get_stat_mod(e)
+        
+        for k in static_proc_stats:
+            current_stats[k] +=  static_proc_stats[ k ]
+                        
         attacks_per_second, crit_rates = attack_counts_function(current_stats)
-
-        for _loop in range(20):
-            current_stats = {
-                'str': self.base_strength,
-                'agi': self.base_stats['agi'] * self.agi_multiplier * self.stats.agi_mod,
-                'ap': self.base_stats['ap'] * self.stats.ap_mod,
-                'crit': self.base_stats['crit'] * self.stats.crit_mod,
-                'haste': self.base_stats['haste'] * self.stats.haste_mod * self.amplify_stats,
-                'mastery': self.base_stats['mastery'] * self.stats.mastery_mod * self.amplify_stats
-            }
-
-            for proc in damage_procs:
-                if not proc.icd:
-                    self.update_with_damaging_proc(proc, attacks_per_second, crit_rates)
-
-            for proc in active_procs:
-                if not proc.icd:
-                    self.set_uptime(proc, attacks_per_second, crit_rates)
-                    if proc.stat == 'multi':
-                        for e in proc.buffs:
-                            current_stats[ e[0] ] += proc.uptime * e[1] * self.get_stat_mod(e[0])
-                    else:
-                        current_stats[proc.stat] += proc.uptime * proc.value * self.get_stat_mod(proc.stat)
-
-            if windsong_enchants:
-                proc = windsong_enchants[0]
-                stats = proc.stats
-                effective_ppm_multiplier = len(windsong_enchants) * 1.0 / len(stats)
-                proc.ppm *= effective_ppm_multiplier
-                self.set_uptime(proc, attacks_per_second, crit_rates)
-                proc.ppm /= effective_ppm_multiplier
-                for stat in stats:
-                    current_stats[stat] += proc.uptime * proc.value * self.get_stat_mod(stat)
+        
+        #check need to converge
+        need_converge = True
+        if len(active_procs_perc+active_procs_ppm) < 2:
+            need_converge = False
+        #if we need to converge
+        if need_converge:
+            for _loop in range(20):
+                current_stats = {
+                    'str': self.base_strength,
+                    'agi': self.base_stats['agi'] * self.agi_multiplier,
+                    'ap': self.base_stats['ap'] * self.stats.ap_mod,
+                    'crit': self.base_stats['crit'] * self.stats.crit_mod * self.amplify_stats,
+                    'haste': self.base_stats['haste'] * self.stats.haste_mod * self.amplify_stats,
+                    'mastery': self.base_stats['mastery'] * self.stats.mastery_mod * self.amplify_stats
+                }
+                for k in static_proc_stats:
+                    current_stats[k] +=  static_proc_stats[k]
+                
+                for proc in active_procs_perc:
+                    if not proc.icd:
+                        print 'perc-in', proc.proc_name
+                        self.set_uptime(proc, attacks_per_second, crit_rates)
+                        for e in proc.value:
+                            current_stats[ e ] += proc.uptime * proc.value[e] * self.get_stat_mod(e)
+                
+                for proc in active_procs_ppm:
+                    if not proc.icd:
+                        print 'ppm-in', proc.proc_name
+                        self.set_uptime(proc, attacks_per_second, crit_rates)
+                        for e in proc.value:
+                            current_stats[ e ] += proc.uptime * proc.value[e] * self.get_stat_mod(e)
+                        
+                old_attacks_per_second = attacks_per_second
+                attacks_per_second, crit_rates = attack_counts_function(current_stats)
             
-            old_attacks_per_second = attacks_per_second
-            attacks_per_second, crit_rates = attack_counts_function(current_stats)
-
-            if self.are_close_enough(old_attacks_per_second, attacks_per_second):
-                break
+                if self.are_close_enough(old_attacks_per_second, attacks_per_second):
+                    break
             
-        for proc in active_procs:
+        for proc in active_procs_perc:
             if proc.icd:
+                print 'perc-outside', proc.proc_name
                 self.set_uptime(proc, attacks_per_second, crit_rates)
-                if proc.stat == 'multi':
-                    for e in proc.buffs:
-                        if proc.stat == 'agi':
-                            current_stats[ e[0] ] += proc.uptime * e[1] * self.agi_multiplier
-                        else:
-                            current_stats[ e[0] ] += proc.uptime * e[1] * self.get_stat_mod(e[0])
-                else:
-                    if proc.stat == 'agi':
-                        current_stats[proc.stat] += proc.uptime * proc.value * self.agi_multiplier
-                    else:
-                        current_stats[proc.stat] += proc.uptime * proc.value * self.get_stat_mod(proc.stat)
-
+                for e in proc.value:
+                    current_stats[ e ] += proc.uptime * proc.value[e] * self.get_stat_mod(e)
+        
+        for proc in active_procs_ppm:
+            if proc.icd:
+                print 'ppm-outside', proc.proc_name
+                self.set_uptime(proc, attacks_per_second, crit_rates)
+                for e in proc.value:
+                    current_stats[ e ] += proc.uptime * proc.value[e] * self.get_stat_mod(e)
+                
         attacks_per_second, crit_rates = attack_counts_function(current_stats)
 
         # the t16 4pc do not need to be in the main loop because mastery for assa is just increased damage
@@ -1314,7 +1250,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         for proc in weapon_damage_procs:
             self.set_uptime(proc, attacks_per_second, crit_rates)
-        
+                        
         return current_stats, attacks_per_second, crit_rates, damage_procs
     
     def compute_damage_from_aps(self, current_stats, attacks_per_second, crit_rates, damage_procs):
@@ -1631,7 +1567,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         return attacks_per_second, crit_rates
     
-    def assassination_attack_counts_anticipation(self, current_stats, cpg, finisher_size):
+    def assassination_attack_counts_anticipation(self, current_stats, cpg):
         attacks_per_second = {}
         crit_rates = self.get_crit_rates(current_stats)
 
@@ -1749,12 +1685,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     def assassination_attack_counts_non_execute(self, current_stats):
         if self.talents.anticipation:
-            return self.assassination_attack_counts_anticipation(current_stats, 'mutilate', self.settings.cycle.min_envenom_size_non_execute)
+            return self.assassination_attack_counts_anticipation(current_stats, 'mutilate')
         return self.assassination_attack_counts(current_stats, 'mutilate', self.settings.cycle.min_envenom_size_non_execute)
 
     def assassination_attack_counts_execute(self, current_stats):
         if self.talents.anticipation:
-            return self.assassination_attack_counts_anticipation(current_stats, 'dispatch', self.settings.cycle.min_envenom_size_non_execute)
+            return self.assassination_attack_counts_anticipation(current_stats, 'dispatch')
         return self.assassination_attack_counts(current_stats, 'dispatch', self.settings.cycle.min_envenom_size_execute)
 
     ###########################################################################
@@ -1784,7 +1720,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.revealing_strike_multiplier = 1.35
         self.extra_cp_chance = .2 # Assume all casts during RvS
         self.rvs_duration = 24
-        self.combat_phase_buffer = 3.5 #rough accounting for KS+RB delay
+        self.combat_phase_buffer = 0
         
         cds = {'ar':self.get_spell_cd('adrenaline_rush')}
         
@@ -2234,7 +2170,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         rupture_cd = 24
         snd_cd = 36
         shadow_blades_cd = self.get_spell_cd('shadow_blades')
-        base_cp_per_second = hat_cp_per_second * (self.shd_cd-8.)/self.shd_cd + self.total_openers_per_second * 2
+        base_cp_per_second = hat_cp_per_second * (self.shd_cd-8.)/self.shd_cd + self.total_openers_per_second * 2 + sb_uptime
         if self.stats.gear_buffs.rogue_t15_2pc:
             rupture_cd += 4
             snd_cd += 6

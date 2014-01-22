@@ -18,7 +18,7 @@ class Stats(object):
     pvp_power_rating_conversion_values = {60:7.96, 70:12.55, 80:26.11, 85:79.12, 90:400.0}
     pvp_resil_rating_conversion_values = {60:9.29, 70:14.65, 80:30.46, 85:92.31, 90:310.0}
 
-    def __init__(self, mh, oh, procs, gear_buffs, str=0, agi=0, int=0, spirit=0, stam=0, ap=0, crit=0, hit=0, exp=0, haste=0, mastery=0, level=None,
+    def __init__(self, mh, oh, procs, gear_buffs, str=0, agi=0, int=0, spirit=0, stam=0, ap=0, crit=0, haste=0, mastery=0, level=None,
                  pvp_power=0, pvp_resil=0, pvp_target_armor=None, emh=None, eoh=None):
         # This will need to be adjusted if at any point we want to support
         # other classes, but this is probably the easiest way to do it for
@@ -30,8 +30,6 @@ class Stats(object):
         self.stam = stam
         self.ap = ap
         self.crit = crit
-        self.hit = hit
-        self.exp = exp
         self.haste = haste
         self.mastery = mastery
         self.mh = mh
@@ -73,23 +71,6 @@ class Stats(object):
         if rating is None:
             rating = self.mastery
         return 8 + rating / self.mastery_rating_conversion
-
-    def get_melee_hit_from_rating(self, rating=None):
-        if rating is None:
-            rating = self.hit
-        return rating / (100 * self.melee_hit_rating_conversion)
-
-    def get_expertise_from_rating(self, rating=None):
-        if rating is None:
-            rating = self.exp
-        return rating / (100 * self.expertise_rating_conversion)
-
-    def get_spell_hit_from_rating(self, hit_rating=None, exp_rating=None):
-        if hit_rating is None:
-            hit_rating = self.hit
-        if exp_rating is None:
-            exp_rating = self.exp
-        return hit_rating / (100 * self.spell_hit_rating_conversion) + exp_rating / (100 * self.expertise_rating_conversion)
 
     def get_crit_from_rating(self, rating=None):
         if rating is None:
@@ -174,42 +155,19 @@ class Weapon(object):
 class GearBuffs(object):
     activated_boosts = {
         # Duration and cool down in seconds - name is mandatory for damage-on-use boosts
-        'unsolvable_riddle':              {'stat': 'agi', 'value': 1605, 'duration': 20, 'cooldown': 120},
-        'demon_panther':                  {'stat': 'agi', 'value': 1425, 'duration': 20, 'cooldown': 120},
-        'skardyns_grace':                 {'stat': 'mastery', 'value': 1260, 'duration': 20, 'cooldown': 120},
-        'heroic_skardyns_grace':          {'stat': 'mastery', 'value': 1425, 'duration': 20, 'cooldown': 120},
         'virmens_bite':                   {'stat': 'agi', 'value': 4000, 'duration': 25, 'cooldown': None}, #Cooldown = fight length
         'virmens_bite_prepot':            {'stat': 'agi', 'value': 4000, 'duration': 23, 'cooldown': None}, #guesstimate
         'potion_of_the_tolvir':           {'stat': 'agi', 'value': 1200, 'duration': 25, 'cooldown': None}, #Cooldown = fight length
         'potion_of_the_tolvir_prepot':    {'stat': 'agi', 'value': 1200, 'duration': 23, 'cooldown': None}, #Very rough guesstimate; actual modeling should be done with the opener sequence, alas, there's no such thing.
         'hyperspeed_accelerators':        {'stat': 'haste', 'value': 340, 'duration': 12, 'cooldown': 60},  #WotLK tinker
         'synapse_springs':                {'stat': 'varies', 'value': 'varies', 'duration': 10, 'cooldown': 60}, #Overwrite stat in the model for the highest of agi, str, int
-        'tazik_shocker':                  {'stat': 'spell_damage', 'value': 4800, 'duration': 0, 'cooldown': 60, 'name': 'Tazik Shocker'},
         'lifeblood':                      {'stat': 'haste', 'value': 'varies', 'duration': 20, 'cooldown': 120},
-        'heroic_jade_bandit_figurine':    {'stat': 'haste', 'value': 4059, 'duration': 15, 'cooldown': 60},
-        'jade_bandit_figurine':           {'stat': 'haste', 'value': 3595, 'duration': 15, 'cooldown': 60, 'upgradable': True, 'scaling': {'factor': 1.6499999762, 'item_level': 489, 'quality': 'epic'}},
-        'lfr_jade_bandit_figurine':       {'stat': 'haste', 'value': 3184, 'duration': 15, 'cooldown': 60},
-        'hawkmasters_talon':              {'stat': 'haste', 'value': 3595, 'duration': 15, 'cooldown': 60, 'upgradable': True, 'scaling': {'factor': 1.6499999762, 'item_level': 489, 'quality': 'epic'}},
-        'flashing_steel_talisman':        {'stat': 'agi', 'value': 4232, 'duration': 15, 'cooldown': 90, 'upgradable': True, 'scaling': {'factor': 2.4749999046, 'item_level': 463, 'quality': 'blue'}},
-        'woundripper_medallion':          {'stat': 'crit', 'value': 3838, 'duration': 15, 'cooldown': 60}, # 5.1
-        'gerps_perfect_arrow':            {'stat': 'agi', 'value': 3480, 'duration': 20, 'cooldown': 120},
-        'ancient_petrified_seed':         {'stat': 'agi', 'value': 1277, 'duration': 15, 'cooldown': 60},
-        'heroic_ancient_petrified_seed':  {'stat': 'agi', 'value': 1441, 'duration': 15, 'cooldown': 60},
-        'rickets_magnetic_fireball':      {'stat': 'crit', 'value': 1700, 'duration': 20, 'cooldown': 120},
-        'kiroptyric_sigil':               {'stat': 'agi', 'value': 2290, 'duration': 15, 'cooldown': 90},
-        'heroic_kiroptyric_sigil':        {'stat': 'agi', 'value': 2585, 'duration': 15, 'cooldown': 90},  #Not available in-game
-        'lfr_kiroptyric_sigil':           {'stat': 'agi', 'value': 2029, 'duration': 15, 'cooldown': 90},  #Not available in-game
     }
 
     other_gear_buffs = [
         'leather_specialization',       # Increase %stat by 5%
         'chaotic_metagem',              # Increase critical damage by 3%
         'rogue_pvp_4pc',                # 30 Extra Energy
-        'rogue_t11_2pc',                # Increase crit chance for BS, Mut, SS by 5%
-        'rogue_t12_2pc',                # Add 6% of melee crit damage as a fire DOT
-        'rogue_t12_4pc',                # Increase crit/haste/mastery rating by 25% every TotT
-        'rogue_t13_2pc',                # Decrease energy cost by 20% for 6secs every TotT
-        'rogue_t13_4pc',                # ShD +2secs, AR +3secs, Vendetta +9secs
         'rogue_t13_legendary',          # Increase 45% damage on SS and RvS, used in case the rogue only equips the mh of a set.
         'rogue_t14_2pc',                # Venom Wound damage by 20%, Sinister Strike by 15%, Backstab by 10%
         'rogue_t14_4pc',                # Shadow Blades by +12s
@@ -258,30 +216,6 @@ class GearBuffs(object):
         if self.rogue_pvp_4pc:
             return 30
         return 0
-    
-    def rogue_t11_2pc_crit_bonus(self):
-        if self.rogue_t11_2pc:
-            return .05
-        else:
-            return 0
-
-    def rogue_t12_2pc_damage_bonus(self):
-        if self.rogue_t12_2pc:
-            return .06
-        else:
-            return 0
-
-    def rogue_t12_4pc_stat_bonus(self):
-        if self.rogue_t12_4pc:
-            return .25
-        else:
-            return 0
-
-    def rogue_t13_2pc_cost_multiplier(self):
-        if self.rogue_t13_2pc:
-            return 1 / 1.05
-        else:
-            return 1
 
     def rogue_t14_2pc_damage_bonus(self, spell):
         if self.rogue_t14_2pc:

@@ -47,7 +47,6 @@ test_buffs = buffs.Buffs(
 # Set up weapons.
 test_mh = stats.Weapon(18846.0, 2.6, 'axe', 'dancing_steel')
 #test_oh = stats.Weapon(18846.0, 2.6, 'axe', 'dancing_steel')
-test_eoh = stats.Weapon(18846.0, 2.6, 'axe', 'dancing_steel')
 test_oh = stats.Weapon(13047.0, 1.8, 'dagger', 'dancing_steel')
 
 # Set up procs.
@@ -62,11 +61,8 @@ test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          agi=27882,
                          stam=35869,
                          crit=3851,
-                         hit=2606,
-                         exp=2548,
                          haste=18871,
-                         mastery=8574,
-                         eoh=test_eoh)
+                         mastery=8574)
 
 # Initialize talents..
 test_talents = talents.Talents('332213', test_class, test_level)
@@ -78,8 +74,8 @@ test_glyphs = glyphs.Glyphs(test_class, *glyph_list)
 # Set up settings.
 test_cycle = settings.CombatCycle(stack_cds=True, weapon_swap=False)
 test_settings = settings.Settings(test_cycle, response_time=.5, duration=360, dmg_poison='dp', utl_poison='lp', is_pvp=False, stormlash=1,
-                                  tricks_on_cooldown=False, latency=.03, merge_damage=True, use_opener='always', opener_name='eviscerate',
-                                  num_boss_adds=0.2, adv_params="", feint_interval=50,) # 0.2 = 20% of the fight is an add present
+                                  tricks_on_cooldown=False, latency=.03, merge_damage=True, use_opener='always', opener_name='ambush',
+                                  num_boss_adds=0.2, adv_params="") # 0.2 = 20% of the fight is an add present
 
 # Build a DPS object.
 calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_glyphs, test_buffs, test_race, test_settings, test_level)
@@ -96,68 +92,14 @@ tier_ep_values = calculator.get_other_ep(['rogue_t14_4pc', 'rogue_t14_2pc', 'rog
 trinkets_list = [
     #5.4
     'heroic_war_assurance_of_consequence',
-    'heroic_assurance_of_consequence',
-    'war_assurance_of_consequence',
-    'assurance_of_consequence',
-    'flex_assurance_of_consequence',
-    'lfr_assurance_of_consequence',
     'heroic_war_haromms_talisman',
-    'heroic_haromms_talisman',
-    'war_haromms_talisman',
-    'haromms_talisman',
-    'flex_haromms_talisman',
-    'lfr_haromms_talisman',
     'heroic_war_sigil_of_rampage',
     'heroic_sigil_of_rampage',
-    'war_sigil_of_rampage',
-    'sigil_of_rampage',
-    'flex_sigil_of_rampage',
-    'lfr_sigil_of_rampage',
     'heroic_war_ticking_ebon_detonator',
-    'heroic_ticking_ebon_detonator',
-    'war_ticking_ebon_detonator',
-    'ticking_ebon_detonator',
-    'flex_ticking_ebon_detonator',
-    'lfr_ticking_ebon_detonator',
     'heroic_war_thoks_tail_tip',
-    'heroic_thoks_tail_tip',
-    'war_thoks_tail_tip',
-    'thoks_tail_tip',
-    'flex_thoks_tail_tip',
-    'lfr_thoks_tail_tip',
     'timeless_discipline_of_xuen',
     'discipline_of_xuen',
     'fury_of_xuen',
-    #5.2
-    'heroic_thunder_rune_of_re_origination',
-    'heroic_rune_of_re_origination',
-    'thunder_rune_of_re_origination',
-    'rune_of_re_origination',
-    'lfr_rune_of_re_origination',
-    'heroic_thunder_bad_juju',
-    'heroic_bad_juju',
-    'thunder_bad_juju',
-    'bad_juju',
-    'lfr_bad_juju',
-    'heroic_thunder_talisman_of_bloodlust',
-    'heroic_talisman_of_bloodlust',
-    'thunder_talisman_of_bloodlust',
-    'talisman_of_bloodlust',
-    'lfr_talisman_of_bloodlust',
-    'heroic_thunder_renatakis_soul_charm',
-    'heroic_renatakis_soul_charm',
-    'thunder_renatakis_soul_charm',
-    'renatakis_soul_charm',
-    'lfr_renatakis_soul_charm',
-    'vicious_talisman_of_the_shado-pan_assault',
-    #5.0-5.1
-    'heroic_bottle_of_infinite_stars',
-    'bottle_of_infinite_stars',
-    'lfr_bottle_of_infinite_stars',
-    'heroic_terror_in_the_mists',
-    'terror_in_the_mists',
-    'lfr_terror_in_the_mists',
-    'relic_of_xuen',
 ]
 #trinkets_ep_value = calculator.get_upgrades_ep_fast(trinkets_list)
 #glyph_values = calculator.get_glyphs_ranking()
