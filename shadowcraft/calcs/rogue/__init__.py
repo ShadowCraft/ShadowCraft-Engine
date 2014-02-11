@@ -505,16 +505,13 @@ class RogueDamageCalculator(DamageCalculator):
         }
         return formulas[name]
 
-    def get_spell_stats(self, ability, hit_chance=1.0, cost_mod=1.0):
+    def get_spell_stats(self, ability, cost_mod=1.0):
         if ability == 'tricks_of_the_trade' and self.glyphs.tricks_of_the_trade:
             return (0, 'buff')
         
-        if self.ability_info[ability][1] == 'buff':
-            hit_chance = 1. # Buffs can't be dodged, override any hit chance that was mistakenly thrown at the method.
         cost = self.ability_info[ability][0] * cost_mod
-        final_cost = cost * .8 + cost * .2 / hit_chance
         
-        return (final_cost, self.ability_info[ability][1])
+        return (cost, self.ability_info[ability][1])
     
     def get_spell_cd(self, ability):
         cd_reduction_table = {'assassination': ['vanish', 'shadow_blades', 'vendetta'],

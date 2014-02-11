@@ -120,7 +120,6 @@ class CombatCycle(Cycle):
         self.ksp_immediately = bool(ksp_immediately) # Determines whether to KSp the instant it comes off cool or wait until Bandit's Guile stacks up.
         self.revealing_strike_pooling = bool(revealing_strike_pooling)
         self.stack_cds = bool(stack_cds) # This refers specifically to stacking SB and AR
-        self.weapon_swap = weapon_swap # Tells the combat calculations to use the second oh weapon for KS, and weapon swap before and after the cast.
 
 class SubtletyCycle(Cycle):
     _cycle_type = 'subtlety'
