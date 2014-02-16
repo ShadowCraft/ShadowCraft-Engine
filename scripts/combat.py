@@ -15,13 +15,13 @@ from shadowcraft.objects import glyphs
 
 from shadowcraft.core import i18n
 
-from time import clock
+import time
 
 # Set up language. Use 'en_US', 'es_ES', 'fr' for specific languages.
 test_language = 'local'
 i18n.set_language(test_language)
 
-start = clock()
+start = time.time()
 
 # Set up level/class/race
 test_level = 90
@@ -143,4 +143,4 @@ dicts_for_pretty_print = [
 pretty_print(dicts_for_pretty_print)
 pretty_print([dps_breakdown], total_sum=total_dps, show_percent=True)
 print ' ' * (max_length(dicts_for_pretty_print) + 1), total_dps, _("total damage per second.")
-print "Request time: %s sec" % (clock() - start)
+print "Request time: %s sec" % (time.time() - start)
