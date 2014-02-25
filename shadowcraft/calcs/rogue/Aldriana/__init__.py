@@ -635,7 +635,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     def add_exported_data(self, damage_breakdown):
         #used explicitly to highjack data outputs to export additional data.
         if self.get_version_number:
-            damage_breakdown['version_' + self.GENERAL_VERSION_NUMBER] = [.0, 0]
+            damage_breakdown['version_' + self.WOW_BUILD_TARGET + '_' + self.SHADOWCRAFT_BUILD] = [.0, 0]
         
     def get_net_energy_cost(self, ability):
         return self.get_spell_stats(ability)[0]
