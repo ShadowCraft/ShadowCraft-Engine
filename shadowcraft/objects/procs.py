@@ -8,7 +8,9 @@ class InvalidProcException(exceptions.InvalidInputException):
 class Proc(object):
     allowed_behaviours = proc_data.behaviours
 
-    def __init__(self, stat, value, duration, proc_name, behaviours, max_stacks=1, can_crit=True, stats=None, upgradable=False, scaling=None, upgrade_level=0, buffs=None, base_value=0):
+    def __init__(self, stat, value, duration, proc_name, max_stacks=1, can_crit=True, stats=None, upgradable=False, scaling=None,
+                 buffs=None, base_value=0, type='rppm', icd=0, proc_rate=1.0, trigger='all_attacks', haste_scales=False, item_level=1,
+                 on_crit=False, on_procced_strikes=True):
         self.stat = stat
         if stats is not None:
             self.stats = set(stats)
@@ -20,15 +22,16 @@ class Proc(object):
         self.max_stacks = max_stacks
         self.upgradable = upgradable
         self.scaling = scaling
-        self.upgrade_level = upgrade_level
         self.proc_name = proc_name
-        self.proc_behaviours = {}
-        for i in behaviours:
-            if behaviours[i] in self.allowed_behaviours:
-                self.proc_behaviours[i] = self.allowed_behaviours[behaviours[i]]
-            else:
-                raise InvalidProcException(_('Behaviour {behaviour}:{behaviour_name} is not allowed').format(behaviour=i, behaviour_name=behaviours[i]))
-        self.behaviour_toggle = 'default'
+        self.proc_type = type
+        self.icd = icd
+        self.type = type
+        self.proc_rate = proc_rate
+        self.trigger = trigger
+        self.haste_scales = haste_scales
+        self.item_level = item_level
+        self.on_crit = on_crit
+        self.on_procced_strikes = on_procced_strikes
 
     def __setattr__(self, name, value):
         object.__setattr__(self, name, value)
@@ -118,45 +121,39 @@ class Proc(object):
             return True
         return False
         
-    def rppm_proc_rate(self, haste=1.):
+    def get_rppm_proc_rate(self, haste=1.):
         if self.is_real_ppm():
-            return haste * self.ppm
+            return haste * self.proc_rate
         raise InvalidProcException(_('Invalid proc handling for proc {proc}').format(proc=self.proc_name))
     
-    def proc_rate(self, speed=None, haste=1.0):
+    def get_proc_rate(self, speed=None, haste=1.0):
         if self.is_ppm():
             if speed is None:
                 raise InvalidProcException(_('Weapon speed needed to calculate the proc rate of {proc}').format(proc=self.proc_name))
             else:
-                return self.ppm * speed / 60.
+                return self.proc_rate * speed / 60.
         elif self.is_real_ppm():
-            return haste * self.ppm / 60.
+            return haste * self.proc_rate / 60.
         else:
-            return self.proc_chance
+            return self.proc_rate
 
     def is_ppm(self):
         if self.type == 'ppm':
             return True
-        if self.proc_chance not in (False, None) and self.ppm == False:
-            return False
-        elif self.real_ppm == True:
-            return False
-        elif self.ppm not in (False, None) and self.proc_chance == False:
-            return True
         else:
-            raise InvalidProcException(_('Invalid data for proc {proc}').format(proc=self.proc_name))
+            return False
+        # probably should configure this somehow, but type check is probably enough
+        raise InvalidProcException(_('Invalid data for proc {proc}').format(proc=self.proc_name))
     
     def is_rppm(self):
         return is_real_ppm()
     def is_real_ppm(self):
         if self.type == 'rppm':
             return True
-        if self.real_ppm == True and (self.ppm not in (False, None)):
-            return True
-        elif self.real_ppm in (False, None):
-            return False
         else:
-            raise InvalidProcException(_('Invalid data for proc {proc}').format(proc=self.proc_name))
+            return False
+        # probably should configure this somehow, but type check is probably enough
+        raise InvalidProcException(_('Invalid data for proc {proc}').format(proc=self.proc_name))
 
 class ProcsList(object):
     allowed_procs = proc_data.allowed_procs
@@ -167,7 +164,6 @@ class ProcsList(object):
                 arg = (arg,0)
             if arg[0] in self.allowed_procs:
                 proc_data = self.allowed_procs[arg[0]]
-                proc_data['upgrade_level'] = arg[1]
                 setattr(self, arg[0], Proc(**proc_data))
             else:
                 raise InvalidProcException(_('No data for proc {proc}').format(proc=arg[0]))
@@ -212,11 +208,7 @@ class ProcsList(object):
             if proc:
                 if stat is None:
                     procs.append(proc)
-                elif proc.stat == 'stats' and stat in proc.value:
-                    procs.append(proc)
-                elif proc.stat == 'highest' and stat in proc.value:
-                    procs.append(proc)
-                elif proc.stat == 'random' and stat in proc.value:
+                elif proc.stat in ('stats', 'highest', 'random') and stat in proc.value:
                     procs.append(proc)
 
         return procs

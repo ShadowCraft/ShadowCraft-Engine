@@ -45,11 +45,11 @@ test_buffs = buffs.Buffs(
     )
 
 # Set up weapons.
-test_mh = stats.Weapon(12337.7475582, 1.8, 'dagger', 'dancing_steel')
-test_oh = stats.Weapon(12337.7475582, 1.8, 'dagger', 'dancing_steel')
+test_mh = stats.Weapon(13047.0, 1.8, 'dagger', 'dancing_steel')
+test_oh = stats.Weapon(13047.0, 1.8, 'dagger', 'dancing_steel')
 
 # Set up procs.
-test_procs = procs.ProcsList( ('heroic_war_ticking_ebon_detonator', 0), ('heroic_war_haromms_talisman', 0), 'legendary_capacitive_meta', 'fury_of_xuen')
+test_procs = procs.ProcsList( ('ticking_ebon_detonator', 580), ('haromms_talisman', 580), 'legendary_capacitive_meta', 'fury_of_xuen')
 
 # Set up gear buffs.
 #test_gear_buffs = stats.GearBuffs('rogue_t15_2pc', 'rogue_t15_4pc', 'leather_specialization', 'virmens_bite', 'virmens_bite_prepot')
