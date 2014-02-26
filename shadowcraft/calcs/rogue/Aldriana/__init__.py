@@ -189,8 +189,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         crit_rates = {
             'mh_autoattacks': min(base_melee_crit_rate, self.dw_mh_hit_chance - self.GLANCE_RATE),
             'oh_autoattacks': min(base_melee_crit_rate, self.dw_oh_hit_chance - self.GLANCE_RATE),
-            'emh_autoattacks':min(base_melee_crit_rate, self.dw_mh_hit_chance - self.GLANCE_RATE),
-            'eoh_autoattacks':min(base_melee_crit_rate, self.dw_oh_hit_chance - self.GLANCE_RATE),
         }
         for attack in ('mh_shadow_blade', 'oh_shadow_blade', 'rupture_ticks', 'shuriken_toss'):
             crit_rates[attack] = base_melee_crit_rate
@@ -420,15 +418,17 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.swing_reset_spacing = opener_spacing
 
     def get_bonus_energy_from_openers(self, *cycle_abilities):
-        if self.settings.opener_name in cycle_abilities and not self.talents.shadow_focus:
+        if self.settings.opener_name not in cycle_abilities:
+            # self.get_shadow_focus_multiplier() handles multiplier, costs player energy
+            return -1 * self.get_net_energy_cost(self.settings.opener_name) * self.get_shadow_focus_multiplier() * self.total_openers_per_second
+        elif not self.talents.shadow_focus:
+            # it must be a rotational ability and without SF then
             return 0
-        elif self.settings.opener_name not in cycle_abilities and self.talents.shadow_focus:
-            energy_per_opener = self.get_net_energy_cost(self.settings.opener_name)
-            return -1 * self.get_shadow_focus_multiplier() * energy_per_opener * self.total_openers_per_second
         else:
-            energy_per_opener = self.get_net_energy_cost(self.settings.opener_name)
-            return [-1, 1][self.talents.shadow_focus] * self.get_shadow_focus_multiplier() * energy_per_opener * self.total_openers_per_second
-
+            # if it's a rotational ability and we have SF, we should add energy
+            # this lets us save computational time in the aps methods
+            return self.get_net_energy_cost(self.settings.opener_name) * (1 - self.get_shadow_focus_multiplier()) * self.total_openers_per_second
+        
     def get_damage_breakdown(self, current_stats, attacks_per_second, crit_rates, damage_procs):
         average_ap = current_stats['ap'] + 2 * current_stats['agi'] + current_stats['str']
         average_ap *= self.buffs.attack_power_multiplier()
@@ -458,19 +458,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             else:
                 damage_breakdown['mh_autoattack'] = mh_dps_tuple[0], mh_dps_tuple[1]
                 damage_breakdown['oh_autoattack'] = oh_dps_tuple[0], oh_dps_tuple[1]
-                
-            if 'eoh_autoattacks' in attacks_per_second:
-                (eoh_base_damage, eoh_crit_damage) = self.eoh_damage(average_ap)
-                eoh_hit_rate = self.dw_oh_hit_chance - self.GLANCE_RATE - crit_rates['eoh_autoattacks']
-                average_eoh_hit = self.GLANCE_RATE * self.GLANCE_MULTIPLIER * eoh_base_damage + eoh_hit_rate * eoh_base_damage + crit_rates['eoh_autoattacks'] * eoh_crit_damage
-                crit_eoh_hit = crit_rates['eoh_autoattacks'] * eoh_crit_damage
-                eoh_dps_tuple = average_eoh_hit * attacks_per_second['eoh_autoattacks'], crit_eoh_hit * attacks_per_second['eoh_autoattacks']
-                
-                if self.settings.merge_damage:
-                    damage_breakdown['autoattack'] = damage_breakdown['autoattack'][0] + eoh_dps_tuple[0], damage_breakdown['autoattack'][1] + eoh_dps_tuple[1]
-                else:
-                    damage_breakdown['eoh_autoattack'] = eoh_dps_tuple[0], eoh_dps_tuple[1]
-
+            
         for key in attacks_per_second.keys():
             if not attacks_per_second[key]:
                 del attacks_per_second[key]
@@ -655,6 +643,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         return self.get_activated_uptime(duration, (cooldown, self.get_spell_cd('shadow_blades'))[cooldown is None])
 
     def update_with_shadow_blades(self, attacks_per_second, shadow_blades_uptime):
+        # we don't remove white swings here to prevent swing reset from eating into SB
         mh_sb_swings_per_second = attacks_per_second['mh_autoattacks'] * shadow_blades_uptime
         oh_sb_swings_per_second = attacks_per_second['oh_autoattacks'] * shadow_blades_uptime
         attacks_per_second['mh_shadow_blade'] = mh_sb_swings_per_second
@@ -722,13 +711,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if proc.procs_off_crit_only():
                 if 'oh_autoattacks' in attacks_per_second:
                     triggers_per_second += attacks_per_second['oh_autoattacks'] * crit_rates['oh_autoattacks']
-                if 'eoh_autoattacks' in attacks_per_second:
-                    triggers_per_second += attacks_per_second['eoh_autoattacks'] * crit_rates['eoh_autoattacks']
             else:
                 if 'oh_autoattack_hits' in attacks_per_second:
                     triggers_per_second += attacks_per_second['oh_autoattack_hits']
-                if 'eoh_autoattack_hits' in attacks_per_second:
-                    triggers_per_second += attacks_per_second['eoh_autoattack_hits']
         if proc.procs_off_strikes():
             for ability in ('mutilate', 'oh_killing_spree', 'oh_shadow_blade'):
                 if ability in attacks_per_second:

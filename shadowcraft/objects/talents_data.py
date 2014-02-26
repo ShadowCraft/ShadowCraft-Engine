@@ -60,9 +60,9 @@ talents = {
         ('deadly_throw', 'nerve_strike', 'combat_readiness'),
         ('cheat_death', 'leeching_poison', 'elusiveness'),
         ('cloak_and_dagger', 'shadowstep', 'burst_of_speed'),
-        ('prey_on_the_weak', 'paralytic_poison', 'dirty_tricks'),
+        ('prey_on_the_weak', 'internal_bleeding', 'dirty_tricks'),
         ('shuriken_toss', 'marked_for_death', 'anticipation'),
-        ('master_the_basics', 'shadow_reflection', 'death_from_above')
+        ('lemon_zest', 'shadow_reflection', 'death_from_above')
     ),
     'shaman': (
         ('natures_guardian', 'stone_bulwark_totem', 'astral_shift'),
