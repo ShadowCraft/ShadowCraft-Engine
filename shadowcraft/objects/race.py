@@ -44,56 +44,49 @@ class Race(object):
     }
 
     allowed_racials = frozenset([
-        "axe_specialization",       #Orc
-        "fist_specialization",      #Orc
-        "mace_specialization",      #Human, Dwarf
-        "stoneform",                #Dwarf
-        "expansive_mind",           #Gnome
-        "dagger_specialization",    #Gnome
-        "sword_1h_specialization",  #Gnome, Human
-        "human_spirit",             #Human
-        "sword_2h_specialization",  #Human
+        "heroic_presence",          #Draenei (+x to primary stat)
+        "might_of_the_mountain",    #Dwarf (2% crit damage/healing)
+        "expansive_mind",           #Gnome (+5% Max Mana, Energy, Rage, or Runic Power)
+        "nimble_fingers",           #Gnome (1% haste)
+        "human_spirit",             #Human (+x to /2/ secondary stats of choice)
         "quickness",                #Night Elf
+        "touch_of_elune",           #Night Elf (1% haste at night, 1% crit at day)
         "shadowmeld",               #Night Elf
-        "heroic_presence",          #Draenei
-        "viciousness",              #Worgen
-        "blood_fury_physical",      #Orc
+        "viciousness",              #Worgen (1% crit chance)
+        "blood_fury_physical",      #Orc (+x AP for n seconds every 2min)
         "blood_fury_spell",         #Orc
-        "command",                  #Orc
-        "endurance",                #Tauren
-        "berserking",               #Troll
-        "regeneration",             #Troll
-        "beast_slaying",            #Troll
-        "ranged_specialization",    #Troll, Dwarf
-        "arcane_torrent",           #Blood Elf
-        "rocket_barrage",           #Goblin
-        "time_is_money",            #Goblin
-        "epicurean",                #Pandaren
-        "touch_of_the_grave",       #Undead
-        "cannibalize",              #Undead
+        "endurance",                #Tauren (+x stam)
+        "brawn",                    #Tauren (+2% crit damage/healing)
+        "berserking",               #Troll (15% haste for 10s every 3min)
+        "arcane_acuity",            #Blood Elf (1% crit chance)
+        "arcane_torrent",           #Blood Elf (20 Runic Power, or 1HoPo, or 3% Mana, x chi, x energy)
+        "rocket_barrage",           #Goblin (x magic damage every n min)
+        "time_is_money",            #Goblin (1% haste)
+        "epicurean",                #Pandaren (doubles food buff)
+        "touch_of_the_grave",       #Undead (shadow damage chance to proc)
     ])
 
     activated_racial_data = {
         #Blood fury values are set when level is set
         'blood_fury_physical':      {'stat': "ap", 'value': 0, 'duration': 15, 'cooldown': 120},    #level-based ap increase
-        'blood_fury_spell':         {'stat': "sp", 'value': 0, 'duration': 15, 'cooldown': 120},                                    #level-based sp increase
-        'berserking':               {'stat': "haste_multiplier", 'value': 1.2, 'duration': 10, 'cooldown': 180},                    #20% haste increase for 10 seconds, 3 minute cd
-        'arcane_torrent':           {'stat': "energy", 'value': 15, 'duration': 0, 'cooldown': 120},                                #gain 15 energy (or 15 runic power or 6% mana), 2 minute cd
-        'rocket_barrage':           {'stat': "damage", 'value': calculate_rocket_barrage, 'duration': 0, 'cooldown': 120},      #deal formula-based damage, 2 min cd
+        'blood_fury_spell':         {'stat': "sp", 'value': 0, 'duration': 15, 'cooldown': 120},                           #level-based sp increase
+        'berserking':               {'stat': "haste_multiplier", 'value': 1.15, 'duration': 10, 'cooldown': 180},          #15% haste increase for 10 seconds, 3 minute cd
+        'arcane_torrent':           {'stat': "energy", 'value': 15, 'duration': 0, 'cooldown': 120},                       #gain 15 energy (or 15 runic power or 6% mana), 2 minute cd
+        'rocket_barrage':           {'stat': "damage", 'value': calculate_rocket_barrage, 'duration': 0, 'cooldown': 120}, #deal formula-based damage, 2 min cd
     }
 
     racials_by_race = {
-        "human":        ["mace_specialization", "sword_1h_specialization", "sword_2h_specialization", "human_spirit"],
-        "night_elf":    ["quickness", "shadowmeld"],
-        "dwarf":        ["stoneform", "ranged_specialization", "mace_specialization"],
-        "gnome":        ["expansive_mind", "dagger_specialization", "sword_1h_specialization"],
+        "human":        ["human_spirit"],
+        "night_elf":    ["quickness", "touch_of_elune", "shadowmeld"],
+        "dwarf":        ["stoneform", "might_of_the_mountain"],
+        "gnome":        ["expansive_mind", "nimble_fingers"],
         "draenei":      ["heroic_presence"],
         "worgen":       ["viciousness"],
-        "orc":          ["blood_fury_physical", "blood_fury_spell", "fist_specialization", "axe_specialization"],
+        "orc":          ["blood_fury_physical", "blood_fury_spell"],
         "undead":       ["touch_of_the_grave", "cannibalize"],
-        "tauren":       ["endurance"],
-        "troll":        ["regeneration", "beast_slaying", "ranged_specialization", "berserking"],
-        "blood_elf":    ["arcane_torrent"],
+        "tauren":       ["endurance", "brawn"],
+        "troll":        ["berserking"],
+        "blood_elf":    ["arcane_torrent", "arcane_acuity"],
         "goblin":       ["rocket_barrage", "time_is_money"],
         "pandaren":     ["epicurean"],
         "none":         [],
@@ -146,49 +139,22 @@ class Race(object):
         else:
             object.__getattribute__(self, name)
 
-    def get_racial_expertise(self, weapon_type):
-        #print weapon_type
-        if weapon_type in ['axe', '1h_axe', '2h_axe']:
-            if self.axe_specialization:
-                return .01
-        elif weapon_type == 'fist':
-           if self.fist_specialization:
-               return .01
-        elif weapon_type in ['sword', '1h_sword']:
-            if self.sword_1h_specialization:
-                return .01
-        elif weapon_type == '2h_sword': 
-            if self.sword_2h_specialization:
-                return .01
-        elif weapon_type in ['mace', '1h_mace', '2h_mace']:
-            if self.mace_specialization:
-                return .01
-        elif weapon_type == 'dagger':
-            if self.dagger_specialization:
-                return .01
-        elif weapon_type in ['bow', 'crossbow', 'gun']:
-            if self.ranged_specialization:
-                return .01
-
-        return 0
-
-    def get_racial_crit(self, weapon_type=None):
+    def get_racial_crit(self, is_day=False):
         crit_bonus = 0
         if self.viciousness:
+            crit_bonus = .01
+        if self.touch_of_elune and is_day:
             crit_bonus = .01
 
         return crit_bonus
 
-    def get_racial_hit(self):
-        hit_bonus = 0
-        if self.heroic_presence:
-            hit_bonus = .01
-
-        return hit_bonus
-
-    def get_racial_haste(self):
+    def get_racial_haste(self, is_day=False):
         haste_bonus = 0
         if self.time_is_money:
+            haste_bonus = .01
+        if self.touch_of_elune and not is_day:
+            haste_bonus = .01
+        if self.nimble_fingers:
             haste_bonus = .01
 
         return haste_bonus

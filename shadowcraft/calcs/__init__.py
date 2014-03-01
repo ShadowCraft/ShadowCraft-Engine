@@ -19,9 +19,7 @@ class DamageCalculator(object):
     # calcs.<class>.<Class>DamageCalculator instead - for an example, see
     # calcs.rogue.RogueDamageCalculator
 
-    TARGET_BASE_ARMOR_VALUES = {88:11977., 93:24835.}
-    GLANCE_RATE = .24
-    GLANCE_MULTIPLIER = .75
+    TARGET_BASE_ARMOR_VALUES = {88:11977., 93:24835., 103:100000.}
     AOE_TARGET_CAP = 20
     
     # Override this in your class specfic subclass to list appropriate stats
@@ -43,12 +41,13 @@ class DamageCalculator(object):
         self.race = race
         self.char_class = char_class
         self.settings = settings
-        self.target_level = [target_level, level + 3][target_level is None]
+        self.target_level = [target_level, level + 3][target_level is None] #assumes 3 levels higher if not explicit
         if self.settings.is_pvp:
             self.level_difference = 0
         else:
             self.level_difference = max(self.target_level - level, 0)
         self.level = level
+        #racials
         if self.stats.gear_buffs.mixology and (self.buffs.agi_flask or self.buffs.agi_flask_mop):
             self.stats.agi += self.stats.gear_buffs.tradeskill_bonus()
         if self.stats.gear_buffs.master_of_anatomy:
@@ -594,14 +593,6 @@ class DamageCalculator(object):
         # this is what callers will (initially) be looking at.
         pass
 
-    def get_spell_hit_from_talents(self):
-        # Override this in your subclass to implement talents that modify spell hit chance
-        return 0.
-
-    def get_melee_hit_from_talents(self):
-        # Override this in your subclass to implement talents that modify melee hit chance
-        return 0.
-
     def get_all_activated_stat_boosts(self):
         racial_boosts = self.race.get_racial_stat_boosts()
         gear_boosts = self.stats.gear_buffs.get_all_activated_boosts()
@@ -616,14 +607,12 @@ class DamageCalculator(object):
         return damage * self.armor_mitigation_multiplier(armor)
 
     def melee_hit_chance(self, base_miss_chance, dodgeable, parryable, weapon_type, blockable=False, bonus_hit=0):
-        hit_chance = self.race.get_racial_hit() + self.get_melee_hit_from_talents()
-        miss_chance = max(base_miss_chance - hit_chance, 0)
+        miss_chance = base_miss_chance
 
         # Expertise represented as the reduced chance to be dodged, not true "Expertise".
-        expertise = self.race.get_racial_expertise(weapon_type)
 
         if dodgeable:
-            dodge_chance = max(self.base_dodge_chance - expertise, 0)
+            dodge_chance = self.base_dodge_chance
         else:
             dodge_chance = 0
 

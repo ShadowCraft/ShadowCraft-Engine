@@ -4,6 +4,7 @@
 # Assumed heroic trinkets have the same behaviour as the non-heroic kin.
 # behaviours must have a 'default' key so that the proc is properly initialized.
 allowed_procs = {
+    #generic
     'rogue_poison': {
         'stat': 'weird_proc',
         'value': 0,
@@ -14,6 +15,7 @@ allowed_procs = {
         'proc_rate': 1,
         'trigger': 'all_attacks'
     },
+    #racials
     'touch_of_the_grave': {
         'stat': 'spell_damage',
         'value': 13680,
@@ -25,8 +27,19 @@ allowed_procs = {
         'proc_rate': .20,
         'trigger': 'all_attacks'
     },
+    'lifeblood': { #triggered on demand
+        'stat': 'stats',
+        'value': 'varies',
+        'duration': 20,
+        'proc_name': 'lifeblood',
+        'type': 'perc',
+        'icd': 120,
+        'proc_rate': 1.,
+        'trigger': 'all_attacks'
+    },
+    #professions
     'swordguard_embroidery': {
-        'stat': 'ap',
+        'stat': 'stats',
         'value': 'varies',
         'duration': 15,
         'proc_name': 'Swordguard Embroidery',
@@ -35,6 +48,17 @@ allowed_procs = {
         'proc_rate': .15,
         'trigger': 'all_attacks'
     },
+    'synapse_springs': { #triggered on demand
+        'stat': 'stats',
+        'value': 'varies',
+        'duration': 10,
+        'proc_name': 'Synapse Springs',
+        'type': 'perc',
+        'icd': 60,
+        'proc_rate': 1.,
+        'trigger': 'all_attacks'
+    },
+    #gear procs
     'fury_of_xuen': {
         'stat':'physical_damage',
         'value': 1,
@@ -62,6 +86,7 @@ allowed_procs = {
         'haste_scales': True,
         'trigger': 'all_attacks'
     },
+    #5.4 procs
     'assurance_of_consequence': {
         'stat': 'stats',
         'value': {'agi':14037}, # not 100% accurate

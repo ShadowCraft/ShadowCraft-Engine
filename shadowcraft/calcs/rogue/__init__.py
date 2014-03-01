@@ -89,6 +89,12 @@ class RogueDamageCalculator(DamageCalculator):
             self.stats.agi += self.buffs.buff_agi(just_food=True)
         if self.settings.is_pvp:
             self.default_ep_stats.append('pvp_power')
+        for proc in self.stats.procs.get_all_procs_for_stat():
+            if proc == 'synapse_springs':
+                self.stats.procs.synapse_springs['value'] = {'agi': self.tradeskill_bonus('synapse_springs')}
+            if proc == 'lifeblood':
+                self.stats.procs.lifeblood['value'] = {'haste': self.tradeskill_bonus('master_of_anatomy')}
+
 
         # These factors are taken from sc_spell_data.inc in SimulationCraft.
         # At some point we should automate the process to fetch them. Numbers
@@ -118,6 +124,24 @@ class RogueDamageCalculator(DamageCalculator):
         self.dp_percentage_dmg = .213 # spellID 2818
         self.wp_percentage_dmg = .120 # spellID 8680
         self.ip_percentage_dmg = .109 # spellID 113780
+    
+    def tradeskill_bonus(self, tradeskill='base'):
+        # Hardcoded to use maxed tradeskills for the character level.
+        tradeskills = ('skill', 'base', 'master_of_anatomy', 'lifeblood', 'synapse_springs')
+        if self.level == 100:
+            return (600, 320, 480, 2880, 1920)[tradeskills.index(tradeskill)]
+        tradeskill_base_bonus = {
+            (01, 60): (0, None, None, None, 0),
+            (60, 70): (300, 9,   9,   70,   0),
+            (70, 80): (375, 12,  12,  120,  0),
+            (80, 85): (450, 20,  20,  240,  480),
+            (85, 90): (525, 80,  80,  480,  480),
+            (90, 95): (600, 320, 480, 2880, 2940)
+        }
+
+        for i, j in tradeskill_base_bonus.keys():
+            if self.level in range(i, j):
+                return tradeskill_base_bonus[(i, j)][tradeskills.index(tradeskill)]
 
     def get_factor(self, avg, delta=0):
         avg_for_level = avg * self.spell_scaling_for_level

@@ -52,8 +52,7 @@ test_oh = stats.Weapon(13047.0, 1.8, 'dagger', 'dancing_steel')
 test_procs = procs.ProcsList( ('ticking_ebon_detonator', 580), ('haromms_talisman', 580), 'legendary_capacitive_meta', 'fury_of_xuen')
 
 # Set up gear buffs.
-#test_gear_buffs = stats.GearBuffs('rogue_t15_2pc', 'rogue_t15_4pc', 'leather_specialization', 'virmens_bite', 'virmens_bite_prepot')
-test_gear_buffs = stats.GearBuffs('rogue_t16_2pc', 'rogue_t16_4pc', 'leather_specialization', 'virmens_bite', 'virmens_bite_prepot')
+test_gear_buffs = stats.GearBuffs('rogue_t16_2pc', 'rogue_t16_4pc', 'leather_specialization')
 
 # Set up a calcs object..
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
@@ -74,8 +73,8 @@ test_glyphs = glyphs.Glyphs(test_class, *glyph_list)
 # Set up settings.
 test_cycle = settings.AssassinationCycle(min_envenom_size_non_execute=4, min_envenom_size_execute=5,
                                          prioritize_rupture_uptime_non_execute=True, prioritize_rupture_uptime_execute=True)
-test_settings = settings.Settings(test_cycle, response_time=.5, duration=360, dmg_poison='dp', utl_poison='lp', is_pvp=False, stormlash=True,
-                                  tricks_on_cooldown=False, use_opener='always', opener_name='envenom')
+test_settings = settings.Settings(test_cycle, response_time=.5, duration=360, dmg_poison='dp', utl_poison='lp', is_pvp=False,
+                                  use_opener='always', opener_name='envenom')
 
 # Build a DPS object.
 calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_glyphs, test_buffs, test_race, test_settings, test_level)
@@ -95,12 +94,11 @@ ep_values = calculator.get_ep()
 
 trinkets_list = [
     #5.4
-    'heroic_war_assurance_of_consequence',
-    'heroic_war_haromms_talisman',
-    'heroic_war_sigil_of_rampage',
-    'heroic_war_ticking_ebon_detonator',
-    'heroic_war_thoks_tail_tip',
-    'timeless_discipline_of_xuen',
+    'assurance_of_consequence',
+    'haromms_talisman',
+    'sigil_of_rampage',
+    'ticking_ebon_detonator',
+    'thoks_tail_tip',
     'discipline_of_xuen',
     'fury_of_xuen',
 ]

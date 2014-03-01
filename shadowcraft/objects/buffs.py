@@ -8,7 +8,6 @@ class Buffs(object):
 
     allowed_buffs = frozenset([
         'short_term_haste_buff',            # Heroism/Blood Lust, Time Warp
-        'short_term_crit_buff',             # Skull Banner
         'stat_multiplier_buff',             # Mark of the Wild, Blessing of Kings, Legacy of the Emperor
         'crit_chance_buff',                 # Leader of the Pack, Legacy of the White Tiger, Arcane Brillance
         'melee_haste_buff',                 # Swiftblade's Cunning, Unholy Aura
@@ -23,8 +22,6 @@ class Buffs(object):
         'weakened_blows_debuff',
         'slow_casting_debuff',
         'mortal_wounds_debuff',
-        'agi_flask',                        # Flask of the Winds (cata)
-        'guild_feast',                      # Seafood Magnifique Feast (cata)
         'agi_flask_mop',                    # Flask of Spring Blossoms
         'food_250',                         # Pandaren Banquet
         'food_275',                         # Pandaren Banquet
@@ -35,7 +32,6 @@ class Buffs(object):
     
     buffs_debuffs = frozenset([
         'short_term_haste_buff',            # Heroism/Blood Lust, Time Warp
-        'short_term_crit_buff',             # Skull Banner
         'stat_multiplier_buff',             # Mark of the Wild, Blessing of Kings, Legacy of the Emperor
         'crit_chance_buff',                 # Leader of the Pack, Legacy of the White Tiger, Arcane Brillance
         'melee_haste_buff',                 # Swiftblade's Cunning, Unholy Aura
@@ -108,16 +104,14 @@ class Buffs(object):
     def buff_agi(self, just_food=False):
         flask_agi = 0
         if not just_food:
-            if self.agi_flask_mop + self.agi_flask > 1:
+            if self.agi_flask_mop + self.agi_flask_wod > 1:
                 raise InvalidBuffException(_('You can only have one type of Flask active'))
-            flask_agi += [0, 300][self.agi_flask]
             flask_agi += [0, 1000][self.agi_flask_mop]
             flask_agi += [0, 0][self.agi_flask_wod]
 
-        if self.guild_feast + self.food_250 + self.food_275 + self.food_300_agi > 1:
+        if self.food_250 + self.food_275 + self.food_300_agi + self.food_x_wod> 1:
             raise InvalidBuffException(_('You can only have one type of Well Fed buff active'))
         food_agi = 0
-        food_agi += 90 * self.guild_feast
         food_agi += 250 * self.food_250
         food_agi += 275 * self.food_275
         food_agi += 300 * self.food_300_agi

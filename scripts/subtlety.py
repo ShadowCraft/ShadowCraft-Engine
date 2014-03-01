@@ -36,8 +36,8 @@ test_buffs = buffs.Buffs(
         'armor_debuff',
         'physical_vulnerability_debuff',
         'spell_damage_debuff',
-        'agi_flask',
-        'guild_feast'
+        'agi_flask_mop',
+        'food_300_agi'
     )
 
 # Set up weapons.
@@ -48,7 +48,7 @@ test_oh = stats.Weapon(13047.0, 1.8, 'dagger', 'dancing_steel')
 test_procs = procs.ProcsList(('assurance_of_consequence', 580), ('haromms_talisman', 580), 'legendary_capacitive_meta', 'fury_of_xuen' )
 
 # Set up gear buffs.
-test_gear_buffs = stats.GearBuffs('rogue_t16_2pc', 'rogue_t15_2pc', 'leather_specialization', 'virmens_bite', 'virmens_bite_prepot')
+test_gear_buffs = stats.GearBuffs('rogue_t16_2pc', 'rogue_t15_2pc', 'leather_specialization')
 
 # Set up a calcs object..
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
@@ -69,7 +69,7 @@ test_glyphs = glyphs.Glyphs(test_class, *glyph_list)
 # Set up settings.
 test_cycle = settings.SubtletyCycle(5, use_hemorrhage=24, sub_sb_timing='shd') #shd, fw, other
 test_settings = settings.Settings(test_cycle, response_time=.5, duration=360, dmg_poison='dp', utl_poison='lp', is_pvp=False,
-                                  stormlash=True, adv_params="")
+                                 adv_params="")
 
 # Build a DPS object.
 calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_glyphs, test_buffs, test_race, test_settings, test_level)

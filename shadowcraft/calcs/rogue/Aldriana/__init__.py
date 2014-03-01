@@ -79,7 +79,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if list is None:
             list = [
                 'vendetta',
-                'tricks_of_the_trade',
                 'adrenaline_rush'
             ]
         return super(AldrianasRogueDamageCalculator, self).get_glyphs_ranking(list)
@@ -229,31 +228,16 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.amplify_crit_bonus = 0
         self.amplify_stats = 1
         self.spec_needs_converge = False
-        self.highest_primary_stat = 'agi'
-        if self.settings.tricks_on_cooldown:
-            self.bonus_energy_regen -= self.get_spell_stats('tricks_of_the_trade')[0] / (30 + self.settings.response_time)
-        if self.settings.shiv_interval != 0:
-            self.bonus_energy_regen -= self.get_spell_stats('shiv')[0] / self.settings.shiv_interval
+        #racials
         if self.race.arcane_torrent:
             self.bonus_energy_regen += 15. / (120 + self.settings.response_time)
+        #auxiliary rotational effects
+        if self.settings.shiv_interval != 0:
+            self.bonus_energy_regen -= self.get_spell_stats('shiv')[0] / self.settings.shiv_interval
         if self.settings.feint_interval != 0:
             self.bonus_energy_regen -= self.get_spell_stats('feint')[0] / self.settings.feint_interval
             
         self.set_openers()
-        
-        # thoks tail tip
-        # TODO verify if the numbers are correct
-        # VERIFY: ingame it looks like that the crit multiplier is more around 8% instead of 7% for 553 ilvl
-        # maybe 3.5% crit multiplier is rounded to 4 and then doubled through the 200% crit damage...
-        # VERIFY: tooltip of the item only shows multiplier for haste and mastery
-        #'heroic_','war_','','flex_','lfr_')
-        proc = getattr(self.stats.procs, 'thoks_tail_tip')
-        if proc and proc.scaling:
-            item_level = proc.item_level
-            scale_value = self.tools.get_random_prop_point(item_level)
-            self.amplify_crit_bonus = 0.0008850000 * scale_value / 100
-            amp_stats = round(0.0017700000 * scale_value)
-            self.amplify_stats += amp_stats / 100
         
         #only include if general multiplier applies to spec calculations 
         self.true_haste_mod *= self.get_heroism_haste_multiplier()
@@ -269,28 +253,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if boost['stat'] in self.base_stats:
                 self.base_stats[boost['stat']] += boost['value'] * boost['duration'] * 1.0 / (boost['cooldown'] + self.settings.response_time)
 
-        if getattr(self.stats.gear_buffs, 'synapse_springs'):
-            self.stats.gear_buffs.activated_boosts['synapse_springs']['stat'] = 'agi'
         for proc in self.stats.procs.get_all_procs_for_stat('highest'):
             if 'agi' in proc.value:
                 proc.stat = 'stats'
                 for e in proc.value:
                     if proc.value[e] is not 'agi':
                         proc.value[e] = 0
-
-        for stat in self.base_stats:
-            for boost in self.stats.gear_buffs.get_all_activated_boosts_for_stat(stat):
-                if 'scaling' in boost and 'upgrade_level' in boost:
-                    item_level = boost['scaling']['item_level']
-                    if boost['scaling']['quality'] == 'epic':
-                        item_level += boost['upgrade_level'] * 4
-                    elif boost['scaling']['quality'] == 'blue':
-                        item_level += boost['upgrade_level'] * 8
-                    boost['value'] = round(boost['scaling']['factor'] * self.tools.get_random_prop_point(item_level, boost['scaling']['quality']))
-                if boost['cooldown'] is not None:
-                    self.base_stats[stat] += (boost['value'] * boost['duration']) * 1.0 / (boost['cooldown'] + self.settings.response_time)
-                else:
-                    self.base_stats[stat] += (boost['value'] * boost['duration']) * 1.0 / self.settings.duration
 
         self.agi_multiplier = self.buffs.stat_multiplier() * self.stats.gear_buffs.leather_specialization_multiplier()
         if self.settings.is_subtlety_rogue():
@@ -300,12 +268,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.base_strength *= self.buffs.stat_multiplier()
 
         self.relentless_strikes_energy_return_per_cp = .20 * 25
-
+        
+        #should only include bloodlust if the spec can average it in, deal with this later
         self.base_speed_multiplier = 1.4 * self.buffs.melee_haste_multiplier()
         if self.race.berserking:
-            self.true_haste_mod *= (1 + .2 * 10. / (180 + self.settings.response_time))
+            self.true_haste_mod *= (1 + .15 * 10. / (180 + self.settings.response_time))
         if self.race.time_is_money:
-            self.base_speed_multiplier *= 1.01
+            self.true_haste_mod *= 1.01
             
         #hit chances
         self.dw_mh_hit_chance = self.dual_wield_mh_hit_chance()
@@ -316,7 +285,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         self.major_cd_delay = self.get_adv_param('major_cd_delay', 0, min_bound=0, max_bound=600)
         self.settings.feint_interval = self.get_adv_param('feint_interval', self.settings.feint_interval, min_bound=0, max_bound=600)
-        self.settings.use_stormlash = self.get_adv_param('stormlash_count', self.settings.use_stormlash, min_bound=0, max_bound=39)
         
         self.get_version_number = self.get_adv_param('print_version', False, ignore_bounds=True)
         
@@ -370,8 +338,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     def append_damage_on_use(self, average_ap, current_stats, damage_breakdown):
         on_use_damage_list = []
-        for i in ('spell_damage', 'physical_damage', 'melee_spell_damage'):
-            on_use_damage_list += self.stats.gear_buffs.get_all_activated_boosts_for_stat(i)
         if self.race.rocket_barrage:
             rocket_barrage_dict = {'stat': 'spell_damage', 'cooldown': 120, 'name': 'Rocket Barrage'}
             rocket_barrage_dict['value'] = self.race.calculate_rocket_barrage(average_ap, 0, 0)
@@ -442,14 +408,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             #
             # Friends don't let friends raid without gear.
             (mh_base_damage, mh_crit_damage) = self.mh_damage(average_ap)
-            mh_hit_rate = self.dw_mh_hit_chance - self.GLANCE_RATE - crit_rates['mh_autoattacks']
-            average_mh_hit = self.GLANCE_RATE * self.GLANCE_MULTIPLIER * mh_base_damage + mh_hit_rate * mh_base_damage + crit_rates['mh_autoattacks'] * mh_crit_damage
+            mh_hit_rate = self.dw_mh_hit_chance - crit_rates['mh_autoattacks']
+            average_mh_hit = mh_hit_rate * mh_base_damage + crit_rates['mh_autoattacks'] * mh_crit_damage
             crit_mh_hit = crit_rates['mh_autoattacks'] * mh_crit_damage
             mh_dps_tuple = average_mh_hit * attacks_per_second['mh_autoattacks'], crit_mh_hit * attacks_per_second['mh_autoattacks']
             
             (oh_base_damage, oh_crit_damage) = self.oh_damage(average_ap)
-            oh_hit_rate = self.dw_oh_hit_chance - self.GLANCE_RATE - crit_rates['oh_autoattacks']
-            average_oh_hit = self.GLANCE_RATE * self.GLANCE_MULTIPLIER * oh_base_damage + oh_hit_rate * oh_base_damage + crit_rates['oh_autoattacks'] * oh_crit_damage
+            oh_hit_rate = self.dw_oh_hit_chance - crit_rates['oh_autoattacks']
+            average_oh_hit = oh_hit_rate * oh_base_damage + crit_rates['oh_autoattacks'] * oh_crit_damage
             crit_oh_hit = crit_rates['oh_autoattacks'] * oh_crit_damage
             oh_dps_tuple = average_oh_hit * attacks_per_second['oh_autoattacks'], crit_oh_hit * attacks_per_second['oh_autoattacks']
             
@@ -575,29 +541,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                     dmg_cleave += damage_breakdown[attack][0] * proc_chance * min(5., self.settings.num_boss_adds)
             damage_breakdown['cleave'] = (dmg_cleave,0.)
 
-        if self.settings.use_stormlash:
-            stormlash_mod_table = {'mh_autoattack_hits': .4 * (self.stats.mh.speed / 2.6),
-                     'oh_autoattack_hits': .2 * (self.stats.oh.speed / 2.6), 
-                     'mh_shadow_blade': .4 * (self.stats.mh.speed / 2.6), 
-                     'oh_shadow_blade': .2 * (self.stats.oh.speed / 2.6), 
-                     'sinister_strike': .5}
-            if self.settings.use_stormlash == 'True':
-                self.settings.use_stormlash = 1
-            average_dps = crit_dps = 0
-            uptime = int(self.settings.use_stormlash) * 10. / (5 * 60)
-            for value in attacks_per_second:
-                if value in self.all_attacks:
-                    damage_mod = 1.
-                    if value in stormlash_mod_table:
-                        damage_mod = stormlash_mod_table[value]
-                    if value in ('envenom', 'eviscerate', 'rupture_ticks'):
-                        damage_tuple = self.get_dps_contribution(self.stormlash_totem_damage(average_ap, mod=damage_mod), self.spell_crit_rate(), finisher_per_second[value])
-                    else:
-                        damage_tuple = self.get_dps_contribution(self.stormlash_totem_damage(average_ap, mod=damage_mod), self.spell_crit_rate(), attacks_per_second[value])
-                    average_dps += uptime * damage_tuple[0]
-                    crit_dps += uptime * damage_tuple[1]
-            damage_breakdown['stormlash'] = average_dps, crit_dps
-        
         for proc in damage_procs:
             if proc.proc_name not in damage_breakdown:
                 # Toss multiple damage procs with the same name (Avalanche):
