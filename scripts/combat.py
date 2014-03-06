@@ -62,7 +62,9 @@ test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          stam=35869,
                          crit=3851,
                          haste=18871,
-                         mastery=8574)
+                         mastery=8574,
+                         readiness=6000,
+                         multistrike=6000,)
 
 # Initialize talents..
 test_talents = talents.Talents('332213', test_class, test_level)
@@ -86,7 +88,7 @@ total_dps = sum(entry[1] for entry in dps_breakdown.items())
 
 # Compute EP values.
 ep_values = calculator.get_ep(baseline_dps=total_dps)
-tier_ep_values = calculator.get_other_ep(['rogue_t14_4pc', 'rogue_t14_2pc', 'rogue_t15_4pc', 'rogue_t15_2pc', 'rogue_t16_2pc', 'rogue_t16_4pc'])
+tier_ep_values = calculator.get_other_ep(['rogue_t16_2pc', 'rogue_t16_4pc'])
 #mh_enchants_and_dps_ep_values, oh_enchants_and_dps_ep_values = calculator.get_weapon_ep(dps=True, enchants=True)
 
 trinkets_list = [

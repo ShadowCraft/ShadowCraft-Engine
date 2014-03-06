@@ -9,12 +9,11 @@ class Stats(object):
     # rows 1-9 from my WotLK spreadsheets to see how these are typically
     # defined, though the numbers will need to updated for level 85.
 
-    melee_hit_rating_conversion_values = {60:8.0, 70:12.6154, 80:26.232, 85:102.4457, 90:340.0, 100:600}
-    spell_hit_rating_conversion_values = {60:8.0, 70:12.6154, 80:26.232, 85:102.4457, 90:340.0, 100:600}
-    expertise_rating_conversion_values = {60:8.0, 70:12.6154, 80:26.232, 85:102.4457, 90:340.0, 100:600}
     crit_rating_conversion_values = {60:14.0, 70:22.0769, 80:45.906, 85:179.28, 90:600.0, 100:1000}
     haste_rating_conversion_values = {60:10.0, 70:15.7692, 80:32.79, 85:128.057, 90:425.0, 100:800}
     mastery_rating_conversion_values = {60:14, 70:22.0769, 80:45.906, 85:179.28, 90:600.0, 100:1000}
+    multistrike_rating_conversion_values = {60:14, 70:22.0769, 80:45.906, 85:179.28, 90:200.0, 100:5000}
+    readiness_rating_conversion_values = {60:14, 70:22.0769, 80:45.906, 85:179.28, 90:200.0, 100:5000}
     pvp_power_rating_conversion_values = {60:7.96, 70:12.55, 80:26.11, 85:79.12, 90:400.0, 100:800}
     pvp_resil_rating_conversion_values = {60:9.29, 70:14.65, 80:30.46, 85:92.31, 90:310.0, 100:600}
 
@@ -46,14 +45,13 @@ class Stats(object):
     def _set_constants_for_level(self):
         self.procs.level = self.level
         try:
-            self.melee_hit_rating_conversion = self.melee_hit_rating_conversion_values[self.level]
-            self.spell_hit_rating_conversion = self.spell_hit_rating_conversion_values[self.level]
-            self.expertise_rating_conversion = self.expertise_rating_conversion_values[self.level]
-            self.crit_rating_conversion = self.crit_rating_conversion_values[self.level]
-            self.haste_rating_conversion = self.haste_rating_conversion_values[self.level]
-            self.mastery_rating_conversion = self.mastery_rating_conversion_values[self.level]
-            self.pvp_power_rating_conversion = self.pvp_power_rating_conversion_values[self.level]
-            self.pvp_resil_rating_conversion = self.pvp_resil_rating_conversion_values[self.level]
+            self.crit_rating_conversion        = self.crit_rating_conversion_values[self.level]
+            self.haste_rating_conversion       = self.haste_rating_conversion_values[self.level]
+            self.mastery_rating_conversion     = self.mastery_rating_conversion_values[self.level]
+            self.multistrike_rating_conversion = self.multistrike_rating_conversion_values[self.level]
+            self.readiness_rating_conversion   = self.readiness_rating_conversion_values[self.level]
+            self.pvp_power_rating_conversion   = self.pvp_power_rating_conversion_values[self.level]
+            self.pvp_resil_rating_conversion   = self.pvp_resil_rating_conversion_values[self.level]
         except KeyError:
             raise exceptions.InvalidLevelException(_('No conversion factor available for level {level}').format(level=self.level))
 
@@ -61,11 +59,6 @@ class Stats(object):
         object.__setattr__(self, name, value)
         if name == 'level' and value is not None:
             self._set_constants_for_level()
-    
-    def get_max_health(self, rating=None):
-        if rating is None:
-            rating = self.stam
-        return rating * 14 - 260 + 146663 #assumed to be level 90 for now
     
     def get_mastery_from_rating(self, rating=None):
         if rating is None:
@@ -82,15 +75,15 @@ class Stats(object):
             rating = self.haste
         return 1 + rating / (100 * self.haste_rating_conversion)
     
-    def get_readiness_multiplier_from_rating(self, rating=None):
+    def get_readiness_multiplier_from_rating(self, rating=None, readiness_conversion=1):
         if rating is None:
             rating = self.readiness
-        return 1
+        return 1 / (1 + (readiness_conversion * rating) / (self.readiness_rating_conversion * 100))
     
-    def get_multistrike_multiplier_from_rating(self, rating=None):
+    def get_multistrike_chance_from_rating(self, rating=None):
         if rating is None:
             rating = self.multistrike
-        return 1
+        return rating / (100 * self.multistrike_rating_conversion)
     
     def get_pvp_power_multiplier_from_rating(self, rating=None):
         if rating is None:
@@ -207,39 +200,6 @@ class GearBuffs(object):
         if self.rogue_pvp_4pc:
             return 30
         return 0
-
-    def rogue_t14_2pc_damage_bonus(self, spell):
-        if self.rogue_t14_2pc:
-            bonus = {
-                ('assassination', 'vw', 'venomous_wounds'): 0.2,
-                ('combat', 'ss', 'sinister_strike'): 0.15,
-                ('subtlety', 'bs', 'backstab'): 0.1
-            }
-            for spells in bonus.keys():
-                if spell in spells:
-                    return 1 + bonus[spells]
-        return 1
-
-    def rogue_t14_4pc_extra_time(self, is_combat=False):
-        if is_combat:
-            return self.rogue_t14_4pc * 6
-        return self.rogue_t14_4pc * 12
-    
-    def rogue_t15_2pc_bonus_cp(self):
-        if self.rogue_t15_2pc:
-            return 1
-        return 0
-    
-    def rogue_t15_4pc_reduced_cost(self, uptime= 12. / 180.): #This is for Mut calcs
-        cost_reduction = .15
-        if self.rogue_t15_4pc:
-            return 1. - (cost_reduction * uptime)
-        return 1.
-    
-    def rogue_t15_4pc_modifier(self, is_sb=False): #This is for Combat/Sub calcs
-        if self.rogue_t15_4pc and is_sb:
-            return .85 # 1 - .15
-        return 1.
     
     def rogue_t16_2pc_bonus(self):
         if self.rogue_t16_2pc:

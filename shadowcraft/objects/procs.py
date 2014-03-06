@@ -10,7 +10,7 @@ class Proc(object):
 
     def __init__(self, stat, value, duration, proc_name, max_stacks=1, can_crit=True, stats=None, upgradable=False, scaling=None,
                  buffs=None, base_value=0, type='rppm', icd=0, proc_rate=1.0, trigger='all_attacks', haste_scales=False, item_level=1,
-                 on_crit=False, on_procced_strikes=True):
+                 on_crit=False, on_procced_strikes=True, proc_rate_modifier=1.):
         self.stat = stat
         if stats is not None:
             self.stats = set(stats)
@@ -32,6 +32,7 @@ class Proc(object):
         self.item_level = item_level
         self.on_crit = on_crit
         self.on_procced_strikes = on_procced_strikes
+        self.proc_rate_modifier = proc_rate_modifier
 
     def __setattr__(self, name, value):
         object.__setattr__(self, name, value)
@@ -123,7 +124,7 @@ class Proc(object):
         
     def get_rppm_proc_rate(self, haste=1.):
         if self.is_real_ppm():
-            return haste * self.proc_rate
+            return haste * self.proc_rate * self.proc_rate_modifier
         raise InvalidProcException(_('Invalid proc handling for proc {proc}').format(proc=self.proc_name))
     
     def get_proc_rate(self, speed=None, haste=1.0):

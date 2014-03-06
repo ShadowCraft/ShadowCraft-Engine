@@ -711,12 +711,3 @@ class DamageCalculator(object):
         elif attack_kind == 'physical':
             armor_override = self.target_armor(armor)
             return self.buffs.physical_damage_multiplier() * self.armor_mitigation_multiplier(armor_override) * pvp_mod
-        
-    def get_trinket_cd_reducer(self):
-        trinket_cd_reducer_value = .0
-        proc = getattr(self.stats.procs, 'assurance_of_consequence')
-        if proc and proc.scaling:
-            item_level = proc.item_level
-            trinket_cd_reducer_value = 0.0098999999 / 100 * self.tools.get_random_prop_point(item_level)
-            return 1 / (1 + trinket_cd_reducer_value)
-        return 1

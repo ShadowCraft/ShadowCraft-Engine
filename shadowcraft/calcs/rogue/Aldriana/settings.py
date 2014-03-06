@@ -18,6 +18,8 @@ class Settings(object):
         self.is_pvp = is_pvp
         self.feint_interval = feint_interval
         self.merge_damage = merge_damage
+        self.potion = potion
+        self.prepot = prepot
         self.num_boss_adds = max(num_boss_adds, 0)
         self.shiv_interval = float(shiv_interval)
         self.adv_params = self.interpret_adv_params(adv_params)

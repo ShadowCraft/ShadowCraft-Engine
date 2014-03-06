@@ -27,16 +27,6 @@ allowed_procs = {
         'proc_rate': .20,
         'trigger': 'all_attacks'
     },
-    'lifeblood': { #triggered on demand
-        'stat': 'stats',
-        'value': 'varies',
-        'duration': 20,
-        'proc_name': 'lifeblood',
-        'type': 'perc',
-        'icd': 120,
-        'proc_rate': 1.,
-        'trigger': 'all_attacks'
-    },
     #professions
     'swordguard_embroidery': {
         'stat': 'stats',
@@ -58,6 +48,16 @@ allowed_procs = {
         'proc_rate': 1.,
         'trigger': 'all_attacks'
     },
+    'lifeblood': { #triggered on demand
+        'stat': 'stats',
+        'value': 'varies',
+        'duration': 20,
+        'proc_name': 'lifeblood',
+        'type': 'perc',
+        'icd': 120,
+        'proc_rate': 1.,
+        'trigger': 'all_attacks'
+    },
     #gear procs
     'fury_of_xuen': {
         'stat':'physical_damage',
@@ -68,7 +68,7 @@ allowed_procs = {
         'item_level': 0,
         'type': 'rppm',
         'icd': 3,
-        'proc_rate': 1.74, #1.55 mut, 1.15 com, 0 sub
+        'proc_rate': 1.74, #1.55 mut, 1.15 com, 1.0 sub
         'haste_scales': True,
         'trigger': 'all_attacks'
     },

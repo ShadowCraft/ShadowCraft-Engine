@@ -17,21 +17,25 @@ class RogueDamageCalculator(DamageCalculator):
     
     normalize_ep_stat = 'agi' #use 'dps' to prevent normalization
     # removed default_ep_stats: 'str', 'spell_hit', 'spell_exp'
-    default_ep_stats = ['agi', 'haste', 'crit', 'mastery', 'ap']
+    default_ep_stats = ['agi', 'haste', 'crit', 'mastery', 'ap', 'multistrike', 'readiness']
     melee_attacks = ['mh_autoattack_hits', 'oh_autoattack_hits', 'mh_shadow_blade', 'oh_shadow_blade', 'autoattack', 'shadow_blades',
                      'eviscerate', 'envenom', 'ambush', 'garrote',
                      'sinister_strike', 'revealing_strike', 'main_gauche', 'mh_killing_spree', 'oh_killing_spree',
                      'backstab', 'hemorrhage', 
                      'mutilate', 'mh_mutilate', 'oh_mutilate', 'dispatch']
-    melee_hit_chance_attacks = melee_attacks + ['deadly_instant_poison', 'fan_of_knives', 'crimson_tempest']
+    other_attacks = ['deadly_instant_poison']
+    aoe_attacks = ['fan_of_knives', 'crimson_tempest']
     dot_ticks = ['rupture_ticks', 'garrote_ticks', 'deadly_poison', 'hemorrhage_dot']
     ranged_attacks = ['shuriken_toss', 'throw']
-    non_dot_attacks = melee_hit_chance_attacks + ranged_attacks
-    all_attacks = melee_hit_chance_attacks + ranged_attacks + dot_ticks
+    non_dot_attacks = melee_attacks + ranged_attacks + aoe_attacks
+    all_attacks = melee_attacks + ranged_attacks + dot_ticks + aoe_attacks + other_attacks
     
     assassination_mastery_conversion = .035
     combat_mastery_conversion = .02
     subtlety_mastery_conversion = .03
+    assassination_readiness_conversion = 1.0
+    combat_readiness_conversion = 1.0
+    subtlety_readiness_conversion = 1.0
     
     passive_assassasins_resolve = 1.20
     passive_sanguinary_veins = 1.35
@@ -543,8 +547,9 @@ class RogueDamageCalculator(DamageCalculator):
                               'subtlety': ['vanish', 'shadow_blades', 'shadow_dance']
                              }#Cloak, Evasion, Sprint affect all 3 specs, not needed in list
         
+        #self.stats.get_readiness_multiplier_from_rating()
         if ability in cd_reduction_table[self.settings.get_spec()]:
-            return self.ability_cds[ability] * self.get_trinket_cd_reducer()
+            return self.ability_cds[ability] * self.stats.get_readiness_multiplier_from_rating(readiness_conversion=self.readiness_spec_conversion)
         else:
             return self.ability_cds[ability]
 
