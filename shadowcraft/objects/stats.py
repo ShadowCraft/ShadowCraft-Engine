@@ -201,6 +201,39 @@ class GearBuffs(object):
             return 30
         return 0
     
+    def rogue_t14_2pc_damage_bonus(self, spell):
+        if self.rogue_t14_2pc:
+            bonus = {
+                     ('assassination', 'vw', 'venomous_wounds'): 0.2,
+                     ('combat', 'ss', 'sinister_strike'): 0.15,
+                     ('subtlety', 'bs', 'backstab'): 0.1
+            }
+            for spells in bonus.keys():
+                if spell in spells:
+                    return 1 + bonus[spells]
+        return 1
+    
+    def rogue_t14_4pc_extra_time(self, is_combat=False):
+        if is_combat:
+            return self.rogue_t14_4pc * 6
+        return self.rogue_t14_4pc * 12
+    
+    def rogue_t15_2pc_bonus_cp(self):
+        if self.rogue_t15_2pc:
+            return 1
+        return 0
+    
+    def rogue_t15_4pc_reduced_cost(self, uptime= 12. / 180.): #This is for Mut calcs
+        cost_reduction = .15
+        if self.rogue_t15_4pc:
+            return 1. - (cost_reduction * uptime)
+        return 1.
+    
+    def rogue_t15_4pc_modifier(self, is_sb=False): #This is for Combat/Sub calcs
+        if self.rogue_t15_4pc and is_sb:
+            return .85 # 1 - .15
+        return 1.
+    
     def rogue_t16_2pc_bonus(self):
         if self.rogue_t16_2pc:
             return True
