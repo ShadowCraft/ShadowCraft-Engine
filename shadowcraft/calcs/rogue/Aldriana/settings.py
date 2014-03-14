@@ -5,7 +5,7 @@ class Settings(object):
 
     def __init__(self, cycle, time_in_execute_range=.35, response_time=.5, latency=.03, dmg_poison='dp', utl_poison=None,
                  duration=300, use_opener='always', opener_name='default', is_pvp=False, shiv_interval=0, adv_params=None,
-                 merge_damage=True, num_boss_adds=0, feint_interval=0, default_ep_stat='agi', potion=True, prepot=True):
+                 merge_damage=True, num_boss_adds=0, feint_interval=0, default_ep_stat='agi', potion=True, prepot=True, is_day=False):
         self.cycle = cycle
         self.time_in_execute_range = time_in_execute_range
         self.response_time = response_time
@@ -20,6 +20,7 @@ class Settings(object):
         self.merge_damage = merge_damage
         self.potion = potion
         self.prepot = prepot
+        self.is_day = is_day
         self.num_boss_adds = max(num_boss_adds, 0)
         self.shiv_interval = float(shiv_interval)
         self.adv_params = self.interpret_adv_params(adv_params)

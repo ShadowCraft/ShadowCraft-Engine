@@ -547,7 +547,7 @@ class RogueDamageCalculator(DamageCalculator):
                               'subtlety': ['vanish', 'shadow_blades', 'shadow_dance']
                              }#Cloak, Evasion, Sprint affect all 3 specs, not needed in list
         
-        #self.stats.get_readiness_multiplier_from_rating()
+        #need to update list of affected abilities
         if ability in cd_reduction_table[self.settings.get_spec()]:
             return self.ability_cds[ability] * self.stats.get_readiness_multiplier_from_rating(readiness_conversion=self.readiness_spec_conversion)
         else:
@@ -558,7 +558,7 @@ class RogueDamageCalculator(DamageCalculator):
             agi = self.stats.agi
         base_crit = self.agi_crit_intercept + agi / self.agi_per_crit
         base_crit += self.stats.get_crit_from_rating(crit)
-        return base_crit + self.buffs.buff_all_crit() + self.race.get_racial_crit() - self.melee_crit_reduction
+        return base_crit + self.buffs.buff_all_crit() + self.race.get_racial_crit(is_day=self.settings.is_day) - self.melee_crit_reduction
 
     def spell_crit_rate(self, crit=None):
         base_crit = self.stats.get_crit_from_rating(crit)

@@ -13,7 +13,7 @@ class Stats(object):
     haste_rating_conversion_values = {60:10.0, 70:15.7692, 80:32.79, 85:128.057, 90:425.0, 100:800}
     mastery_rating_conversion_values = {60:14, 70:22.0769, 80:45.906, 85:179.28, 90:600.0, 100:1000}
     multistrike_rating_conversion_values = {60:14, 70:22.0769, 80:45.906, 85:179.28, 90:200.0, 100:5000}
-    readiness_rating_conversion_values = {60:14, 70:22.0769, 80:45.906, 85:179.28, 90:200.0, 100:5000}
+    readiness_rating_conversion_values = {60:14, 70:22.0769, 80:45.906, 85:179.28, 90:100.0, 100:5000}
     pvp_power_rating_conversion_values = {60:7.96, 70:12.55, 80:26.11, 85:79.12, 90:400.0, 100:800}
     pvp_resil_rating_conversion_values = {60:9.29, 70:14.65, 80:30.46, 85:92.31, 90:310.0, 100:600}
 

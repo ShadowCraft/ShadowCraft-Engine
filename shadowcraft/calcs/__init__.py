@@ -681,8 +681,11 @@ class DamageCalculator(object):
         # The obscure formulae for the different crit enhancers can be found here
         # http://elitistjerks.com/f31/t13300-shaman_relentless_earthstorm_ele/#post404567
         base_modifier = 2
+        if self.settings.is_pvp:
+            base_modifier = 1.5
         crit_damage_modifier = self.stats.gear_buffs.metagem_crit_multiplier()
-        crit_damage_modifier += self.amplify_crit_bonus
+        if self.race.might_of_the_mountain:
+            crit_damage_modifier *= 1.02 #2x base becomes 2.04x with MotM
         total_modifier = 1 + (base_modifier * crit_damage_modifier - 1) * crit_damage_bonus_modifier
         return total_modifier
 

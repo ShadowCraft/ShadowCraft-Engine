@@ -225,9 +225,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         # General setup that we'll use in all 3 cycles.
         self.load_from_advanced_parameters()
         self.bonus_energy_regen = 0
-        self.amplify_crit_bonus = 0
-        self.amplify_stats = 1
         self.spec_needs_converge = False
+        self.human_racial_stats = []
         #racials
         if self.race.arcane_torrent:
             self.bonus_energy_regen += 15. / (120 + self.settings.response_time)
@@ -247,6 +246,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             'crit': (self.stats.crit),
             'haste': (self.stats.haste),
             'mastery': (self.stats.mastery + self.buffs.buff_mast()),
+            'readiness': (self.stats.readiness),
+            'multistrike': (self.stats.multistrike),
         }
         
         for boost in self.race.get_racial_stat_boosts():
@@ -260,13 +261,17 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.base_strength = self.stats.str + self.buffs.buff_str() + self.race.racial_str
         self.base_strength *= self.buffs.stat_multiplier()
 
-        self.relentless_strikes_energy_return_per_cp = .20 * 25
+        self.relentless_strikes_energy_return_per_cp = 5 #.20 * 25
         
         #should only include bloodlust if the spec can average it in, deal with this later
         self.base_speed_multiplier = 1.4 * self.buffs.melee_haste_multiplier()
         if self.race.berserking:
             self.true_haste_mod *= (1 + .15 * 10. / (180 + self.settings.response_time))
         if self.race.time_is_money:
+            self.true_haste_mod *= 1.01
+        if self.race.touch_of_elune and not self.settings.is_day:
+            self.true_haste_mod *= 1.01
+        if self.race.nimble_fingers:
             self.true_haste_mod *= 1.01
             
         #hit chances
@@ -279,6 +284,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.major_cd_delay = self.get_adv_param('major_cd_delay', 0, min_bound=0, max_bound=600)
         self.settings.feint_interval = self.get_adv_param('feint_interval', self.settings.feint_interval, min_bound=0, max_bound=600)
         
+        self.settings.is_day = self.get_adv_param('is_day', self.settings.is_day, ignore_bounds=True)
         self.get_version_number = self.get_adv_param('print_version', False, ignore_bounds=True)
         
     def get_stat_mod(self, stat):
@@ -378,13 +384,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     def get_bonus_energy_from_openers(self, *cycle_abilities):
         if self.settings.opener_name not in cycle_abilities:
-            # self.get_shadow_focus_multiplier() handles multiplier, costs player energy
+            # if not a normal rotational ability, it should cost the player energy
             return -1 * self.get_net_energy_cost(self.settings.opener_name) * self.get_shadow_focus_multiplier() * self.total_openers_per_second
         elif not self.talents.shadow_focus:
-            # it must be a rotational ability and without SF then
+            # or a rotational ability and without SF then
             return 0
         else:
-            # if it's a rotational ability and we have SF, we should add energy
+            # else, it's a rotational ability and we have SF, so we should add energy
             # this lets us save computational time in the aps methods
             return self.get_net_energy_cost(self.settings.opener_name) * (1 - self.get_shadow_focus_multiplier()) * self.total_openers_per_second
         
@@ -681,7 +687,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             procs_per_second = self.get_mh_procs_per_second(proc, attacks_per_second, crit_rates)
             procs_per_second += self.get_oh_procs_per_second(proc, attacks_per_second, crit_rates)
             procs_per_second += self.get_other_procs_per_second(proc, attacks_per_second, crit_rates)
-
         return procs_per_second
 
     def set_uptime_for_ramping_proc(self, proc, procs_per_second):
@@ -714,22 +719,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     
     def set_uptime(self, proc, attacks_per_second, crit_rates):
         if proc.is_real_ppm():
-            #http://iam.yellingontheinternet.com/2013/04/12/theorycraft-201-advanced-rppm/
-            haste = 1.
-            if proc.haste_scales:
-                haste *= self.stats.get_haste_multiplier_from_rating(self.base_stats['haste']) * self.buffs.spell_haste_multiplier() * self.true_haste_mod
-            #The 1.1307 is a value that increases the proc rate due to bad luck prevention. It /should/ be constant among all rppm proc styles
-            if not proc.icd:
-                if proc.max_stacks <= 1:
-                    proc.uptime = 1.1307 * (1 - math.e ** (-1 * haste * proc.get_rppm_proc_rate() * proc.duration / 60))
-                else:
-                    lambd = haste * proc.get_rppm_proc_rate() * proc.duration / 60
-                    e_lambda = math.e ** lambd
-                    e_minus_lambda = math.e ** (-1 * lambd)
-                    proc.uptime = 1.1307 * (e_lambda - 1) * (1 - ((1 - e_minus_lambda) ** proc.max_stacks))
-            else:
-                mean_proc_time = 60. / (haste * proc.get_rppm_proc_rate()) + proc.icd - min(proc.icd, 10)
-                proc.uptime = 1.1307 * proc.duration / mean_proc_time
+            self.set_rppm_uptime(proc)
         else:
             procs_per_second = self.get_procs_per_second(proc, attacks_per_second, crit_rates)
 
@@ -834,8 +824,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             'agi': self.base_stats['agi'] * self.agi_multiplier,
             'ap': self.base_stats['ap'],
             'crit': self.base_stats['crit'],
-            'haste': self.base_stats['haste'] * self.amplify_stats,
-            'mastery': self.base_stats['mastery'] * self.amplify_stats
+            'haste': self.base_stats['haste'],
+            'mastery': self.base_stats['mastery'],
+            'readiness': self.base_stats['readiness'],
+            'multistrike': self.base_stats['multistrike'],
         }
         self.current_variables = {}
         
@@ -929,7 +921,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             'crit': 0,
             'haste': 0,
             'mastery': 0,
+            'readiness': 0,
+            'multistrike': 0,
         }
+        
+        #human racial stats, we can sneak it in static proc stats to keep code cleaner
+        for e in self.human_racial_stats:
+            static_proc_stats[e] += 30 #placeholder
         
         for proc in active_procs_rppm:
             self.set_rppm_uptime(proc)
@@ -946,14 +944,16 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         need_converge = False
         if len(active_procs_no_icd) > 0:
             need_converge = True
+        #only have to converge with specific procs, try to simplify later
+        #check if... assassination:agi/crit/haste, combat:mastery/haste, sub:haste
         while need_converge or self.spec_needs_converge:
             current_stats = {
                 'str': self.base_strength,
                 'agi': self.base_stats['agi'] * self.agi_multiplier,
                 'ap': self.base_stats['ap'],
                 'crit': self.base_stats['crit'],
-                'haste': self.base_stats['haste'] * self.amplify_stats,
-                'mastery': self.base_stats['mastery'] * self.amplify_stats
+                'haste': self.base_stats['haste'],
+                'mastery': self.base_stats['mastery']
             }
             for k in static_proc_stats:
                 current_stats[k] +=  static_proc_stats[k]
@@ -1022,7 +1022,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             else:
                 uptime = buff_duration / attack_spacing
                 res = self.vendetta_duration * uptime * mas_per_stack * avg_stacks_per_attack / self.get_spell_cd('vendetta')
-            current_stats['mastery'] += res * self.amplify_stats
+            current_stats['mastery'] += res
 
         for proc in damage_procs:
             self.update_with_damaging_proc(proc, attacks_per_second, crit_rates)
@@ -1090,6 +1090,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         #set readiness coefficient
         self.readiness_spec_conversion = self.assassination_readiness_conversion
+        self.human_racial_stats = ['mastery', 'crit']
         
         self.base_energy_regen = 10
         self.max_energy = 120.
@@ -1482,6 +1483,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         #set readiness coefficient
         self.readiness_spec_conversion = self.combat_readiness_conversion
+        self.human_racial_stats = ['haste', 'readiness']
         
         #combat specific constants
         self.max_bandits_guile_buff = 1.3
@@ -1495,13 +1497,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.revealing_strike_multiplier = 1.35
         self.extra_cp_chance = .2 # Assume all casts during RvS
         self.rvs_duration = 24
-        self.combat_phase_buffer = 0
         
         cds = {'ar':self.get_spell_cd('adrenaline_rush')}
         
         phases = {}
         #Could definitely be cleaner, but it works for now
-        if self.settings.cycle.stack_cds:
+        if False:
+            #DEPRECATED: self.settings.cycle.stack_cds code, to be deleted once we know rotational changes
             #Phase 1: AR (AND) SB
             stats, aps, crits, procs = self.determine_stats(self.combat_attack_counts_both)
             #                (phase_length,
@@ -1529,7 +1531,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             #Phase 3: (not) AR (nor) SB
             self.tmp_phase_length = cds['ar'] #This is to approximate the value of a full energy bar to be used when not during AR or SB
             stats, aps, crits, procs = self.determine_stats(self.combat_attack_counts_none)
-            phases['none'] = (self.rb_actual_cds(aps, cds)['ar'] + self.settings.response_time + self.major_cd_delay + self.combat_phase_buffer,
+            phases['none'] = (self.rb_actual_cds(aps, cds)['ar'] + self.settings.response_time + self.major_cd_delay,
                               self.update_with_bandits_guile(self.compute_damage_from_aps(stats, aps, crits, procs)) )
             
             total_duration = phases['none'][0] + phases['buffer'][0] + phases['both'][0]
@@ -1541,20 +1543,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             for e in cds:
                 cds[e] -= ar_duration / self.rb_cd_modifier(aps)
             
-            #SB phase
-            stats, aps, crits, procs = self.determine_stats(self.combat_attack_counts_sb)
-            phases['sb'] = (self.get_shadow_blades_duration(),
-                            self.update_with_bandits_guile(self.compute_damage_from_aps(stats, aps, crits, procs)) )
-            for e in cds:
-                cds[e] -= self.get_shadow_blades_duration() / self.rb_cd_modifier(aps)
-            
             #none
             self.tmp_phase_length = cds['ar'] #This is to approximate the value of a full energy bar to be used when not during AR or SB
             stats, aps, crits, procs = self.determine_stats(self.combat_attack_counts_none)
-            phases['none'] = (self.rb_actual_cds(aps, cds)['ar'] + self.settings.response_time + self.major_cd_delay + self.combat_phase_buffer,
+            phases['none'] = (self.rb_actual_cds(aps, cds)['ar'] + self.settings.response_time + self.major_cd_delay,
                               self.update_with_bandits_guile(self.compute_damage_from_aps(stats, aps, crits, procs)) )
             
-            total_duration = phases['ar'][0] + phases['sb'][0] + phases['none'][0] 
+            total_duration = phases['ar'][0] + phases['none'][0] 
         #average it together
         damage_breakdown = self.average_damage_breakdowns(phases, denom = total_duration)
         
@@ -1761,7 +1756,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.bandits_guile_multiplier = 1 + .1 * avg_stacks
         
         if not sb and not ar:
-            final_ks_cd = self.rb_actual_cd(attacks_per_second, self.tmp_phase_length) + self.combat_phase_buffer + self.major_cd_delay
+            final_ks_cd = self.rb_actual_cd(attacks_per_second, self.tmp_phase_length) + self.major_cd_delay
             if not self.settings.cycle.ksp_immediately:
                 final_ks_cd += (3 * time_at_level)/2 * (3 * time_at_level)/cycle_duration
             attacks_per_second['mh_killing_spree'] = 7 / (final_ks_cd + self.settings.response_time)
@@ -1771,8 +1766,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if (ar or sb) and not self.settings.cycle.stack_cds:
             approx_time_to_empty = 100 / sinister_strike_energy_cost
             approx_time_to_empty += (energy_regen * approx_time_to_empty) / sinister_strike_energy_cost
-            if approx_time_to_empty > self.combat_phase_buffer:
-                self.combat_phase_buffer = approx_time_to_empty
         
         self.get_poison_counts(attacks_per_second)
         
@@ -1800,16 +1793,15 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             offensive_finisher_rate += attacks_per_second['rupture']
         #should never happen, catch error just in case
         if offensive_finisher_rate != 0:
-            final_cds = base_cd * (1 - avg_rb_effect / (1. / offensive_finisher_rate + avg_rb_effect))
-        return final_cds
-    
+            return base_cd * (1 - avg_rb_effect / (1. / offensive_finisher_rate + avg_rb_effect))
+        return base_cd
     def rb_cd_modifier(self, attacks_per_second, avg_rb_effect=10):
         # If it's best to always use 5CP finishers as combat now, it should continue to be so, this is simpler and faster
         offensive_finisher_rate = attacks_per_second['eviscerate'][5]
         if 'rupture' in attacks_per_second:
             offensive_finisher_rate += attacks_per_second['rupture']
         if offensive_finisher_rate != 0:
-            #should never happen, catch error just in case
+            #should never happen, catch divide-by-zero error just in case
             return (1 - avg_rb_effect / (1. / offensive_finisher_rate + avg_rb_effect))
         else:
             return 1.
@@ -1850,6 +1842,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         #set readiness coefficient
         self.readiness_spec_conversion = self.assassination_readiness_conversion
+        self.human_racial_stats = ['haste', 'readiness']
         
         self.base_energy_regen = 10.
         self.max_energy = 100.
