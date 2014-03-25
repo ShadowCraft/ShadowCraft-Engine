@@ -529,7 +529,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         #calculate multistrike here, really cheap to calculate
         #turns out the 2 chance system yields a very basic linear pattern, the damage modifier is 30% of the multistrike %!
-        multistrike_multiplier = 1 + .3 * self.stats.get_multistrike_chance_from_rating()
+        multistrike_multiplier = 1 + .3 * self.stats.get_multistrike_chance_from_rating(rating=current_stats['multistrike'])
         for ability in damage_breakdown:
             damage_breakdown[ability] = (damage_breakdown[ability][0] * multistrike_multiplier,
                                          damage_breakdown[ability][1] * multistrike_multiplier)
@@ -773,23 +773,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         return 1.
 
     def setup_unique_procs(self):
-        if getattr(self.stats.procs, 'legendary_capacitive_meta'):
-            #1.789 mut, 1.136 com, 1.114 sub
-            if self.settings.is_assassination_rogue():
-                getattr(self.stats.procs, 'legendary_capacitive_meta').proc_rate_modifier = 1.789
-            elif self.settings.is_combat_rogue():
-                getattr(self.stats.procs, 'legendary_capacitive_meta').proc_rate_modifier = 1.136
-            elif self.settings.is_subtlety_rogue():
-                getattr(self.stats.procs, 'legendary_capacitive_meta').proc_rate_modifier = 1.114
-
-        if getattr(self.stats.procs, 'fury_of_xuen'):
-            #1.55 mut, 1.15 com, 1.0 sub
-            if self.settings.is_assassination_rogue():
-                getattr(self.stats.procs, 'fury_of_xuen').proc_rate_modifier = 1.55
-            elif self.settings.is_combat_rogue():
-                getattr(self.stats.procs, 'fury_of_xuen').proc_rate_modifier = 1.15
-            elif self.settings.is_subtlety_rogue():
-                getattr(self.stats.procs, 'fury_of_xuen').proc_rate_modifier = 1.0
+        self.setup_unique_procs_for_class()
 
     def get_poison_counts(self, attacks_per_second):
         # Builds a phony 'poison' proc object to count triggers through the proc
@@ -926,6 +910,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         }
         
         #human racial stats, we can sneak it in static proc stats to keep code cleaner
+        #should probably rely on self.race object for data instead of hardcoded value here
         for e in self.human_racial_stats:
             static_proc_stats[e] += 30 #placeholder
         
@@ -953,7 +938,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 'ap': self.base_stats['ap'],
                 'crit': self.base_stats['crit'],
                 'haste': self.base_stats['haste'],
-                'mastery': self.base_stats['mastery']
+                'mastery': self.base_stats['mastery'],
+                'readiness': self.base_stats['readiness'],
+                'multistrike': self.base_stats['multistrike'],
             }
             for k in static_proc_stats:
                 current_stats[k] +=  static_proc_stats[k]

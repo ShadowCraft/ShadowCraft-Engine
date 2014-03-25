@@ -184,6 +184,7 @@ allowed_melee_enchants = {
         'duration': 12,
         'proc_name': 'Dancing Steel',
         'type': 'rppm',
+        'scaling': 10.3125000000, # need to fix implementation?
         'icd': 0,
         'proc_rate': 2.53,
         'trigger': 'all_melee_attacks'

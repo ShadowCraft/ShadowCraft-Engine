@@ -146,6 +146,25 @@ class RogueDamageCalculator(DamageCalculator):
         for i, j in tradeskill_base_bonus.keys():
             if self.level in range(i, j):
                 return tradeskill_base_bonus[(i, j)][tradeskills.index(tradeskill)]
+            
+    def setup_unique_procs_for_class(self):
+        if getattr(self.stats.procs, 'legendary_capacitive_meta'):
+            #1.789 mut, 1.136 com, 1.114 sub
+            if self.settings.is_assassination_rogue():
+                getattr(self.stats.procs, 'legendary_capacitive_meta').proc_rate_modifier = 1.789
+            elif self.settings.is_combat_rogue():
+                getattr(self.stats.procs, 'legendary_capacitive_meta').proc_rate_modifier = 1.136
+            elif self.settings.is_subtlety_rogue():
+                getattr(self.stats.procs, 'legendary_capacitive_meta').proc_rate_modifier = 1.114
+
+        if getattr(self.stats.procs, 'fury_of_xuen'):
+            #1.55 mut, 1.15 com, 1.0 sub
+            if self.settings.is_assassination_rogue():
+                getattr(self.stats.procs, 'fury_of_xuen').proc_rate_modifier = 1.55
+            elif self.settings.is_combat_rogue():
+                getattr(self.stats.procs, 'fury_of_xuen').proc_rate_modifier = 1.15
+            elif self.settings.is_subtlety_rogue():
+                getattr(self.stats.procs, 'fury_of_xuen').proc_rate_modifier = 1.0
 
     def get_factor(self, avg, delta=0):
         avg_for_level = avg * self.spell_scaling_for_level

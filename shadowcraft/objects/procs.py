@@ -1,5 +1,8 @@
 from shadowcraft.core import exceptions
 from shadowcraft.objects import proc_data
+from shadowcraft.objects import class_data
+
+import sys, traceback
 
 class InvalidProcException(exceptions.InvalidInputException):
     pass
@@ -33,8 +36,15 @@ class Proc(object):
         self.on_crit = on_crit
         self.on_procced_strikes = on_procced_strikes
         self.proc_rate_modifier = proc_rate_modifier
+        
+        tools = class_data.Util()
+        #http://forums.elitistjerks.com/topic/130561-shadowcraft-for-mists-of-pandaria/page-3
+        #see above for stat value initiation
+        #for e in self.value:
+            #print self.scaling, tools.get_random_prop_point(self.item_level)
+            #self.value[e] = round(self.scaling * tools.get_random_prop_point(self.item_level))
 
-    def __setattr__(self, name, value):
+    def __setattr__DEPRECATED(self, name, value):
         object.__setattr__(self, name, value)
         if name == 'behaviour_toggle':
             # Set behaviour attributes when this is modified.
@@ -162,10 +172,11 @@ class ProcsList(object):
     def __init__(self, *args):
         for arg in args:
             if not isinstance(arg, (list,tuple)):
-                arg = (arg,0)
+                arg = (arg,160)
             if arg[0] in self.allowed_procs:
                 proc_data = self.allowed_procs[arg[0]]
                 setattr(self, arg[0], Proc(**proc_data))
+                getattr(self, arg[0]).item_level = arg[1]
             else:
                 raise InvalidProcException(_('No data for proc {proc}').format(proc=arg[0]))
 

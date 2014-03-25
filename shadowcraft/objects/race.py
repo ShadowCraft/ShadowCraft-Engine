@@ -79,7 +79,7 @@ class Race(object):
         "human":        ["human_spirit"],
         "night_elf":    ["quickness", "touch_of_elune", "shadowmeld"],
         "dwarf":        ["stoneform", "might_of_the_mountain"],
-        "gnome":        ["expansive_mind", "nimble_fingers"], #TODO: Expansive Mind
+        "gnome":        ["expansive_mind", "nimble_fingers"], #TODO: Expansive Mind (multiplicative? or just +5?)
         "draenei":      ["heroic_presence"],
         "worgen":       ["viciousness"],
         "orc":          ["blood_fury_physical", "blood_fury_spell"],
