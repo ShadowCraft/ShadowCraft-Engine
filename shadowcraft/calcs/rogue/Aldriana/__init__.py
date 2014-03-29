@@ -774,6 +774,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     def setup_unique_procs(self):
         self.setup_unique_procs_for_class()
+        #modelling specific proc setup would go here
+        #example, RoRO, Matrix Restabilizer, etc.
 
     def get_poison_counts(self, attacks_per_second):
         # Builds a phony 'poison' proc object to count triggers through the proc
@@ -849,12 +851,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 weapon_damage_procs.append(proc)
                 
         #update proc values in each proc "folder"
-        for dict in (active_procs_rppm, active_procs_icd, active_procs_no_icd):
-            for proc in dict:
+        #for dict in (active_procs_rppm, active_procs_icd, active_procs_no_icd):
+            #for proc in dict:
                 #establish proc value for proc level
-                proc.item_level
-                for e in proc.value:
-                    proc.value[e] = round(proc.scaling * self.tools.get_random_prop_point(proc.item_level))
+                #for e in proc.value:
+                    #proc.value[e] = round(proc.scaling * self.tools.get_random_prop_point(proc.item_level))
         
         #calculate weapon procs
         weapon_enchants = set([])

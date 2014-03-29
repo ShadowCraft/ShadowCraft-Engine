@@ -13,7 +13,7 @@ class Proc(object):
 
     def __init__(self, stat, value, duration, proc_name, max_stacks=1, can_crit=True, stats=None, upgradable=False, scaling=None,
                  buffs=None, base_value=0, type='rppm', icd=0, proc_rate=1.0, trigger='all_attacks', haste_scales=False, item_level=1,
-                 on_crit=False, on_procced_strikes=True, proc_rate_modifier=1.):
+                 on_crit=False, on_procced_strikes=True, proc_rate_modifier=1., source='generic',):
         self.stat = stat
         if stats is not None:
             self.stats = set(stats)
@@ -29,6 +29,7 @@ class Proc(object):
         self.proc_type = type
         self.icd = icd
         self.type = type
+        self.source = source
         self.proc_rate = proc_rate
         self.trigger = trigger
         self.haste_scales = haste_scales
@@ -37,12 +38,16 @@ class Proc(object):
         self.on_procced_strikes = on_procced_strikes
         self.proc_rate_modifier = proc_rate_modifier
         
+        #separate method just to keep the constructor clean
+        self.update_proc_value()
+    
+    def update_proc_value(self):
         tools = class_data.Util()
         #http://forums.elitistjerks.com/topic/130561-shadowcraft-for-mists-of-pandaria/page-3
-        #see above for stat value initiation
-        #for e in self.value:
-            #print self.scaling, tools.get_random_prop_point(self.item_level)
-            #self.value[e] = round(self.scaling * tools.get_random_prop_point(self.item_level))
+        #see above for stat value initialization
+        if self.source in ('trinket',):
+            for e in self.value:
+                self.value[e] = round(self.scaling * tools.get_random_prop_point(self.item_level))
 
     def __setattr__DEPRECATED(self, name, value):
         object.__setattr__(self, name, value)
@@ -53,7 +58,7 @@ class Proc(object):
             else:
                 raise InvalidProcException(_('Behaviour \'{behaviour}\' is not defined for {proc}').format(proc=self.proc_name, behaviour=value))
 
-    def _set_behaviour(self, icd, trigger, proc_chance=False, ppm=False, on_crit=False, on_procced_strikes=True, real_ppm=False,
+    def _set_behaviour_DEPRECATED(self, icd, trigger, proc_chance=False, ppm=False, on_crit=False, on_procced_strikes=True, real_ppm=False,
                        haste_scales=False, type='perc'):
         # This could be merged with __setattr__; its sole purpose is
         # to clearly surface the parameters passed with the behaviours.
@@ -172,11 +177,11 @@ class ProcsList(object):
     def __init__(self, *args):
         for arg in args:
             if not isinstance(arg, (list,tuple)):
-                arg = (arg,160)
+                arg = (arg,90)
             if arg[0] in self.allowed_procs:
                 proc_data = self.allowed_procs[arg[0]]
+                proc_data['item_level'] = arg[1]
                 setattr(self, arg[0], Proc(**proc_data))
-                getattr(self, arg[0]).item_level = arg[1]
             else:
                 raise InvalidProcException(_('No data for proc {proc}').format(proc=arg[0]))
 

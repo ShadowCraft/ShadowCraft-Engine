@@ -33,6 +33,7 @@ allowed_procs = {
         'value': 'varies',
         'duration': 15,
         'proc_name': 'Swordguard Embroidery',
+        'source': 'profession',
         'type': 'perc',
         'icd': 55,
         'proc_rate': .15,
@@ -43,6 +44,8 @@ allowed_procs = {
         'value': 'varies',
         'duration': 10,
         'proc_name': 'Synapse Springs',
+        'source': 'profession',
+        #'scaling': 12.0000000000, Doesn't seem right...
         'type': 'perc',
         'icd': 60,
         'proc_rate': 1.,
@@ -53,6 +56,8 @@ allowed_procs = {
         'value': 'varies',
         'duration': 20,
         'proc_name': 'lifeblood',
+        'source': 'profession',
+        #'scaling': 10.0590000153, Doesn't seem right...
         'type': 'perc',
         'icd': 120,
         'proc_rate': 1.,
@@ -67,6 +72,7 @@ allowed_procs = {
         'scaling': 0.0,
         'item_level': 0,
         'type': 'rppm',
+        'source': 'unique',
         'icd': 3,
         'proc_rate': 1.74, #1.55 mut, 1.15 com, 1.0 sub
         'haste_scales': True,
@@ -81,6 +87,7 @@ allowed_procs = {
         'scaling': 0.0,
         'item_level': 541,
         'type': 'rppm',
+        'source': 'unique',
         'icd': 1,
         'proc_rate': 19.27, #1.789 mut, 1.136 com, 1.114 sub
         'haste_scales': True,
@@ -96,6 +103,7 @@ allowed_procs = {
         'scaling': 2.9730000496,
         'item_level': 572,
         'type': 'perc',
+        'source': 'trinket',
         'icd': 115,
         'proc_rate': 0.15,
         'trigger': 'all_attacks'
@@ -109,6 +117,7 @@ allowed_procs = {
         'scaling': 2.9730000496,
         'item_level': 572,
         'type': 'rppm',
+        'source': 'trinket',
         'icd': 10,
         'proc_rate': 0.92,
         'trigger': 'all_attacks'
@@ -122,6 +131,7 @@ allowed_procs = {
         'scaling': 2.9730000496,
         'item_level': 572,
         'type': 'perc',
+        'source': 'trinket',
         'icd': 85,
         'proc_rate': 0.15,
         'trigger': 'all_attacks'
@@ -135,6 +145,7 @@ allowed_procs = {
         'scaling': 0.2703000009 * 10.5,
         'item_level': 572,
         'type': 'rppm',
+        'source': 'trinket',
         'icd': 10,
         'proc_rate': 1.00,
         'trigger': 'all_attacks'
@@ -148,6 +159,7 @@ allowed_procs = {
         'scaling': 2.9730000496,
         'item_level': 572,
         'type': 'perc',
+        'source': 'trinket',
         'icd': 115,
         'proc_rate': 0.15,
         'trigger': 'all_attacks'
@@ -161,6 +173,7 @@ allowed_procs = {
         'scaling': 2.9730000496,
         'item_level': 535,
         'type': 'perc',
+        'source': 'trinket',
         'icd': 115,
         'proc_rate': 0.15,
         'trigger': 'all_attacks'
@@ -174,6 +187,8 @@ allowed_melee_enchants = {
         'duration': 12,
         'proc_name': 'Windsong',
         'type': 'rppm',
+        'source': 'weapon',
+        'item_level': 90,
         'icd': 0,
         'proc_rate': 2.2,
         'trigger': 'all_attacks'
@@ -184,7 +199,9 @@ allowed_melee_enchants = {
         'duration': 12,
         'proc_name': 'Dancing Steel',
         'type': 'rppm',
-        'scaling': 10.3125000000, # need to fix implementation?
+        'source': 'weapon',
+        'item_level': 90, #rely on player level here, due to enchants scaling with level (to a point)
+        'scaling': 10.3125000000,
         'icd': 0,
         'proc_rate': 2.53,
         'trigger': 'all_melee_attacks'
@@ -195,6 +212,8 @@ allowed_melee_enchants = {
         'duration': 0,
         'proc_name': 'Elemental Force',
         'type': 'rppm',
+        'source': 'weapon',
+        'item_level': 90,
         'icd': 0,
         'proc_rate': 9.17,
         'haste_scales': True,
