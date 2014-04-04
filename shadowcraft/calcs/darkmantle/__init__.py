@@ -74,7 +74,6 @@ class DarkmantleCalculator(object):
 
     def get_dps_breakdown(self):
         if self.settings.is_assassination_rogue():
-            #self.init_assassination()
             return self.assassination_dps_breakdown()
         elif self.settings.is_combat_rogue():
             return self.combat_dps_breakdown()

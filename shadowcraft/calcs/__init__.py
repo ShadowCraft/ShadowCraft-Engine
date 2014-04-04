@@ -42,11 +42,7 @@ class DamageCalculator(object):
         self.char_class = char_class
         self.settings = settings
         self.target_level = [target_level, level + 3][target_level is None] #assumes 3 levels higher if not explicit
-        if self.settings.is_pvp:
-            self.level_difference = 0
-        else:
-            self.level_difference = max(self.target_level - level, 0)
-        self.level = level
+
         #racials
         if self.stats.gear_buffs.mixology and (self.buffs.agi_flask or self.buffs.agi_flask_mop):
             self.stats.agi += self.stats.gear_buffs.tradeskill_bonus()
@@ -54,18 +50,22 @@ class DamageCalculator(object):
             self.stats.crit += self.stats.gear_buffs.tradeskill_bonus('master_of_anatomy')
         if self.race.race_name == 'undead':
             self.stats.procs.set_proc('touch_of_the_grave')
-        self._set_constants_for_class()
         
         if self.settings.is_pvp:
+            self.level_difference = 0
             self.base_one_hand_miss_rate = .03
             self.base_parry_chance = .03
             self.base_dodge_chance = .03
             self.base_spell_miss_rate = .06
         else:
+            self.level_difference = max(self.target_level - level, 0)
             self.base_one_hand_miss_rate = 0
             self.base_parry_chance = .01 * self.level_difference
             self.base_dodge_chance = 0
             self.base_spell_miss_rate = 0
+            
+        self._set_constants_for_class()
+        self.level = level
         
         self.base_dw_miss_rate = self.base_one_hand_miss_rate + .19
         self.base_block_chance = .03 + .015 * self.level_difference
@@ -103,7 +103,6 @@ class DamageCalculator(object):
         if self.talents.game_class != self.glyphs.game_class:
             raise exceptions.InvalidInputException(_('You must specify the same class for your talents and glyphs'))
         self.game_class = self.talents.game_class
-        self.agi_crit_intercept = self.tools.get_agi_intercept(self.game_class)
 
     def ep_helper(self, stat):
         setattr(self.stats, stat, getattr(self.stats, stat) + 1.)

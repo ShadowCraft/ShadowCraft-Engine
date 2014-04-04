@@ -93,7 +93,7 @@ class Stats(object):
     def get_pvp_resil_multiplier_from_rating(self, rating=None):
         if rating is None:
             rating = self.pvp_resil
-        return 0.6*(rating/(rating+11727)) + .65 # .65 is base resil
+        return 0.6*(rating/(rating+11727))  # 0% base resil now
 
 class Weapon(object):
     allowed_melee_enchants = proc_data.allowed_melee_enchants
@@ -149,10 +149,10 @@ class Weapon(object):
         return not self.type in frozenset(['gun', 'bow', 'crossbow', 'thrown'])
 
     def damage(self, ap=0):
-        return self.speed * (self.weapon_dps + ap / 14.)
+        return self.speed * (self.weapon_dps + ap / 3.5) #used to be 14
 
     def normalized_damage(self, ap=0):
-        return self.speed * self.weapon_dps + self._normalization_speed * ap / 14.
+        return self.speed * self.weapon_dps + self._normalization_speed * ap / 3.5 #used to be 14
 
 # Catch-all for non-proc gear based buffs (static or activated)
 class GearBuffs(object):
