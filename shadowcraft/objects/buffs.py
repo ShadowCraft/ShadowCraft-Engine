@@ -10,10 +10,9 @@ class Buffs(object):
         'short_term_haste_buff',            # Heroism/Blood Lust, Time Warp
         'stat_multiplier_buff',             # Mark of the Wild, Blessing of Kings, Legacy of the Emperor
         'crit_chance_buff',                 # Leader of the Pack, Legacy of the White Tiger, Arcane Brillance
-        'melee_haste_buff',                 # Swiftblade's Cunning, Unholy Aura
+        'haste_buff',                       # Swiftblade's Cunning, Unholy Aura
         'attack_power_buff',                # Horn of Winter, Trueshot Aura, Battle Shout
         'mastery_buff',                     # Blessing of Might, Grace of Air
-        'spell_haste_buff',                 # Moonkin Form, Shadowform
         'spell_power_buff',                 # Dark Intent, Arcane Brillance
         'stamina_buff',                     # PW: Fortitude, Blood Pact, Commanding Shout
         'armor_debuff',                     # Sunder, Expose Armor, Faerie Fire
@@ -34,10 +33,9 @@ class Buffs(object):
         'short_term_haste_buff',            # Heroism/Blood Lust, Time Warp
         'stat_multiplier_buff',             # Mark of the Wild, Blessing of Kings, Legacy of the Emperor
         'crit_chance_buff',                 # Leader of the Pack, Legacy of the White Tiger, Arcane Brillance
-        'melee_haste_buff',                 # Swiftblade's Cunning, Unholy Aura
+        'haste_buff',                       # Swiftblade's Cunning, Unholy Aura
         'attack_power_buff',                # Horn of Winter, Trueshot Aura, Battle Shout
         'mastery_buff',                     # Blessing of Might, Grace of Air
-        'spell_haste_buff',                 # Moonkin Form, Shadowform
         'spell_power_buff',                 # Dark Intent, Arcane Brillance
         'stamina_buff',                     # PW: Fortitude, Blood Pact, Commanding Shout
         'armor_debuff',                     # Sunder, Expose Armor, Faerie Fire
@@ -92,12 +90,9 @@ class Buffs(object):
     def attack_power_multiplier(self):
         return [1, 1.1][self.attack_power_buff]
 
-    def melee_haste_multiplier(self):
-        return [1, 1.1][self.melee_haste_buff]
+    def haste_multiplier(self):
+        return [1, 1.05][self.haste_buff]
     
-    def spell_haste_multiplier(self):
-        return [1, 1.05][self.spell_haste_buff]
-
     def buff_str(self):
         return 0
 

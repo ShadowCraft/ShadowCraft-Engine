@@ -32,7 +32,7 @@ class DamageCalculator(object):
 
     def __init__(self, stats, talents, glyphs, buffs, race, settings=None, level=85, target_level=None, char_class='rogue'):
         self.WOW_BUILD_TARGET = '6.0.0' # should reflect the game patch being targetted
-        self.SHADOWCRAFT_BUILD = '0.06' # <1 for beta builds, 1.00 is GM, >1 for any bug fixes, reset for each warcraft patch
+        self.SHADOWCRAFT_BUILD = '0.07' # <1 for beta builds, 1.00 is GM, >1 for any bug fixes, reset for each warcraft patch
         self.tools = class_data.Util()
         self.stats = stats
         self.talents = talents
@@ -53,21 +53,20 @@ class DamageCalculator(object):
         
         if self.settings.is_pvp:
             self.level_difference = 0
-            self.base_one_hand_miss_rate = .03
+            self.base_one_hand_miss_rate = .00
             self.base_parry_chance = .03
             self.base_dodge_chance = .03
-            self.base_spell_miss_rate = .06
         else:
             self.level_difference = max(self.target_level - level, 0)
             self.base_one_hand_miss_rate = 0
             self.base_parry_chance = .01 * self.level_difference
             self.base_dodge_chance = 0
-            self.base_spell_miss_rate = 0
-            
+        
+        self.dw_miss_penalty = .19
         self._set_constants_for_class()
         self.level = level
         
-        self.base_dw_miss_rate = self.base_one_hand_miss_rate + .19
+        self.base_dw_miss_rate = self.base_one_hand_miss_rate + self.dw_miss_penalty
         self.base_block_chance = .03 + .015 * self.level_difference
 
     def __setattr__(self, name, value):
@@ -648,26 +647,24 @@ class DamageCalculator(object):
         hit_chance = self.melee_hit_chance(self.base_one_hand_miss_rate, dodgeable, parryable, weapon.type)
         return hit_chance
 
-    def dual_wield_mh_hit_chance(self, dodgeable=False, parryable=False, bonus_hit=0):
+    def dual_wield_mh_hit_chance(self, dodgeable=False, parryable=False, dw_miss=None):
         # Most attacks by DPS aren't parryable due to positional negation. But
         # if you ever want to attacking from the front, you can just set that
         # to True.
-        hit_chance = self.dual_wield_hit_chance(dodgeable, parryable, self.stats.mh.type)
+        hit_chance = self.dual_wield_hit_chance(dodgeable, parryable, self.stats.mh.type, dw_miss=dw_miss)
         return hit_chance
 
-    def dual_wield_oh_hit_chance(self, dodgeable=False, parryable=False, bonus_hit=0):
+    def dual_wield_oh_hit_chance(self, dodgeable=False, parryable=False, dw_miss=None):
         # Most attacks by DPS aren't parryable due to positional negation. But
         # if you ever want to attacking from the front, you can just set that
         # to True.
-        hit_chance = self.dual_wield_hit_chance(dodgeable, parryable, self.stats.oh.type)
+        hit_chance = self.dual_wield_hit_chance(dodgeable, parryable, self.stats.oh.type, dw_miss=dw_miss)
         return hit_chance
 
-    def dual_wield_hit_chance(self, dodgeable, parryable, weapon_type, bonus_hit=0):
-        hit_chance = self.melee_hit_chance(self.base_dw_miss_rate, dodgeable, parryable, weapon_type)
-        return hit_chance
-
-    def spell_hit_chance(self, bonus_hit=0):
-        hit_chance = 1 - max(self.base_spell_miss_rate - self.get_spell_hit_from_talents() - self.race.get_racial_hit(), 0)
+    def dual_wield_hit_chance(self, dodgeable, parryable, weapon_type, dw_miss=None):
+        if not dw_miss:
+            dw_miss = self.base_dw_miss_rate
+        hit_chance = self.melee_hit_chance(dw_miss, dodgeable, parryable, weapon_type)
         return hit_chance
 
     def buff_melee_crit(self):

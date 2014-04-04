@@ -200,7 +200,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             spec_attacks = ('eviscerate', 'backstab', 'ambush', 'hemorrhage')
 
         if self.settings.dmg_poison == 'dp':
-            poisons = ('deadly_instant_poison', 'deadly_poison')
+            poisons = ('deadly_instant_poison', 'deadly_poison', 'instant_poison')
         elif self.settings.dmg_poison == 'wp':
             poisons = tuple(['wound_poison'])
 
@@ -264,7 +264,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.relentless_strikes_energy_return_per_cp = 5 #.20 * 25
         
         #should only include bloodlust if the spec can average it in, deal with this later
-        self.base_speed_multiplier = 1.4 * self.buffs.melee_haste_multiplier()
+        self.base_speed_multiplier = 1.4 * self.buffs.haste_multiplier()
         if self.race.berserking:
             self.true_haste_mod *= (1 + .15 * 10. / (180 + self.settings.response_time))
         if self.race.time_is_money:
@@ -274,7 +274,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.race.nimble_fingers:
             self.true_haste_mod *= 1.01
             
-        #hit chances
+        #hit chances (need better implementation)
+        if self.settings.is_combat_rogue():
+            self.base_dw_miss_rate = 0 #for level 100
         self.dw_mh_hit_chance = self.dual_wield_mh_hit_chance()
         self.dw_oh_hit_chance = self.dual_wield_oh_hit_chance()
     
@@ -455,7 +457,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 damage_breakdown['mh_shadow_blades'] = mh_dps[0], mh_dps[1]
                 damage_breakdown['oh_shadow_blades'] = oh_dps[0], oh_dps[1]
 
-        for poison in ('venomous_wounds', 'deadly_poison', 'wound_poison', 'deadly_instant_poison'):
+        for poison in ('venomous_wounds', 'deadly_poison', 'wound_poison', 'deadly_instant_poison', 'instant_poison'):
             if poison in attacks_per_second:
                 damage = self.get_dps_contribution(self.get_formula(poison)(average_ap, mastery=current_stats['mastery']), crit_rates[poison], attacks_per_second[poison])
                 if poison == 'venomous_wounds':
@@ -703,7 +705,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #http://iam.yellingontheinternet.com/2013/04/12/theorycraft-201-advanced-rppm/
         haste = 1.
         if proc.haste_scales:
-            haste *= self.stats.get_haste_multiplier_from_rating(self.base_stats['haste']) * self.buffs.spell_haste_multiplier() * self.true_haste_mod
+            haste *= self.stats.get_haste_multiplier_from_rating(self.base_stats['haste']) * self.buffs.haste_multiplier() * self.true_haste_mod
         #The 1.1307 is a value that increases the proc rate due to bad luck prevention. It /should/ be constant among all rppm proc styles
         if not proc.icd:
             if proc.max_stacks <= 1:
@@ -744,7 +746,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             #http://us.battle.net/wow/en/forum/topic/8197741003?page=4#79
             haste = 1.
             if proc.haste_scales:
-                haste *= self.buffs.spell_haste_multiplier() * self.true_haste_mod * self.stats.get_haste_multiplier_from_rating(self.base_stats['haste'])
+                haste *= self.buffs.haste_multiplier() * self.true_haste_mod * self.stats.get_haste_multiplier_from_rating(self.base_stats['haste'])
             #The 1.1307 is a value that increases the proc rate due to bad luck prevention. It /should/ be constant among all rppm proc styles
             if not proc.icd:
                 frequency = haste * 1.1307 * proc.get_rppm_proc_rate() / 60
@@ -797,8 +799,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             avg_poison_proc_rate = poison_base_proc_rate * (1 - envenom_uptime) + poison_envenom_proc_rate * envenom_uptime
         else:
             avg_poison_proc_rate = poison_base_proc_rate
-
-        if self.settings.dmg_poison == 'dp':
+        
+        #for level 100
+        if self.settings.is_combat_rogue():
+            poison_procs = avg_poison_proc_rate * total_hits_per_second - 1 / self.settings.duration
+            attacks_per_second['instant_poison'] = poison_procs
+        elif self.settings.dmg_poison == 'dp':
             poison_procs = avg_poison_proc_rate * total_hits_per_second - 1 / self.settings.duration
             attacks_per_second['deadly_instant_poison'] = poison_procs
             attacks_per_second['deadly_poison'] = 1. / 3
@@ -1695,13 +1701,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if 'garrote' in attacks_per_second:
             attacks_per_second['garrote_ticks'] = 6 * attacks_per_second['garrote']
         
-        cpgs_per_second = attacks_per_second['sinister_strike'] + attacks_per_second['revealing_strike']
-        time_at_level = 4 / cpgs_per_second
+        time_at_level = 4 / attacks_per_second['sinister_strike']
         cycle_duration = 3 * time_at_level + 15
         #avg_stacks = (3 * time_at_level + 45) / cycle_duration #45 is the duration (15s) multiplied by the stack power (30% BG)
         #self.bandits_guile_multiplier = 1 + .1 * avg_stacks
-        #                                   2*time_at_level/cycle_duration + 15/cycle_duration
-        self.bandits_guile_multiplier = 1 + (.1*time_at_level + .2*time_at_level + .5 * 15) / cycle_duration #for level 100
+        #split up for clarity at the moment, needs to be simplified closer to launch
+        self.bandits_guile_multiplier = 1 + (0*time_at_level + .1*time_at_level + .2*time_at_level + .5 * 15) / cycle_duration #for level 100
         
         if not sb and not ar:
             final_ks_cd = self.rb_actual_cd(attacks_per_second, self.tmp_phase_length) + self.major_cd_delay

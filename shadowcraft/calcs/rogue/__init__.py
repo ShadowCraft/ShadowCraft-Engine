@@ -54,7 +54,7 @@ class RogueDamageCalculator(DamageCalculator):
             'recuperate':          (30, 'buff'),
             'revealing_strike':    (40, 'strike'),
             'rupture':             (25, 'strike'),
-            'sinister_strike':     (50, 'strike'),
+            'sinister_strike':     (40, 'strike'),
             'slice_and_dice':      (25, 'buff'),
             'tricks_of_the_trade': (15, 'buff'),
             'shuriken_toss':       (40, 'strike'),
@@ -108,7 +108,8 @@ class RogueDamageCalculator(DamageCalculator):
         self.vw_percentage_dmg = .160 # spellID 79136
         self.dp_percentage_dmg = .213 # spellID 2818
         self.wp_percentage_dmg = .120 # spellID 8680
-        self.ip_percentage_dmg = .109 # spellID 113780
+        self.dp_ip_percentage_dmg = .109 # spellID 113780
+        self.ip_percentage_dmg = .15 # spellID
     
     def tradeskill_bonus(self, tradeskill='base'):
         # Hardcoded to use maxed tradeskills for the character level.
@@ -393,6 +394,14 @@ class RogueDamageCalculator(DamageCalculator):
     def deadly_instant_poison_damage(self, ap, mastery=None, is_bleeding=True):
         mult, crit_mult = self.get_modifiers('spell', 'potent_poisons', mastery=mastery, is_bleeding=is_bleeding)
 
+        damage = (self.dp_ip_percentage_dmg * ap) * mult
+        crit_damage = damage * crit_mult
+
+        return damage, crit_damage
+
+    def instant_poison_damage(self, ap, mastery=None, is_bleeding=True):
+        mult, crit_mult = self.get_modifiers('spell', 'potent_poisons', mastery=mastery, is_bleeding=is_bleeding)
+
         damage = (self.ip_percentage_dmg * ap) * mult
         crit_damage = damage * crit_mult
 
@@ -511,6 +520,7 @@ class RogueDamageCalculator(DamageCalculator):
             'deadly_poison':         self.deadly_poison_tick_damage,
             'wound_poison':          self.wound_poison_damage,
             'deadly_instant_poison': self.deadly_instant_poison_damage,
+            'instant_poison':        self.instant_poison_damage,
             'shuriken_toss':         self.shuriken_toss_damage
         }
         return formulas[name]
