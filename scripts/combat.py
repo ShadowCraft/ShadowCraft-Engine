@@ -66,7 +66,7 @@ test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          multistrike=6000,)
 
 # Initialize talents..
-test_talents = talents.Talents('332213', test_class, test_level)
+test_talents = talents.Talents('3322131', test_class, test_level)
 
 # Set up glyphs.
 glyph_list = ['recuperate']

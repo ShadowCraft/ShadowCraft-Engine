@@ -11,6 +11,7 @@ class Talents(object):
         self.game_class = game_class
         self.class_talents = talents_data.talents[game_class]
         self.level = level
+        self.max_rows = 7
         self.allowed_talents = [talent for tier in self.class_talents for talent in tier]
         self.allowed_talents_for_level = self.get_allowed_talents_for_level()
         self.initialize_talents(talent_string)
@@ -39,7 +40,7 @@ class Talents(object):
             return name in self.allowed_talents
 
     def get_top_tier(self):
-        levels = (15, 30, 45, 60, 75, 90)
+        levels = (15, 30, 45, 60, 75, 90, 100)
         top_tier = 0
         for i in levels:
             if self.level >= i:
@@ -47,8 +48,8 @@ class Talents(object):
         return top_tier
 
     def initialize_talents(self, talent_string):
-        if len(talent_string) > 6:
-            raise InvalidTalentException(_('Talent strings must be 6 or less characters long'))
+        if len(talent_string) > self.max_rows:
+            raise InvalidTalentException(_('Talent strings must be 7 or less characters long'))
         j = 0
         for i in talent_string:
             if int(i) not in range(4):
@@ -67,7 +68,7 @@ class Talents(object):
         if name not in self.allowed_talents:
             return None
         tier = 0
-        for i in xrange(6):
+        for i in xrange(self.max_rows):
             if name in self.class_talents[i]:
                 return i
 
