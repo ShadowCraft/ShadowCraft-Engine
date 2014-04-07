@@ -1,5 +1,6 @@
 import gettext
 import __builtin__
+import math
 
 __builtin__._ = gettext.gettext
 
@@ -32,7 +33,7 @@ class DamageCalculator(object):
 
     def __init__(self, stats, talents, glyphs, buffs, race, settings=None, level=85, target_level=None, char_class='rogue'):
         self.WOW_BUILD_TARGET = '6.0.0' # should reflect the game patch being targetted
-        self.SHADOWCRAFT_BUILD = '0.07' # <1 for beta builds, 1.00 is GM, >1 for any bug fixes, reset for each warcraft patch
+        self.SHADOWCRAFT_BUILD = '0.08' # <1 for beta builds, 1.00 is GM, >1 for any bug fixes, reset for each warcraft patch
         self.tools = class_data.Util()
         self.stats = stats
         self.talents = talents
@@ -62,11 +63,11 @@ class DamageCalculator(object):
             self.base_parry_chance = .01 * self.level_difference
             self.base_dodge_chance = 0
         
-        self.dw_miss_penalty = .19
+        self.dw_miss_penalty = .17
         self._set_constants_for_class()
         self.level = level
         
-        self.base_dw_miss_rate = self.base_one_hand_miss_rate + self.dw_miss_penalty
+        self.recalculate_hit_constants()
         self.base_block_chance = .03 + .015 * self.level_difference
 
     def __setattr__(self, name, value):
@@ -102,7 +103,78 @@ class DamageCalculator(object):
         if self.talents.game_class != self.glyphs.game_class:
             raise exceptions.InvalidInputException(_('You must specify the same class for your talents and glyphs'))
         self.game_class = self.talents.game_class
+    
+    def recalculate_hit_constants(self):
+        self.base_dw_miss_rate = self.base_one_hand_miss_rate + self.dw_miss_penalty
+        
+    def get_adv_param(self, type, default_val, min_bound=-10000, max_bound=10000, ignore_bounds=False):
+        if type in self.settings.adv_params and not ignore_bounds:
+            return max(   min(float(self.settings.adv_params[type]), max_bound), min_bound   )
+        elif type in self.settings.adv_params:
+            return self.settings.adv_params[type]
+        else:
+            return default_val
+        raise exceptions.InvalidInputException(_('Improperly defined parameter type: '+type))
+    
+    def add_exported_data(self, damage_breakdown):
+        #used explicitly to highjack data outputs to export additional data.
+        if self.get_version_number:
+            damage_breakdown['version_' + self.WOW_BUILD_TARGET + '_' + self.SHADOWCRAFT_BUILD] = [.0, 0]
+    
+    def set_rppm_uptime(self, proc):
+        #http://iam.yellingontheinternet.com/2013/04/12/theorycraft-201-advanced-rppm/
+        haste = 1.
+        if proc.haste_scales:
+            haste *= self.stats.get_haste_multiplier_from_rating(self.base_stats['haste']) * self.buffs.haste_multiplier() * self.true_haste_mod
+        #The 1.1307 is a value that increases the proc rate due to bad luck prevention. It /should/ be constant among all rppm proc styles
+        if not proc.icd:
+            if proc.max_stacks <= 1:
+                proc.uptime = 1.1307 * (1 - math.e ** (-1 * haste * proc.get_rppm_proc_rate() * proc.duration / 60))
+            else:
+                lambd = haste * proc.get_rppm_proc_rate() * proc.duration / 60
+                e_lambda = math.e ** lambd
+                e_minus_lambda = math.e ** (-1 * lambd)
+                proc.uptime = 1.1307 * (e_lambda - 1) * (1 - ((1 - e_minus_lambda) ** proc.max_stacks))
+        else:
+            mean_proc_time = 60. / (haste * proc.get_rppm_proc_rate()) + proc.icd - min(proc.icd, 10)
+            proc.uptime = 1.1307 * proc.duration / mean_proc_time
+    
+    def set_uptime(self, proc, attacks_per_second, crit_rates):
+        if proc.is_real_ppm():
+            self.set_rppm_uptime(proc)
+        else:
+            procs_per_second = self.get_procs_per_second(proc, attacks_per_second, crit_rates)
 
+            if proc.icd:
+                proc.uptime = proc.duration / (proc.icd + 1. / procs_per_second)
+            else:
+                if procs_per_second >= 1:
+                    self.set_uptime_for_ramping_proc(proc, procs_per_second)
+                else:
+                # See http://elitistjerks.com/f31/t20747-advanced_rogue_mechanics_discussion/#post621369
+                # for the derivation of this formula.
+                    q = 1 - procs_per_second
+                    Q = q ** proc.duration
+                    if Q < .0001:
+                        self.set_uptime_for_ramping_proc(proc, procs_per_second)
+                    else:
+                        P = 1 - Q
+                        proc.uptime = P * (1 - P ** proc.max_stacks) / Q
+    
+    def average_damage_breakdowns(self, aps_dict, denom=180):
+        final_breakdown = {}
+        #key: phase name
+        #number: place in tuple... tuple = (phase_length, dps_breakdown)
+        #entry: DPS skill_name
+        #denom: total duration (to divide phase duration by it)
+        for key in aps_dict:
+            for entry in aps_dict[key][1]:
+                if entry in final_breakdown:
+                    final_breakdown[entry] += aps_dict[key][1][entry] * (aps_dict[key][0]/denom)
+                else:
+                    final_breakdown[entry] = aps_dict[key][1][entry] * (aps_dict[key][0]/denom)
+        return final_breakdown
+    
     def ep_helper(self, stat):
         setattr(self.stats, stat, getattr(self.stats, stat) + 1.)
         dps = self.get_dps()
@@ -120,6 +192,7 @@ class DamageCalculator(object):
             ep_values[stat] = 0
         if baseline_dps == None:
             baseline_dps = self.get_dps()
+        
         if normalize_ep_stat == 'dps':
             normalize_dps_difference = 1.
         else:
@@ -127,6 +200,7 @@ class DamageCalculator(object):
             normalize_dps_difference = normalize_dps - baseline_dps
         if normalize_dps_difference == 0:
             normalize_dps_difference = 1
+        
         for stat in ep_values:
             dps = self.ep_helper(stat)
             ep_values[stat] = abs(dps - baseline_dps) / normalize_dps_difference
@@ -559,9 +633,6 @@ class DamageCalculator(object):
 
     def get_talents_ranking(self, list=None):
         talents_ranking = {}
-        #self.talents = talents.Talents('000000', self.char_class, self.level)
-        active_tals = self.talents.get_active_talents() #save talents for the end
-        self.talents.reset_talents()
         baseline_dps = self.get_dps()
         talent_list = []
 
@@ -575,14 +646,10 @@ class DamageCalculator(object):
             try:
                 new_dps = self.get_dps()
                 if new_dps != baseline_dps:
-                    talents_ranking[talent] = new_dps - baseline_dps
+                    talents_ranking[talent] = abs(new_dps - baseline_dps)
             except:
                 talents_ranking[talent] = _('not implemented')
             setattr(self.talents, talent, not getattr(self.talents, talent))
-        
-        #bring back the original talents!
-        for t in active_tals:
-            self.talents.set_talent(t)
         
         return talents_ranking
 

@@ -69,7 +69,7 @@ test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
 test_talents = talents.Talents('3322131', test_class, test_level)
 
 # Set up glyphs.
-glyph_list = ['recuperate']
+glyph_list = ['energy', 'disappearance']
 test_glyphs = glyphs.Glyphs(test_class, *glyph_list)
 
 # Set up settings.
@@ -100,7 +100,7 @@ trinkets_list = [
     'discipline_of_xuen',
 ]
 #trinkets_ep_value = calculator.get_upgrades_ep_fast(trinkets_list)
-#glyph_values = calculator.get_glyphs_ranking()
+glyph_values = calculator.get_glyphs_ranking()
 
 # Compute weapon type modifier.
 #weapon_type_mod = calculator.get_oh_weapon_modifier()
@@ -135,7 +135,7 @@ dicts_for_pretty_print = [
     #mh_enchants_and_dps_ep_values,
     #oh_enchants_and_dps_ep_values,
     #trinkets_ep_value,
-    #glyph_values,
+    glyph_values,
     talent_ranks,
 ]
 pretty_print(dicts_for_pretty_print)

@@ -115,7 +115,7 @@ class AssassinationCycle(Cycle):
 class CombatCycle(Cycle):
     _cycle_type = 'combat'
 
-    def __init__(self, use_rupture=True, ksp_immediately=True, revealing_strike_pooling=True, blade_flurry=False, stack_cds=True, bf_targets=1, weapon_swap=False):
+    def __init__(self, use_rupture=True, ksp_immediately=True, revealing_strike_pooling=True, blade_flurry=False, stack_cds=True):
         self.blade_flurry = bool(blade_flurry)
         self.use_rupture = bool(use_rupture)
         self.ksp_immediately = bool(ksp_immediately) # Determines whether to KSp the instant it comes off cool or wait until Bandit's Guile stacks up.
@@ -125,9 +125,9 @@ class CombatCycle(Cycle):
 class SubtletyCycle(Cycle):
     _cycle_type = 'subtlety'
 
-    def __init__(self, raid_crits_per_second, use_hemorrhage='24', sub_sb_timing='shd'):
+    def __init__(self, raid_crits_per_second, use_hemorrhage='24'):
         self.raid_crits_per_second = raid_crits_per_second #used to calculate HAT procs per second.
         self.use_hemorrhage = use_hemorrhage # Allowed values are 'always' (main CP generator),
                                                                  #'never' (default to backstab),
                                                                  # or a number denoting the interval in seconds between applications
-        self.sub_sb_timing = sub_sb_timing #Sets when ShD is cast: 'shd', 'fw', 'other'
+        

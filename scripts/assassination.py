@@ -34,9 +34,8 @@ test_buffs = buffs.Buffs(
         'stat_multiplier_buff',
         'crit_chance_buff',
         'mastery_buff',
-        'melee_haste_buff', #all rogues bring this
+        'haste_buff', #all rogues bring this
         'attack_power_buff',
-        'spell_haste_buff',
         'armor_debuff',
         'physical_vulnerability_debuff',
         'spell_damage_debuff', #all rogues bring this

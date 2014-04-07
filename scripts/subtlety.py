@@ -30,9 +30,8 @@ test_buffs = buffs.Buffs(
         'stat_multiplier_buff',
         'crit_chance_buff',
         'mastery_buff',
-        'melee_haste_buff',
+        'haste_buff',
         'attack_power_buff',
-        'spell_haste_buff',
         'armor_debuff',
         'physical_vulnerability_debuff',
         'spell_damage_debuff',
@@ -60,7 +59,7 @@ test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          mastery=6874)
 
 # Initialize talents..
-test_talents = talents.Talents('322212', test_class, test_level)
+test_talents = talents.Talents('3222121', test_class, test_level)
 
 # Set up glyphs.
 glyph_list = []

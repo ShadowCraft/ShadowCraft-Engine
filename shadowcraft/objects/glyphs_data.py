@@ -32,6 +32,10 @@ glyphs = {
         'stealth',
         'vanish',
         'vendetta',
+        'disappearance',
+        'energy',
+        'elusiveness',
+        'energy_flows',
         # Minor
         'blurred_speed',
         'decoy',
