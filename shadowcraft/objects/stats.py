@@ -160,15 +160,12 @@ class GearBuffs(object):
         'leather_specialization',       # Increase %stat by 5%
         'chaotic_metagem',              # Increase critical damage by 3%
         'rogue_pvp_4pc',                # 30 Extra Energy
-        'rogue_t13_legendary',          # Increase 45% damage on SS and RvS, used in case the rogue only equips the mh of a set.
         'rogue_t14_2pc',                # Venom Wound damage by 20%, Sinister Strike by 15%, Backstab by 10%
         'rogue_t14_4pc',                # Shadow Blades by +12s
         'rogue_t15_2pc',                # Extra CP per finisher (max of 6)
         'rogue_t15_4pc',                # Abilities cast during Shadow Blades cost 40% less
         'rogue_t16_2pc',                # Stacking energy cost reduction (up to 5, up to 5 stacks) on NEXT RvS cast, Seal Fate Proc, or HAT proc
         'rogue_t16_4pc',                # 10% KS damage every time it hits, stacking mastery during vendetta (250 mastery, up to 20 stacks), every 5th backstab is an ambush
-        'mixology',
-        'master_of_anatomy',
     ]
 
     allowed_buffs = frozenset(other_gear_buffs)

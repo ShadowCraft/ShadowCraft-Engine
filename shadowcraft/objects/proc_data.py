@@ -27,42 +27,6 @@ allowed_procs = {
         'proc_rate': .20,
         'trigger': 'all_attacks'
     },
-    #professions
-    'swordguard_embroidery': {
-        'stat': 'stats',
-        'value': 'varies',
-        'duration': 15,
-        'proc_name': 'Swordguard Embroidery',
-        'source': 'profession',
-        'type': 'perc',
-        'icd': 55,
-        'proc_rate': .15,
-        'trigger': 'all_attacks'
-    },
-    'synapse_springs': { #triggered on demand
-        'stat': 'stats',
-        'value': 'varies',
-        'duration': 10,
-        'proc_name': 'Synapse Springs',
-        'source': 'profession',
-        #'scaling': 12.0000000000, Doesn't seem right...
-        'type': 'perc',
-        'icd': 60,
-        'proc_rate': 1.,
-        'trigger': 'all_attacks'
-    },
-    'lifeblood': { #triggered on demand
-        'stat': 'stats',
-        'value': 'varies',
-        'duration': 20,
-        'proc_name': 'lifeblood',
-        'source': 'profession',
-        #'scaling': 10.0590000153, Doesn't seem right...
-        'type': 'perc',
-        'icd': 120,
-        'proc_rate': 1.,
-        'trigger': 'all_attacks'
-    },
     #gear procs
     'fury_of_xuen': {
         'stat':'physical_damage',
@@ -218,18 +182,5 @@ allowed_melee_enchants = {
         'proc_rate': 9.17,
         'haste_scales': True,
         'trigger': 'all_attacks'
-    },
-}
-
-# The _set_behaviour method takes these parameters:
-# trigger, icd, proc_chance=False, ppm=False, on_crit=False, on_procced_strikes=True
-# You can't set a value for both 'ppm' and 'proc_chance': one must be False
-# Allowed triggers are: 'all_spells_and_attacks', 'all_damaging_attacks',
-# 'all_attacks', 'strikes', 'auto_attacks', 'damaging_spells', 'all_spells',
-# 'healing_spells', 'all_periodic_damage', 'bleeds', 'spell_periodic_damage'
-# and 'hots'. The trigger 'all_melee_attacks' is sugar for 'all_attacks'.
-behaviours = {
-    'dead_code': {
-        'hail_sithis':True
     },
 }

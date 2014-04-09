@@ -36,12 +36,7 @@ class RogueDamageCalculator(DamageCalculator):
     assassination_readiness_conversion = 1.0
     combat_readiness_conversion = 0.8
     subtlety_readiness_conversion = 1.0
-    
-    passive_assassasins_resolve = 1.20
-    passive_sanguinary_veins = 1.35
-    passive_vitality_ap = 1.40
-    passive_vitality_energy = 1.2
-        
+            
     ability_info = {
             'ambush':              (60, 'strike'),
             'backstab':            (35, 'strike'),
@@ -89,40 +84,14 @@ class RogueDamageCalculator(DamageCalculator):
             self.stats.agi += self.buffs.buff_agi(just_food=True)
         if self.settings.is_pvp:
             self.default_ep_stats.append('pvp_power')
-        for proc in self.stats.procs.get_all_procs_for_stat():
-            if proc == 'synapse_springs':
-                self.stats.procs.synapse_springs['value'] = {'agi': self.tradeskill_bonus('synapse_springs')}
-            if proc == 'lifeblood':
-                self.stats.procs.lifeblood['value'] = {'haste': self.tradeskill_bonus('master_of_anatomy')}
         
-        #update energy costs and CDs
+        #update data banks in this object
         if self.glyphs.disappearance and not self.settings.is_subtlety_rogue():
             self.ability_cds['vanish'] -= 60
-        if self.settings.is_subtlety_rogue():
-            self.ability_cds['vanish'] -= 30 #for level 100
+        if self.settings.is_subtlety_rogue() and self.level == 100:
+            self.ability_cds['vanish'] -= 30
             self.ability_info['eviscerate'] = (30, 'strike')
-        
-        #self.spell_scaling_for_level = self.tools.get_spell_scaling('rogue', self.level)
-        
-    def tradeskill_bonus(self, tradeskill='base'):
-        # Hardcoded to use maxed tradeskills for the character level.
-        tradeskills = ('skill', 'base', 'master_of_anatomy', 'lifeblood', 'synapse_springs')
-        if self.level == 100:
-            return (600, 320, 480, 2880, 1920)[tradeskills.index(tradeskill)]
-        tradeskill_base_bonus = {
-            (01, 60):  (0, None, None, None, 0),
-            (60, 70):  (300, 9,   9,   70,   0),
-            (70, 80):  (375, 12,  12,  120,  0),
-            (80, 85):  (450, 20,  20,  240,  480),
-            (85, 90):  (525, 80,  80,  480,  480),
-            (90, 100): (600, 320, 480, 2880, 2940),
-            (100, 110):(600, 320, 480, 2880, 2940),
-        }
-
-        for i, j in tradeskill_base_bonus.keys():
-            if self.level in range(i, j):
-                return tradeskill_base_bonus[(i, j)][tradeskills.index(tradeskill)]
-            
+                
     def setup_unique_procs_for_class(self):
         if getattr(self.stats.procs, 'legendary_capacitive_meta'):
             #1.789 mut, 1.136 com, 1.114 sub
@@ -142,15 +111,6 @@ class RogueDamageCalculator(DamageCalculator):
             elif self.settings.is_subtlety_rogue():
                 getattr(self.stats.procs, 'fury_of_xuen').proc_rate_modifier = 1.0
 
-    def get_factor_DEPRECATED(self, avg, delta=0):
-        avg_for_level = avg * self.spell_scaling_for_level
-        if delta == 0:
-            return round(avg_for_level)
-        else:
-            min = round(avg_for_level * (1 - delta / 2))
-            max = round(avg_for_level * (1 + delta / 2))
-            return (min + max) / 2 # Not rounded: this is the average for us.
-
     def get_weapon_damage_bonus(self):
         # Override this in your modeler to implement weapon damage boosts
         # such as Unheeded Warning.
@@ -159,9 +119,9 @@ class RogueDamageCalculator(DamageCalculator):
     def get_weapon_damage(self, hand, ap, is_normalized=True):
         weapon = getattr(self.stats, hand)
         if is_normalized:
-            damage = weapon.normalized_damage(ap) + self.get_weapon_damage_bonus()
+            damage = weapon.normalized_damage(ap) #+ self.get_weapon_damage_bonus() looks to be a dead mechanic, commented out for now.
         else:
-            damage = weapon.damage(ap) + self.get_weapon_damage_bonus()
+            damage = weapon.damage(ap) #+ self.get_weapon_damage_bonus()
         return damage
 
     def oh_penalty(self):
@@ -171,9 +131,6 @@ class RogueDamageCalculator(DamageCalculator):
             return .5
 
     def get_modifiers(self, *args, **kwargs):
-        # A note on stacking: both executioner and potent poisons are expected
-        # to stack additively as per my notes on issue #12. In mists they don't
-        # have anything to stack additively with.
         base_modifier = 1
         kwargs.setdefault('mastery', None)
         if 'executioner' in args and self.settings.is_subtlety_rogue():
@@ -182,11 +139,11 @@ class RogueDamageCalculator(DamageCalculator):
             base_modifier += self.assassination_mastery_conversion * self.stats.get_mastery_from_rating(kwargs['mastery'])
         # Assassasins's Resolve
         if self.settings.is_assassination_rogue():
-            base_modifier *= self.passive_assassasins_resolve
+            base_modifier *= 1.20
         # Sanguinary Vein
         kwargs.setdefault('is_bleeding', True)
         if kwargs['is_bleeding'] and self.settings.is_subtlety_rogue():
-            base_modifier *= self.passive_sanguinary_veins
+            base_modifier *= 1.35
         # Raid modifiers
         kwargs.setdefault('armor', None)
         ability_type_check = 0
@@ -204,7 +161,7 @@ class RogueDamageCalculator(DamageCalculator):
         average_ap = current_stats['ap'] + current_stats['agi'] + current_stats['str']
         average_ap *= self.buffs.attack_power_multiplier()
         if self.settings.is_combat_rogue():
-            average_ap *= self.passive_vitality_ap
+            average_ap *= 1.40 # vitality spec perk
 
         damage_breakdown = {}
                 
@@ -269,27 +226,32 @@ class RogueDamageCalculator(DamageCalculator):
             else:
                 damage_breakdown['mh_killing_spree'] = mh_killing_spree_dps[0], mh_killing_spree_dps[1]
                 damage_breakdown['oh_killing_spree'] = oh_killing_spree_dps[0], oh_killing_spree_dps[1]
-                
-        finisher_per_second = {'envenom': 0, 'eviscerate': 0, 'rupture_ticks':0}
+        
+        if 'garrote_ticks' in attacks_per_second:
+            damage_breakdown['garrote'] = self.get_dps_contribution(self.garrote_tick_damage(average_ap), crit_rates['garrote'], attacks_per_second['garrote_ticks'])        
+        
+        if 'hemorrhage_ticks' in attacks_per_second:
+            dps_from_hit_hemo = self.get_dps_contribution(self.hemorrhage_tick_damage(average_ap, from_crit_hemo=False), crit_rates['hemorrhage'], attacks_per_second['hemorrhage_ticks'] * (1 - crit_rates['hemorrhage']))
+            dps_from_crit_hemo = self.get_dps_contribution(self.hemorrhage_tick_damage(average_ap, from_crit_hemo=True), crit_rates['hemorrhage'], attacks_per_second['hemorrhage_ticks'] * crit_rates['hemorrhage'])
+            damage_breakdown['hemorrhage_dot'] = dps_from_hit_hemo[0] + dps_from_crit_hemo[0], dps_from_hit_hemo[1] + dps_from_crit_hemo[1]
+        
+        #finisher_per_second = {'envenom': 0, 'eviscerate': 0, 'rupture_ticks':0}
         if 'rupture_ticks' in attacks_per_second:
             average_dps = crit_dps = 0
             for i in xrange(1, 6):
                 dps_tuple = self.get_dps_contribution(self.rupture_tick_damage(average_ap, i), crit_rates['rupture_ticks'], attacks_per_second['rupture_ticks'][i])
                 average_dps += dps_tuple[0]
                 crit_dps += dps_tuple[1]
-                finisher_per_second['rupture_ticks'] += attacks_per_second['rupture_ticks'][i]
+                #finisher_per_second['rupture_ticks'] += attacks_per_second['rupture_ticks'][i]
             damage_breakdown['rupture'] = average_dps, crit_dps
-
-        if 'garrote_ticks' in attacks_per_second:
-            damage_breakdown['garrote'] = self.get_dps_contribution(self.garrote_tick_damage(average_ap), crit_rates['garrote'], attacks_per_second['garrote_ticks'])
-            
+    
         if 'envenom' in attacks_per_second:
             average_dps = crit_dps = 0
             for i in xrange(1, 6):
                 dps_tuple = self.get_dps_contribution(self.envenom_damage(average_ap, i, current_stats['mastery']), crit_rates['envenom'], attacks_per_second['envenom'][i])
                 average_dps += dps_tuple[0]
                 crit_dps += dps_tuple[1]
-                finisher_per_second['envenom'] += attacks_per_second['envenom'][i]
+                #finisher_per_second['envenom'] += attacks_per_second['envenom'][i]
             damage_breakdown['envenom'] = average_dps, crit_dps
 
         if 'eviscerate' in attacks_per_second:
@@ -298,14 +260,9 @@ class RogueDamageCalculator(DamageCalculator):
                 dps_tuple = self.get_dps_contribution(self.eviscerate_damage(average_ap, i), crit_rates['eviscerate'], attacks_per_second['eviscerate'][i])
                 average_dps += dps_tuple[0]
                 crit_dps += dps_tuple[1]
-                finisher_per_second['eviscerate'] += attacks_per_second['eviscerate'][i]
+                #finisher_per_second['eviscerate'] += attacks_per_second['eviscerate'][i]
             damage_breakdown['eviscerate'] = average_dps, crit_dps
-            
-        if 'hemorrhage_ticks' in attacks_per_second:
-            dps_from_hit_hemo = self.get_dps_contribution(self.hemorrhage_tick_damage(average_ap, from_crit_hemo=False), crit_rates['hemorrhage'], attacks_per_second['hemorrhage_ticks'] * (1 - crit_rates['hemorrhage']))
-            dps_from_crit_hemo = self.get_dps_contribution(self.hemorrhage_tick_damage(average_ap, from_crit_hemo=True), crit_rates['hemorrhage'], attacks_per_second['hemorrhage_ticks'] * crit_rates['hemorrhage'])
-            damage_breakdown['hemorrhage_dot'] = dps_from_hit_hemo[0] + dps_from_crit_hemo[0], dps_from_hit_hemo[1] + dps_from_crit_hemo[1]
-               
+                   
         for proc in damage_procs:
             if proc.proc_name not in damage_breakdown:
                 # Toss multiple damage procs with the same name (Avalanche):
@@ -634,7 +591,6 @@ class RogueDamageCalculator(DamageCalculator):
 
     def get_spell_stats(self, ability, cost_mod=1.0):
         cost = self.ability_info[ability][0] * cost_mod
-        
         return (cost, self.ability_info[ability][1])
     
     def get_spell_cd(self, ability):
@@ -652,15 +608,13 @@ class RogueDamageCalculator(DamageCalculator):
     def melee_crit_rate(self, crit=None):
         # all rogues get 10% bonus crit, assumed to affect everything, .05 of base crit for everyone
         # should be coded better?
-        base_crit = .05
+        base_crit = .15
         base_crit += self.stats.get_crit_from_rating(crit)
-        base_crit += .1
         return base_crit + self.buffs.buff_all_crit() + self.race.get_racial_crit(is_day=self.settings.is_day) - self.melee_crit_reduction
 
     def spell_crit_rate(self, crit=None):
         # all rogues get 10% bonus crit, assumed to affect everything, .05 of base crit for everyone
         # should be coded better?
-        base_crit = .05
+        base_crit = .15
         base_crit += self.stats.get_crit_from_rating(crit)
-        base_crit += .1
         return base_crit + self.buffs.buff_all_crit() + self.race.get_racial_crit(is_day=self.settings.is_day) - self.spell_crit_reduction

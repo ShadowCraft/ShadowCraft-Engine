@@ -33,7 +33,7 @@ class DamageCalculator(object):
 
     def __init__(self, stats, talents, glyphs, buffs, race, settings=None, level=85, target_level=None, char_class='rogue'):
         self.WOW_BUILD_TARGET = '6.0.0' # should reflect the game patch being targetted
-        self.SHADOWCRAFT_BUILD = '0.08' # <1 for beta builds, 1.00 is GM, >1 for any bug fixes, reset for each warcraft patch
+        self.SHADOWCRAFT_BUILD = '0.09' # <1 for beta builds, 1.00 is GM, >1 for any bug fixes, reset for each warcraft patch
         self.tools = class_data.Util()
         self.stats = stats
         self.talents = talents
@@ -45,10 +45,6 @@ class DamageCalculator(object):
         self.target_level = [target_level, level + 3][target_level is None] #assumes 3 levels higher if not explicit
 
         #racials
-        if self.stats.gear_buffs.mixology and (self.buffs.agi_flask or self.buffs.agi_flask_mop):
-            self.stats.agi += self.stats.gear_buffs.tradeskill_bonus()
-        if self.stats.gear_buffs.master_of_anatomy:
-            self.stats.crit += self.stats.gear_buffs.tradeskill_bonus('master_of_anatomy')
         if self.race.race_name == 'undead':
             self.stats.procs.set_proc('touch_of_the_grave')
         

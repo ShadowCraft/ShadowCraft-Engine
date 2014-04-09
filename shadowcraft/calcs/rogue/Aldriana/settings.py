@@ -115,12 +115,10 @@ class AssassinationCycle(Cycle):
 class CombatCycle(Cycle):
     _cycle_type = 'combat'
 
-    def __init__(self, use_rupture=True, ksp_immediately=True, revealing_strike_pooling=True, blade_flurry=False, stack_cds=True):
+    def __init__(self, ksp_immediately=True, revealing_strike_pooling=True, blade_flurry=False, ):
         self.blade_flurry = bool(blade_flurry)
-        self.use_rupture = bool(use_rupture)
         self.ksp_immediately = bool(ksp_immediately) # Determines whether to KSp the instant it comes off cool or wait until Bandit's Guile stacks up.
         self.revealing_strike_pooling = bool(revealing_strike_pooling)
-        self.stack_cds = bool(stack_cds) # This refers specifically to stacking SB and AR
 
 class SubtletyCycle(Cycle):
     _cycle_type = 'subtlety'

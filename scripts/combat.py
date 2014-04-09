@@ -45,8 +45,8 @@ test_buffs = buffs.Buffs(
 
 # Set up weapons.
 test_mh = stats.Weapon(18846.0, 2.6, 'axe', 'dancing_steel')
-#test_oh = stats.Weapon(18846.0, 2.6, 'axe', 'dancing_steel')
-test_oh = stats.Weapon(13047.0, 1.8, 'dagger', 'dancing_steel')
+test_oh = stats.Weapon(18846.0, 2.6, 'axe', 'dancing_steel')
+#test_oh = stats.Weapon(13047.0, 1.8, 'dagger', 'dancing_steel')
 
 # Set up procs.
 test_procs = procs.ProcsList(('assurance_of_consequence', 580), ('haromms_talisman', 580), 'legendary_capacitive_meta', 'fury_of_xuen')
@@ -73,10 +73,10 @@ glyph_list = ['energy', 'disappearance']
 test_glyphs = glyphs.Glyphs(test_class, *glyph_list)
 
 # Set up settings.
-test_cycle = settings.CombatCycle(stack_cds=True, weapon_swap=False)
+test_cycle = settings.CombatCycle(revealing_strike_pooling=True)
 test_settings = settings.Settings(test_cycle, response_time=.5, duration=360, dmg_poison='dp', utl_poison='lp', is_pvp=False,
                                   latency=.03, merge_damage=True, use_opener='always', opener_name='ambush',
-                                  num_boss_adds=0.2, adv_params="", potion=True, prepot=True) # 0.2 = 20% of the fight is an add present
+                                  num_boss_adds=0.0, adv_params="", potion=True, prepot=True) # 0.2 = 20% of the fight is an add present
 
 # Build a DPS object.
 calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_glyphs, test_buffs, test_race, test_settings, test_level)

@@ -9,8 +9,6 @@ class InvalidProcException(exceptions.InvalidInputException):
 
 
 class Proc(object):
-    allowed_behaviours = proc_data.behaviours
-
     def __init__(self, stat, value, duration, proc_name, max_stacks=1, can_crit=True, stats=None, upgradable=False, scaling=None,
                  buffs=None, base_value=0, type='rppm', icd=0, proc_rate=1.0, trigger='all_attacks', haste_scales=False, item_level=1,
                  on_crit=False, on_procced_strikes=True, proc_rate_modifier=1., source='generic',):
@@ -48,29 +46,6 @@ class Proc(object):
         if self.source in ('trinket',):
             for e in self.value:
                 self.value[e] = round(self.scaling * tools.get_random_prop_point(self.item_level))
-
-    def __setattr__DEPRECATED(self, name, value):
-        object.__setattr__(self, name, value)
-        if name == 'behaviour_toggle':
-            # Set behaviour attributes when this is modified.
-            if value in self.proc_behaviours:
-                self._set_behaviour(**self.proc_behaviours[value])
-            else:
-                raise InvalidProcException(_('Behaviour \'{behaviour}\' is not defined for {proc}').format(proc=self.proc_name, behaviour=value))
-
-    def _set_behaviour_DEPRECATED(self, icd, trigger, proc_chance=False, ppm=False, on_crit=False, on_procced_strikes=True, real_ppm=False,
-                       haste_scales=False, type='perc'):
-        # This could be merged with __setattr__; its sole purpose is
-        # to clearly surface the parameters passed with the behaviours.
-        self.proc_chance = proc_chance
-        self.trigger = trigger
-        self.type = type #types: 'perc', 'ppm', 'rppm'
-        self.icd = icd
-        self.on_crit = on_crit
-        self.ppm = ppm
-        self.real_ppm = real_ppm
-        self.haste_scales = haste_scales
-        self.on_procced_strikes = on_procced_strikes  # Main Gauche and its kin
 
     def procs_off_auto_attacks(self):
         if self.trigger in ('all_attacks', 'auto_attacks', 'all_spells_and_attacks', 'all_melee_attacks'):
@@ -132,11 +107,6 @@ class Proc(object):
         else:
             return False
     
-    def if_haste_scales(self):
-        if self.haste_scales:
-            return True
-        return False
-        
     def get_rppm_proc_rate(self, haste=1.):
         if self.is_real_ppm():
             return haste * self.proc_rate * self.proc_rate_modifier
@@ -193,31 +163,7 @@ class ProcsList(object):
         if proc in self.allowed_procs:
             return False
         object.__getattribute__(self, proc)
-
-    def __setattr__(self, name, value):
-        object.__setattr__(self, name, value)
-        if name == 'level':
-            self._set_constants_for_level()
-
-    def _set_constants_for_level(self):
-        self.set_swordguard_embroidery_value()
-
-    def set_swordguard_embroidery_value(self):
-        proc = getattr(self, 'swordguard_embroidery')
-        values = [
-            (100, 10000),
-            (90, 4000),
-            (85, 1000),
-            (80, 400),
-            (1, 0)
-        ]
-        for level, value in values:
-            if self.level >= level:
-                self.allowed_procs['swordguard_embroidery']['value'] = value
-                if proc:
-                    proc.value = value
-                break
-
+    
     def get_all_procs_for_stat(self, stat=None):
         procs = []
         for proc_name in self.allowed_procs:

@@ -1,4 +1,4 @@
-import copy
+#import copy
 import gettext
 import __builtin__
 import math
@@ -25,7 +25,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     def get_dps(self):
         super(AldrianasRogueDamageCalculator, self).get_dps()
         if self.settings.is_assassination_rogue():
-            #self.init_assassination()
+            self.init_assassination()
             return self.assassination_dps_estimate()
         elif self.settings.is_combat_rogue():
             return self.combat_dps_estimate()
@@ -36,7 +36,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     def get_dps_breakdown(self):
         if self.settings.is_assassination_rogue():
-            #self.init_assassination()
+            self.init_assassination()
             return self.assassination_dps_breakdown()
         elif self.settings.is_combat_rogue():
             return self.combat_dps_breakdown()
@@ -277,8 +277,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.true_haste_mod *= 1.01
             
         #hit chances
-        if self.settings.is_combat_rogue():
-            self.dw_miss_penalty = 0 #for level 100
+        if self.settings.is_combat_rogue() and self.level == 100:
+            self.dw_miss_penalty = 0
             self.recalculate_hit_constants()
         self.dw_mh_hit_chance = self.dual_wield_mh_hit_chance()
         self.dw_oh_hit_chance = self.dual_wield_oh_hit_chance()
@@ -392,10 +392,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     
     def get_net_energy_cost(self, ability):
         return self.get_spell_stats(ability)[0]
-
-    def get_activated_uptime_DEPRECATED(self, duration, cooldown, use_response_time=True):
-        response_time = [0, self.settings.response_time][use_response_time]
-        return 1. * duration / (cooldown + response_time)
 
     def update_with_autoattack_passives(self, attacks_per_second, *args, **kwargs):
         # Appends the keys passed in args to attacks_per_second. This includes
@@ -569,13 +565,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.settings.is_assassination_rogue() and poison:
             poison_base_proc_rate += .2
             poison_envenom_proc_rate = poison_base_proc_rate + .15
-            poison_envenom_proc_rate += .15 #for level 100
+            if self.level == 100:
+                poison_envenom_proc_rate += .15
             envenom_uptime = min(sum([(1 + cps + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp()) * attacks_per_second['envenom'][cps] for cps in xrange(1, 6)]), 1)
             avg_poison_proc_rate = poison_base_proc_rate * (1 - envenom_uptime) + poison_envenom_proc_rate * envenom_uptime
         else:
             avg_poison_proc_rate = poison_base_proc_rate
         
-        #for level 100
         if self.settings.dmg_poison == 'ip':
             poison_procs = avg_poison_proc_rate * total_hits_per_second - 1 / self.settings.duration
             attacks_per_second['instant_poison'] = poison_procs
@@ -632,13 +628,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             elif proc.stat == 'extra_weapon_damage':
                 weapon_damage_procs.append(proc)
                 
-        #update proc values in each proc "folder"
-        #for dict in (active_procs_rppm, active_procs_icd, active_procs_no_icd):
-            #for proc in dict:
-                #establish proc value for proc level
-                #for e in proc.value:
-                    #proc.value[e] = round(proc.scaling * self.tools.get_random_prop_point(proc.item_level))
-        
         #calculate weapon procs
         weapon_enchants = set([])
         for hand, enchant in [(x, y) for x in ('mh', 'oh') for y in ('dancing_steel', 'elemental_force')]:
@@ -653,7 +642,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                             active_procs_icd.append(proc)
                         else:
                             active_procs_no_icd.append(proc)
-                elif enchant in ('avalanche', 'elemental_force'):
+                elif enchant in ('elemental_force',):
                     damage_procs.append(proc)
                 elif proc.stat == 'highest' and 'agi' in proc.value:
                     proc.stat = 'stats'
@@ -668,18 +657,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                             active_procs_icd.append(proc)
                         else:
                             active_procs_no_icd.append(proc)
-
-                if enchant not in weapon_enchants and enchant in ('hurricane', 'avalanche'):
-                    weapon_enchants.add(enchant)
-                    spell_component = copy.copy(proc)
-                    delattr(spell_component, '_'.join((hand, 'only')))
-                    spell_component.behaviour_toggle = 'spell'
-                    if enchant == 'hurricane':
-                        # This would heavily overestimate Hurricane by ignoring the refresh mechanic.
-                        # active_procs.append(spell_component)
-                        pass
-                    elif enchant == 'avalanche':
-                        damage_procs.append(spell_component)
         
         static_proc_stats = {
             'str': 0,
@@ -730,20 +707,19 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 'multistrike': self.base_stats['multistrike'],
             }
             for k in static_proc_stats:
-                current_stats[k] +=  static_proc_stats[k]
+                current_stats[k] +=  static_proc_stats[k] * self.get_stat_mod(k)
                 
             for proc in active_procs_no_icd:
                 self.set_uptime(proc, attacks_per_second, crit_rates)
                 for e in proc.value:
-                    if e in ('agi', 'crit'):
+                    if e == 'crit':
                         recalculate_crit = True
                     current_stats[ e ] += proc.uptime * proc.value[e] * self.get_stat_mod(e)
                 
             old_attacks_per_second = attacks_per_second
             if recalculate_crit:
-                attacks_per_second, crit_rates = attack_counts_function(current_stats)
-            else:
-                attacks_per_second, crit_rates = attack_counts_function(current_stats, crit_rates=crit_rates)
+                crit_rates = None
+            attacks_per_second, crit_rates = attack_counts_function(current_stats, crit_rates=crit_rates)
             recalculate_crit = False
             
             if self.are_close_enough(old_attacks_per_second, attacks_per_second):
@@ -752,16 +728,15 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         for proc in active_procs_icd:
             self.set_uptime(proc, attacks_per_second, crit_rates)
             for e in proc.value:
-                if e in ('agi', 'crit'):
+                if e == 'crit':
                     recalculate_crit = True
                 current_stats[ e ] += proc.uptime * proc.value[e] * self.get_stat_mod(e)
         
         #if no new stats are added, skip this step
         if len(active_procs_icd) > 0:
             if recalculate_crit:
-                attacks_per_second, crit_rates = attack_counts_function(current_stats)
-            else:
-                attacks_per_second, crit_rates = attack_counts_function(current_stats, crit_rates=crit_rates)
+                crit_rates = None
+            attacks_per_second, crit_rates = attack_counts_function(current_stats, crit_rates=crit_rates)
 
         # the t16 4pc do not need to be in the main loop because mastery for assa is just increased damage
         # and has no impact on the cycle
@@ -853,13 +828,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.set_constants()
         
         self.base_energy_regen = 10
-        if self.talents.lemon_zest:
-            self.base_energy_regen *= 1 + .05 * self.settings.num_boss_adds
-        self.max_energy = 120.
+        self.max_energy = 100.
         if self.stats.gear_buffs.rogue_pvp_4pc_extra_energy():
             self.max_energy += 30
         if self.talents.lemon_zest:
+            self.base_energy_regen *= 1 + .05 * (1 + min(self.settings.num_boss_adds, 2))
             self.max_energy += 15
+        if self.glyphs.energy:
+            self.max_energy += 20
 
         self.vendetta_duration = 20 + 10 * self.glyphs.vendetta
         self.vendetta_uptime = self.vendetta_duration / (self.get_spell_cd('vendetta') + self.settings.response_time + self.major_cd_delay)
@@ -878,7 +854,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         return sum(self.assassination_dps_breakdown_non_execute().values())
 
     def assassination_dps_breakdown(self):
-        self.init_assassination()
         non_execute_dps_breakdown = self.assassination_dps_breakdown_non_execute()
         execute_dps_breakdown = self.assassination_dps_breakdown_execute()
 
@@ -903,13 +878,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 damage_breakdown[key] *= self.vendetta_mult
 
     def assassination_dps_breakdown_non_execute(self):
-        self.init_assassination()
         damage_breakdown = self.compute_damage(self.assassination_attack_counts_non_execute)
         self.update_damage_breakdown_for_vendetta(damage_breakdown)
         return damage_breakdown
 
     def assassination_dps_breakdown_execute(self):
-        self.init_assassination()
         damage_breakdown = self.compute_damage(self.assassination_attack_counts_execute)
         self.update_damage_breakdown_for_vendetta(damage_breakdown)
         return damage_breakdown
@@ -928,8 +901,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             energy_regen += (self.max_energy - 10) / (self.settings.duration * self.settings.time_in_execute_range)
 
         vw_energy_return = 10
-        #vw_proc_chance = .75
-        vw_proc_chance = 1.0 #for level 100
+        if self.level == 100:
+            vw_proc_chance = 1.0
+        else:
+            vw_proc_chance = .75
         vw_energy_per_bleed_tick = vw_energy_return * vw_proc_chance
 
         blindside_proc_rate = [0, .3][cpg == 'mutilate']
@@ -1089,8 +1064,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         energy_regen += self.bonus_energy_regen
 
         vw_energy_return = 10
-        #vw_proc_chance = .75
-        vw_proc_chance = 1.0 #for level 100
+        if self.level == 100:
+            vw_proc_chance = 1.0
+        else:
+            vw_proc_chance = .75
         vw_energy_per_bleed_tick = vw_energy_return * vw_proc_chance
 
         blindside_proc_rate = [0, .3][cpg == 'mutilate']
@@ -1221,7 +1198,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         #combat specific constants
         self.max_bandits_guile_buff = 1.3
-        self.max_bandits_guile_buff += .2 #for level 100
+        if self.level == 100:
+            self.max_bandits_guile_buff += .2
         self.max_energy = 100.
         if self.stats.gear_buffs.rogue_pvp_4pc_extra_energy():
             self.max_energy += 30
@@ -1282,12 +1260,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                     damage_breakdown[key] *= 1.49084
             elif key in ('sinister_strike', 'revealing_strike'):
                 damage_breakdown[key] *= self.bandits_guile_multiplier
-                if key == 'sinister_strike':
-                    damage_breakdown[key] *= 1.2 #for level 100
+                if key == 'sinister_strike' and self.level == 100:
+                    damage_breakdown[key] *= 1.2
             elif key in ('eviscerate', ):
-                damage_breakdown[key] *= self.bandits_guile_multiplier * self.revealing_strike_multiplier * 1.2 #1.2 is for level 100
-            elif key in ('autoattack', 'deadly_poison', 'main_gauche', 'mh_autoattack', 'oh_autoattack'):
-                damage_breakdown[key] *= self.bandits_guile_multiplier #* self.ksp_multiplier
+                damage_breakdown[key] *= self.bandits_guile_multiplier * self.revealing_strike_multiplier
+                if self.level == 100:
+                    damage_breakdown[key] *= 1.2
             else:
                 damage_breakdown[key] *= self.bandits_guile_multiplier #* self.ksp_multiplier
                 
@@ -1318,10 +1296,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.attack_speed_increase *= 1.2
             self.base_energy_regen *= 2.0
         if self.talents.lemon_zest:
-            self.base_energy_regen *= 1 + .05 * self.settings.num_boss_adds
+            self.base_energy_regen *= 1 + .05 * (1 + min(self.settings.num_boss_adds, 2))
         gcd_size = 1.0 + self.settings.latency
         if ar:
-            gcd_size -= .4 #GCD reduction changed to .4 from .1 for level 100
+            gcd_size -= .2
+            if self.level == 100:
+                gcd_size -= .3
         cp_per_cpg = 1.
             
         # Combine energy cost scalers to reduce function calls (ie, 40% reduced energy cost). Assume multiplicative.
@@ -1329,7 +1309,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         # Turn the cost of the ability into the net loss of energy by reducing it by the energy gained from MG
         cost_reducer = main_gauche_proc_rate * combat_potency_from_mg
         
-        #get_spell_stats(self, ability, hit_chance=1.0, cost_mod=1.0)
         eviscerate_energy_cost =  self.get_spell_stats('eviscerate', cost_mod=cost_modifier)[0]
         eviscerate_energy_cost -= cost_reducer
         revealing_strike_energy_cost =  self.get_spell_stats('revealing_strike', cost_mod=cost_modifier)[0]
@@ -1367,7 +1346,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         rvs_interval = self.rvs_duration
         if self.settings.cycle.revealing_strike_pooling and not ar:
             min_energy_while_pooling = energy_regen * gcd_size
-            max_energy_while_pooling = 80.
+            max_energy_while_pooling = self.max_energy - 20
             average_pooling = max(0, (max_energy_while_pooling - min_energy_while_pooling)) / 2
             rvs_interval += average_pooling / energy_regen
         
@@ -1434,10 +1413,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         time_at_level = 4 / attacks_per_second['sinister_strike']
         cycle_duration = 3 * time_at_level + 15
-        #avg_stacks = (3 * time_at_level + 45) / cycle_duration #45 is the duration (15s) multiplied by the stack power (30% BG)
-        #self.bandits_guile_multiplier = 1 + .1 * avg_stacks
-        #split up for clarity at the moment, needs to be simplified closer to launch
-        self.bandits_guile_multiplier = 1 + (0*time_at_level + .1*time_at_level + .2*time_at_level + .5 * 15) / cycle_duration #for level 100
+        if self.level == 100:
+            self.bandits_guile_multiplier = 1 + (0*time_at_level + .1*time_at_level + .2*time_at_level + .5 * 15) / cycle_duration
+        else:
+            avg_stacks = (3 * time_at_level + 45) / cycle_duration #45 is the duration (15s) multiplied by the stack power (30% BG)
+            self.bandits_guile_multiplier = 1 + .1 * avg_stacks
         
         if not ar:
             final_ks_cd = self.rb_actual_cd(attacks_per_second, self.tmp_phase_length) + self.major_cd_delay
@@ -1446,10 +1426,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second['mh_killing_spree'] = 7 / (final_ks_cd + self.settings.response_time)
             attacks_per_second['oh_killing_spree'] = 7 / (final_ks_cd + self.settings.response_time)
             attacks_per_second['main_gauche'] += attacks_per_second['mh_killing_spree'] * main_gauche_proc_rate
-        
-        if ar and not self.settings.cycle.stack_cds:
-            approx_time_to_empty = 100 / sinister_strike_energy_cost
-            approx_time_to_empty += (energy_regen * approx_time_to_empty) / sinister_strike_energy_cost
         
         self.get_poison_counts(attacks_per_second)
         
@@ -1521,9 +1497,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.stats.gear_buffs.rogue_pvp_4pc_extra_energy():
             self.max_energy += 30
         if self.talents.lemon_zest:
-            self.base_energy_regen *= 1 + .05 * self.settings.num_boss_adds
+            self.base_energy_regen *= 1 + .05 * (1 + min(self.settings.num_boss_adds, 2))
             self.max_energy += 15
-        self.shd_duration = 8 + 2 # 2s more for level 100
+        self.shd_duration = 8
+        if self.level == 100:
+            self.shd_duration += 2
         self.shd_cd = self.get_spell_cd('shadow_dance') + self.settings.response_time + self.major_cd_delay
         self.settings.cycle.raid_crits_per_second = self.get_adv_param('hat_triggers_per_second', self.settings.cycle.raid_crits_per_second, min_bound=0, max_bound=600)
 
