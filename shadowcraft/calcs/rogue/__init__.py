@@ -36,7 +36,7 @@ class RogueDamageCalculator(DamageCalculator):
     assassination_readiness_conversion = 1.0
     combat_readiness_conversion = 0.8
     subtlety_readiness_conversion = 1.0
-            
+                
     ability_info = {
             'ambush':              (60, 'strike'),
             'backstab':            (35, 'strike'),
@@ -69,6 +69,10 @@ class RogueDamageCalculator(DamageCalculator):
             'marked_for_death':    60,
             'preparation':         300,
         }
+    cd_reduction_table = {'assassination': ['vanish', 'vendetta'],
+                          'combat': ['adrenaline_rush', 'killing_spree'],
+                          'subtlety': ['vanish', 'shadow_dance']
+                         }#Cloak, Evasion, Sprint affect all 3 specs, not needed in list
     
     def __setattr__(self, name, value):
         object.__setattr__(self, name, value)
@@ -78,38 +82,13 @@ class RogueDamageCalculator(DamageCalculator):
     def _set_constants_for_level(self):
         super(RogueDamageCalculator, self)._set_constants_for_level()
         self.normalize_ep_stat = self.get_adv_param('norm_ep_stat', self.settings.default_ep_stat, ignore_bounds=True)
+        self.damage_modifier_cache = 1
         # We only check race here (instead of calcs) because we can assume it's an agi food buff and it applies to every possible rogue calc
         # Otherwise we would be obligated to have a series of conditions to check for classes
         if self.race.epicurean:
             self.stats.agi += self.buffs.buff_agi(just_food=True)
         if self.settings.is_pvp:
             self.default_ep_stats.append('pvp_power')
-        
-        #update data banks in this object
-        if self.glyphs.disappearance and not self.settings.is_subtlety_rogue():
-            self.ability_cds['vanish'] -= 60
-        if self.settings.is_subtlety_rogue() and self.level == 100:
-            self.ability_cds['vanish'] -= 30
-            self.ability_info['eviscerate'] = (30, 'strike')
-                
-    def setup_unique_procs_for_class(self):
-        if getattr(self.stats.procs, 'legendary_capacitive_meta'):
-            #1.789 mut, 1.136 com, 1.114 sub
-            if self.settings.is_assassination_rogue():
-                getattr(self.stats.procs, 'legendary_capacitive_meta').proc_rate_modifier = 1.789
-            elif self.settings.is_combat_rogue():
-                getattr(self.stats.procs, 'legendary_capacitive_meta').proc_rate_modifier = 1.136
-            elif self.settings.is_subtlety_rogue():
-                getattr(self.stats.procs, 'legendary_capacitive_meta').proc_rate_modifier = 1.114
-
-        if getattr(self.stats.procs, 'fury_of_xuen'):
-            #1.55 mut, 1.15 com, 1.0 sub
-            if self.settings.is_assassination_rogue():
-                getattr(self.stats.procs, 'fury_of_xuen').proc_rate_modifier = 1.55
-            elif self.settings.is_combat_rogue():
-                getattr(self.stats.procs, 'fury_of_xuen').proc_rate_modifier = 1.15
-            elif self.settings.is_subtlety_rogue():
-                getattr(self.stats.procs, 'fury_of_xuen').proc_rate_modifier = 1.0
 
     def get_weapon_damage_bonus(self):
         # Override this in your modeler to implement weapon damage boosts
@@ -131,19 +110,14 @@ class RogueDamageCalculator(DamageCalculator):
             return .5
 
     def get_modifiers(self, *args, **kwargs):
-        base_modifier = 1
+        # self.damage_modifier_cache stores common modifiers like Assassin's Resolve that won't change between calculations
+        # this cuts down on repetetive if statements
+        base_modifier = self.damage_modifier_cache
         kwargs.setdefault('mastery', None)
         if 'executioner' in args and self.settings.is_subtlety_rogue():
             base_modifier += self.subtlety_mastery_conversion * self.stats.get_mastery_from_rating(kwargs['mastery'])
         if 'potent_poisons' in args and self.settings.is_assassination_rogue():
             base_modifier += self.assassination_mastery_conversion * self.stats.get_mastery_from_rating(kwargs['mastery'])
-        # Assassasins's Resolve
-        if self.settings.is_assassination_rogue():
-            base_modifier *= 1.20
-        # Sanguinary Vein
-        kwargs.setdefault('is_bleeding', True)
-        if kwargs['is_bleeding'] and self.settings.is_subtlety_rogue():
-            base_modifier *= 1.35
         # Raid modifiers
         kwargs.setdefault('armor', None)
         ability_type_check = 0
@@ -594,13 +568,8 @@ class RogueDamageCalculator(DamageCalculator):
         return (cost, self.ability_info[ability][1])
     
     def get_spell_cd(self, ability):
-        cd_reduction_table = {'assassination': ['vanish', 'vendetta'],
-                              'combat': ['adrenaline_rush', 'killing_spree'],
-                              'subtlety': ['vanish', 'shadow_dance']
-                             }#Cloak, Evasion, Sprint affect all 3 specs, not needed in list
-        
         #need to update list of affected abilities
-        if ability in cd_reduction_table[self.settings.get_spec()]:
+        if ability in self.cd_reduction_table[self.settings.get_spec()]:
             return self.ability_cds[ability] * self.stats.get_readiness_multiplier_from_rating(readiness_conversion=self.readiness_spec_conversion)
         else:
             return self.ability_cds[ability]

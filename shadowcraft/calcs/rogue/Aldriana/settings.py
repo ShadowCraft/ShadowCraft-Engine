@@ -32,15 +32,15 @@ class Settings(object):
             'combat': ('sinister_strike', 'revealing_strike', 'eviscerate'),
             'subtlety': ()
         }
-        allowed_openers = allowed_openers_per_spec[self.get_spec()] + ('ambush', 'garrote', 'default', 'cpg')
+        allowed_openers = allowed_openers_per_spec[self.cycle._cycle_type] + ('ambush', 'garrote', 'default', 'cpg')
         if opener_name not in allowed_openers:
-            raise exceptions.InvalidInputException(_('Opener {opener} is not allowed in {cycle} cycles.').format(opener=opener_name, cycle=self.get_spec()))
+            raise exceptions.InvalidInputException(_('Opener {opener} is not allowed in {cycle} cycles.').format(opener=opener_name, cycle=self.cycle._cycle_type))
         if opener_name == 'default':
             default_openers = {
                 'assassination': 'mutilate',
                 'combat': 'ambush',
                 'subtlety': 'ambush'}
-            self.opener_name = default_openers[self.get_spec()]
+            self.opener_name = default_openers[self.cycle._cycle_type]
         if dmg_poison not in (None, 'dp', 'wp'):
             raise exceptions.InvalidInputException(_('You can only choose Deadly(dp) or Wound(wp) as a damage poison'))
         if utl_poison not in (None, 'cp', 'mnp', 'lp', 'pp'):
@@ -67,13 +67,13 @@ class Settings(object):
         return data
     
     def is_assassination_rogue(self):
-        return self.get_spec() == 'assassination'
+        return self.cycle._cycle_type == 'assassination'
 
     def is_combat_rogue(self):
-        return self.get_spec() == 'combat'
+        return self.cycle._cycle_type == 'combat'
 
     def is_subtlety_rogue(self):
-        return self.get_spec() == 'subtlety'
+        return self.cycle._cycle_type == 'subtlety'
 
 class Cycle(object):
     # Base class for cycle objects.  Can't think of anything that particularly

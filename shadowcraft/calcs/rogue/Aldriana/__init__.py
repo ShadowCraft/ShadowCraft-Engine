@@ -257,8 +257,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 self.base_stats[boost['stat']] += boost['value'] * boost['duration'] * 1.0 / (boost['cooldown'] + self.settings.response_time)
 
         self.agi_multiplier = self.buffs.stat_multiplier() * self.stats.gear_buffs.leather_specialization_multiplier()
-        if self.settings.is_subtlety_rogue():
-            self.agi_multiplier *= 1.30
 
         self.base_strength = self.stats.str + self.buffs.buff_str() + self.race.racial_str
         self.base_strength *= self.buffs.stat_multiplier()
@@ -306,10 +304,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             multiplier = self.raid_settings_modifiers('physical')
             crit_multiplier = self.crit_damage_modifiers()
             crit_rate = self.melee_crit_rate(crit=current_stats['crit'])
-        elif proc.stat == 'melee_spell_damage':
-            multiplier = self.raid_settings_modifiers('spell')
-            crit_multiplier = self.crit_damage_modifiers()
-            crit_rate = self.melee_crit_rate(crit=current_stats['crit'])
         else:
             return 0, 0
 
@@ -347,10 +341,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 modifier = self.raid_settings_modifiers('spell')
                 crit_multiplier = self.crit_damage_modifiers()
                 crit_rate = self.spell_crit_rate(crit=current_stats['crit'])
-            elif item['stat'] == 'melee_spell_damage':
-                modifier = self.raid_settings_modifiers('spell')
-                crit_multiplier = self.crit_damage_modifiers()
-                crit_rate = self.melee_crit_rate(crit=current_stats['crit'])
             average_hit = item['value'] * modifier
             frequency = 1. / (item['cooldown'] + self.settings.response_time)
             average_dps = average_hit * (1 + crit_rate * (crit_multiplier - 1)) * frequency
@@ -361,10 +351,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     def set_openers(self):
         # Sets the swing_reset_spacing and total_openers_per_second variables.
         opener_cd = [10, 20][self.settings.opener_name == 'garrote']
-        if self.settings.is_subtlety_rogue():
-            self.settings.use_opener = 'always' #Overrides setting. Using Ambush + Vanish on CD is critical.
-            self.settings.opener_name = 'ambush'
-            opener_cd = 30
         if self.settings.use_opener == 'always':
             opener_spacing = (self.get_spell_cd('vanish') + self.settings.response_time)
             total_openers_per_second = (1. + math.floor((self.settings.duration - opener_cd) / opener_spacing)) / self.settings.duration
@@ -546,7 +532,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         return 1.
 
     def setup_unique_procs(self):
-        self.setup_unique_procs_for_class()
+        pass
         #modelling specific proc setup would go here
         #example, RoRO, Matrix Restabilizer, etc.
 
@@ -623,7 +609,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                         active_procs_icd.append(proc)
                     else:
                         active_procs_no_icd.append(proc)
-            elif proc.stat in ('spell_damage', 'physical_damage', 'melee_spell_damage'):
+            elif proc.stat in ('spell_damage', 'physical_damage'):
                 damage_procs.append(proc)
             elif proc.stat == 'extra_weapon_damage':
                 weapon_damage_procs.append(proc)
@@ -690,7 +676,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if len(active_procs_no_icd) > 0:
             need_converge = True
         #only have to converge with specific procs, try to simplify later
-        #check if... assassination:agi/crit/haste, combat:mastery/haste, sub:haste
+        #check if... assassination:crit/haste, combat:mastery/haste, sub:haste/mastery
         #while True:
             #stuff()
             #if not condition():
@@ -707,7 +693,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 'multistrike': self.base_stats['multistrike'],
             }
             for k in static_proc_stats:
-                current_stats[k] +=  static_proc_stats[k] * self.get_stat_mod(k)
+                current_stats[k] +=  static_proc_stats[k]
                 
             for proc in active_procs_no_icd:
                 self.set_uptime(proc, attacks_per_second, crit_rates)
@@ -719,8 +705,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             old_attacks_per_second = attacks_per_second
             if recalculate_crit:
                 crit_rates = None
+                recalculate_crit = False
             attacks_per_second, crit_rates = attack_counts_function(current_stats, crit_rates=crit_rates)
-            recalculate_crit = False
             
             if self.are_close_enough(old_attacks_per_second, attacks_per_second):
                 break
@@ -825,6 +811,15 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.readiness_spec_conversion = self.assassination_readiness_conversion
         self.human_racial_stats = ['mastery', 'crit']
         
+        # Assassasins's Resolve
+        self.damage_modifier_cache *= 1.20
+        
+        #update spec specific proc rates
+        if getattr(self.stats.procs, 'legendary_capacitive_meta'):
+            getattr(self.stats.procs, 'legendary_capacitive_meta').proc_rate_modifier = 1.789
+        if getattr(self.stats.procs, 'fury_of_xuen'):
+            getattr(self.stats.procs, 'fury_of_xuen').proc_rate_modifier = 1.55
+        
         self.set_constants()
         
         self.base_energy_regen = 10
@@ -836,6 +831,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.max_energy += 15
         if self.glyphs.energy:
             self.max_energy += 20
+        
+        #spec specific glyph behaviour
+        if self.glyphs.disappearance:
+            self.ability_cds['vanish'] = 60
 
         self.vendetta_duration = 20 + 10 * self.glyphs.vendetta
         self.vendetta_uptime = self.vendetta_duration / (self.get_spell_cd('vendetta') + self.settings.response_time + self.major_cd_delay)
@@ -1194,6 +1193,16 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.readiness_spec_conversion = self.combat_readiness_conversion
         self.human_racial_stats = ['haste', 'readiness']
         
+        #spec specific glyph behaviour
+        if self.glyphs.disappearance:
+            self.ability_cds['vanish'] = 60
+        
+        #update spec specific proc rates
+        if getattr(self.stats.procs, 'legendary_capacitive_meta'):
+            getattr(self.stats.procs, 'legendary_capacitive_meta').proc_rate_modifier = 1.136
+        if getattr(self.stats.procs, 'fury_of_xuen'):
+            getattr(self.stats.procs, 'fury_of_xuen').proc_rate_modifier = 1.15
+        
         self.set_constants()
         
         #combat specific constants
@@ -1212,7 +1221,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.revealing_strike_multiplier = 1.35
         self.extra_cp_chance = .2 # Assume all casts during RvS
         self.rvs_duration = 24
-        if self.settings.dmg_poison == 'dp':
+        if self.settings.dmg_poison == 'dp' and self.level == 100:
             self.settings.dmg_poison = 'ip'
         
         cds = {'ar':self.get_spell_cd('adrenaline_rush')}
@@ -1490,7 +1499,19 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.readiness_spec_conversion = self.subtlety_readiness_conversion
         self.human_racial_stats = ['haste', 'readiness']
         
+        #overrides setting, using Ambush + Vanish on CD is critical
+        self.settings.use_opener = 'always'
+        self.settings.opener_name = 'ambush'
+        opener_cd = 30
+        # Sanguinary Vein
+        self.damage_modifier_cache *= 1.35
+        
+        #update spec specific proc rates
+        if getattr(self.stats.procs, 'legendary_capacitive_meta'):
+            getattr(self.stats.procs, 'legendary_capacitive_meta').proc_rate_modifier = 1.114
+        
         self.set_constants()
+        self.agi_multiplier *= 1.30
         
         self.base_energy_regen = 10.
         self.max_energy = 100.
@@ -1500,11 +1521,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.base_energy_regen *= 1 + .05 * (1 + min(self.settings.num_boss_adds, 2))
             self.max_energy += 15
         self.shd_duration = 8
+        # leveling perks
         if self.level == 100:
             self.shd_duration += 2
+            self.ability_cds['vanish'] -= 30
+            self.ability_info['eviscerate'] = (30, 'strike')
         self.shd_cd = self.get_spell_cd('shadow_dance') + self.settings.response_time + self.major_cd_delay
         self.settings.cycle.raid_crits_per_second = self.get_adv_param('hat_triggers_per_second', self.settings.cycle.raid_crits_per_second, min_bound=0, max_bound=600)
-
+        
         cost_modifier = self.stats.gear_buffs.rogue_t15_4pc_reduced_cost()
         shd_ambush_cost_modifier = 1.
         backstab_cost_mod = cost_modifier / ((self.shd_cd - self.shd_duration) / self.shd_cd)

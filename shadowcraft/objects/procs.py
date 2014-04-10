@@ -181,7 +181,7 @@ class ProcsList(object):
         for proc_name in self.allowed_procs:
             proc = getattr(self, proc_name)
             if proc:
-                if proc.stat in ('spell_damage', 'physical_damage', 'melee_spell_damage'):
+                if proc.stat in ('spell_damage', 'physical_damage'):
                     procs.append(proc)
 
         return procs

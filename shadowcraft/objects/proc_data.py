@@ -43,7 +43,7 @@ allowed_procs = {
         'trigger': 'all_attacks'
     },
     'legendary_capacitive_meta': {
-        'stat':'melee_spell_damage',
+        'stat':'spell_damage',
         'value': 280,
         'duration': 0,
         'max_stacks': 5,
