@@ -734,7 +734,7 @@ class DamageCalculator(object):
         return self.buffs.buff_all_crit()
 
     def buff_spell_crit(self):
-        return self.buffs.buff_spell_crit() + self.buffs.buff_all_crit()
+        return self.buffs.buff_all_crit()
 
     def crit_damage_modifiers(self, crit_damage_bonus_modifier=1):
         # The obscure formulae for the different crit enhancers can be found here
@@ -752,7 +752,7 @@ class DamageCalculator(object):
         # Passes base armor reduced by armor debuffs or overridden armor
         if armor is None:
             armor = self.target_base_armor
-        return self.buffs.armor_reduction_multiplier() * armor
+        return armor #* self.buffs.armor_reduction_multiplier()
 
     def raid_settings_modifiers(self, attack_kind, armor=None, affect_resil=True):
         # This function wraps spell, bleed and physical debuffs from raid

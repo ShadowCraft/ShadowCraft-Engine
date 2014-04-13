@@ -117,9 +117,6 @@ class Buffs(object):
     def buff_all_crit(self):
         return [0, .05][self.crit_chance_buff]
 
-    def buff_spell_crit(self):
-        return 0
-
     def armor_reduction_multiplier(self):
         return [1, .88][self.armor_debuff]
 
