@@ -41,7 +41,7 @@ class RogueDamageCalculator(DamageCalculator):
     raid_modifiers_cache = {'physical':None,
                            'bleed':None,
                            'spell':None}
-                
+    
     ability_info = {
             'ambush':              (60, 'strike'),
             'backstab':            (35, 'strike'),
@@ -85,6 +85,8 @@ class RogueDamageCalculator(DamageCalculator):
             self._set_constants_for_level()
 
     def _set_constants_for_level(self):
+        # this calls _set_constants_for_level() in calcs/__init__.py because this supercedes it, this is how inheretence in python works
+        # any modules that expand on rogue/__init__.py and use this should do the same
         super(RogueDamageCalculator, self)._set_constants_for_level()
         self.normalize_ep_stat = self.get_adv_param('norm_ep_stat', self.settings.default_ep_stat, ignore_bounds=True)
         self.damage_modifier_cache = 1
@@ -95,17 +97,12 @@ class RogueDamageCalculator(DamageCalculator):
         if self.settings.is_pvp:
             self.default_ep_stats.append('pvp_power')
 
-    def get_weapon_damage_bonus(self):
-        # Override this in your modeler to implement weapon damage boosts
-        # such as Unheeded Warning.
-        return 0
-
     def get_weapon_damage(self, hand, ap, is_normalized=True):
         weapon = getattr(self.stats, hand)
         if is_normalized:
-            damage = weapon.normalized_damage(ap) #+ self.get_weapon_damage_bonus() looks to be a dead mechanic, commented out for now.
+            damage = weapon.normalized_damage(ap)
         else:
-            damage = weapon.damage(ap) #+ self.get_weapon_damage_bonus()
+            damage = weapon.damage(ap)
         return damage
 
     def oh_penalty(self):
@@ -124,15 +121,18 @@ class RogueDamageCalculator(DamageCalculator):
             self.raid_modifiers_cache[damage_type] = self.raid_settings_modifiers(attack_kind=damage_type, armor=armor)
         base_modifier *= self.raid_modifiers_cache[damage_type]
         
-        # potent poisons and executioner should be calculated outside, and passed in
-        #print base_modifier, mastery_modifier
+        # potent poisons and executioner should be calculated outside, and passed in, no need to recalculate the % each time
         base_modifier *= executioner_modifier
         base_modifier *= potent_poisons_modifier
         
         if not self.crit_damage_cache:
             self.crit_damage_cache = self.crit_damage_modifiers()
 
-        return (base_modifier, base_modifier*self.crit_damage_cache)
+        return (base_modifier, self.crit_damage_cache)
+    
+    def get_dps_contribution(self, base_damage, crit_rate, frequency, crit_modifier):
+        average_hit = base_damage * (1 - crit_rate) + base_damage * crit_rate * crit_modifier
+        return average_hit * frequency
     
     def get_damage_breakdown(self, current_stats, attacks_per_second, crit_rates, damage_procs):
         average_ap = current_stats['ap'] + current_stats['agi'] + current_stats['str']
@@ -152,131 +152,104 @@ class RogueDamageCalculator(DamageCalculator):
             potent_poisons_mod = 1 + self.assassination_mastery_conversion * self.stats.get_mastery_from_rating(current_stats['mastery'])
         
         # these return the tuple (damage_modifier, crit_multiplier)
-        physical_modifiers = self.get_modifiers(damage_type='physical')
-        spell_modifiers = self.get_modifiers(damage_type='spell')
-        bleed_modifiers = self.get_modifiers(damage_type='bleed')
+        physical_modifier, physical_crit_modifier = self.get_modifiers(damage_type='physical')
+        spell_modifier, spell_crit_modifier = self.get_modifiers(damage_type='spell')
+        bleed_modifier, bleed_crit_modifier = self.get_modifiers(damage_type='bleed')
         
         if 'mh_autoattacks' in attacks_per_second:
             # Assumes mh and oh attacks are both active at the same time. As they should always be.
             # Friends don't let friends raid without gear.
-            (mh_base_damage, mh_crit_damage) = self.mh_damage(average_ap)
-            mh_base_damage *= physical_modifiers[0]
-            mh_crit_damage *= physical_modifiers[1]
+            mh_base_damage = self.mh_damage(average_ap) * physical_modifier
             mh_hit_rate = self.dw_mh_hit_chance - crit_rates['mh_autoattacks']
-            average_mh_hit = mh_hit_rate * mh_base_damage + crit_rates['mh_autoattacks'] * mh_crit_damage
-            crit_mh_hit = crit_rates['mh_autoattacks'] * mh_crit_damage
-            mh_dps_tuple = average_mh_hit * attacks_per_second['mh_autoattacks'], crit_mh_hit * attacks_per_second['mh_autoattacks']
+            average_mh_hit = mh_hit_rate * mh_base_damage + crit_rates['mh_autoattacks'] * mh_base_damage * physical_crit_modifier
+            mh_dps_tuple = average_mh_hit * attacks_per_second['mh_autoattacks']
             
-            (oh_base_damage, oh_crit_damage) = self.oh_damage(average_ap)
-            oh_base_damage *= physical_modifiers[0]
-            oh_crit_damage *= physical_modifiers[1]
+            oh_base_damage = self.oh_damage(average_ap) * physical_modifier
             oh_hit_rate = self.dw_oh_hit_chance - crit_rates['oh_autoattacks']
-            average_oh_hit = oh_hit_rate * oh_base_damage + crit_rates['oh_autoattacks'] * oh_crit_damage
-            crit_oh_hit = crit_rates['oh_autoattacks'] * oh_crit_damage
-            oh_dps_tuple = average_oh_hit * attacks_per_second['oh_autoattacks'], crit_oh_hit * attacks_per_second['oh_autoattacks']
-            
+            average_oh_hit = oh_hit_rate * oh_base_damage + crit_rates['oh_autoattacks'] * oh_base_damage * physical_crit_modifier
+            oh_dps_tuple = average_oh_hit * attacks_per_second['oh_autoattacks']
             if self.settings.merge_damage:
-                damage_breakdown['autoattack'] = mh_dps_tuple[0] + oh_dps_tuple[0], mh_dps_tuple[1] + oh_dps_tuple[1]
+                damage_breakdown['autoattack'] = mh_dps_tuple + oh_dps_tuple
             else:
-                damage_breakdown['mh_autoattack'] = mh_dps_tuple[0], mh_dps_tuple[1]
-                damage_breakdown['oh_autoattack'] = oh_dps_tuple[0], oh_dps_tuple[1]
+                damage_breakdown['mh_autoattack'] = mh_dps_tuple
+                damage_breakdown['oh_autoattack'] = oh_dps_tuple
             
         for key in attacks_per_second.keys():
             if not attacks_per_second[key]:
                 del attacks_per_second[key]
         
         if 'mutilate' in attacks_per_second:
-            mh_dmg = self.mh_mutilate_damage(average_ap)
-            mh_dmg = (mh_dmg[0] * physical_modifiers[0], mh_dmg[1] * physical_modifiers[1])
-            oh_dmg = self.oh_mutilate_damage(average_ap)
-            oh_dmg = (oh_dmg[0] * physical_modifiers[0], oh_dmg[1] * physical_modifiers[1])
-            
-            mh_mutilate_dps = self.get_dps_contribution(mh_dmg, crit_rates['mutilate'], attacks_per_second['mutilate'])
-            oh_mutilate_dps = self.get_dps_contribution(oh_dmg, crit_rates['mutilate'], attacks_per_second['mutilate'])
+            mh_dmg = self.mh_mutilate_damage(average_ap) * physical_modifier
+            oh_dmg = self.oh_mutilate_damage(average_ap) * physical_modifier
+            mh_mutilate_dps = self.get_dps_contribution(mh_dmg, crit_rates['mutilate'], attacks_per_second['mutilate'], physical_crit_modifier)
+            oh_mutilate_dps = self.get_dps_contribution(oh_dmg, crit_rates['mutilate'], attacks_per_second['mutilate'], physical_crit_modifier)
             if self.settings.merge_damage:
-                damage_breakdown['mutilate'] = mh_mutilate_dps[0] + oh_mutilate_dps[0], mh_mutilate_dps[1] + oh_mutilate_dps[1]
+                damage_breakdown['mutilate'] = mh_mutilate_dps + oh_mutilate_dps
             else:
-                damage_breakdown['mh_mutilate'] = mh_mutilate_dps[0], mh_mutilate_dps[1]
-                damage_breakdown['oh_mutilate'] = oh_mutilate_dps[0], oh_mutilate_dps[1]
+                damage_breakdown['mh_mutilate'] = mh_mutilate_dps
+                damage_breakdown['oh_mutilate'] = oh_mutilate_dps
             
         for strike in ('hemorrhage', 'backstab', 'sinister_strike', 'revealing_strike', 'main_gauche', 'ambush', 'dispatch', 'shuriken_toss'):
             if strike in attacks_per_second:
-                dps = self.get_formula(strike)(average_ap)
-                dps = (dps[0] * physical_modifiers[0], dps[1] * physical_modifiers[1])
-                dps = self.get_dps_contribution(dps, crit_rates[strike], attacks_per_second[strike])
+                dps = self.get_formula(strike)(average_ap) * physical_modifier
+                dps = self.get_dps_contribution(dps, crit_rates[strike], attacks_per_second[strike], physical_crit_modifier)
                 if strike in ('sinister_strike', 'backstab'):
-                    dps = tuple([i * self.stats.gear_buffs.rogue_t14_2pc_damage_bonus(strike) for i in dps])
+                    dps *= self.stats.gear_buffs.rogue_t14_2pc_damage_bonus(strike)
                 damage_breakdown[strike] = dps
 
         for poison in ('venomous_wounds', 'deadly_poison', 'wound_poison', 'deadly_instant_poison', 'instant_poison'):
             if poison in attacks_per_second:
-                damage = self.get_formula(poison)(average_ap)
-                damage = (damage[0] * spell_modifiers[0] * potent_poisons_mod,
-                          damage[1] * spell_modifiers[1] * potent_poisons_mod)
-                damage = self.get_dps_contribution(damage, crit_rates[poison], attacks_per_second[poison])
+                damage = self.get_formula(poison)(average_ap) * spell_modifier * potent_poisons_mod
+                damage = self.get_dps_contribution(damage, crit_rates[poison], attacks_per_second[poison], spell_crit_modifier)
                 if poison == 'venomous_wounds':
-                    damage = tuple([i * self.stats.gear_buffs.rogue_t14_2pc_damage_bonus('venomous_wounds') for i in damage])
+                    damage *= self.stats.gear_buffs.rogue_t14_2pc_damage_bonus('venomous_wounds')
                 damage_breakdown[poison] = damage
 
         if 'mh_killing_spree' in attacks_per_second:
-            mh_dmg = self.mh_killing_spree_damage(average_ap)
-            mh_dmg = (mh_dmg[0] * physical_modifiers[0], mh_dmg[1] * physical_modifiers[1])
-            oh_dmg = self.oh_killing_spree_damage(average_ap)
-            oh_dmg = (oh_dmg[0] * physical_modifiers[0], oh_dmg[1] * physical_modifiers[1])
-            mh_killing_spree_dps = self.get_dps_contribution(mh_dmg, crit_rates['killing_spree'], attacks_per_second['mh_killing_spree'])
-            oh_killing_spree_dps = self.get_dps_contribution(oh_dmg, crit_rates['killing_spree'], attacks_per_second['oh_killing_spree'])
+            mh_dmg = self.mh_killing_spree_damage(average_ap) * physical_modifier
+            oh_dmg = self.oh_killing_spree_damage(average_ap) * physical_modifier
+            mh_killing_spree_dps = self.get_dps_contribution(mh_dmg, crit_rates['killing_spree'], attacks_per_second['mh_killing_spree'], physical_crit_modifier)
+            oh_killing_spree_dps = self.get_dps_contribution(oh_dmg, crit_rates['killing_spree'], attacks_per_second['oh_killing_spree'], physical_crit_modifier)
             if self.settings.merge_damage:
-                damage_breakdown['killing_spree'] = mh_killing_spree_dps[0] + oh_killing_spree_dps[0], mh_killing_spree_dps[1] + oh_killing_spree_dps[1]
+                damage_breakdown['killing_spree'] = mh_killing_spree_dps + oh_killing_spree_dps
             else:
-                damage_breakdown['mh_killing_spree'] = mh_killing_spree_dps[0], mh_killing_spree_dps[1]
-                damage_breakdown['oh_killing_spree'] = oh_killing_spree_dps[0], oh_killing_spree_dps[1]
+                damage_breakdown['mh_killing_spree'] = mh_killing_spree_dps
+                damage_breakdown['oh_killing_spree'] = oh_killing_spree_dps
         
         if 'garrote_ticks' in attacks_per_second:
-            dps_tuple = self.garrote_tick_damage(average_ap)
-            dps_tuple = (dps_tuple[0] * bleed_modifiers[0], dps_tuple[1] * bleed_modifiers[1])
-            damage_breakdown['garrote'] = self.get_dps_contribution(dps_tuple, crit_rates['garrote'], attacks_per_second['garrote_ticks'])        
+            dps_tuple = self.garrote_tick_damage(average_ap) * bleed_modifier
+            damage_breakdown['garrote'] = self.get_dps_contribution(dps_tuple, crit_rates['garrote'], attacks_per_second['garrote_ticks'], physical_crit_modifier)        
         
         if 'hemorrhage_ticks' in attacks_per_second:
-            hemo_hit = self.hemorrhage_tick_damage(average_ap, from_crit_hemo=False)
-            hemo_hit = (hemo_hit[0] * bleed_modifiers[0], hemo_hit[1] * bleed_modifiers[1])
-            hemo_crit = self.hemorrhage_tick_damage(average_ap, from_crit_hemo=True)
-            hemo_crit = (hemo_crit[0] * bleed_modifiers[0], hemo_crit[1] * bleed_modifiers[1])
-            dps_from_hit_hemo = self.get_dps_contribution(hemo_hit, crit_rates['hemorrhage'], attacks_per_second['hemorrhage_ticks'] * (1 - crit_rates['hemorrhage']))
-            dps_from_crit_hemo = self.get_dps_contribution(hemo_crit, crit_rates['hemorrhage'], attacks_per_second['hemorrhage_ticks'] * crit_rates['hemorrhage'])
-            damage_breakdown['hemorrhage_dot'] = dps_from_hit_hemo[0] + dps_from_crit_hemo[0], dps_from_hit_hemo[1] + dps_from_crit_hemo[1]
+            hemo_hit = self.hemorrhage_tick_damage(average_ap) * bleed_modifier
+            hemo_crit = self.hemorrhage_tick_damage(average_ap) * bleed_modifier * bleed_crit_modifier
+            dps_from_hit_hemo = self.get_dps_contribution(hemo_hit, crit_rates['hemorrhage'], attacks_per_second['hemorrhage_ticks'] * (1 - crit_rates['hemorrhage']), bleed_crit_modifier)
+            dps_from_crit_hemo = self.get_dps_contribution(hemo_crit, crit_rates['hemorrhage'], attacks_per_second['hemorrhage_ticks'] * crit_rates['hemorrhage'], bleed_crit_modifier)
+            damage_breakdown['hemorrhage_dot'] = dps_from_hit_hemo + dps_from_crit_hemo
         
         if 'rupture_ticks' in attacks_per_second:
-            average_dps = crit_dps = 0
+            average_dps = 0
             for i in xrange(1, 6):
-                dps_tuple = self.rupture_tick_damage(average_ap, i)
-                dps_tuple = (dps_tuple[0] * bleed_modifiers[0] * executioner_mod,
-                             dps_tuple[1] * bleed_modifiers[1] * executioner_mod)
-                dps_tuple = self.get_dps_contribution(dps_tuple, crit_rates['rupture_ticks'], attacks_per_second['rupture_ticks'][i])
-                average_dps += dps_tuple[0]
-                crit_dps += dps_tuple[1]
-            damage_breakdown['rupture'] = average_dps, crit_dps
+                dps_tuple = self.rupture_tick_damage(average_ap, i) * bleed_modifier * executioner_mod
+                dps_tuple = self.get_dps_contribution(dps_tuple, crit_rates['rupture_ticks'], attacks_per_second['rupture_ticks'][i], physical_crit_modifier)
+                average_dps += dps_tuple
+            damage_breakdown['rupture'] = average_dps
     
         if 'envenom' in attacks_per_second:
-            average_dps = crit_dps = 0
+            average_dps = 0
             for i in xrange(1, 6):
-                dps_tuple = self.envenom_damage(average_ap, i)
-                dps_tuple = (dps_tuple[0] * spell_modifiers[0] * potent_poisons_mod,
-                             dps_tuple[1] * spell_modifiers[1] * potent_poisons_mod)
-                dps_tuple = self.get_dps_contribution(dps_tuple, crit_rates['envenom'], attacks_per_second['envenom'][i])
-                average_dps += dps_tuple[0]
-                crit_dps += dps_tuple[1]
-            damage_breakdown['envenom'] = average_dps, crit_dps
+                dps_tuple = self.envenom_damage(average_ap, i) * potent_poisons_mod * spell_modifier
+                dps_tuple = self.get_dps_contribution(dps_tuple, crit_rates['envenom'], attacks_per_second['envenom'][i], spell_crit_modifier)
+                average_dps += dps_tuple
+            damage_breakdown['envenom'] = average_dps
 
         if 'eviscerate' in attacks_per_second:
-            average_dps = crit_dps = 0
+            average_dps = 0
             for i in xrange(1, 6):
-                dps_tuple = self.eviscerate_damage(average_ap, i)
-                dps_tuple = (dps_tuple[0] * physical_modifiers[0] * executioner_mod,
-                             dps_tuple[1] * physical_modifiers[1] * executioner_mod)
-                dps_tuple = self.get_dps_contribution(dps_tuple, crit_rates['eviscerate'], attacks_per_second['eviscerate'][i])
-                average_dps += dps_tuple[0]
-                crit_dps += dps_tuple[1]
-            damage_breakdown['eviscerate'] = average_dps, crit_dps
+                dps_tuple = self.eviscerate_damage(average_ap, i) * physical_modifier * executioner_mod
+                dps_tuple = self.get_dps_contribution(dps_tuple, crit_rates['eviscerate'], attacks_per_second['eviscerate'][i], physical_crit_modifier)
+                average_dps += dps_tuple
+            damage_breakdown['eviscerate'] = average_dps
                    
         for proc in damage_procs:
             if proc.proc_name not in damage_breakdown:
@@ -294,233 +267,161 @@ class RogueDamageCalculator(DamageCalculator):
                 ability = attacks_per_second[self.settings.opener_name]
             nightstalker_percent = self.total_openers_per_second / (ability)
             modifier = 1 + nightstalker_mod * nightstalker_percent
-            damage_breakdown[self.settings.opener_name] = tuple([i * modifier for i in damage_breakdown[self.settings.opener_name]])
+            damage_breakdown[self.settings.opener_name] *= modifier
         
         #calculate multistrike here, really cheap to calculate
         #turns out the 2 chance system yields a very basic linear pattern, the damage modifier is 30% of the multistrike %!
         multistrike_multiplier = 1 + .3 * self.stats.get_multistrike_chance_from_rating(rating=current_stats['multistrike'])
         for ability in damage_breakdown:
-            damage_breakdown[ability] = (damage_breakdown[ability][0] * multistrike_multiplier,
-                                         damage_breakdown[ability][1] * multistrike_multiplier)
+            damage_breakdown[ability] *= multistrike_multiplier
         
         self.add_exported_data(damage_breakdown)
 
         return damage_breakdown
 
-    def mh_damage(self, ap, armor=None):
+    def mh_damage(self, ap):
         weapon_damage = self.get_weapon_damage('mh', ap, is_normalized=False)
-
         damage = weapon_damage
-        crit_damage = damage
+        return damage
 
-        return damage, crit_damage
-
-    def oh_damage(self, ap, armor=None):
+    def oh_damage(self, ap):
         weapon_damage = self.get_weapon_damage('oh', ap, is_normalized=False)
-
         damage = self.oh_penalty() * weapon_damage
-        crit_damage = damage
-
-        return damage, crit_damage
+        return damage
     
-    def mh_shuriken(self, ap, armor=None):
+    def mh_shuriken(self, ap):
         return .75 * mh_damage(ap, armor=armor)
     
-    def oh_shuriken(self, ap, armor=None):
+    def oh_shuriken(self, ap):
         return .75 * oh_damage(ap, armor=armor)
 
-    def backstab_damage(self, ap, armor=None):
+    def backstab_damage(self, ap):
         weapon_damage = self.get_weapon_damage('mh', ap)
-
         damage = 3.80 * (weapon_damage) 
-        crit_damage = damage
+        return damage
 
-        return damage, crit_damage
-
-    def dispatch_damage(self, ap, armor=None):
+    def dispatch_damage(self, ap):
         weapon_damage = self.get_weapon_damage('mh', ap)
-
         damage = [3.31, 4.80][self.stats.mh.type == 'dagger'] * (weapon_damage)
-        crit_damage = damage
+        return damage
 
-        return damage, crit_damage
-
-    def mh_mutilate_damage(self, ap, armor=None):
+    def mh_mutilate_damage(self, ap):
         mh_weapon_damage = self.get_weapon_damage('mh', ap)
-
         mh_damage = [1.37, 2.0][self.stats.mh.type == 'dagger'] * (mh_weapon_damage)
-        crit_mh_damage = mh_damage
+        return mh_damage
 
-        return mh_damage, crit_mh_damage
-
-    def oh_mutilate_damage(self, ap, armor=None):
+    def oh_mutilate_damage(self, ap):
         oh_weapon_damage = self.get_weapon_damage('oh', ap)
-
         oh_damage = [1.37, 2.0][self.stats.mh.type == 'dagger'] * (self.oh_penalty() * oh_weapon_damage)
-        crit_oh_damage = oh_damage
+        return oh_damage
 
-        return oh_damage, crit_oh_damage
-
-    def sinister_strike_damage(self, ap, armor=None):
+    def sinister_strike_damage(self, ap):
         weapon_damage = self.get_weapon_damage('mh', ap)
-        
         damage = [1.3, 1.88][self.stats.mh.type == 'dagger'] * weapon_damage
-        crit_damage = damage
+        return damage
 
-        return damage, crit_damage
-
-    def hemorrhage_damage(self, ap, armor=None):
+    def hemorrhage_damage(self, ap):
         weapon_damage = self.get_weapon_damage('mh', ap)
-
         damage = [1.6, 2.32][self.stats.mh.type == 'dagger'] * weapon_damage
-        crit_damage = damage
+        return damage
 
-        return damage, crit_damage
-
-    def hemorrhage_tick_damage(self, ap, from_crit_hemo=False, armor=None):
+    def hemorrhage_tick_damage(self, ap):
         # Call this function twice to get all four crit/non-crit hemo values.
-        hemo_damage = self.hemorrhage_damage(ap, armor=armor)[from_crit_hemo]
-
+        hemo_damage = self.hemorrhage_damage(ap, armor=armor)
         tick_conversion_factor = .5 / 8
         tick_damage = hemo_damage * tick_conversion_factor
+        return tick_damage
 
-        return tick_damage, tick_damage #can't crit
-
-    def ambush_damage(self, ap, armor=None):
+    def ambush_damage(self, ap):
         weapon_damage = self.get_weapon_damage('mh', ap) 
         percentage_damage_bonus = 3.65 * [1, 1.447][self.stats.mh.type == 'dagger']
-
         damage = percentage_damage_bonus * (weapon_damage)
-        crit_damage = damage
+        return damage
 
-        return damage, crit_damage
-
-    def revealing_strike_damage(self, ap, armor=None):
+    def revealing_strike_damage(self, ap):
         weapon_damage = self.get_weapon_damage('mh', ap, is_normalized=False)
-
         damage = 1.60 * weapon_damage
-        crit_damage = damage
-
-        return damage, crit_damage
+        return damage
 
     def venomous_wounds_damage(self, ap):
         damage = (.160 * ap)
-        crit_damage = damage
+        return damage
 
-        return damage, crit_damage
-
-    def main_gauche_damage(self, ap, armor=None):
+    def main_gauche_damage(self, ap):
         weapon_damage = self.get_weapon_damage('mh', ap)
-
         damage = 1.2 * weapon_damage
-        crit_damage = damage
+        return damage
 
-        return damage, crit_damage
-
-    def mh_killing_spree_damage(self, ap, armor=None):
+    def mh_killing_spree_damage(self, ap):
         mh_weapon_damage = self.get_weapon_damage('mh', ap)
 
         mh_damage = mh_weapon_damage
-        crit_mh_damage = mh_damage
+        return mh_damage
 
-        return mh_damage, crit_mh_damage
-
-    def oh_killing_spree_damage(self, ap, armor=None):
+    def oh_killing_spree_damage(self, ap):
         oh_weapon_damage = self.get_weapon_damage('oh', ap)
-
         oh_damage = self.oh_penalty() * oh_weapon_damage
-        crit_oh_damage = oh_damage
-
-        return oh_damage, crit_oh_damage
+        return oh_damage
 
     def deadly_poison_tick_damage(self, ap):
         tick_damage = (.213 * ap)
-        crit_tick_damage = tick_damage
-
-        return tick_damage, crit_tick_damage
+        return tick_damage
 
     def deadly_instant_poison_damage(self, ap):
         damage = (.109 * ap)
-        crit_damage = damage
-
-        return damage, crit_damage
+        return damage
 
     def instant_poison_damage(self, ap):
         damage = (.15 * ap)
-        crit_damage = damage
-
-        return damage, crit_damage
+        return damage
 
     def wound_poison_damage(self, ap):
         damage = (.120 * ap)
-        crit_damage = damage
-
-        return damage, crit_damage
+        return damage
 
     def garrote_tick_damage(self, ap):
         tick_damage = (ap * 0.078)
-        crit_tick_damage = tick_damage
-
-        return tick_damage, crit_tick_damage
+        return tick_damage
 
     def rupture_tick_damage(self, ap, cp):
         ap_multiplier_tuple = (0, .025, .04, .05, .056, .062)
         tick_damage = (ap_multiplier_tuple[cp] * ap)
-        crit_tick_damage = tick_damage
+        return tick_damage
 
-        return tick_damage, crit_tick_damage
-
-    def eviscerate_damage(self, ap, cp, armor=None):
+    def eviscerate_damage(self, ap, cp):
         damage = (0.18 * cp * ap)
-        crit_damage = damage
-        
-        return damage, crit_damage
+        return damage
 
     def envenom_damage(self, ap, cp):
         damage = (0.134 * cp * ap)
-        crit_damage = damage
-        
-        return damage, crit_damage
+        return damage
 
-    def fan_of_knives_damage(self, ap, armor=None):
+    def fan_of_knives_damage(self, ap):
         damage = (.175 * ap)
-        crit_damage = damage
-        
-        return damage, crit_damage
+        return damage
 
-    def crimson_tempest_damage(self, ap, cp, armor=None):
+    def crimson_tempest_damage(self, ap, cp):
         damage = (.0275 * cp * ap)
-        crit_damage = damage
-        
-        return damage, crit_damage
+        return damage
 
-    def crimson_tempest_tick_damage(self, ap, cp, armor=None, from_crit_ct=False):
-        ct_damage = self.crimson_tempest_damage(ap, cp, armor=armor)[from_crit_ct]
-
+    def crimson_tempest_tick_damage(self, ap, cp):
+        ct_damage = self.crimson_tempest_damage(ap, cp, armor=armor)
         tick_conversion_factor = 2.4 / 6
         tick_damage = ct_damage * tick_conversion_factor
+        return tick_damage
 
-        return tick_damage, tick_damage
-
-    def shiv_damage(self, ap, armor=None):
+    def shiv_damage(self, ap):
         oh_weapon_damage = self.get_weapon_damage('oh', ap, is_normalized=False)
-
         oh_damage = .25 * (self.oh_penalty() * oh_weapon_damage)
-        crit_oh_damage = oh_damage
-
-        return oh_damage, crit_oh_damage
+        return oh_damage
 
     def throw_damage(self, ap):
         damage = (.05 * ap)
-        crit_damage = damage
-        
-        return damage, crit_damage
+        return damage
 
     def shuriken_toss_damage(self, ap):
         damage = (.6 * ap)
-        crit_damage = damage
-        
-        return damage, crit_damage
+        return damage
     
     def get_formula(self, name):
         formulas = {

@@ -63,13 +63,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                     if abs(new_dist[item][index] - old_dist[item][index]) > precision:
                         return False
         return True
-
-    def get_dps_contribution(self, damage_tuple, crit_rate, frequency):
-        (base_damage, crit_damage) = damage_tuple
-        average_hit = base_damage * (1 - crit_rate) + crit_damage * crit_rate
-        crit_contribution = crit_damage * crit_rate
-        return average_hit * frequency, crit_contribution * frequency
-
+    
     ###########################################################################
     # Overrides: these make the ep methods default to glyphs/talents or weapon
     # setups that we are really modeling.
@@ -322,8 +316,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         average_hit = proc_value * multiplier
         average_damage = average_hit * (1 + crit_rate * (crit_multiplier - 1)) * proc_count
-        crit_contribution = average_hit * crit_multiplier * crit_rate * proc_count
-        return average_damage, crit_contribution
+        return average_damage
 
     def append_damage_on_use(self, average_ap, current_stats, damage_breakdown):
         on_use_damage_list = []
@@ -546,7 +539,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if poison:
             poison_base_proc_rate = .3
         else:
-            poison_base_proc_rate = 0
+            #poison_base_proc_rate = 0
+            return
+        proc_multiplier = 1
+        if self.settings.cycle.blade_flurry:
+            proc_multiplier = 1 + self.settings.num_boss_adds
 
         if self.settings.is_assassination_rogue() and poison:
             poison_base_proc_rate += .2
@@ -559,12 +556,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             avg_poison_proc_rate = poison_base_proc_rate
         
         if self.settings.dmg_poison == 'ip':
-            poison_procs = avg_poison_proc_rate * total_hits_per_second - 1 / self.settings.duration
+            poison_procs = avg_poison_proc_rate * total_hits_per_second * proc_multiplier - 1 / self.settings.duration
             attacks_per_second['instant_poison'] = poison_procs
         elif self.settings.dmg_poison == 'dp':
-            poison_procs = avg_poison_proc_rate * total_hits_per_second - 1 / self.settings.duration
+            poison_procs = avg_poison_proc_rate * total_hits_per_second * proc_multiplier - 1 / self.settings.duration
             attacks_per_second['deadly_instant_poison'] = poison_procs
-            attacks_per_second['deadly_poison'] = 1. / 3
+            attacks_per_second['deadly_poison'] = 1. / 3  * proc_multiplier
         elif self.settings.dmg_poison == 'wp':
             attacks_per_second['wound_poison'] = total_hits_per_second * avg_poison_proc_rate
 
@@ -768,27 +765,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         return current_stats, attacks_per_second, crit_rates, damage_procs
     
     def compute_damage_from_aps(self, current_stats, attacks_per_second, crit_rates, damage_procs):
+        # this method exists solely to let us use cached values you would get from determine stats
+        # really only useful for combat calculations (restless blades calculations)
         damage_breakdown = self.get_damage_breakdown(current_stats, attacks_per_second, crit_rates, damage_procs)
-
-        # Discard the crit component.
-        for key in damage_breakdown:
-            damage_breakdown[key] = damage_breakdown[key][0]
-
         return damage_breakdown
     
     def compute_damage(self, attack_counts_function):
-        # TODO: Crit cap
-        #
-        # TODO: Hit/Exp procs
-        
         current_stats, attacks_per_second, crit_rates, damage_procs = self.determine_stats(attack_counts_function)
-
         damage_breakdown = self.get_damage_breakdown(current_stats, attacks_per_second, crit_rates, damage_procs)
-
-        # Discard the crit component.
-        for key in damage_breakdown:
-            damage_breakdown[key] = damage_breakdown[key][0]
-
         return damage_breakdown
         
     ###########################################################################
@@ -819,8 +803,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             getattr(self.stats.procs, 'legendary_capacitive_meta').proc_rate_modifier = 1.789
         if getattr(self.stats.procs, 'fury_of_xuen'):
             getattr(self.stats.procs, 'fury_of_xuen').proc_rate_modifier = 1.55
-        
-        self.set_constants()
+            
+        #spec specific glyph behaviour
+        if self.glyphs.disappearance:
+            self.ability_cds['vanish'] = 60
         
         self.base_energy_regen = 10
         self.max_energy = 100.
@@ -831,10 +817,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.max_energy += 15
         if self.glyphs.energy:
             self.max_energy += 20
-        
-        #spec specific glyph behaviour
-        if self.glyphs.disappearance:
-            self.ability_cds['vanish'] = 60
+            
+        self.set_constants()
 
         self.vendetta_duration = 20 + 10 * self.glyphs.vendetta
         self.vendetta_uptime = self.vendetta_duration / (self.get_spell_cd('vendetta') + self.settings.response_time + self.major_cd_delay)
@@ -1203,8 +1187,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if getattr(self.stats.procs, 'fury_of_xuen'):
             getattr(self.stats.procs, 'fury_of_xuen').proc_rate_modifier = 1.15
         
-        self.set_constants()
-        
         #combat specific constants
         self.max_bandits_guile_buff = 1.3
         if self.level == 100:
@@ -1223,6 +1205,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.rvs_duration = 24
         if self.settings.dmg_poison == 'dp' and self.level == 100:
             self.settings.dmg_poison = 'ip'
+        
+        self.set_constants()
         
         cds = {'ar':self.get_spell_cd('adrenaline_rush')}
         
@@ -1251,7 +1235,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             damage_breakdown['blade_flurry'] = 0
             for key in damage_breakdown:
                 if key in self.melee_attacks:
-                    damage_breakdown['blade_flurry'] += bf_mod * damage_breakdown[key] * min(self.settings.num_boss_adds, bf_max_targets)
+                    damage_breakdown['blade_flurry'] += bf_mod * damage_breakdown[key] * self.settings.num_boss_adds
         
         return damage_breakdown
     
