@@ -89,8 +89,7 @@ class DamageCalculator(object):
             self.target_base_armor = self.TARGET_BASE_ARMOR_VALUES[self.target_level]
         except KeyError as e:
             raise exceptions.InvalidInputException(_('There\'s no armor value for a target level {level}').format(level=str(e)))
-        self.melee_crit_reduction = .01 * self.level_difference
-        self.spell_crit_reduction = .01 * self.level_difference
+        self.crit_reduction = .01 * self.level_difference
 
     def _set_constants_for_class(self):
         # These factors are class-specific. Generaly those go in the class module,
@@ -731,9 +730,6 @@ class DamageCalculator(object):
         return hit_chance
 
     def buff_melee_crit(self):
-        return self.buffs.buff_all_crit()
-
-    def buff_spell_crit(self):
         return self.buffs.buff_all_crit()
 
     def crit_damage_modifiers(self, crit_damage_bonus_modifier=1):

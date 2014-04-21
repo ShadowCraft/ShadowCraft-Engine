@@ -182,7 +182,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         return cp_per_cpg
 
     def get_crit_rates(self, stats):
-        base_melee_crit_rate = self.melee_crit_rate(crit=stats['crit'])
+        base_melee_crit_rate = self.crit_rate(crit=stats['crit'])
         crit_rates = {
             'mh_autoattacks': min(base_melee_crit_rate, self.dw_mh_hit_chance),
             'oh_autoattacks': min(base_melee_crit_rate, self.dw_oh_hit_chance),
@@ -293,11 +293,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if proc.stat == 'spell_damage':
             multiplier = self.raid_settings_modifiers('spell')
             crit_multiplier = self.crit_damage_modifiers()
-            crit_rate = self.spell_crit_rate(crit=current_stats['crit'])
+            crit_rate = self.crit_rate(crit=current_stats['crit'])
         elif proc.stat == 'physical_damage':
             multiplier = self.raid_settings_modifiers('physical')
             crit_multiplier = self.crit_damage_modifiers()
-            crit_rate = self.melee_crit_rate(crit=current_stats['crit'])
+            crit_rate = self.crit_rate(crit=current_stats['crit'])
         else:
             return 0, 0
 
@@ -307,11 +307,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         proc_value = proc.value
         #280+75% AP
         if proc is getattr(self.stats.procs, 'legendary_capacitive_meta'):
-            crit_rate = self.melee_crit_rate(crit=current_stats['crit'])
+            crit_rate = self.crit_rate(crit=current_stats['crit'])
             proc_value = average_ap * .75 + 280
         
         if proc is getattr(self.stats.procs, 'fury_of_xuen'):
-            crit_rate = self.melee_crit_rate(crit=current_stats['crit'])
+            crit_rate = self.crit_rate(crit=current_stats['crit'])
             proc_value = (average_ap * .20 + 1) * 10 * (1 + min(4., self.settings.num_boss_adds))
 
         average_hit = proc_value * multiplier
@@ -329,11 +329,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if item['stat'] == 'physical_damage':
                 modifier = self.raid_settings_modifiers('physical')
                 crit_multiplier = self.crit_damage_modifiers()
-                crit_rate = self.melee_crit_rate(crit=current_stats['crit'])
+                crit_rate = self.crit_rate(crit=current_stats['crit'])
             elif item['stat'] == 'spell_damage':
                 modifier = self.raid_settings_modifiers('spell')
                 crit_multiplier = self.crit_damage_modifiers()
-                crit_rate = self.spell_crit_rate(crit=current_stats['crit'])
+                crit_rate = self.crit_rate(crit=current_stats['crit'])
             average_hit = item['value'] * modifier
             frequency = 1. / (item['cooldown'] + self.settings.response_time)
             average_dps = average_hit * (1 + crit_rate * (crit_multiplier - 1)) * frequency
@@ -344,6 +344,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     def set_openers(self):
         # Sets the swing_reset_spacing and total_openers_per_second variables.
         opener_cd = [10, 20][self.settings.opener_name == 'garrote']
+        if self.settings.is_subtlety_rogue():
+            opener_cd = 30
         if self.settings.use_opener == 'always':
             opener_spacing = (self.get_spell_cd('vanish') + self.settings.response_time)
             total_openers_per_second = (1. + math.floor((self.settings.duration - opener_cd) / opener_spacing)) / self.settings.duration
@@ -542,8 +544,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             #poison_base_proc_rate = 0
             return
         proc_multiplier = 1
-        if self.settings.cycle.blade_flurry:
-            proc_multiplier = 1 + self.settings.num_boss_adds
+        if self.settings.is_combat_rogue():
+            if self.settings.cycle.blade_flurry:
+                proc_multiplier += self.settings.num_boss_adds
 
         if self.settings.is_assassination_rogue() and poison:
             poison_base_proc_rate += .2
@@ -852,6 +855,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 dps_breakdown[source] += quantity * execute_weight
             else:
                 dps_breakdown[source] = quantity * execute_weight
+                
+        #level 100 perks
+        if self.level == 100:
+            damage_breakdown['rupture'] *= 1.2
+            #empowered envenom should be calculated here, needs global cache'd variable for accuracy
         
         return dps_breakdown
 
@@ -1229,6 +1237,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #average it together
         damage_breakdown = self.average_damage_breakdowns(phases, denom = total_duration)
         
+        #level 100 perks
+        if self.level == 100:
+            damage_breakdown['sinister_strike'] *= 1.2
+            damage_breakdown['eviscerate'] *= 1.2
+        
         bf_mod = .40
         bf_max_targets = 4
         if self.settings.cycle.blade_flurry:
@@ -1486,9 +1499,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #overrides setting, using Ambush + Vanish on CD is critical
         self.settings.use_opener = 'always'
         self.settings.opener_name = 'ambush'
-        opener_cd = 30
         # Sanguinary Vein
         self.damage_modifier_cache *= 1.35
+        
         
         #update spec specific proc rates
         if getattr(self.stats.procs, 'legendary_capacitive_meta'):
@@ -1550,6 +1563,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if key == 'rupture':
                 damage_breakdown[key] *= 1.5
             damage_breakdown[key] *= mos_multiplier
+        
+        if self.level == 100:
+            damage_breakdown['ambush'] *= 1.2
+            if 'backstab' in damage_breakdown:
+                damage_breakdown['backstab'] *= 1.2
+            if 'hemorrhage' in damage_breakdown:
+                damage_breakdown['hemorrhage'] *= 1.2
         
         return damage_breakdown
 

@@ -15,7 +15,6 @@ class RogueDamageCalculator(DamageCalculator):
     # backstab damage as a function of AP - that (almost) any rogue damage
     # calculator will need to know, so things like that go here.
     
-    normalize_ep_stat = 'agi' #use 'dps' to prevent normalization
     # removed default_ep_stats: 'str', 'spell_hit', 'spell_exp'
     default_ep_stats = ['agi', 'haste', 'crit', 'mastery', 'ap', 'multistrike', 'readiness']
     melee_attacks = ['mh_autoattack_hits', 'oh_autoattack_hits', 'autoattack',
@@ -54,7 +53,7 @@ class RogueDamageCalculator(DamageCalculator):
             'recuperate':          (30, 'buff'),
             'revealing_strike':    (40, 'strike'),
             'rupture':             (25, 'strike'),
-            'sinister_strike':     (40, 'strike'),
+            'sinister_strike':     (50, 'strike'),
             'slice_and_dice':      (25, 'buff'),
             'tricks_of_the_trade': (0, 'buff'),
             'shuriken_toss':       (40, 'strike'),
@@ -173,7 +172,8 @@ class RogueDamageCalculator(DamageCalculator):
             else:
                 damage_breakdown['mh_autoattack'] = mh_dps_tuple
                 damage_breakdown['oh_autoattack'] = oh_dps_tuple
-            
+        
+        # this removes keys with empty values, prevents errors from: attacks_per_second['sinister_strike'] = None
         for key in attacks_per_second.keys():
             if not attacks_per_second[key]:
                 del attacks_per_second[key]
@@ -280,14 +280,10 @@ class RogueDamageCalculator(DamageCalculator):
         return damage_breakdown
 
     def mh_damage(self, ap):
-        weapon_damage = self.get_weapon_damage('mh', ap, is_normalized=False)
-        damage = weapon_damage
-        return damage
+        return self.get_weapon_damage('mh', ap, is_normalized=False)
 
     def oh_damage(self, ap):
-        weapon_damage = self.get_weapon_damage('oh', ap, is_normalized=False)
-        damage = self.oh_penalty() * weapon_damage
-        return damage
+        return self.oh_penalty() * self.get_weapon_damage('oh', ap, is_normalized=False)
     
     def mh_shuriken(self, ap):
         return .75 * mh_damage(ap, armor=armor)
@@ -296,132 +292,85 @@ class RogueDamageCalculator(DamageCalculator):
         return .75 * oh_damage(ap, armor=armor)
 
     def backstab_damage(self, ap):
-        weapon_damage = self.get_weapon_damage('mh', ap)
-        damage = 3.80 * (weapon_damage) 
-        return damage
+        return 5.10 * self.get_weapon_damage('mh', ap)
 
     def dispatch_damage(self, ap):
-        weapon_damage = self.get_weapon_damage('mh', ap)
-        damage = [3.31, 4.80][self.stats.mh.type == 'dagger'] * (weapon_damage)
-        return damage
+        return [3.31, 4.80][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap)
 
     def mh_mutilate_damage(self, ap):
-        mh_weapon_damage = self.get_weapon_damage('mh', ap)
-        mh_damage = [1.37, 2.0][self.stats.mh.type == 'dagger'] * (mh_weapon_damage)
-        return mh_damage
+        return [1.37, 2.0][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap)
 
     def oh_mutilate_damage(self, ap):
-        oh_weapon_damage = self.get_weapon_damage('oh', ap)
-        oh_damage = [1.37, 2.0][self.stats.mh.type == 'dagger'] * (self.oh_penalty() * oh_weapon_damage)
-        return oh_damage
+        return [1.37, 2.0][self.stats.mh.type == 'dagger'] * self.oh_penalty() * self.get_weapon_damage('oh', ap)
 
     def sinister_strike_damage(self, ap):
-        weapon_damage = self.get_weapon_damage('mh', ap)
-        damage = [1.3, 1.88][self.stats.mh.type == 'dagger'] * weapon_damage
-        return damage
+        return [1.3, 1.88][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap)
 
     def hemorrhage_damage(self, ap):
-        weapon_damage = self.get_weapon_damage('mh', ap)
-        damage = [1.6, 2.32][self.stats.mh.type == 'dagger'] * weapon_damage
-        return damage
+        return [1.0, 1.45][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap)
 
     def hemorrhage_tick_damage(self, ap):
-        # Call this function twice to get all four crit/non-crit hemo values.
-        hemo_damage = self.hemorrhage_damage(ap, armor=armor)
-        tick_conversion_factor = .5 / 8
-        tick_damage = hemo_damage * tick_conversion_factor
-        return tick_damage
+        return self.hemorrhage_damage(ap) * (.5 / 8)
 
     def ambush_damage(self, ap):
-        weapon_damage = self.get_weapon_damage('mh', ap) 
-        percentage_damage_bonus = 3.65 * [1, 1.447][self.stats.mh.type == 'dagger']
-        damage = percentage_damage_bonus * (weapon_damage)
-        return damage
+        return [2.35, 3.40][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap) 
 
     def revealing_strike_damage(self, ap):
-        weapon_damage = self.get_weapon_damage('mh', ap, is_normalized=False)
-        damage = 1.60 * weapon_damage
-        return damage
+        return 1.20 * self.get_weapon_damage('mh', ap, is_normalized=False)
 
     def venomous_wounds_damage(self, ap):
-        damage = (.160 * ap)
-        return damage
+        return .320 * ap
 
     def main_gauche_damage(self, ap):
-        weapon_damage = self.get_weapon_damage('mh', ap)
-        damage = 1.2 * weapon_damage
-        return damage
+        return .75 * self.get_weapon_damage('mh', ap)
 
     def mh_killing_spree_damage(self, ap):
-        mh_weapon_damage = self.get_weapon_damage('mh', ap)
-
-        mh_damage = mh_weapon_damage
-        return mh_damage
+        return .6 * self.get_weapon_damage('mh', ap)
 
     def oh_killing_spree_damage(self, ap):
-        oh_weapon_damage = self.get_weapon_damage('oh', ap)
-        oh_damage = self.oh_penalty() * oh_weapon_damage
-        return oh_damage
+        return .6 * self.oh_penalty() * self.get_weapon_damage('oh', ap)
 
     def deadly_poison_tick_damage(self, ap):
-        tick_damage = (.213 * ap)
-        return tick_damage
+        return .379 * ap
 
     def deadly_instant_poison_damage(self, ap):
-        damage = (.109 * ap)
-        return damage
+        return .195 * ap
 
     def instant_poison_damage(self, ap):
-        damage = (.15 * ap)
-        return damage
+        return .218 * ap
 
     def wound_poison_damage(self, ap):
-        damage = (.120 * ap)
-        return damage
+        return .218 * ap
 
     def garrote_tick_damage(self, ap):
-        tick_damage = (ap * 0.078)
-        return tick_damage
+        return .135 * ap
 
     def rupture_tick_damage(self, ap, cp):
-        ap_multiplier_tuple = (0, .025, .04, .05, .056, .062)
-        tick_damage = (ap_multiplier_tuple[cp] * ap)
-        return tick_damage
+        return .0207 * cp * ap
 
     def eviscerate_damage(self, ap, cp):
-        damage = (0.18 * cp * ap)
-        return damage
+        return .295 * cp * ap
 
     def envenom_damage(self, ap, cp):
-        damage = (0.134 * cp * ap)
-        return damage
+        return .232 * cp * ap
 
     def fan_of_knives_damage(self, ap):
-        damage = (.175 * ap)
-        return damage
+        return .175 * ap
 
     def crimson_tempest_damage(self, ap, cp):
-        damage = (.0275 * cp * ap)
-        return damage
+        return .0275 * cp * ap
 
     def crimson_tempest_tick_damage(self, ap, cp):
-        ct_damage = self.crimson_tempest_damage(ap, cp, armor=armor)
-        tick_conversion_factor = 2.4 / 6
-        tick_damage = ct_damage * tick_conversion_factor
-        return tick_damage
+        return self.crimson_tempest_damage(ap, cp) * (2.4 / 6)
 
     def shiv_damage(self, ap):
-        oh_weapon_damage = self.get_weapon_damage('oh', ap, is_normalized=False)
-        oh_damage = .25 * (self.oh_penalty() * oh_weapon_damage)
-        return oh_damage
+        return .25 * self.oh_penalty() * self.get_weapon_damage('oh', ap, is_normalized=False)
 
     def throw_damage(self, ap):
-        damage = (.05 * ap)
-        return damage
+        return .05 * ap
 
     def shuriken_toss_damage(self, ap):
-        damage = (.6 * ap)
-        return damage
+        return .6 * ap
     
     def get_formula(self, name):
         formulas = {
@@ -455,16 +404,9 @@ class RogueDamageCalculator(DamageCalculator):
         else:
             return self.ability_cds[ability]
 
-    def melee_crit_rate(self, crit=None):
+    def crit_rate(self, crit=None):
         # all rogues get 10% bonus crit, assumed to affect everything, .05 of base crit for everyone
         # should be coded better?
         base_crit = .15
         base_crit += self.stats.get_crit_from_rating(crit)
-        return base_crit + self.buffs.buff_all_crit() + self.race.get_racial_crit(is_day=self.settings.is_day) - self.melee_crit_reduction
-
-    def spell_crit_rate(self, crit=None):
-        # all rogues get 10% bonus crit, assumed to affect everything, .05 of base crit for everyone
-        # should be coded better?
-        base_crit = .15
-        base_crit += self.stats.get_crit_from_rating(crit)
-        return base_crit + self.buffs.buff_all_crit() + self.race.get_racial_crit(is_day=self.settings.is_day) - self.spell_crit_reduction
+        return base_crit + self.buffs.buff_all_crit() + self.race.get_racial_crit(is_day=self.settings.is_day) - self.crit_reduction
