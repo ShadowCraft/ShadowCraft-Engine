@@ -18,7 +18,7 @@ allowed_procs = {
     #racials
     'touch_of_the_grave': {
         'stat': 'spell_damage',
-        'value': 13680,
+        'value': 2088,
         'duration': 0,
         'max_stacks': 0,
         'proc_name': 'Touch of the Grave',
@@ -147,7 +147,7 @@ allowed_procs = {
 allowed_melee_enchants = {
     'windsong': {
         'stat': 'random',
-        'value': {'haste':1500, 'mastery':1500, 'crit':1500},
+        'value': {'haste':75, 'mastery':75, 'crit':75},
         'duration': 12,
         'proc_name': 'Windsong',
         'type': 'rppm',
@@ -159,20 +159,19 @@ allowed_melee_enchants = {
     },
     'dancing_steel': {
         'stat': 'highest',
-        'value': {'agi':1650, 'str':1650},
+        'value': {'agi':83, 'str':83},
         'duration': 12,
         'proc_name': 'Dancing Steel',
         'type': 'rppm',
         'source': 'weapon',
         'item_level': 90, #rely on player level here, due to enchants scaling with level (to a point)
-        'scaling': 10.3125000000,
         'icd': 0,
         'proc_rate': 2.53,
         'trigger': 'all_melee_attacks'
     },
     'elemental_force': {
         'stat': 'spell_damage',
-        'value': 3000,
+        'value': 150,
         'duration': 0,
         'proc_name': 'Elemental Force',
         'type': 'rppm',

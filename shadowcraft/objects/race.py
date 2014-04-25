@@ -7,18 +7,21 @@ class Race(object):
     rogue_base_stats = {
         80: (113, 189, 105, 43, 67),
         85: (122, 206, 114, 46, 73),
-        90: (132, 225, 123, 48, 77)
+        90: (132, 225, 123, 48, 77),
+        100:(132, 225, 123, 48, 77),
     }
 
     #(ap,sp)
     blood_fury_bonuses = {
         80: {'ap': 346, 'sp': 173},
         85: {'ap': 1344, 'sp': 672},
-        90: {'ap': 4514, 'sp': 2257}
+        90: {'ap': 4514, 'sp': 2257},
+        100:{'ap': 4514, 'sp': 2257},
     }
     touch_of_the_grave_bonuses = {
         80: {'spell_damage': 1000},
-        90: {'spell_damage': 16000}
+        90: {'spell_damage': 16000},
+        100:{'spell_damage': 16000},
     }
 
     #Arguments are ap, spellpower:fire, and int

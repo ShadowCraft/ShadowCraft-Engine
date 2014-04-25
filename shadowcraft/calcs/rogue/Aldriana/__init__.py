@@ -238,14 +238,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.true_haste_mod *= self.get_heroism_haste_multiplier()
         self.base_stats = {
             'agi': (self.stats.agi + self.buffs.buff_agi() + self.race.racial_agi),
-            'ap': (self.stats.ap + 2 * self.level - 30),
+            'ap': (self.stats.ap),
             'crit': (self.stats.crit),
             'haste': (self.stats.haste),
             'mastery': (self.stats.mastery + self.buffs.buff_mast()),
             'readiness': (self.stats.readiness),
             'multistrike': (self.stats.multistrike),
         }
-        
+                
         for boost in self.race.get_racial_stat_boosts():
             if boost['stat'] in self.base_stats:
                 self.base_stats[boost['stat']] += boost['value'] * boost['duration'] * 1.0 / (boost['cooldown'] + self.settings.response_time)
@@ -269,9 +269,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.true_haste_mod *= 1.01
             
         #hit chances
-        if self.settings.is_combat_rogue() and self.level == 100:
-            self.dw_miss_penalty = 0
-            self.recalculate_hit_constants()
         self.dw_mh_hit_chance = self.dual_wield_mh_hit_chance()
         self.dw_oh_hit_chance = self.dual_wield_oh_hit_chance()
     
@@ -312,7 +309,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         if proc is getattr(self.stats.procs, 'fury_of_xuen'):
             crit_rate = self.crit_rate(crit=current_stats['crit'])
-            proc_value = (average_ap * .20 + 1) * 10 * (1 + min(4., self.settings.num_boss_adds))
+            proc_value = (average_ap * .40 + 1) * 10 * (1 + min(4., self.settings.num_boss_adds))
 
         average_hit = proc_value * multiplier
         average_damage = average_hit * (1 + crit_rate * (crit_multiplier - 1)) * proc_count
@@ -667,7 +664,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         for k in static_proc_stats:
             current_stats[k] +=  static_proc_stats[ k ]
-                        
+        
         attacks_per_second, crit_rates = attack_counts_function(current_stats)
         recalculate_crit = False
         
@@ -764,7 +761,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         for proc in weapon_damage_procs:
             self.set_uptime(proc, attacks_per_second, crit_rates)
-                        
+                                
         return current_stats, attacks_per_second, crit_rates, damage_procs
     
     def compute_damage_from_aps(self, current_stats, attacks_per_second, crit_rates, damage_procs):
@@ -1199,6 +1196,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.max_bandits_guile_buff = 1.3
         if self.level == 100:
             self.max_bandits_guile_buff += .2
+            self.dw_miss_penalty = 0
+            self.recalculate_hit_constants()
         self.max_energy = 100.
         if self.stats.gear_buffs.rogue_pvp_4pc_extra_energy():
             self.max_energy += 30
@@ -1500,7 +1499,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.settings.use_opener = 'always'
         self.settings.opener_name = 'ambush'
         # Sanguinary Vein
-        self.damage_modifier_cache *= 1.35
+        self.damage_modifier_cache *= 1.2
         
         
         #update spec specific proc rates
@@ -1508,7 +1507,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             getattr(self.stats.procs, 'legendary_capacitive_meta').proc_rate_modifier = 1.114
         
         self.set_constants()
-        self.agi_multiplier *= 1.30
+        self.agi_multiplier *= 1.15
         
         self.base_energy_regen = 10.
         self.max_energy = 100.
@@ -1561,7 +1560,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if key == 'backstab':
                 damage_breakdown[key] *= 1 + self.backstab_fw_rate * (find_weakness_damage_boost - 1)
             if key == 'rupture':
-                damage_breakdown[key] *= 1.5
+                damage_breakdown[key] *= 1.1
             damage_breakdown[key] *= mos_multiplier
         
         if self.level == 100:

@@ -15,53 +15,22 @@ class InputNotModeledException(exceptions.InvalidInputException):
     # I'll return these when inputs don't make sense to the model.
     pass
 
-class DarkmantleCalculator(object):
+class RogueDarkmantleCalculator(DarkmantleCalculator):
     #
-
-    def __init__(self, stats, talents, glyphs, buffs, race, settings=None, level=85, target_level=None, char_class='rogue'):
-        self.tools = class_data.Util()
-        self.stats = stats
-        self.talents = talents
-        self.glyphs = glyphs
-        self.buffs = buffs
-        self.race = race
-        self.char_class = char_class
-        self.settings = settings
-        self.target_level = [target_level, level + 3][target_level is None]
-        if self.settings.is_pvp:
-            self.level_difference = 0
-        else:
-            self.level_difference = max(self.target_level - level, 0)
-        self.level = level
-        if self.stats.gear_buffs.mixology and (self.buffs.agi_flask or self.buffs.agi_flask_mop):
-            self.stats.agi += self.stats.gear_buffs.tradeskill_bonus()
-        if self.stats.gear_buffs.master_of_anatomy:
-            self.stats.crit += self.stats.gear_buffs.tradeskill_bonus('master_of_anatomy')
-        if self.race.race_name == 'undead':
-            self.stats.procs.set_proc('touch_of_the_grave')
-        self._set_constants_for_class()
+    
+    def _get_values_for_class(self):
+        #override global states if necessary
+        if self.settings.is_combat_rogue():
+            self.base_dw_miss_rate = 0
         
-        if self.settings.is_pvp:
-            self.base_one_hand_miss_rate = .03
-            self.base_parry_chance = .05
-            self.base_dodge_chance = .03
-            self.base_spell_miss_rate = .06
-        else:
-            self.base_one_hand_miss_rate = 0 #.03 + .015 * self.level_difference
-            self.base_parry_chance = .03 + .015 * self.level_difference
-            self.base_dodge_chance = 0 #.03 + .015 * self.level_difference
-            self.base_spell_miss_rate = 0 #.06 + .03 * self.level_difference
+        #initialize variables into global constants table that won't change throughout the calculations
+        #additionally, set up data structures (like combo points)
+        class_table = {}
         
-        self.base_dw_miss_rate = self.base_one_hand_miss_rate + .19
-        self.base_block_chance = .03 + .015 * self.level_difference
-        #load stats, class, procs, etc to main content
-        #load class modules
-        #load class global settings to global_settings
-        #load spell/mechanic data to global data
-        return
+        class_table['current_combo_points'] = 0
+        return class_table
     
     def get_dps(self):
-        super(AldrianasRogueDamageCalculator, self).get_dps()
         if self.settings.is_assassination_rogue():
             #self.init_assassination()
             return self.assassination_dps_estimate()

@@ -46,7 +46,7 @@ class Buffs(object):
         'mortal_wounds_debuff',
     ])
 
-    buff_scaling = {80: 131, 85: 509, 90: 1710}
+    buff_scaling = {80: 91, 85: 102, 90: 118, 100: 458}
 
     def __init__(self, *args, **kwargs):
         for buff in args:

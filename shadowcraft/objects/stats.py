@@ -9,13 +9,13 @@ class Stats(object):
     # rows 1-9 from my WotLK spreadsheets to see how these are typically
     # defined, though the numbers will need to updated for level 85.
 
-    crit_rating_conversion_values = {60:14.0, 70:22.0769, 80:45.906, 85:179.28, 90:600.0, 100:1000}
-    haste_rating_conversion_values = {60:10.0, 70:15.7692, 80:32.79, 85:128.057, 90:425.0, 100:800}
-    mastery_rating_conversion_values = {60:14, 70:22.0769, 80:45.906, 85:179.28, 90:600.0, 100:1000}
-    multistrike_rating_conversion_values = {60:14, 70:22.0769, 80:45.906, 85:179.28, 90:200.0, 100:5000}
-    readiness_rating_conversion_values = {60:14, 70:22.0769, 80:45.906, 85:179.28, 90:100.0, 100:5000}
-    pvp_power_rating_conversion_values = {60:7.96, 70:12.55, 80:26.11, 85:79.12, 90:400.0, 100:800}
-    pvp_resil_rating_conversion_values = {60:9.29, 70:14.65, 80:30.46, 85:92.31, 90:310.0, 100:600}
+    crit_rating_conversion_values        = {60:13.0, 70:14.0,  80:15.0,  85:17.0,  90:23.0,  100:110.0}
+    haste_rating_conversion_values       = {60:9.0,  70:10.0,  80:12.0,  85:14.0,  90:16.0,  100:80.0}
+    mastery_rating_conversion_values     = {60:13.0, 70:14.0,  80:15.0,  85:17.0,  90:23.0,  100:110.0}
+    multistrike_rating_conversion_values = {60:3.0,  70:4.0,   80:5.0,   85:6.0,   90:7.0,   100:33.0}
+    readiness_rating_conversion_values   = {60:13.0, 70:14.0,  80:15.0,  85:17.0,  90:23.0,  100:110.0}
+    pvp_power_rating_conversion_values   = {60:7.96, 70:12.55, 80:26.11, 85:79.12, 90:400.0, 100:800.0}
+    pvp_resil_rating_conversion_values   = {60:9.29, 70:14.65, 80:30.46, 85:92.31, 90:310.0, 100:600.0}
 
     def __init__(self, mh, oh, procs, gear_buffs, str=0, agi=0, int=0, spirit=0, stam=0, ap=0, crit=0, haste=0, mastery=0, 
                  readiness=0, multistrike=0, level=None, pvp_power=0, pvp_resil=0, pvp_target_armor=None):
@@ -68,27 +68,27 @@ class Stats(object):
     def get_crit_from_rating(self, rating=None):
         if rating is None:
             rating = self.crit
-        return rating / (100 * self.crit_rating_conversion)
+        return rating / (100. * self.crit_rating_conversion)
 
     def get_haste_multiplier_from_rating(self, rating=None):
         if rating is None:
             rating = self.haste
-        return 1 + rating / (100 * self.haste_rating_conversion)
+        return 1 + rating / (100. * self.haste_rating_conversion)
     
     def get_readiness_multiplier_from_rating(self, rating=None, readiness_conversion=1):
         if rating is None:
             rating = self.readiness
-        return 1 / (1 + (readiness_conversion * rating) / (self.readiness_rating_conversion * 100))
+        return 1. / (1 + (readiness_conversion * rating) / (self.readiness_rating_conversion * 100.))
     
     def get_multistrike_chance_from_rating(self, rating=None):
         if rating is None:
             rating = self.multistrike
-        return rating / (100 * self.multistrike_rating_conversion)
+        return rating / (100. * self.multistrike_rating_conversion)
     
     def get_pvp_power_multiplier_from_rating(self, rating=None):
         if rating is None:
             rating = self.pvp_power
-        return 1 + rating / (100 * self.pvp_power_rating_conversion)
+        return 1 + rating / (100. * self.pvp_power_rating_conversion)
     
     def get_pvp_resil_multiplier_from_rating(self, rating=None):
         if rating is None:

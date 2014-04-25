@@ -44,8 +44,8 @@ test_buffs = buffs.Buffs(
     )
 
 # Set up weapons.
-test_mh = stats.Weapon(13047.0, 1.8, 'dagger', 'dancing_steel')
-test_oh = stats.Weapon(13047.0, 1.8, 'dagger', 'dancing_steel')
+test_mh = stats.Weapon(395.5, 1.8, 'dagger', 'dancing_steel')
+test_oh = stats.Weapon(395.5, 1.8, 'dagger', 'dancing_steel')
 
 # Set up procs.
 test_procs = procs.ProcsList( ('ticking_ebon_detonator', 580), ('haromms_talisman', 580), 'legendary_capacitive_meta', 'fury_of_xuen')
@@ -55,12 +55,13 @@ test_gear_buffs = stats.GearBuffs('rogue_t16_2pc', 'rogue_t16_4pc', 'leather_spe
 
 # Set up a calcs object..
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
-                         str=80,
-                         agi=25928,
-                         stam=35816,
-                         crit=8358,
-                         haste=14116,
-                         mastery=10212)
+                         agi=862,
+                         stam=1000,
+                         crit=87,
+                         haste=553,
+                         mastery=200,
+                         readiness=160,
+                         multistrike=120,)
 
 # Initialize talents..
 test_talents = talents.Talents('122213', test_class, test_level)

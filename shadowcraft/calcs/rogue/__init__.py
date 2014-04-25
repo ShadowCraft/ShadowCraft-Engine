@@ -15,7 +15,6 @@ class RogueDamageCalculator(DamageCalculator):
     # backstab damage as a function of AP - that (almost) any rogue damage
     # calculator will need to know, so things like that go here.
     
-    # removed default_ep_stats: 'str', 'spell_hit', 'spell_exp'
     default_ep_stats = ['agi', 'haste', 'crit', 'mastery', 'ap', 'multistrike', 'readiness']
     melee_attacks = ['mh_autoattack_hits', 'oh_autoattack_hits', 'autoattack',
                      'eviscerate', 'envenom', 'ambush', 'garrote',
@@ -33,7 +32,7 @@ class RogueDamageCalculator(DamageCalculator):
     combat_mastery_conversion = .02
     subtlety_mastery_conversion = .03
     assassination_readiness_conversion = 1.0
-    combat_readiness_conversion = 0.8
+    combat_readiness_conversion = 1.0
     subtlety_readiness_conversion = 1.0
     
     crit_damage_cache = None
@@ -271,9 +270,11 @@ class RogueDamageCalculator(DamageCalculator):
         
         #calculate multistrike here, really cheap to calculate
         #turns out the 2 chance system yields a very basic linear pattern, the damage modifier is 30% of the multistrike %!
-        multistrike_multiplier = 1 + .3 * self.stats.get_multistrike_chance_from_rating(rating=current_stats['multistrike'])
+        multistrike_multiplier = .3 * self.stats.get_multistrike_chance_from_rating(rating=current_stats['multistrike'])
+        multistrike_damage = 0
         for ability in damage_breakdown:
-            damage_breakdown[ability] *= multistrike_multiplier
+            multistrike_damage += multistrike_multiplier * damage_breakdown[ability]
+        damage_breakdown['multistrike'] = multistrike_damage
         
         self.add_exported_data(damage_breakdown)
 
@@ -349,7 +350,7 @@ class RogueDamageCalculator(DamageCalculator):
         return .0207 * cp * ap
 
     def eviscerate_damage(self, ap, cp):
-        return .295 * cp * ap
+        return .365 * cp * ap
 
     def envenom_damage(self, ap, cp):
         return .232 * cp * ap
@@ -405,7 +406,7 @@ class RogueDamageCalculator(DamageCalculator):
             return self.ability_cds[ability]
 
     def crit_rate(self, crit=None):
-        # all rogues get 10% bonus crit, assumed to affect everything, .05 of base crit for everyone
+        # all rogues get 10% bonus crit, .05 of base crit for everyone
         # should be coded better?
         base_crit = .15
         base_crit += self.stats.get_crit_from_rating(crit)

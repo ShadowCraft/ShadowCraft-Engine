@@ -12,6 +12,7 @@ from shadowcraft.objects import stats
 from shadowcraft.objects import procs
 from shadowcraft.objects import talents
 from shadowcraft.objects import glyphs
+from shadowcraft.objects import priority_list
 
 from shadowcraft.core import i18n
 
@@ -55,14 +56,21 @@ test_procs = procs.ProcsList(('heroic_war_assurance_of_consequence', 2), ('heroi
 # Set up gear buffs.
 test_gear_buffs = stats.GearBuffs('rogue_t16_2pc', 'rogue_t16_4pc', 'leather_specialization', 'virmens_bite', 'virmens_bite_prepot')
 
-# Set up a calcs object..
+# Set up a calcs object.
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          str=80,
                          agi=27882,
                          stam=35869,
                          crit=3851,
                          haste=18871,
-                         mastery=8574)
+                         mastery=8574,
+                         readiness=6000,
+                         multistrike=6000,)
+
+# Just a priority list to define the course of actions
+priority_list = PriorityList('prepot = prefight,!buff.stealth',
+                             'stealth = prefight,!buff.stealth',
+                             'ambush = buff.stealth')
 
 # Initialize talents..
 test_talents = talents.Talents('332213', test_class, test_level)
@@ -76,7 +84,7 @@ test_cycle = settings.CombatCycle(stack_cds=True, weapon_swap=False)
 test_settings = settings.Settings(test_cycle, response_time=.5, latency=.03, merge_damage=True)
 
 # Build a DPS object.
-calculator = DarkmantleCalculator(test_stats, test_talents, test_glyphs, test_buffs, test_race, test_settings, test_level)
+calculator = RogueDarkmantleCalculator(test_stats, test_talents, test_glyphs, test_buffs, test_race, test_settings, test_level)
 
 # Compute DPS Breakdown.
 dps_breakdown = calculator.get_dps_breakdown()

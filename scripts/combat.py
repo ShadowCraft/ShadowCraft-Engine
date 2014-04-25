@@ -44,9 +44,8 @@ test_buffs = buffs.Buffs(
     )
 
 # Set up weapons.
-test_mh = stats.Weapon(18846.0, 2.6, 'axe', 'dancing_steel')
-test_oh = stats.Weapon(18846.0, 2.6, 'axe', 'dancing_steel')
-#test_oh = stats.Weapon(13047.0, 1.8, 'dagger', 'dancing_steel')
+test_mh = stats.Weapon(571.0, 2.6, 'axe', 'dancing_steel')
+test_oh = stats.Weapon(571.0, 2.6, 'axe', 'dancing_steel')
 
 # Set up procs.
 test_procs = procs.ProcsList(('assurance_of_consequence', 580), ('haromms_talisman', 580), 'legendary_capacitive_meta', 'fury_of_xuen')
@@ -56,17 +55,16 @@ test_gear_buffs = stats.GearBuffs('rogue_t16_2pc', 'rogue_t16_4pc', 'leather_spe
 
 # Set up a calcs object..
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
-                         str=80,
-                         agi=27882,
-                         stam=35869,
-                         crit=3851,
-                         haste=18871,
-                         mastery=8574,
-                         readiness=6000,
-                         multistrike=6000,)
+                         agi=862,
+                         stam=1000,
+                         crit=87,
+                         haste=553,
+                         mastery=200,
+                         readiness=160,
+                         multistrike=120,)
 
 # Initialize talents..
-test_talents = talents.Talents('3322131', test_class, test_level)
+test_talents = talents.Talents('332213', test_class, test_level)
 
 # Set up glyphs.
 glyph_list = ['energy', 'disappearance']

@@ -174,7 +174,6 @@ class DamageCalculator(object):
         setattr(self.stats, stat, getattr(self.stats, stat) + 1.)
         dps = self.get_dps()
         setattr(self.stats, stat, getattr(self.stats, stat) - 1.)
-        
         return dps
 
     def get_ep(self, ep_stats=None, normalize_ep_stat=None, baseline_dps=None):
@@ -182,9 +181,7 @@ class DamageCalculator(object):
             normalize_ep_stat = self.normalize_ep_stat
         if not ep_stats:
             ep_stats = self.default_ep_stats
-        ep_values = {}
-        for stat in ep_stats:
-            ep_values[stat] = 0
+        
         if baseline_dps == None:
             baseline_dps = self.get_dps()
         
@@ -196,9 +193,12 @@ class DamageCalculator(object):
         if normalize_dps_difference == 0:
             normalize_dps_difference = 1
         
-        for stat in ep_values:
-            dps = self.ep_helper(stat)
-            ep_values[stat] = abs(dps - baseline_dps) / normalize_dps_difference
+        ep_values = {}
+        for stat in ep_stats:
+            ep_values[stat] = 1.0
+            if normalize_ep_stat != stat:
+                dps = self.ep_helper(stat)
+                ep_values[stat] = abs(dps - baseline_dps) / normalize_dps_difference
 
         return ep_values
 
