@@ -82,7 +82,7 @@ class Buffs(object):
         return [1, 1.08][self.spell_damage_debuff]
 
     def physical_damage_multiplier(self):
-        return [1, 1.04][self.physical_vulnerability_debuff]
+        return [1, 1.05][self.physical_vulnerability_debuff]
 
     def bleed_damage_multiplier(self):
         return self.physical_damage_multiplier()

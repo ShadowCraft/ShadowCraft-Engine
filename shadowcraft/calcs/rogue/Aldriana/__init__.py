@@ -670,14 +670,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         #check need to converge
         need_converge = False
+        convergence_stats = False
         if len(active_procs_no_icd) > 0:
             need_converge = True
-        #only have to converge with specific procs, try to simplify later
-        #check if... assassination:crit/haste, combat:mastery/haste, sub:haste/mastery
-        #while True:
-            #stuff()
-            #if not condition():
-                #break
         while need_converge or self.spec_needs_converge:
             current_stats = {
                 'str': self.base_strength,
@@ -695,10 +690,17 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             for proc in active_procs_no_icd:
                 self.set_uptime(proc, attacks_per_second, crit_rates)
                 for e in proc.value:
+                    if e in self.spec_convergence_stats:
+                        convergence_stats = True
                     if e == 'crit':
                         recalculate_crit = True
                     current_stats[ e ] += proc.uptime * proc.value[e] * self.get_stat_mod(e)
-                
+            
+            #only have to converge with specific procs
+            #check if... assassination:crit/haste, combat:mastery/haste, sub:haste/mastery
+            if not convergence_stats:
+                break
+            
             old_attacks_per_second = attacks_per_second
             if recalculate_crit:
                 crit_rates = None
@@ -794,6 +796,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #set readiness coefficient
         self.readiness_spec_conversion = self.assassination_readiness_conversion
         self.human_racial_stats = ['mastery', 'crit']
+        self.spec_convergence_stats = ['haste', 'crit', 'readiness']
         
         # Assassasins's Resolve
         self.damage_modifier_cache *= 1.20
@@ -1181,6 +1184,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #set readiness coefficient
         self.readiness_spec_conversion = self.combat_readiness_conversion
         self.human_racial_stats = ['haste', 'readiness']
+        self.spec_convergence_stats = ['haste', 'mastery', 'readiness']
         
         #spec specific glyph behaviour
         if self.glyphs.disappearance:
@@ -1494,6 +1498,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #set readiness coefficient
         self.readiness_spec_conversion = self.subtlety_readiness_conversion
         self.human_racial_stats = ['haste', 'readiness']
+        self.spec_convergence_stats = ['haste', 'mastery', 'readiness']
         
         #overrides setting, using Ambush + Vanish on CD is critical
         self.settings.use_opener = 'always'
@@ -1511,6 +1516,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         self.base_energy_regen = 10.
         self.max_energy = 100.
+        mos_value = .1
         if self.stats.gear_buffs.rogue_pvp_4pc_extra_energy():
             self.max_energy += 30
         if self.talents.lemon_zest:
@@ -1519,6 +1525,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.shd_duration = 8
         # leveling perks
         if self.level == 100:
+            mos_value += .05
             self.shd_duration += 2
             self.ability_cds['vanish'] -= 30
             self.ability_info['eviscerate'] = (30, 'strike')
@@ -1536,7 +1543,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.sd_ambush_cost = self.get_spell_stats('ambush', cost_mod=shd_ambush_cost_modifier)[0] - 20
         self.normal_ambush_cost = self.get_spell_stats('ambush')[0]
             
-        mos_value = .1
         self.vanish_rate = 1. / (self.get_spell_cd('vanish') + self.settings.response_time) + 1. / (self.get_spell_cd('preparation') + self.settings.response_time * 3) #vanish CD + Prep CD
         mos_multiplier = 1. + mos_value * (6 + 3 * self.talents.subterfuge * [1, 2][self.glyphs.vanish]) * self.vanish_rate
 

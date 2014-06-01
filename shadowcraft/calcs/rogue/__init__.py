@@ -104,10 +104,7 @@ class RogueDamageCalculator(DamageCalculator):
         return damage
 
     def oh_penalty(self):
-        if self.settings.is_combat_rogue():
-            return .875
-        else:
-            return .5
+        return .5
 
     def get_modifiers(self, damage_type='physical', armor=None, executioner_modifier=1., potent_poisons_modifier=1.):
         # self.damage_modifier_cache stores common modifiers like Assassin's Resolve that won't change between calculations
@@ -293,31 +290,31 @@ class RogueDamageCalculator(DamageCalculator):
         return .75 * oh_damage(ap, armor=armor)
 
     def backstab_damage(self, ap):
-        return 5.10 * self.get_weapon_damage('mh', ap)
+        return 1.3 * self.get_weapon_damage('mh', ap)
 
     def dispatch_damage(self, ap):
-        return [3.31, 4.80][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap)
+        return 3.15 * self.get_weapon_damage('mh', ap)
 
     def mh_mutilate_damage(self, ap):
-        return [1.37, 2.0][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap)
+        return 2.0 * self.get_weapon_damage('mh', ap)
 
     def oh_mutilate_damage(self, ap):
-        return [1.37, 2.0][self.stats.mh.type == 'dagger'] * self.oh_penalty() * self.get_weapon_damage('oh', ap)
+        return 2.0 * self.oh_penalty() * self.get_weapon_damage('oh', ap)
 
     def sinister_strike_damage(self, ap):
-        return [1.3, 1.88][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap)
+        return 0.85 * self.get_weapon_damage('mh', ap)
 
     def hemorrhage_damage(self, ap):
-        return [1.0, 1.45][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap)
+        return [0.6, 0.94][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap)
 
     def hemorrhage_tick_damage(self, ap):
-        return self.hemorrhage_damage(ap) * (.5 / 8)
+        return self.hemorrhage_damage(ap) / 8. #24s, 3s per tick
 
     def ambush_damage(self, ap):
-        return [2.35, 3.40][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap) 
+        return [2.50, 3.62][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap) 
 
     def revealing_strike_damage(self, ap):
-        return 1.20 * self.get_weapon_damage('mh', ap, is_normalized=False)
+        return 0.8 * self.get_weapon_damage('mh', ap, is_normalized=False)
 
     def venomous_wounds_damage(self, ap):
         return .320 * ap
@@ -326,46 +323,46 @@ class RogueDamageCalculator(DamageCalculator):
         return .75 * self.get_weapon_damage('mh', ap)
 
     def mh_killing_spree_damage(self, ap):
-        return .6 * self.get_weapon_damage('mh', ap)
+        return .5 * self.get_weapon_damage('mh', ap)
 
     def oh_killing_spree_damage(self, ap):
-        return .6 * self.oh_penalty() * self.get_weapon_damage('oh', ap)
+        return .5 * self.oh_penalty() * self.get_weapon_damage('oh', ap)
 
     def deadly_poison_tick_damage(self, ap):
-        return .379 * ap
+        return .25014 * ap
 
     def deadly_instant_poison_damage(self, ap):
-        return .195 * ap
+        return .1287 * ap
 
     def instant_poison_damage(self, ap):
-        return .218 * ap
+        return .264 * ap
 
     def wound_poison_damage(self, ap):
         return .218 * ap
 
     def garrote_tick_damage(self, ap):
-        return .135 * ap
+        return .0891 * ap
 
     def rupture_tick_damage(self, ap, cp):
-        return .0207 * cp * ap
+        return .0685 * cp * ap
 
     def eviscerate_damage(self, ap, cp):
-        return .365 * cp * ap
+        return .3203 * cp * ap
 
     def envenom_damage(self, ap, cp):
-        return .232 * cp * ap
+        return .306 * cp * ap
 
     def fan_of_knives_damage(self, ap):
-        return .175 * ap
+        return .231 * ap
 
     def crimson_tempest_damage(self, ap, cp):
-        return .0275 * cp * ap
+        return .0602 * cp * ap
 
     def crimson_tempest_tick_damage(self, ap, cp):
         return self.crimson_tempest_damage(ap, cp) * (2.4 / 6)
 
     def shiv_damage(self, ap):
-        return .25 * self.oh_penalty() * self.get_weapon_damage('oh', ap, is_normalized=False)
+        return .10 * self.oh_penalty() * self.get_weapon_damage('oh', ap, is_normalized=False)
 
     def throw_damage(self, ap):
         return .05 * ap
