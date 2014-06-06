@@ -14,11 +14,12 @@ class Stats(object):
     mastery_rating_conversion_values     = {60:13.0, 70:14.0,  80:15.0,  85:17.0,  90:23.0,  100:110.0}
     multistrike_rating_conversion_values = {60:3.0,  70:4.0,   80:5.0,   85:6.0,   90:7.0,   100:33.0}
     readiness_rating_conversion_values   = {60:13.0, 70:14.0,  80:15.0,  85:17.0,  90:23.0,  100:110.0}
+    versatility_rating_conversion_values = {60:13.0, 70:14.0,  80:15.0,  85:17.0,  90:23.0,  100:110.0}
     pvp_power_rating_conversion_values   = {60:7.96, 70:12.55, 80:26.11, 85:79.12, 90:400.0, 100:800.0}
     pvp_resil_rating_conversion_values   = {60:9.29, 70:14.65, 80:30.46, 85:92.31, 90:310.0, 100:600.0}
 
     def __init__(self, mh, oh, procs, gear_buffs, str=0, agi=0, int=0, spirit=0, stam=0, ap=0, crit=0, haste=0, mastery=0, 
-                 readiness=0, multistrike=0, level=None, pvp_power=0, pvp_resil=0, pvp_target_armor=None):
+                 readiness=0, multistrike=0, versatility=0, level=None, pvp_power=0, pvp_resil=0, pvp_target_armor=None):
         # This will need to be adjusted if at any point we want to support
         # other classes, but this is probably the easiest way to do it for
         # the moment.
@@ -33,6 +34,7 @@ class Stats(object):
         self.mastery = mastery
         self.readiness = readiness
         self.multistrike = multistrike
+        self.versatility = versatility
         self.mh = mh
         self.oh = oh
         self.procs = procs
@@ -50,6 +52,7 @@ class Stats(object):
             self.mastery_rating_conversion     = self.mastery_rating_conversion_values[self.level]
             self.multistrike_rating_conversion = self.multistrike_rating_conversion_values[self.level]
             self.readiness_rating_conversion   = self.readiness_rating_conversion_values[self.level]
+            self.versatility_rating_conversion = self.versatility_rating_conversion_values[self.level]
             self.pvp_power_rating_conversion   = self.pvp_power_rating_conversion_values[self.level]
             self.pvp_resil_rating_conversion   = self.pvp_resil_rating_conversion_values[self.level]
         except KeyError:
@@ -85,10 +88,15 @@ class Stats(object):
             rating = self.multistrike
         return rating / (100. * self.multistrike_rating_conversion)
     
+    def get_versatility_multiplier_from_rating(self, rating=None):
+        if rating is None:
+            rating = self.versatility
+        return 1. + rating / (100. * self.versatility_rating_conversion)
+    
     def get_pvp_power_multiplier_from_rating(self, rating=None):
         if rating is None:
             rating = self.pvp_power
-        return 1 + rating / (100. * self.pvp_power_rating_conversion)
+        return 1. + rating / (100. * self.pvp_power_rating_conversion)
     
     def get_pvp_resil_multiplier_from_rating(self, rating=None):
         if rating is None:

@@ -244,6 +244,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             'mastery': (self.stats.mastery + self.buffs.buff_mast()),
             'readiness': (self.stats.readiness),
             'multistrike': (self.stats.multistrike),
+            'versatility': (self.stats.versatility),
         }
                 
         for boost in self.race.get_racial_stat_boosts():
@@ -575,6 +576,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             'mastery': self.base_stats['mastery'],
             'readiness': self.base_stats['readiness'],
             'multistrike': self.base_stats['multistrike'],
+            'versatility': self.base_stats['versatility'],
         }
         self.current_variables = {}
         
@@ -650,6 +652,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             'mastery': 0,
             'readiness': 0,
             'multistrike': 0,
+            'versatility': 0,
         }
         
         #human racial stats, we can sneak it in static proc stats to keep code cleaner
@@ -683,6 +686,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 'mastery': self.base_stats['mastery'],
                 'readiness': self.base_stats['readiness'],
                 'multistrike': self.base_stats['multistrike'],
+                'versatility': self.base_stats['versatility'],
             }
             for k in static_proc_stats:
                 current_stats[k] +=  static_proc_stats[k]

@@ -60,7 +60,7 @@ test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          crit=87,
                          haste=553,
                          mastery=200,
-                         readiness=160,
+                         versatility=160,
                          multistrike=120,)
 
 # Initialize talents..

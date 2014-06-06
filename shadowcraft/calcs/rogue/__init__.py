@@ -15,7 +15,7 @@ class RogueDamageCalculator(DamageCalculator):
     # backstab damage as a function of AP - that (almost) any rogue damage
     # calculator will need to know, so things like that go here.
     
-    default_ep_stats = ['agi', 'haste', 'crit', 'mastery', 'ap', 'multistrike', 'readiness']
+    default_ep_stats = ['agi', 'haste', 'crit', 'mastery', 'ap', 'multistrike', 'versatility'] #'readiness'
     melee_attacks = ['mh_autoattack_hits', 'oh_autoattack_hits', 'autoattack',
                      'eviscerate', 'envenom', 'ambush', 'garrote',
                      'sinister_strike', 'revealing_strike', 'main_gauche', 'mh_killing_spree', 'oh_killing_spree',
@@ -35,7 +35,6 @@ class RogueDamageCalculator(DamageCalculator):
     combat_readiness_conversion = 1.0
     subtlety_readiness_conversion = 1.0
     
-    crit_damage_cache = None
     raid_modifiers_cache = {'physical':None,
                            'bleed':None,
                            'spell':None}
@@ -120,10 +119,10 @@ class RogueDamageCalculator(DamageCalculator):
         base_modifier *= executioner_modifier
         base_modifier *= potent_poisons_modifier
         
-        if not self.crit_damage_cache:
-            self.crit_damage_cache = self.crit_damage_modifiers()
+        #versatility is a generic damage modifier
+        base_modifier *= self.stats.get_versatility_multiplier_from_rating()
 
-        return (base_modifier, self.crit_damage_cache)
+        return base_modifier
     
     def get_dps_contribution(self, base_damage, crit_rate, frequency, crit_modifier):
         average_hit = base_damage * (1 - crit_rate) + base_damage * crit_rate * crit_modifier
@@ -147,21 +146,22 @@ class RogueDamageCalculator(DamageCalculator):
             potent_poisons_mod = 1 + self.assassination_mastery_conversion * self.stats.get_mastery_from_rating(current_stats['mastery'])
         
         # these return the tuple (damage_modifier, crit_multiplier)
-        physical_modifier, physical_crit_modifier = self.get_modifiers(damage_type='physical')
-        spell_modifier, spell_crit_modifier = self.get_modifiers(damage_type='spell')
-        bleed_modifier, bleed_crit_modifier = self.get_modifiers(damage_type='bleed')
+        crit_damage_modifier = self.crit_damage_modifiers()
+        physical_modifier = self.get_modifiers(damage_type='physical')
+        spell_modifier = self.get_modifiers(damage_type='spell')
+        bleed_modifier = self.get_modifiers(damage_type='bleed')
         
         if 'mh_autoattacks' in attacks_per_second:
             # Assumes mh and oh attacks are both active at the same time. As they should always be.
             # Friends don't let friends raid without gear.
             mh_base_damage = self.mh_damage(average_ap) * physical_modifier
             mh_hit_rate = self.dw_mh_hit_chance - crit_rates['mh_autoattacks']
-            average_mh_hit = mh_hit_rate * mh_base_damage + crit_rates['mh_autoattacks'] * mh_base_damage * physical_crit_modifier
+            average_mh_hit = mh_hit_rate * mh_base_damage + crit_rates['mh_autoattacks'] * mh_base_damage * crit_damage_modifier
             mh_dps_tuple = average_mh_hit * attacks_per_second['mh_autoattacks']
             
             oh_base_damage = self.oh_damage(average_ap) * physical_modifier
             oh_hit_rate = self.dw_oh_hit_chance - crit_rates['oh_autoattacks']
-            average_oh_hit = oh_hit_rate * oh_base_damage + crit_rates['oh_autoattacks'] * oh_base_damage * physical_crit_modifier
+            average_oh_hit = oh_hit_rate * oh_base_damage + crit_rates['oh_autoattacks'] * oh_base_damage * crit_damage_modifier
             oh_dps_tuple = average_oh_hit * attacks_per_second['oh_autoattacks']
             if self.settings.merge_damage:
                 damage_breakdown['autoattack'] = mh_dps_tuple + oh_dps_tuple
@@ -177,8 +177,8 @@ class RogueDamageCalculator(DamageCalculator):
         if 'mutilate' in attacks_per_second:
             mh_dmg = self.mh_mutilate_damage(average_ap) * physical_modifier
             oh_dmg = self.oh_mutilate_damage(average_ap) * physical_modifier
-            mh_mutilate_dps = self.get_dps_contribution(mh_dmg, crit_rates['mutilate'], attacks_per_second['mutilate'], physical_crit_modifier)
-            oh_mutilate_dps = self.get_dps_contribution(oh_dmg, crit_rates['mutilate'], attacks_per_second['mutilate'], physical_crit_modifier)
+            mh_mutilate_dps = self.get_dps_contribution(mh_dmg, crit_rates['mutilate'], attacks_per_second['mutilate'], crit_damage_modifier)
+            oh_mutilate_dps = self.get_dps_contribution(oh_dmg, crit_rates['mutilate'], attacks_per_second['mutilate'], crit_damage_modifier)
             if self.settings.merge_damage:
                 damage_breakdown['mutilate'] = mh_mutilate_dps + oh_mutilate_dps
             else:
@@ -188,7 +188,7 @@ class RogueDamageCalculator(DamageCalculator):
         for strike in ('hemorrhage', 'backstab', 'sinister_strike', 'revealing_strike', 'main_gauche', 'ambush', 'dispatch', 'shuriken_toss'):
             if strike in attacks_per_second:
                 dps = self.get_formula(strike)(average_ap) * physical_modifier
-                dps = self.get_dps_contribution(dps, crit_rates[strike], attacks_per_second[strike], physical_crit_modifier)
+                dps = self.get_dps_contribution(dps, crit_rates[strike], attacks_per_second[strike], crit_damage_modifier)
                 if strike in ('sinister_strike', 'backstab'):
                     dps *= self.stats.gear_buffs.rogue_t14_2pc_damage_bonus(strike)
                 damage_breakdown[strike] = dps
@@ -196,7 +196,7 @@ class RogueDamageCalculator(DamageCalculator):
         for poison in ('venomous_wounds', 'deadly_poison', 'wound_poison', 'deadly_instant_poison', 'instant_poison'):
             if poison in attacks_per_second:
                 damage = self.get_formula(poison)(average_ap) * spell_modifier * potent_poisons_mod
-                damage = self.get_dps_contribution(damage, crit_rates[poison], attacks_per_second[poison], spell_crit_modifier)
+                damage = self.get_dps_contribution(damage, crit_rates[poison], attacks_per_second[poison], crit_damage_modifier)
                 if poison == 'venomous_wounds':
                     damage *= self.stats.gear_buffs.rogue_t14_2pc_damage_bonus('venomous_wounds')
                 damage_breakdown[poison] = damage
@@ -204,8 +204,8 @@ class RogueDamageCalculator(DamageCalculator):
         if 'mh_killing_spree' in attacks_per_second:
             mh_dmg = self.mh_killing_spree_damage(average_ap) * physical_modifier
             oh_dmg = self.oh_killing_spree_damage(average_ap) * physical_modifier
-            mh_killing_spree_dps = self.get_dps_contribution(mh_dmg, crit_rates['killing_spree'], attacks_per_second['mh_killing_spree'], physical_crit_modifier)
-            oh_killing_spree_dps = self.get_dps_contribution(oh_dmg, crit_rates['killing_spree'], attacks_per_second['oh_killing_spree'], physical_crit_modifier)
+            mh_killing_spree_dps = self.get_dps_contribution(mh_dmg, crit_rates['killing_spree'], attacks_per_second['mh_killing_spree'], crit_damage_modifier)
+            oh_killing_spree_dps = self.get_dps_contribution(oh_dmg, crit_rates['killing_spree'], attacks_per_second['oh_killing_spree'], crit_damage_modifier)
             if self.settings.merge_damage:
                 damage_breakdown['killing_spree'] = mh_killing_spree_dps + oh_killing_spree_dps
             else:
@@ -214,20 +214,20 @@ class RogueDamageCalculator(DamageCalculator):
         
         if 'garrote_ticks' in attacks_per_second:
             dps_tuple = self.garrote_tick_damage(average_ap) * bleed_modifier
-            damage_breakdown['garrote'] = self.get_dps_contribution(dps_tuple, crit_rates['garrote'], attacks_per_second['garrote_ticks'], physical_crit_modifier)        
+            damage_breakdown['garrote'] = self.get_dps_contribution(dps_tuple, crit_rates['garrote'], attacks_per_second['garrote_ticks'], crit_damage_modifier)        
         
         if 'hemorrhage_ticks' in attacks_per_second:
             hemo_hit = self.hemorrhage_tick_damage(average_ap) * bleed_modifier
-            hemo_crit = self.hemorrhage_tick_damage(average_ap) * bleed_modifier * bleed_crit_modifier
-            dps_from_hit_hemo = self.get_dps_contribution(hemo_hit, crit_rates['hemorrhage'], attacks_per_second['hemorrhage_ticks'] * (1 - crit_rates['hemorrhage']), bleed_crit_modifier)
-            dps_from_crit_hemo = self.get_dps_contribution(hemo_crit, crit_rates['hemorrhage'], attacks_per_second['hemorrhage_ticks'] * crit_rates['hemorrhage'], bleed_crit_modifier)
+            hemo_crit = self.hemorrhage_tick_damage(average_ap) * bleed_modifier * crit_damage_modifier
+            dps_from_hit_hemo = self.get_dps_contribution(hemo_hit, crit_rates['hemorrhage'], attacks_per_second['hemorrhage_ticks'] * (1 - crit_rates['hemorrhage']), crit_damage_modifier)
+            dps_from_crit_hemo = self.get_dps_contribution(hemo_crit, crit_rates['hemorrhage'], attacks_per_second['hemorrhage_ticks'] * crit_rates['hemorrhage'], crit_damage_modifier)
             damage_breakdown['hemorrhage_dot'] = dps_from_hit_hemo + dps_from_crit_hemo
         
         if 'rupture_ticks' in attacks_per_second:
             average_dps = 0
             for i in xrange(1, 6):
                 dps_tuple = self.rupture_tick_damage(average_ap, i) * bleed_modifier * executioner_mod
-                dps_tuple = self.get_dps_contribution(dps_tuple, crit_rates['rupture_ticks'], attacks_per_second['rupture_ticks'][i], physical_crit_modifier)
+                dps_tuple = self.get_dps_contribution(dps_tuple, crit_rates['rupture_ticks'], attacks_per_second['rupture_ticks'][i], crit_damage_modifier)
                 average_dps += dps_tuple
             damage_breakdown['rupture'] = average_dps
     
@@ -235,7 +235,7 @@ class RogueDamageCalculator(DamageCalculator):
             average_dps = 0
             for i in xrange(1, 6):
                 dps_tuple = self.envenom_damage(average_ap, i) * potent_poisons_mod * spell_modifier
-                dps_tuple = self.get_dps_contribution(dps_tuple, crit_rates['envenom'], attacks_per_second['envenom'][i], spell_crit_modifier)
+                dps_tuple = self.get_dps_contribution(dps_tuple, crit_rates['envenom'], attacks_per_second['envenom'][i], crit_damage_modifier)
                 average_dps += dps_tuple
             damage_breakdown['envenom'] = average_dps
 
@@ -243,7 +243,7 @@ class RogueDamageCalculator(DamageCalculator):
             average_dps = 0
             for i in xrange(1, 6):
                 dps_tuple = self.eviscerate_damage(average_ap, i) * physical_modifier * executioner_mod
-                dps_tuple = self.get_dps_contribution(dps_tuple, crit_rates['eviscerate'], attacks_per_second['eviscerate'][i], physical_crit_modifier)
+                dps_tuple = self.get_dps_contribution(dps_tuple, crit_rates['eviscerate'], attacks_per_second['eviscerate'][i], crit_damage_modifier)
                 average_dps += dps_tuple
             damage_breakdown['eviscerate'] = average_dps
                    
