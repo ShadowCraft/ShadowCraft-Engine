@@ -11,6 +11,7 @@ class Buffs(object):
         'stat_multiplier_buff',             # Mark of the Wild, Blessing of Kings, Legacy of the Emperor
         'crit_chance_buff',                 # Leader of the Pack, Legacy of the White Tiger, Arcane Brillance
         'haste_buff',                       # Swiftblade's Cunning, Unholy Aura
+        'multistrike_buff',                 # Swiftblade's Cunning, ...
         'attack_power_buff',                # Horn of Winter, Trueshot Aura, Battle Shout
         'mastery_buff',                     # Blessing of Might, Grace of Air
         'spell_power_buff',                 # Dark Intent, Arcane Brillance
@@ -34,6 +35,7 @@ class Buffs(object):
         'stat_multiplier_buff',             # Mark of the Wild, Blessing of Kings, Legacy of the Emperor
         'crit_chance_buff',                 # Leader of the Pack, Legacy of the White Tiger, Arcane Brillance
         'haste_buff',                       # Swiftblade's Cunning, Unholy Aura
+        'multistrike_buff',                 # Swiftblade's Cunning, ...
         'attack_power_buff',                # Horn of Winter, Trueshot Aura, Battle Shout
         'mastery_buff',                     # Blessing of Might, Grace of Air
         'spell_power_buff',                 # Dark Intent, Arcane Brillance
@@ -122,3 +124,6 @@ class Buffs(object):
 
     def buff_mast(self):
         return [0, self.mast_buff_bonus][self.mastery_buff]
+    
+    def multistrike_bonus(self):
+        return [0, 0.05][self.multistrike_buff]

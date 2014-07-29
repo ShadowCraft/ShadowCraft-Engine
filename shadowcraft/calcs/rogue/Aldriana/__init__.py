@@ -201,8 +201,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             poisons = ('deadly_instant_poison', 'deadly_poison')
         elif self.settings.dmg_poison == 'wp':
             poisons = ('wound_poison', )
-        elif self.settings.dmg_poison == 'ip':
-            poisons = ('instant_poison', )
+        elif self.settings.dmg_poison == 'sp':
+            poisons = ('swift_poison', )
 
         openers = tuple([self.settings.opener_name])
 
@@ -251,7 +251,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if boost['stat'] in self.base_stats:
                 self.base_stats[boost['stat']] += boost['value'] * boost['duration'] * 1.0 / (boost['cooldown'] + self.settings.response_time)
 
-        self.agi_multiplier = self.buffs.stat_multiplier() * self.stats.gear_buffs.leather_specialization_multiplier()
+        self.agi_multiplier = self.buffs.stat_multiplier() * self.stats.gear_buffs.gear_specialization_multiplier()
 
         self.base_strength = self.stats.str + self.buffs.buff_str() + self.race.racial_str
         self.base_strength *= self.buffs.stat_multiplier()
@@ -556,9 +556,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         else:
             avg_poison_proc_rate = poison_base_proc_rate
         
-        if self.settings.dmg_poison == 'ip':
+        if self.settings.dmg_poison == 'sp':
             poison_procs = avg_poison_proc_rate * total_hits_per_second * proc_multiplier - 1 / self.settings.duration
-            attacks_per_second['instant_poison'] = poison_procs
+            attacks_per_second['swift_poison'] = poison_procs
         elif self.settings.dmg_poison == 'dp':
             poison_procs = avg_poison_proc_rate * total_hits_per_second * proc_multiplier - 1 / self.settings.duration
             attacks_per_second['deadly_instant_poison'] = poison_procs
@@ -816,7 +816,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.ability_cds['vanish'] = 60
         
         self.base_energy_regen = 10
-        self.max_energy = 100.
+        self.max_energy = 120.
         if self.stats.gear_buffs.rogue_pvp_4pc_extra_energy():
             self.max_energy += 30
         if self.talents.lemon_zest:
@@ -928,9 +928,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         cpg_energy_cost *= self.stats.gear_buffs.rogue_t15_4pc_reduced_cost()
 
         if cpg == 'mutilate':
-            cpg_energy_cost = cpg_energy_cost * (1 - dispatch_as_cpg_chance) + 0 * dispatch_as_cpg_chance  # blindside costs nothing
             mut_seal_fate_proc_rate = 1 - (1 - crit_rates['mutilate']) ** 2
             dsp_seal_fate_proc_rate = crit_rates['dispatch']
+            if self.stats.gear_buffs.rogue_t17_2pc:
+                cpg_energy_cost -= 10 * mut_seal_fate_proc_rate
+            
+            cpg_energy_cost = cpg_energy_cost * (1 - dispatch_as_cpg_chance) #+ 0 * dispatch_as_cpg_chance  # blindside costs nothing
             seal_fate_proc_rate = mut_seal_fate_proc_rate * (1 - dispatch_as_cpg_chance) + dsp_seal_fate_proc_rate * dispatch_as_cpg_chance
             base_cp_per_cpg = 1
             mutilate_extra_cp_chance = 1 - dispatch_as_cpg_chance # in non execute the ratio of mutilate attacks is (1 - dispatch_as_cpg_chance)
@@ -1088,6 +1091,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         blindside_cost = 0
         mutilate_cost = self.get_spell_stats('mutilate', cost_mod=ability_cost_modifier)[0]
+        if self.stats.gear_buffs.rogue_t17_2pc:
+            mutilate_cost -= 10 * (1 - (1 - crit_rates['mutilate']) ** 2)
         
         if cpg == 'mutilate':
             cpg_energy_cost = blindside_cost + mutilate_cost
@@ -1219,7 +1224,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.extra_cp_chance = .2 # Assume all casts during RvS
         self.rvs_duration = 24
         if self.settings.dmg_poison == 'dp' and self.level == 100:
-            self.settings.dmg_poison = 'ip'
+            self.settings.dmg_poison = 'sp'
         
         self.set_constants()
         

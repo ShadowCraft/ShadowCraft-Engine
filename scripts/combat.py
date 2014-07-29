@@ -35,6 +35,7 @@ test_buffs = buffs.Buffs(
         'crit_chance_buff',
         'mastery_buff',
         'haste_buff',
+        'multistrike_buff',
         'attack_power_buff',
         'armor_debuff',
         'physical_vulnerability_debuff',

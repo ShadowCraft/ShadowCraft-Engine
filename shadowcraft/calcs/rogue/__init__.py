@@ -21,7 +21,7 @@ class RogueDamageCalculator(DamageCalculator):
                      'sinister_strike', 'revealing_strike', 'main_gauche', 'mh_killing_spree', 'oh_killing_spree',
                      'backstab', 'hemorrhage', 
                      'mutilate', 'mh_mutilate', 'oh_mutilate', 'dispatch']
-    other_attacks = ['deadly_instant_poison']
+    other_attacks = ['deadly_instant_poison', 'swift_poison']
     aoe_attacks = ['fan_of_knives', 'crimson_tempest']
     dot_ticks = ['rupture_ticks', 'garrote_ticks', 'deadly_poison', 'hemorrhage_dot']
     ranged_attacks = ['shuriken_toss', 'throw']
@@ -129,7 +129,7 @@ class RogueDamageCalculator(DamageCalculator):
         return average_hit * frequency
     
     def get_damage_breakdown(self, current_stats, attacks_per_second, crit_rates, damage_procs):
-        average_ap = current_stats['ap'] + current_stats['agi'] + current_stats['str']
+        average_ap = current_stats['ap'] + current_stats['agi']
         average_ap *= self.buffs.attack_power_multiplier()
         if self.settings.is_combat_rogue():
             average_ap *= 1.40 # vitality spec perk
@@ -193,7 +193,7 @@ class RogueDamageCalculator(DamageCalculator):
                     dps *= self.stats.gear_buffs.rogue_t14_2pc_damage_bonus(strike)
                 damage_breakdown[strike] = dps
 
-        for poison in ('venomous_wounds', 'deadly_poison', 'wound_poison', 'deadly_instant_poison', 'instant_poison'):
+        for poison in ('venomous_wounds', 'deadly_poison', 'wound_poison', 'deadly_instant_poison', 'swift_poison'):
             if poison in attacks_per_second:
                 damage = self.get_formula(poison)(average_ap) * spell_modifier * potent_poisons_mod
                 damage = self.get_dps_contribution(damage, crit_rates[poison], attacks_per_second[poison], crit_damage_modifier)
@@ -267,7 +267,7 @@ class RogueDamageCalculator(DamageCalculator):
         
         #calculate multistrike here, really cheap to calculate
         #turns out the 2 chance system yields a very basic linear pattern, the damage modifier is 30% of the multistrike %!
-        multistrike_multiplier = .3 * self.stats.get_multistrike_chance_from_rating(rating=current_stats['multistrike'])
+        multistrike_multiplier = .3 * (self.stats.get_multistrike_chance_from_rating(rating=current_stats['multistrike']) + self.buffs.multistrike_bonus())
         multistrike_damage = 0
         for ability in damage_breakdown:
             multistrike_damage += multistrike_multiplier * damage_breakdown[ability]
@@ -320,13 +320,13 @@ class RogueDamageCalculator(DamageCalculator):
         return .320 * ap
 
     def main_gauche_damage(self, ap):
-        return .75 * self.get_weapon_damage('mh', ap)
+        return .75 * self.get_weapon_damage('oh', ap)
 
     def mh_killing_spree_damage(self, ap):
-        return .5 * self.get_weapon_damage('mh', ap)
+        return 1.0 * self.get_weapon_damage('mh', ap)
 
     def oh_killing_spree_damage(self, ap):
-        return .5 * self.oh_penalty() * self.get_weapon_damage('oh', ap)
+        return 1.0 * self.oh_penalty() * self.get_weapon_damage('oh', ap)
 
     def deadly_poison_tick_damage(self, ap):
         return .25014 * ap
@@ -334,7 +334,7 @@ class RogueDamageCalculator(DamageCalculator):
     def deadly_instant_poison_damage(self, ap):
         return .1287 * ap
 
-    def instant_poison_damage(self, ap):
+    def swift_poison_damage(self, ap):
         return .264 * ap
 
     def wound_poison_damage(self, ap):
@@ -386,7 +386,7 @@ class RogueDamageCalculator(DamageCalculator):
             'deadly_poison':         self.deadly_poison_tick_damage,
             'wound_poison':          self.wound_poison_damage,
             'deadly_instant_poison': self.deadly_instant_poison_damage,
-            'instant_poison':        self.instant_poison_damage,
+            'swift_poison':          self.swift_poison_damage,
             'shuriken_toss':         self.shuriken_toss_damage
         }
         return formulas[name]

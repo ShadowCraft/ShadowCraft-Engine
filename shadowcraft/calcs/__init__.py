@@ -24,16 +24,14 @@ class DamageCalculator(object):
     AOE_TARGET_CAP = 20
     
     # Override this in your class specfic subclass to list appropriate stats
-    # possible values are agi, str, spi, int, white_hit, spell_hit, yellow_hit,
-    # haste, crit, mastery, dodge_exp, parry_exp, oh_dodge_exp, mh_dodge_exp,
-    # oh_parry_exp, mh_parry_exp
+    # possible values are agi, str, spi, int, haste, crit, mastery
     default_ep_stats = []
     # normalize_ep_stat is the stat with value 1 EP, override in your subclass
     normalize_ep_stat = None
 
     def __init__(self, stats, talents, glyphs, buffs, race, settings=None, level=100, target_level=None, char_class='rogue'):
         self.WOW_BUILD_TARGET = '6.0.0' # should reflect the game patch being targetted
-        self.SHADOWCRAFT_BUILD = '0.10' # <1 for beta builds, 1.00 is GM, >1 for any bug fixes, reset for each warcraft patch
+        self.SHADOWCRAFT_BUILD = '0.11' # <1 for beta builds, 1.00 is GM, >1 for any bug fixes, reset for each warcraft patch
         self.tools = class_data.Util()
         self.stats = stats
         self.talents = talents

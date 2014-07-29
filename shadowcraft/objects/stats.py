@@ -10,7 +10,7 @@ class Stats(object):
     # defined, though the numbers will need to updated for level 85.
 
     crit_rating_conversion_values        = {60:13.0, 70:14.0,  80:15.0,  85:17.0,  90:23.0,  100:110.0}
-    haste_rating_conversion_values       = {60:9.0,  70:10.0,  80:12.0,  85:14.0,  90:16.0,  100:80.0}
+    haste_rating_conversion_values       = {60:9.0,  70:10.0,  80:12.0,  85:14.0,  90:16.0,  100:100.0}
     mastery_rating_conversion_values     = {60:13.0, 70:14.0,  80:15.0,  85:17.0,  90:23.0,  100:110.0}
     multistrike_rating_conversion_values = {60:3.0,  70:4.0,   80:5.0,   85:6.0,   90:7.0,   100:33.0}
     readiness_rating_conversion_values   = {60:13.0, 70:14.0,  80:15.0,  85:17.0,  90:23.0,  100:110.0}
@@ -119,11 +119,15 @@ class Weapon(object):
             self.set_normalization_speed()
 
     def set_normalization_speed(self):
-        if self.type in ['gun', 'bow', 'crossbow']:
-            self._normalization_speed = 2.8
-        elif self.type in ['2h_sword', '2h_mace', '2h_axe', 'polearm']:
-            self._normalization_speed = 3.3
-        elif self.type == 'dagger':
+        #if self.type in ['gun', 'bow', 'crossbow']:
+        #    self._normalization_speed = 2.8
+        #elif self.type in ['2h_sword', '2h_mace', '2h_axe', 'polearm']:
+        #    self._normalization_speed = 3.3
+        #elif
+        
+        # commented out for micro performance's sake
+        # should be re-enabled if other classes ever make use of Shadowcraft
+        if self.type == 'dagger':
             self._normalization_speed = 1.7
         else:
             self._normalization_speed = 2.4
@@ -156,16 +160,20 @@ class Weapon(object):
     def is_melee(self):
         return not self.type in frozenset(['gun', 'bow', 'crossbow', 'thrown'])
 
-    def damage(self, ap=0):
-        return self.speed * (self.weapon_dps + ap / 3.5) #used to be 14
+    def damage(self, ap=0, weapon_speed=None):
+        if weapon_speed == None:
+            weapon_speed = self.speed
+        return weapon_speed * (self.weapon_dps + ap / 3.5) #used to be 14
 
-    def normalized_damage(self, ap=0):
-        return self.speed * self.weapon_dps + self._normalization_speed * ap / 3.5 #used to be 14
+    def normalized_damage(self, ap=0, weapon_speed=None):
+        if weapon_speed == None:
+            weapon_speed = self.speed
+        return weapon_speed * self.weapon_dps + self._normalization_speed * ap / 3.5 #used to be 14
 
 # Catch-all for non-proc gear based buffs (static or activated)
 class GearBuffs(object):
     other_gear_buffs = [
-        'leather_specialization',       # Increase %stat by 5%
+        'gear_specialization',          # Increase stat by 5%, previously leather specialization
         'chaotic_metagem',              # Increase critical damage by 3%
         'rogue_pvp_4pc',                # 30 Extra Energy
         'rogue_t14_2pc',                # Venom Wound damage by 20%, Sinister Strike by 15%, Backstab by 10%
@@ -173,7 +181,9 @@ class GearBuffs(object):
         'rogue_t15_2pc',                # Extra CP per finisher (max of 6)
         'rogue_t15_4pc',                # Abilities cast during Shadow Blades cost 40% less
         'rogue_t16_2pc',                # Stacking energy cost reduction (up to 5, up to 5 stacks) on NEXT RvS cast, Seal Fate Proc, or HAT proc
-        'rogue_t16_4pc',                # 10% KS damage every time it hits, stacking mastery during vendetta (250 mastery, up to 20 stacks), every 5th backstab is an ambush
+        'rogue_t16_4pc',                # 10% KS damage every time it hits, stacking mastery during vendetta (250 mastery, up to 20 stacks), % chance for backstab to become ambush
+        'rogue_t17_2pc',                # 
+        'rogue_t17_4pc',                # 
     ]
 
     allowed_buffs = frozenset(other_gear_buffs)
@@ -242,17 +252,25 @@ class GearBuffs(object):
     def rogue_t16_2pc_bonus(self):
         if self.rogue_t16_2pc:
             return True
-        else:
-            return False
+        return False
     
     def rogue_t16_4pc_bonus(self):
         if self.rogue_t16_4pc:
             return True
-        else:
-            return False
+        return False
     
-    def leather_specialization_multiplier(self):
-        if self.leather_specialization:
+    def rogue_t17_2pc_bonus(self):
+        if self.rogue_t17_2pc:
+            return True
+        return False
+    
+    def rogue_t17_4pc_bonus(self):
+        if self.rogue_t17_4pc:
+            return True
+        return False
+    
+    def gear_specialization_multiplier(self):
+        if self.gear_specialization:
             return 1.05
         else:
             return 1

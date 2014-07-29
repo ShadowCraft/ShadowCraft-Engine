@@ -2,11 +2,13 @@ from shadowcraft.core import exceptions
 
 class Settings(object):
 
-    def __init__(self, cycle, response_time=.5, latency=.03, merge_damage=True):
-        self.cycle = cycle
-        self.response_time = response_time
-        self.latency = latency
-        self.merge_damage = merge_damage
+    def __init__(self, cycle, response_time=.5, latency=.03, merge_damage=True, style='time', limit=10):
+        self.cycle = cycle #for the spec
+        self.response_time = response_time #general player reaction time
+        self.latency = latency #used sparingly
+        self.merge_damage = merge_damage #combines mh and oh attacks to a single source
+        self.style = style #determines end conditions, limited by health or time
+        self.limit = limit #end condition for the style, if time then in seconds
         
     def get_spec(self):
         return self.cycle._cycle_type

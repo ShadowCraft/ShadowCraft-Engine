@@ -5,23 +5,24 @@ class InvalidRaceException(exceptions.InvalidInputException):
 
 class Race(object):
     rogue_base_stats = {
-        80: (113, 189, 105, 43, 67),
-        85: (122, 206, 114, 46, 73),
-        90: (132, 225, 123, 48, 77),
-        100:(132, 225, 123, 48, 77),
+         1: (  14,   15,   11,    8,   6),
+        80: ( 256,  273,  189,  151, 113),
+        85: ( 288,  306,  212,  169, 127),
+        90: ( 339,  361,  250,  200, 150),
+        100:(1206, 1284,  890,  711, 533),
     }
 
     #(ap,sp)
     blood_fury_bonuses = {
-        80: {'ap': 346, 'sp': 173},
-        85: {'ap': 1344, 'sp': 672},
-        90: {'ap': 4514, 'sp': 2257},
-        100:{'ap': 4514, 'sp': 2257},
+        80: {'ap': 20, 'sp': 20},
+        85: {'ap': 30, 'sp': 30},
+        90: {'ap': 50, 'sp': 50},
+        100:{'ap': 120, 'sp': 120},
     }
     touch_of_the_grave_bonuses = {
-        80: {'spell_damage': 1000},
-        90: {'spell_damage': 16000},
-        100:{'spell_damage': 16000},
+        80: {'spell_damage': 200},
+        90: {'spell_damage': 400},
+        100:{'spell_damage': 1000},
     }
 
     #Arguments are ap, spellpower:fire, and int
@@ -30,9 +31,10 @@ class Race(object):
         return 1 + 0.25 * ap + .429 * spfi + self.level * 2 + int * 0.50193
 
     racial_stat_offset = {
+                       #str,agi,sta,int,spi
         "human":        ( 0,  0,  0,  0,  0),
-        "night_elf":    (-4,  4,  0,  0,  0),
         "dwarf":        ( 5, -4,  1, -1, -1),
+        "night_elf":    (-4,  4,  0,  0,  0),
         "gnome":        (-5,  2,  0,  3,  0),
         "draenei":      ( 1, -3,  0,  0,  2),
         "worgen":       ( 3,  2,  0, -4, -1),
@@ -131,6 +133,7 @@ class Race(object):
             self.stats = self.stat_set[self.level]
             self.activated_racial_data["blood_fury_physical"]["value"] = self.blood_fury_bonuses[self.level]["ap"]
             self.activated_racial_data["blood_fury_spell"]["value"] = self.blood_fury_bonuses[self.level]["sp"]
+            # this merges racial stats with class stats (ie, racial_stat_offset and rogue_base_stats)
             self.stats = map(sum, zip(self.stats, Race.racial_stat_offset[self.race_name]))
         except KeyError as e:
             raise InvalidRaceException(_('Unsupported class/level combination {character_class}/{level}').format(character_class=self.character_class, level=self.level))
@@ -141,6 +144,17 @@ class Race(object):
             return False
         else:
             object.__getattribute__(self, name)
+    
+    def get_stats_from_race(self, level, secondaries=False):
+        str = Race.rogue_base_stats[level][0] + Race.racial_stat_offset[self.race_name][0]
+        agi = Race.rogue_base_stats[level][1] + Race.racial_stat_offset[self.race_name][1]
+        sta = Race.rogue_base_stats[level][2] + Race.racial_stat_offset[self.race_name][2]
+        int = Race.rogue_base_stats[level][3] + Race.racial_stat_offset[self.race_name][3]
+        spi = Race.rogue_base_stats[level][4] + Race.racial_stat_offset[self.race_name][4]
+        if secondaries:
+            return {'agi':agi, 'str':str, 'sta':sta, 'int':int, 'spi':spi,
+                    'readiness':0, 'multistrike':0, 'versatility':0, 'haste':0, 'crit':0, 'mastery':0}
+        return {'agi':agi, 'str':str, 'sta':sta, 'int':int, 'spi':spi}
 
     def get_racial_crit(self, is_day=False):
         crit_bonus = 0
