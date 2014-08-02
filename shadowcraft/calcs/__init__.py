@@ -366,7 +366,7 @@ class DamageCalculator(object):
 
         return ep_values
     
-    def get_upgrades_ep(self, list, normalize_ep_stat=None):
+    def get_upgrades_ep(self, _list, normalize_ep_stat=None):
         if not normalize_ep_stat:
             normalize_ep_stat = self.normalize_ep_stat
         # This method computes ep for every other buff/proc not covered by
@@ -374,108 +374,62 @@ class DamageCalculator(object):
         # weapons they are on, are computed by get_weapon_ep.
         
         active_procs_cache = []
-        active_gear_buffs_cache = []
         procs_list = []
-        gear_buffs_list = []
         ep_values = {}
-        for i in list:
+        for i in _list:
             if i in self.stats.procs.allowed_procs:
-                procs_list.append(i)
+                procs_list.append( (i, _list[i]) )
                 if getattr(self.stats.procs, i):
-                    active_procs_cache.append((i, getattr(self.stats.procs, i).upgrade_level))
+                    active_procs_cache.append((i, getattr(self.stats.procs, i).item_level))
                     delattr(self.stats.procs, i)
-            elif i in self.stats.gear_buffs.allowed_buffs:
-                gear_buffs_list.append(i)
-                if getattr(self.stats.gear_buffs, i):
-                    active_gear_buffs_cache.append((i, self.stats.gear_buffs.activated_boosts[i]['upgrade_level']))
-                    setattr(self.stats.gear_buffs, i, False)
             else:
                 ep_values[i] = _('not allowed')
 
         baseline_dps = self.get_dps()
         normalize_dps = self.ep_helper(normalize_ep_stat)
-
-        for i in gear_buffs_list:
-            ep_values[i] = []
-            if getattr(self.stats.gear_buffs, i):
-                old_buff = self.stats.gear_buffs.activated_boosts[i]['upgrade_level']
-                setattr(self.stats.gear_buffs, i, False)
-                base_dps = self.get_dps()
-                base_normalize_dps = self.ep_helper(normalize_ep_stat)
-            else:
-                old_buff = -1
-                base_dps = baseline_dps
-                base_normalize_dps = normalize_dps
-            setattr(self.stats.gear_buffs, i, True)
-            if 'upgradable' in self.stats.gear_buffs.activated_boosts[i] and self.stats.gear_buffs.activated_boosts[i]['upgradable'] == True and 'scaling' in self.stats.gear_buffs.activated_boosts[i]:
-                if self.stats.gear_buffs.activated_boosts[i]['scaling']['quality'] == 'blue':
-                    max_upgrade_level = 1
-                else:
-                    max_upgrade_level = 2
-            else:
-                max_upgrade_level = 0
-            for l in xrange(max_upgrade_level+1):
-                self.stats.gear_buffs.activated_boosts[i]['upgrade_level'] = l
-                new_dps = self.get_dps()
-                if new_dps != base_dps:
-                    ep = abs(new_dps - base_dps) / (base_normalize_dps - base_dps)
-                    ep_values[i].append(ep)
-            if old_buff != -1:
-                setattr(self.stats.gear_buffs, i, True)
-                self.stats.gear_buffs.activated_boosts[i]['upgrade_level'] = old_buff
-            else:
-                setattr(self.stats.gear_buffs, i, False)
-                self.stats.gear_buffs.activated_boosts[i]['upgrade_level'] = 0
-
         for i in procs_list:
-            ep_values[i] = []
+            proc_name, item_levels = i
+            ep_values[proc_name] = {}
             try:
-                if getattr(self.stats.procs, i):
-                    old_proc = getattr(self.stats.procs, i)
-                    delattr(self.stats.procs, i)
+                if getattr(self.stats.procs, proc_name):
+                    old_proc = getattr(self.stats.procs, proc_name)
+                    delattr(self.stats.procs, proc_name)
                     base_dps = self.get_dps()
                     base_normalize_dps = self.ep_helper(normalize_ep_stat)
                 else:
                     old_proc = False
                     base_dps = baseline_dps
                     base_normalize_dps = normalize_dps
-                self.stats.procs.set_proc(i)
-                if getattr(self.stats.procs, i).upgradable and getattr(self.stats.procs, i).scaling:
-                    if getattr(self.stats.procs, i).scaling['quality'] == 'blue':
-                        max_upgrade_level = 1
-                    else:
-                        max_upgrade_level = 2
-                else:
-                    max_upgrade_level = 0
-                for l in xrange(max_upgrade_level+1):
-                    getattr(self.stats.procs, i).upgrade_level = l
-                    new_dps = self.get_dps()
-                    if new_dps != base_dps:
-                        ep = abs(new_dps - base_dps) / (base_normalize_dps - base_dps)
-                        ep_values[i].append(ep)
+                self.stats.procs.set_proc(proc_name)
+                proc = getattr(self.stats.procs, proc_name)
+                for group in item_levels:
+                    if not isinstance(group, (list,tuple)):
+                        group = group,
+                    for l in group:
+                        proc.item_level = l
+                        proc.update_proc_value() # after setting item_level re-set the proc value
+                        new_dps = self.get_dps()
+                        if new_dps != base_dps:
+                            ep = abs(new_dps - base_dps) / (base_normalize_dps - base_dps)
+                            ep_values[proc_name][l] = ep
                 if old_proc:
-                    self.stats.procs.set_proc(i)
-                    getattr(self.stats.procs, i).upgrade_level = old_proc.upgrade_level
+                    self.stats.procs.set_proc(proc_name)
                 else:
-                    delattr(self.stats.procs, i)
+                    delattr(self.stats.procs, proc_name)
             except InvalidProcException:
                 # Data for these procs is not complete/correct
                 ep_values[i].append(_('not supported'))
-                delattr(self.stats.procs, i)
+                delattr(self.stats.procs, proc_name)
 
         for proc in active_procs_cache:
             self.stats.procs.set_proc(proc[0])
-            getattr(self.stats.procs, proc[0]).upgrade_level = proc[1]
-
-        for gear_buff in active_gear_buffs_cache:
-            setattr(self.stats.gear_buffs, gear_buff[0], True)
-            self.stats.gear_buffs.activated_boosts[gear_buff[0]]['upgrade_level'] = gear_buff[1]
+            getattr(self.stats.procs, proc[0]).item_level = proc[1]
 
         return ep_values
 
     # this function is in comparison to get_upgrades_ep a lot faster but not 100% accurate
     # the error is around 1% which is accurate enough for the ranking in Shadowcraft-UI
-    def get_upgrades_ep_fast(self, list, normalize_ep_stat=None):
+    def get_upgrades_ep_fast(self, _list, normalize_ep_stat=None):
         if not normalize_ep_stat:
             normalize_ep_stat = self.normalize_ep_stat
         # This method computes ep for every other buff/proc not covered by
@@ -483,110 +437,61 @@ class DamageCalculator(object):
         # weapons they are on, are computed by get_weapon_ep.
         
         active_procs_cache = []
-        active_gear_buffs_cache = []
         procs_list = []
-        gear_buffs_list = []
         ep_values = {}
-        for i in list:
+        for i in _list:
             if i in self.stats.procs.allowed_procs:
-                procs_list.append(i)
+                procs_list.append( (i, _list[i]) )
                 if getattr(self.stats.procs, i):
-                    active_procs_cache.append((i, getattr(self.stats.procs, i).upgrade_level))
+                    active_procs_cache.append((i, getattr(self.stats.procs, i).item_level))
                     delattr(self.stats.procs, i)
-            elif i in self.stats.gear_buffs.allowed_buffs:
-                gear_buffs_list.append(i)
-                if getattr(self.stats.gear_buffs, i):
-                    active_gear_buffs_cache.append((i, self.stats.gear_buffs.activated_boosts[i]['upgrade_level']))
-                    setattr(self.stats.gear_buffs, i, False)
             else:
                 ep_values[i] = _('not allowed')
 
         baseline_dps = self.get_dps()
         normalize_dps = self.ep_helper(normalize_ep_stat)
 
-        for i in gear_buffs_list:
-            ep_values[i] = []
-            if getattr(self.stats.gear_buffs, i):
-                old_buff = self.stats.gear_buffs.activated_boosts[i]['upgrade_level']
-                setattr(self.stats.gear_buffs, i, False)
-                base_dps = self.get_dps()
-                base_normalize_dps = self.ep_helper(normalize_ep_stat)
-            else:
-                old_buff = -1
-                base_dps = baseline_dps
-                base_normalize_dps = normalize_dps
-            setattr(self.stats.gear_buffs, i, True)
-            boost = self.stats.gear_buffs.activated_boosts[i]
-            boost['upgrade_level'] = 0
-            if 'upgradable' in boost and boost['upgradable'] == True and 'scaling' in boost:
-                if self.stats.gear_buffs.activated_boosts[i]['scaling']['quality'] == 'blue':
-                    level_steps = 8
-                    max_upgrade_level = 1
-                else:
-                    level_steps = 4
-                    max_upgrade_level = 4
-                item_level = boost['scaling']['item_level']
-                scale_factor = self.tools.get_random_prop_point(item_level, boost['scaling']['quality'])
-            else:
-                max_upgrade_level = 0
-            new_dps = self.get_dps()
-            for l in xrange(max_upgrade_level+1):
-                if new_dps != base_dps:
-                    ep = abs(new_dps - base_dps) / (base_normalize_dps - base_dps)
-                    if l > 0:
-                        upgraded_scale_factor = self.tools.get_random_prop_point(item_level + level_steps * l, boost['scaling']['quality'])
-                        ep *= float(upgraded_scale_factor) / float(scale_factor)
-                    ep_values[i].append(ep)
-            if old_buff != -1:
-                setattr(self.stats.gear_buffs, i, True)
-            else:
-                setattr(self.stats.gear_buffs, i, False)
-                self.stats.gear_buffs.activated_boosts[i]['upgrade_level'] = 0
-
         for i in procs_list:
-            ep_values[i] = []
+            proc_name, item_levels = i
+            ep_values[proc_name] = {}
             try:
-                if getattr(self.stats.procs, i):
-                    old_proc = getattr(self.stats.procs, i)
-                    delattr(self.stats.procs, i)
+                if getattr(self.stats.procs, proc_name):
+                    old_proc = getattr(self.stats.procs, proc_name)
+                    delattr(self.stats.procs, proc_name)
                     base_dps = self.get_dps()
                     base_normalize_dps = self.ep_helper(normalize_ep_stat)
                 else:
                     old_proc = False
                     base_dps = baseline_dps
                     base_normalize_dps = normalize_dps
-                self.stats.procs.set_proc(i)
-                proc = getattr(self.stats.procs, i)
-                proc.upgrade_level = 0
-                if proc.upgradable and proc.scaling:
-                    if proc.scaling['quality'] == 'blue':
-                        level_steps = 8
-                        max_upgrade_level = 1
-                    else:
-                        level_steps = 4
-                        max_upgrade_level = 4
-                    item_level = proc.scaling['item_level']
-                    if proc.proc_name == 'Rune of Re-Origination':
-                        scale_factor = 1/(1.15**((528-item_level)/15.0)) * proc.base_ppm
-                    else:
-                        scale_factor = self.tools.get_random_prop_point(item_level, proc.scaling['quality'])
-                else:
-                    max_upgrade_level = 0
-                new_dps = self.get_dps()
-                for l in xrange(max_upgrade_level+1):
+                self.stats.procs.set_proc(proc_name)
+                proc = getattr(self.stats.procs, proc_name)
+                for group in item_levels:
+                    if not isinstance(group, (list,tuple)):
+                        group = group,
+                    if proc.scaling:
+                        proc.item_level = group[0]
+                        proc.update_proc_value() # after setting item_level re-set the proc value
+                        item_level = proc.item_level
+                        if proc.proc_name == 'Rune of Re-Origination':
+                            scale_factor = 1/(1.15**((528-item_level)/15.0)) * proc.base_ppm
+                        else:
+                            scale_factor = self.tools.get_random_prop_point(item_level)
+                    new_dps = self.get_dps()
                     if new_dps != base_dps:
-                        ep = abs(new_dps - base_dps) / (base_normalize_dps - base_dps)
-                        if l > 0:
-                            if proc.proc_name == 'Rune of Re-Origination':
-                                 upgraded_scale_factor = 1/(1.15**((528-(item_level + level_steps * l))/15.0)) * proc.base_ppm
-                            else:
-                                upgraded_scale_factor = self.tools.get_random_prop_point(item_level + level_steps * l, proc.scaling['quality'])
-                            ep *= float(upgraded_scale_factor) / float(scale_factor)
-                        ep_values[i].append(ep)
+                        for l in group:
+                            ep = abs(new_dps - base_dps) / (base_normalize_dps - base_dps)
+                            if l > proc.item_level:
+                                if proc.proc_name == 'Rune of Re-Origination':
+                                    upgraded_scale_factor = 1/(1.15**((528-(l))/15.0)) * proc.base_ppm
+                                else:
+                                    upgraded_scale_factor = self.tools.get_random_prop_point(l)
+                                ep *= float(upgraded_scale_factor) / float(scale_factor)
+                            ep_values[proc_name][l] = ep
                 if old_proc:
-                    self.stats.procs.set_proc(i)
+                    self.stats.procs.set_proc(proc_name)
                 else:
-                    delattr(self.stats.procs, i)
+                    delattr(self.stats.procs, proc_name)
             except InvalidProcException:
                 # Data for these procs is not complete/correct
                 ep_values[i].append(_('not supported'))
@@ -594,11 +499,7 @@ class DamageCalculator(object):
 
         for proc in active_procs_cache:
             self.stats.procs.set_proc(proc[0])
-            getattr(self.stats.procs, proc[0]).upgrade_level = proc[1]
-
-        for gear_buff in active_gear_buffs_cache:
-            setattr(self.stats.gear_buffs, gear_buff[0], True)
-            self.stats.gear_buffs.activated_boosts[gear_buff[0]]['upgrade_level'] = gear_buff[1]
+            getattr(self.stats.procs, proc[0]).item_level = proc[1]
 
         return ep_values
 
