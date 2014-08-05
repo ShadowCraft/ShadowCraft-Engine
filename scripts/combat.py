@@ -89,16 +89,16 @@ ep_values = calculator.get_ep(baseline_dps=total_dps)
 tier_ep_values = calculator.get_other_ep(['rogue_t16_2pc', 'rogue_t16_4pc'])
 #mh_enchants_and_dps_ep_values, oh_enchants_and_dps_ep_values = calculator.get_weapon_ep(dps=True, enchants=True)
 
-trinkets_list = [
+trinkets_list = {
     #5.4
-    'assurance_of_consequence',
-    'haromms_talisman',
-    'sigil_of_rampage',
-    'ticking_ebon_detonator',
-    'thoks_tail_tip',
-    'discipline_of_xuen',
-]
-#trinkets_ep_value = calculator.get_upgrades_ep_fast(trinkets_list)
+    'assurance_of_consequence': [(528,532,536),(540,544,548),(553,557,561),(559,563,567),(566,570,574),(572,576,580)],
+    'haromms_talisman': [(528,532,536),(540,544,548),(553,557,561),(559,563,567),(566,570,574),(572,576,580)],
+    'sigil_of_rampage': [(528,532,536),(540,544,548),(553,557,561),(559,563,567),(566,570,574),(572,576,580)],
+    'ticking_ebon_detonator': [(528,532,536),(540,544,548),(553,557,561),(559,563,567),(566,570,574),(572,576,580)],
+    'thoks_tail_tip': [(528,532,536),(540,544,548),(553,557,561),(559,563,567),(566,570,574),(572,576,580)],
+    'discipline_of_xuen': [(496,500,504),(535,539,543)],
+}
+trinkets_ep_value = calculator.get_upgrades_ep_fast(trinkets_list)
 glyph_values = calculator.get_glyphs_ranking()
 
 # Compute weapon type modifier.
@@ -133,7 +133,7 @@ dicts_for_pretty_print = [
     tier_ep_values,
     #mh_enchants_and_dps_ep_values,
     #oh_enchants_and_dps_ep_values,
-    #trinkets_ep_value,
+    trinkets_ep_value,
     glyph_values,
     talent_ranks,
 ]
