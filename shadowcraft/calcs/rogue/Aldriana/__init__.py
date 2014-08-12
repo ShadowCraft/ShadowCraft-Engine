@@ -239,12 +239,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.base_stats = {
             'agi': (self.stats.agi + self.buffs.buff_agi() + self.race.racial_agi),
             'ap': (self.stats.ap),
-            'crit': (self.stats.crit),
-            'haste': (self.stats.haste),
+            'crit': (self.stats.crit + self.buffs.buff_crit()),
+            'haste': (self.stats.haste + self.buffs.buff_haste()),
             'mastery': (self.stats.mastery + self.buffs.buff_mast()),
-            'readiness': (self.stats.readiness),
-            'multistrike': (self.stats.multistrike),
-            'versatility': (self.stats.versatility),
+            'readiness': (self.stats.readiness + self.buffs.buff_readiness()),
+            'multistrike': (self.stats.multistrike + self.buffs.buff_multistrike()),
+            'versatility': (self.stats.versatility + self.buffs.buff_versatility()),
         }
                 
         for boost in self.race.get_racial_stat_boosts():
@@ -546,11 +546,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if self.settings.cycle.blade_flurry:
                 proc_multiplier += self.settings.num_boss_adds
 
-        if self.settings.is_assassination_rogue() and poison:
+        if self.settings.is_assassination_rogue():
             poison_base_proc_rate += .2
-            poison_envenom_proc_rate = poison_base_proc_rate + .15
-            if self.level == 100:
-                poison_envenom_proc_rate += .15
+            poison_envenom_proc_rate = poison_base_proc_rate + .3
             envenom_uptime = min(sum([(1 + cps + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp()) * attacks_per_second['envenom'][cps] for cps in xrange(1, 6)]), 1)
             avg_poison_proc_rate = poison_base_proc_rate * (1 - envenom_uptime) + poison_envenom_proc_rate * envenom_uptime
         else:
@@ -824,6 +822,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.max_energy += 15
         if self.glyphs.energy:
             self.max_energy += 20
+        if self.race.expansive_mind:
+            self.max_energy = round(self.max_energy * 1.05, 0)
+        
+        #TODO: Handle crit from Enhanced Vendetta, and damage from Empowered Envenom
             
         self.set_constants()
 
@@ -860,11 +862,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             else:
                 dps_breakdown[source] = quantity * execute_weight
                 
-        #level 100 perks
-        if self.level == 100:
-            damage_breakdown['rupture'] *= 1.2
-            #empowered envenom should be calculated here, needs global cache'd variable for accuracy
-        
         return dps_breakdown
 
     def update_damage_breakdown_for_vendetta(self, damage_breakdown):
@@ -896,11 +893,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             energy_regen += (self.max_energy - 10) / (self.settings.duration * self.settings.time_in_execute_range)
 
         vw_energy_return = 10
-        if self.level == 100:
-            vw_proc_chance = 1.0
-        else:
-            vw_proc_chance = .75
-        vw_energy_per_bleed_tick = vw_energy_return * vw_proc_chance
 
         blindside_proc_rate = [0, .3][cpg == 'mutilate']
         dispatch_as_cpg_chance = blindside_proc_rate / (1 + blindside_proc_rate)
@@ -910,8 +902,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         opener_net_cost *= ability_cost_modifier
 
         if self.settings.opener_name == 'garrote':
-            energy_regen += vw_energy_return * vw_proc_chance / self.settings.duration # Only the first tick at the start of the fight
-            attacks_per_second['venomous_wounds'] = vw_proc_chance / self.settings.duration
+            energy_regen += vw_energy_return / self.settings.duration # Only the first tick at the start of the fight
+            attacks_per_second['venomous_wounds'] = 1. / self.settings.duration
 
         energy_regen -= opener_net_cost * self.total_openers_per_second
         if self.talents.marked_for_death:
@@ -919,7 +911,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         attacks_per_second[self.settings.opener_name] = self.total_openers_per_second
 
-        energy_regen_with_rupture = energy_regen + 0.5 * vw_energy_per_bleed_tick
+        energy_regen_with_rupture = energy_regen + 0.5 * vw_energy_return
 
         attack_speed_multiplier = self.base_speed_multiplier * haste_multiplier
         self.attack_speed_increase = attack_speed_multiplier
@@ -1032,9 +1024,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         total_rupture_ticks_per_second = sum(attacks_per_second['rupture_ticks'])
         if 'venomous_wounds' in attacks_per_second:
-            attacks_per_second['venomous_wounds'] += total_rupture_ticks_per_second * vw_proc_chance
+            attacks_per_second['venomous_wounds'] += total_rupture_ticks_per_second
         else:
-            attacks_per_second['venomous_wounds'] = total_rupture_ticks_per_second * vw_proc_chance
+            attacks_per_second['venomous_wounds'] = total_rupture_ticks_per_second
 
         if 'garrote' in attacks_per_second:
             attacks_per_second['garrote_ticks'] = 6 * attacks_per_second['garrote']
@@ -1062,11 +1054,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         energy_regen += self.bonus_energy_regen
 
         vw_energy_return = 10
-        if self.level == 100:
-            vw_proc_chance = 1.0
-        else:
-            vw_proc_chance = .75
-        vw_energy_per_bleed_tick = vw_energy_return * vw_proc_chance
+        vw_energy_per_bleed_tick = vw_energy_return
 
         blindside_proc_rate = [0, .3][cpg == 'mutilate']
         dispatch_as_cpg_chance = blindside_proc_rate / (1 + blindside_proc_rate)
@@ -1077,8 +1065,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         if self.settings.opener_name == 'garrote':
             # Only the first tick at the start of the fight. Not precise but better than nothing.
-            energy_regen += vw_energy_return * vw_proc_chance / self.settings.duration
-            attacks_per_second['venomous_wounds'] = vw_proc_chance / self.settings.duration
+            energy_regen += vw_energy_return / self.settings.duration
+            attacks_per_second['venomous_wounds'] = 1. / self.settings.duration
             
         energy_regen -= opener_net_cost * self.total_openers_per_second
         if cpg == 'dispatch':
@@ -1119,7 +1107,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         rupture_ticks_per_second = 2 * (6 + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp()) / avg_cycle_length # 1+5 since all 5CP ruptures
         attacks_per_second['rupture_ticks'] = [0, 0, 0, 0, 0, rupture_ticks_per_second]
         
-        energy_regen_with_rupture = energy_regen + attacks_per_second['rupture_ticks'][5] * vw_energy_per_bleed_tick
+        energy_regen_with_rupture = energy_regen + attacks_per_second['rupture_ticks'][5] * vw_energy_return
         energy_per_cycle = avg_rupture_length * energy_regen_with_rupture + avg_gap * energy_regen
         cpg_per_finisher = cp_per_finisher / avg_cp_per_cpg
         
@@ -1150,9 +1138,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attacks_per_second['envenom'] = [0, 0, 0, 0, 0, envenoms_per_second]
 
         if 'venomous_wounds' in attacks_per_second:
-            attacks_per_second['venomous_wounds'] += rupture_ticks_per_second * vw_proc_chance
+            attacks_per_second['venomous_wounds'] += rupture_ticks_per_second
         else:
-            attacks_per_second['venomous_wounds'] = rupture_ticks_per_second * vw_proc_chance
+            attacks_per_second['venomous_wounds'] = rupture_ticks_per_second
 
         if 'garrote' in attacks_per_second:
             attacks_per_second['garrote_ticks'] = 6 * attacks_per_second['garrote']
@@ -1218,6 +1206,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.max_energy += 15
         if self.glyphs.energy:
             self.max_energy += 20
+        if self.race.expansive_mind:
+            self.max_energy = round(self.max_energy * 1.05, 0)
         ar_duration = 15
         self.ksp_buff = 0.5
         self.revealing_strike_multiplier = 1.35
@@ -1249,18 +1239,15 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #average it together
         damage_breakdown = self.average_damage_breakdowns(phases, denom = total_duration)
         
-        #level 100 perks
-        if self.level == 100:
-            damage_breakdown['sinister_strike'] *= 1.2
-            damage_breakdown['eviscerate'] *= 1.2
-        
         bf_mod = .40
         bf_max_targets = 4
+        if self.level == 100:
+            bf_max_targets = 999 #this is the "no more target cap" limit, screw extra if statements
         if self.settings.cycle.blade_flurry:
             damage_breakdown['blade_flurry'] = 0
             for key in damage_breakdown:
                 if key in self.melee_attacks:
-                    damage_breakdown['blade_flurry'] += bf_mod * damage_breakdown[key] * self.settings.num_boss_adds
+                    damage_breakdown['blade_flurry'] += bf_mod * damage_breakdown[key] * math.min(self.settings.num_boss_adds, bf_max_targets)
         
         return damage_breakdown
     
@@ -1278,12 +1265,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                     damage_breakdown[key] *= 1.49084
             elif key in ('sinister_strike', 'revealing_strike'):
                 damage_breakdown[key] *= self.bandits_guile_multiplier
-                if key == 'sinister_strike' and self.level == 100:
-                    damage_breakdown[key] *= 1.2
             elif key in ('eviscerate', ):
                 damage_breakdown[key] *= self.bandits_guile_multiplier * self.revealing_strike_multiplier
-                if self.level == 100:
-                    damage_breakdown[key] *= 1.2
             else:
                 damage_breakdown[key] *= self.bandits_guile_multiplier #* self.ksp_multiplier
                 
@@ -1318,8 +1301,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         gcd_size = 1.0 + self.settings.latency
         if ar:
             gcd_size -= .2
-            if self.level == 100:
-                gcd_size -= .3
         cp_per_cpg = 1.
             
         # Combine energy cost scalers to reduce function calls (ie, 40% reduced energy cost). Assume multiplicative.
@@ -1531,13 +1512,17 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.talents.lemon_zest:
             self.base_energy_regen *= 1 + .05 * (1 + min(self.settings.num_boss_adds, 2))
             self.max_energy += 15
+        if self.glyphs.energy:
+            self.max_energy += 20
+        if self.race.expansive_mind:
+            self.max_energy = round(self.max_energy * 1.05, 0)
         self.shd_duration = 8
         # leveling perks
         if self.level == 100:
             mos_value += .05
             self.shd_duration += 2
             self.ability_cds['vanish'] -= 30
-            self.ability_info['eviscerate'] = (30, 'strike')
+            #enhanced FOK
         self.shd_cd = self.get_spell_cd('shadow_dance') + self.settings.response_time + self.major_cd_delay
         self.settings.cycle.raid_crits_per_second = self.get_adv_param('hat_triggers_per_second', self.settings.cycle.raid_crits_per_second, min_bound=0, max_bound=600)
         
@@ -1577,13 +1562,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if key == 'rupture':
                 damage_breakdown[key] *= 1.1
             damage_breakdown[key] *= mos_multiplier
-        
-        if self.level == 100:
-            damage_breakdown['ambush'] *= 1.2
-            if 'backstab' in damage_breakdown:
-                damage_breakdown['backstab'] *= 1.2
-            if 'hemorrhage' in damage_breakdown:
-                damage_breakdown['hemorrhage'] *= 1.2
         
         return damage_breakdown
 

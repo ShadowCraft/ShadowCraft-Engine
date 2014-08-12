@@ -24,7 +24,7 @@ i18n.set_language(test_language)
 start = time.time()
 
 # Set up level/class/race
-test_level = 90
+test_level = 100
 test_race = race.Race('troll')
 test_class = 'rogue'
 
@@ -36,33 +36,34 @@ test_buffs = buffs.Buffs(
         'mastery_buff',
         'haste_buff',
         'multistrike_buff',
+        'versatility_buff',
         'attack_power_buff',
-        'armor_debuff',
         'physical_vulnerability_debuff',
         'spell_damage_debuff',
         'agi_flask_mop',
-        'food_300_agi'
+        'food_mop_agi'
     )
 
 # Set up weapons.
-test_mh = stats.Weapon(571.0, 2.6, 'axe', 'dancing_steel')
-test_oh = stats.Weapon(571.0, 2.6, 'axe', 'dancing_steel')
+test_mh = stats.Weapon(607./2.6, 2.6, 'sword', 'dancing_steel')
+test_oh = stats.Weapon(607./2.6, 2.6, 'sword', 'dancing_steel')
 
 # Set up procs.
-test_procs = procs.ProcsList(('assurance_of_consequence', 580), ('haromms_talisman', 580), 'legendary_capacitive_meta', 'fury_of_xuen')
+test_procs = procs.ProcsList(('assurance_of_consequence', 580), ('haromms_talisman', 580)) #trinkets, other things (legendary procs)
 
 # Set up gear buffs.
-test_gear_buffs = stats.GearBuffs('rogue_t16_2pc', 'rogue_t16_4pc', 'leather_specialization')
+test_gear_buffs = stats.GearBuffs('gear_specialization') #tier buffs located here
 
 # Set up a calcs object..
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
-                         agi=862,
-                         stam=1000,
-                         crit=87,
-                         haste=553,
-                         mastery=200,
-                         versatility=160,
-                         multistrike=120,)
+                         agi=1957,
+                         stam=2426,
+                         crit=794,
+                         haste=645,
+                         mastery=557,
+                         readiness=0,
+                         versatility=154,
+                         multistrike=121,)
 
 # Initialize talents..
 test_talents = talents.Talents('332213', test_class, test_level)
@@ -98,8 +99,8 @@ trinkets_list = {
     'thoks_tail_tip': [(528,532,536),(540,544,548),(553,557,561),(559,563,567),(566,570,574),(572,576,580)],
     'discipline_of_xuen': [(496,500,504),(535,539,543)],
 }
-trinkets_ep_value = calculator.get_upgrades_ep_fast(trinkets_list)
-glyph_values = calculator.get_glyphs_ranking()
+#trinkets_ep_value = calculator.get_upgrades_ep_fast(trinkets_list)
+#glyph_values = calculator.get_glyphs_ranking()
 
 # Compute weapon type modifier.
 #weapon_type_mod = calculator.get_oh_weapon_modifier()
@@ -133,8 +134,8 @@ dicts_for_pretty_print = [
     tier_ep_values,
     #mh_enchants_and_dps_ep_values,
     #oh_enchants_and_dps_ep_values,
-    trinkets_ep_value,
-    glyph_values,
+    #trinkets_ep_value,
+    #glyph_values,
     talent_ranks,
 ]
 pretty_print(dicts_for_pretty_print)

@@ -20,7 +20,7 @@ test_language = 'local'
 i18n.set_language(test_language)
 
 # Set up level/class/race
-test_level = 90
+test_level = 100
 test_race = race.Race('night_elf')
 test_class = 'rogue'
 
@@ -51,13 +51,14 @@ test_gear_buffs = stats.GearBuffs('rogue_t16_2pc', 'rogue_t15_2pc', 'leather_spe
 
 # Set up a calcs object..
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
-                         agi=862,
-                         stam=1000,
-                         crit=87,
-                         haste=553,
-                         mastery=200,
-                         readiness=160,
-                         multistrike=120,)
+                         agi=1957,
+                         stam=2426,
+                         crit=794,
+                         haste=645,
+                         mastery=557,
+                         readiness=0,
+                         versatility=154,
+                         multistrike=121,)
 
 # Initialize talents..
 test_talents = talents.Talents('3222121', test_class, test_level)

@@ -24,7 +24,7 @@ i18n.set_language(test_language)
 start = clock()
 
 # Set up level/class/race
-test_level = 90
+test_level = 100
 test_race = race.Race('pandaren')
 test_class = 'rogue'
 
@@ -36,7 +36,6 @@ test_buffs = buffs.Buffs(
         'mastery_buff',
         'haste_buff', #all rogues bring this
         'attack_power_buff',
-        'armor_debuff',
         'physical_vulnerability_debuff',
         'spell_damage_debuff', #all rogues bring this
         'agi_flask_mop',
@@ -44,24 +43,25 @@ test_buffs = buffs.Buffs(
     )
 
 # Set up weapons.
-test_mh = stats.Weapon(395.5, 1.8, 'dagger', 'dancing_steel')
-test_oh = stats.Weapon(395.5, 1.8, 'dagger', 'dancing_steel')
+test_mh = stats.Weapon(420.5, 1.8, 'dagger', 'dancing_steel')
+test_oh = stats.Weapon(420.5, 1.8, 'dagger', 'dancing_steel')
 
 # Set up procs.
-test_procs = procs.ProcsList( ('ticking_ebon_detonator', 580), ('haromms_talisman', 580), 'legendary_capacitive_meta', 'fury_of_xuen')
+test_procs = procs.ProcsList( ('ticking_ebon_detonator', 580), ('haromms_talisman', 580))
 
 # Set up gear buffs.
-test_gear_buffs = stats.GearBuffs('rogue_t16_2pc', 'rogue_t16_4pc', 'leather_specialization')
+test_gear_buffs = stats.GearBuffs('leather_specialization')
 
 # Set up a calcs object..
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
-                         agi=862,
-                         stam=1000,
-                         crit=87,
-                         haste=553,
-                         mastery=200,
-                         readiness=160,
-                         multistrike=120,)
+                         agi=1957,
+                         stam=2426,
+                         crit=794,
+                         haste=645,
+                         mastery=557,
+                         readiness=0,
+                         versatility=154,
+                         multistrike=121,)
 
 # Initialize talents..
 test_talents = talents.Talents('122213', test_class, test_level)

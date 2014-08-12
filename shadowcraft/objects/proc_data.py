@@ -145,6 +145,45 @@ allowed_procs = {
 }
 
 allowed_melee_enchants = {
+    #6.0
+    'mark_of_the_frostwolf': {
+        'stat': 'stats',
+        'value': {'multistrike':500},
+        'duration': 6,
+        'max_stacks': 2,
+        'proc_name': 'Mark of the Frostwolf',
+        'type': 'rppm',
+        'source': 'weapon',
+        'item_level': 100,
+        'icd': 0,
+        'proc_rate': 3.0,
+        'trigger': 'all_melee_attacks'
+    },
+    'mark_of_the_thunderlord': {
+        'stat': 'stats',
+        'value': {'crit':500},
+        'duration': 6,
+        'proc_name': 'Mark of the Thunderlord',
+        'type': 'rppm',
+        'source': 'weapon',
+        'item_level': 100,
+        'icd': 0,
+        'proc_rate': 2.5,
+        'trigger': 'all_melee_attacks'
+    },
+    'mark_of_the_bleeding_hollow': {
+        'stat': 'stats',
+        'value': {'mastery':500},
+        'duration': 12,
+        'proc_name': 'Mark of the Bleeding Hollow',
+        'type': 'rppm',
+        'source': 'weapon',
+        'item_level': 100,
+        'icd': 0,
+        'proc_rate': 2.3,
+        'trigger': 'all_melee_attacks'
+    },
+    #5.0
     'windsong': {
         'stat': 'random',
         'value': {'haste':75, 'mastery':75, 'crit':75},

@@ -120,7 +120,7 @@ class RogueDamageCalculator(DamageCalculator):
         base_modifier *= potent_poisons_modifier
         
         #versatility is a generic damage modifier
-        base_modifier *= self.stats.get_versatility_multiplier_from_rating()
+        base_modifier *= (self.stats.get_versatility_multiplier_from_rating() + self.buffs.versatility_bonus())
 
         return base_modifier
     
@@ -284,13 +284,13 @@ class RogueDamageCalculator(DamageCalculator):
         return self.oh_penalty() * self.get_weapon_damage('oh', ap, is_normalized=False)
     
     def mh_shuriken(self, ap):
-        return .75 * mh_damage(ap, armor=armor)
+        return .75 * mh_damage(ap, armor=armor) #update?
     
     def oh_shuriken(self, ap):
-        return .75 * oh_damage(ap, armor=armor)
+        return .75 * oh_damage(ap, armor=armor) #update?
 
     def backstab_damage(self, ap):
-        return 1.3 * self.get_weapon_damage('mh', ap)
+        return 1.56 * self.get_weapon_damage('mh', ap)
 
     def dispatch_damage(self, ap):
         return 3.15 * self.get_weapon_damage('mh', ap)
@@ -302,25 +302,25 @@ class RogueDamageCalculator(DamageCalculator):
         return 2.0 * self.oh_penalty() * self.get_weapon_damage('oh', ap)
 
     def sinister_strike_damage(self, ap):
-        return 0.85 * self.get_weapon_damage('mh', ap)
+        return 1.02 * self.get_weapon_damage('mh', ap)
 
     def hemorrhage_damage(self, ap):
-        return [0.6, 0.94][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap)
+        return .78 * [1., 1.4][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap)
 
     def hemorrhage_tick_damage(self, ap):
         return self.hemorrhage_damage(ap) / 8. #24s, 3s per tick
 
     def ambush_damage(self, ap):
-        return [2.50, 3.62][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap) 
+        return 3.0 * [1., 1.4][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap) 
 
     def revealing_strike_damage(self, ap):
-        return 0.8 * self.get_weapon_damage('mh', ap, is_normalized=False)
+        return .96 * self.get_weapon_damage('mh', ap, is_normalized=False)
 
     def venomous_wounds_damage(self, ap):
         return .320 * ap
 
     def main_gauche_damage(self, ap):
-        return .75 * self.get_weapon_damage('oh', ap)
+        return 1.5 * self.oh_penalty() * self.get_weapon_damage('oh', ap)
 
     def mh_killing_spree_damage(self, ap):
         return 1.0 * self.get_weapon_damage('mh', ap)
@@ -341,13 +341,13 @@ class RogueDamageCalculator(DamageCalculator):
         return .218 * ap
 
     def garrote_tick_damage(self, ap):
-        return .0891 * ap
+        return .2241 * ap #what is this again?
 
     def rupture_tick_damage(self, ap, cp):
         return .0685 * cp * ap
 
     def eviscerate_damage(self, ap, cp):
-        return .3203 * cp * ap
+        return .38436 * cp * ap
 
     def envenom_damage(self, ap, cp):
         return .306 * cp * ap
@@ -368,7 +368,7 @@ class RogueDamageCalculator(DamageCalculator):
         return .05 * ap
 
     def shuriken_toss_damage(self, ap):
-        return .6 * ap
+        return 1.2 * ap
     
     def get_formula(self, name):
         formulas = {

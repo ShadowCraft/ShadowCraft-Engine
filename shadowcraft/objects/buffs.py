@@ -7,27 +7,25 @@ class InvalidBuffException(exceptions.InvalidInputException):
 class Buffs(object):
 
     allowed_buffs = frozenset([
-        'short_term_haste_buff',            # Heroism/Blood Lust, Time Warp
-        'stat_multiplier_buff',             # Mark of the Wild, Blessing of Kings, Legacy of the Emperor
-        'crit_chance_buff',                 # Leader of the Pack, Legacy of the White Tiger, Arcane Brillance
-        'haste_buff',                       # Swiftblade's Cunning, Unholy Aura
-        'multistrike_buff',                 # Swiftblade's Cunning, ...
-        'attack_power_buff',                # Horn of Winter, Trueshot Aura, Battle Shout
-        'mastery_buff',                     # Blessing of Might, Grace of Air
-        'spell_power_buff',                 # Dark Intent, Arcane Brillance
-        'stamina_buff',                     # PW: Fortitude, Blood Pact, Commanding Shout
-        'armor_debuff',                     # Sunder, Expose Armor, Faerie Fire
+        'short_term_haste_buff',           # Heroism/Blood Lust, Time Warp
+        'stat_multiplier_buff',            # Mark of the Wild, Blessing of Kings, Legacy of the Emperor
+        'crit_chance_buff',                # Leader of the Pack, Legacy of the White Tiger, Arcane Brillance
+        'haste_buff',                      # Swiftblade's Cunning, Unholy Aura
+        'multistrike_buff',                # Swiftblade's Cunning, ...
+        'attack_power_buff',               # Horn of Winter, Trueshot Aura, Battle Shout
+        'mastery_buff',                    # Blessing of Might, Grace of Air
+        'stamina_buff',                    # PW: Fortitude, Blood Pact, Commanding Shout
+        'versatility_buff',                #
+        'spell_power_buff',                # Dark Intent, Arcane Brillance
+        #'armor_debuff',                     # Sunder, Expose Armor, Faerie Fire
         'physical_vulnerability_debuff',    # Brittle Bones, Ebon Plaguebringer, Judgments of the Bold, Colossus Smash
         'spell_damage_debuff',              # Master Poisoner, Curse of Elements
-        'weakened_blows_debuff',
-        'slow_casting_debuff',
+        #'slow_casting_debuff',
         'mortal_wounds_debuff',
         'agi_flask_mop',                    # Flask of Spring Blossoms
-        'food_250',                         # Pandaren Banquet
-        'food_275',                         # Pandaren Banquet
-        'food_300_agi',                     # Sea Mist Rice Noodles
-        'agi_flask_wod',                    # 
-        'food_x_wod',                       # 
+        'food_mop_agi',                     # Sea Mist Rice Noodles
+        'flask_wod_mastery',                #
+        'food_wod_mastery',                 #
     ])
     
     buffs_debuffs = frozenset([
@@ -39,12 +37,10 @@ class Buffs(object):
         'attack_power_buff',                # Horn of Winter, Trueshot Aura, Battle Shout
         'mastery_buff',                     # Blessing of Might, Grace of Air
         'spell_power_buff',                 # Dark Intent, Arcane Brillance
+        'versatility_buff',
         'stamina_buff',                     # PW: Fortitude, Blood Pact, Commanding Shout
-        'armor_debuff',                     # Sunder, Expose Armor, Faerie Fire
         'physical_vulnerability_debuff',    # Brittle Bones, Ebon Plaguebringer, Judgments of the Bold, Colossus Smash
         'spell_damage_debuff',              # Master Poisoner, Curse of Elements
-        'weakened_blows_debuff',
-        'slow_casting_debuff',
         'mortal_wounds_debuff',
     ])
 
@@ -95,35 +91,43 @@ class Buffs(object):
     def haste_multiplier(self):
         return [1, 1.05][self.haste_buff]
     
-    def buff_str(self):
-        return 0
-
-    def buff_agi(self, just_food=False):
-        flask_agi = 0
-        if not just_food:
-            if self.agi_flask_mop + self.agi_flask_wod > 1:
-                raise InvalidBuffException(_('You can only have one type of Flask active'))
-            flask_agi += [0, 1000][self.agi_flask_mop]
-            flask_agi += [0, 0][self.agi_flask_wod]
-
-        if self.food_250 + self.food_275 + self.food_300_agi + self.food_x_wod> 1:
-            raise InvalidBuffException(_('You can only have one type of Well Fed buff active'))
-        food_agi = 0
-        food_agi += 250 * self.food_250
-        food_agi += 275 * self.food_275
-        food_agi += 300 * self.food_300_agi
-        food_agi += 0 * self.food_x_wod
-
-        return food_agi + flask_agi
-
+    def versatility_bonus(self):
+        return [0, 0.03][self.versatility_buff]
+    
     def buff_all_crit(self):
         return [0, .05][self.crit_chance_buff]
 
-    def armor_reduction_multiplier(self):
-        return [1, .88][self.armor_debuff]
-
-    def buff_mast(self):
-        return [0, self.mast_buff_bonus][self.mastery_buff]
-    
     def multistrike_bonus(self):
         return [0, 0.05][self.multistrike_buff]
+    
+    #stat buffs
+    def buff_str(self):
+        return 0
+
+    def buff_agi(self):
+        bonus_agi = 0
+        bonus_agi += 114 * self.agi_flask_mop
+        bonus_agi += 34 * self.food_mop_agi
+        return bonus_agi
+    
+    def buff_haste(self):
+        return 0
+    
+    def buff_crit(self):
+        return 0
+    
+    def buff_mast(self):
+        bonus_mastery = 0
+        bonus_mastery += [0, self.mast_buff_bonus][self.mastery_buff]
+        bonus_mastery += 500 * self.flask_wod_mastery
+        bonus_mastery += 125 * self.food_wod_mastery
+        return bonus_mastery
+    
+    def buff_versatility(self):
+        return 0
+    
+    def buff_multistrike(self):
+        return 0
+    
+    def buff_readiness(self):
+        return 0
