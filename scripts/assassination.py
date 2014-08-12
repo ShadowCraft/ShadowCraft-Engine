@@ -34,17 +34,19 @@ test_buffs = buffs.Buffs(
         'stat_multiplier_buff',
         'crit_chance_buff',
         'mastery_buff',
-        'haste_buff', #all rogues bring this
+        'haste_buff',
+        'multistrike_buff',
+        'versatility_buff',
         'attack_power_buff',
         'physical_vulnerability_debuff',
-        'spell_damage_debuff', #all rogues bring this
+        'spell_damage_debuff',
         'agi_flask_mop',
-        'food_300_agi'
+        'food_mop_agi'
     )
 
 # Set up weapons.
-test_mh = stats.Weapon(420.5, 1.8, 'dagger', 'dancing_steel')
-test_oh = stats.Weapon(420.5, 1.8, 'dagger', 'dancing_steel')
+test_mh = stats.Weapon(420.5/1.8, 1.8, 'dagger', 'dancing_steel')
+test_oh = stats.Weapon(420.5/1.8, 1.8, 'dagger', 'dancing_steel')
 
 # Set up procs.
 test_procs = procs.ProcsList( ('ticking_ebon_detonator', 580), ('haromms_talisman', 580))

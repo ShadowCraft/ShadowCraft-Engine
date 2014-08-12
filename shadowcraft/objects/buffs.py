@@ -101,33 +101,33 @@ class Buffs(object):
         return [0, 0.05][self.multistrike_buff]
     
     #stat buffs
-    def buff_str(self):
+    def buff_str(self, race=False):
         return 0
 
-    def buff_agi(self):
+    def buff_agi(self, race=False):
         bonus_agi = 0
         bonus_agi += 114 * self.agi_flask_mop
-        bonus_agi += 34 * self.food_mop_agi
+        bonus_agi += 34 * self.food_mop_agi * [1, 2][race]
         return bonus_agi
     
-    def buff_haste(self):
+    def buff_haste(self, race=False):
         return 0
     
-    def buff_crit(self):
+    def buff_crit(self, race=False):
         return 0
     
-    def buff_mast(self):
+    def buff_mast(self, race=False):
         bonus_mastery = 0
         bonus_mastery += [0, self.mast_buff_bonus][self.mastery_buff]
         bonus_mastery += 500 * self.flask_wod_mastery
-        bonus_mastery += 125 * self.food_wod_mastery
+        bonus_mastery += 125 * self.food_wod_mastery * [1, 2][race]
         return bonus_mastery
     
-    def buff_versatility(self):
+    def buff_versatility(self, race=False):
         return 0
     
-    def buff_multistrike(self):
+    def buff_multistrike(self, race=False):
         return 0
     
-    def buff_readiness(self):
+    def buff_readiness(self, race=False):
         return 0

@@ -222,7 +222,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.load_from_advanced_parameters()
         self.bonus_energy_regen = 0
         self.spec_needs_converge = False
-        self.human_racial_stats = []
         #racials
         if self.race.arcane_torrent:
             self.bonus_energy_regen += 15. / (120 + self.settings.response_time)
@@ -237,15 +236,18 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #only include if general multiplier applies to spec calculations 
         self.true_haste_mod *= self.get_heroism_haste_multiplier()
         self.base_stats = {
-            'agi': (self.stats.agi + self.buffs.buff_agi() + self.race.racial_agi),
+            'agi': (self.stats.agi + self.buffs.buff_agi(race=self.race.epicurean) + self.race.racial_agi),
             'ap': (self.stats.ap),
-            'crit': (self.stats.crit + self.buffs.buff_crit()),
-            'haste': (self.stats.haste + self.buffs.buff_haste()),
-            'mastery': (self.stats.mastery + self.buffs.buff_mast()),
-            'readiness': (self.stats.readiness + self.buffs.buff_readiness()),
-            'multistrike': (self.stats.multistrike + self.buffs.buff_multistrike()),
-            'versatility': (self.stats.versatility + self.buffs.buff_versatility()),
+            'crit': (self.stats.crit + self.buffs.buff_crit(race=self.race.epicurean)),
+            'haste': (self.stats.haste + self.buffs.buff_haste(race=self.race.epicurean)),
+            'mastery': (self.stats.mastery + self.buffs.buff_mast(race=self.race.epicurean)),
+            'readiness': (self.stats.readiness + self.buffs.buff_readiness(race=self.race.epicurean)),
+            'multistrike': (self.stats.multistrike + self.buffs.buff_multistrike(race=self.race.epicurean)),
+            'versatility': (self.stats.versatility + self.buffs.buff_versatility(race=self.race.epicurean)),
         }
+        
+        if self.race.human_spirit:
+            self.base_stats['versatility'] += self.race.versatility_bonuses[self.level]
                 
         for boost in self.race.get_racial_stat_boosts():
             if boost['stat'] in self.base_stats:
@@ -539,12 +541,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if poison:
             poison_base_proc_rate = .3
         else:
-            #poison_base_proc_rate = 0
             return
         proc_multiplier = 1
         if self.settings.is_combat_rogue():
             if self.settings.cycle.blade_flurry:
-                proc_multiplier += self.settings.num_boss_adds
+                proc_multiplier += math.min(self.settings.num_boss_adds, [4, 999][self.level==100])
 
         if self.settings.is_assassination_rogue():
             poison_base_proc_rate += .2
@@ -652,11 +653,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             'multistrike': 0,
             'versatility': 0,
         }
-        
-        #human racial stats, we can sneak it in static proc stats to keep code cleaner
-        #should probably rely on self.race object for data instead of hardcoded value here
-        for e in self.human_racial_stats:
-            static_proc_stats[e] += 30 #placeholder
         
         for proc in active_procs_rppm:
             self.set_rppm_uptime(proc)
@@ -797,11 +793,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         #set readiness coefficient
         self.readiness_spec_conversion = self.assassination_readiness_conversion
-        self.human_racial_stats = ['mastery', 'crit']
         self.spec_convergence_stats = ['haste', 'crit', 'readiness']
         
         # Assassasins's Resolve
-        self.damage_modifier_cache *= 1.20
+        self.damage_modifier_cache = 1.20
         
         #update spec specific proc rates
         if getattr(self.stats.procs, 'legendary_capacitive_meta'):
@@ -1180,7 +1175,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         #set readiness coefficient
         self.readiness_spec_conversion = self.combat_readiness_conversion
-        self.human_racial_stats = ['haste', 'readiness']
         self.spec_convergence_stats = ['haste', 'mastery', 'readiness']
         
         #spec specific glyph behaviour
@@ -1487,14 +1481,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             
         #set readiness coefficient
         self.readiness_spec_conversion = self.subtlety_readiness_conversion
-        self.human_racial_stats = ['haste', 'readiness']
         self.spec_convergence_stats = ['haste', 'mastery', 'readiness']
         
         #overrides setting, using Ambush + Vanish on CD is critical
         self.settings.use_opener = 'always'
         self.settings.opener_name = 'ambush'
         # Sanguinary Vein
-        self.damage_modifier_cache *= 1.2
+        self.damage_modifier_cache = 1.2
         
         
         #update spec specific proc rates

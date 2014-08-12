@@ -24,6 +24,11 @@ class Race(object):
         90: {'spell_damage': 400},
         100:{'spell_damage': 1000},
     }
+    versatility_bonuses = {
+        0:     1,
+        90:   26,
+        100: 100,
+    }
 
     #Arguments are ap, spellpower:fire, and int
     #This is the formula according to wowhead, with a probable typo corrected
@@ -53,7 +58,7 @@ class Race(object):
         "might_of_the_mountain",    #Dwarf (2% crit damage/healing)
         "expansive_mind",           #Gnome (+5% Max Mana, Energy, Rage, or Runic Power)
         "nimble_fingers",           #Gnome (1% haste)
-        "human_spirit",             #Human (+x to /2/ secondary stats of choice)
+        "human_spirit",             #Human (+X Versatility)
         "quickness",                #Night Elf
         "touch_of_elune",           #Night Elf (1% haste at night, 1% crit at day)
         "shadowmeld",               #Night Elf

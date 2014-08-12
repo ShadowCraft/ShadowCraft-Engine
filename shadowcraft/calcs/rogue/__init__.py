@@ -89,8 +89,6 @@ class RogueDamageCalculator(DamageCalculator):
         self.damage_modifier_cache = 1
         # We only check race here (instead of calcs) because we can assume it's an agi food buff and it applies to every possible rogue calc
         # Otherwise we would be obligated to have a series of conditions to check for classes
-        if self.race.epicurean:
-            self.stats.agi += self.buffs.buff_agi(just_food=True)
         if self.settings.is_pvp:
             self.default_ep_stats.append('pvp_power')
 
