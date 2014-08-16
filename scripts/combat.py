@@ -40,13 +40,13 @@ test_buffs = buffs.Buffs(
         'attack_power_buff',
         'physical_vulnerability_debuff',
         'spell_damage_debuff',
-        'agi_flask_mop',
+        'flask_wod_agi',
         'food_mop_agi'
     )
 
-# Set up weapons.
-test_mh = stats.Weapon(607./2.6, 2.6, 'sword', 'dancing_steel')
-test_oh = stats.Weapon(607./2.6, 2.6, 'sword', 'dancing_steel')
+# Set up weapons: dancing_steel mark_of_the_shattered_hand
+test_mh = stats.Weapon(607., 2.6, 'sword', 'mark_of_the_shattered_hand')
+test_oh = stats.Weapon(607., 2.6, 'sword', 'mark_of_the_shattered_hand')
 
 # Set up procs.
 test_procs = procs.ProcsList(('assurance_of_consequence', 580), ('haromms_talisman', 580)) #trinkets, other things (legendary procs)

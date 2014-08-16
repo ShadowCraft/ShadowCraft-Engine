@@ -15,6 +15,20 @@ allowed_procs = {
         'proc_rate': 1,
         'trigger': 'all_attacks'
     },
+    #weapon enchant support
+    'mark_of_the_shattered_hand_dot': {
+        'stat': 'physical_dot',
+        'value': 750,
+        'duration': 6,
+        'proc_name': 'Mark of the Shattered Hand DOT',
+        'type': 'rppm',
+        'source': 'weapon',
+        'item_level': 100,
+        'icd': 0,
+        'proc_rate': 3.5,
+        'haste_scales': True,
+        'trigger': 'all_attacks',
+    },
     #racials
     'touch_of_the_grave': {
         'stat': 'spell_damage',
@@ -159,6 +173,19 @@ allowed_melee_enchants = {
         'proc_rate': 3.0,
         'trigger': 'all_melee_attacks'
     },
+    'mark_of_the_shattered_hand': {
+        'stat': 'physical_damage',
+        'value': 1500, #triggers mark_of_the_shattered_hand_dot
+        'duration': 0,
+        'proc_name': 'Mark of the Shattered Hand',
+        'type': 'rppm',
+        'source': 'weapon',
+        'item_level': 100,
+        'icd': 0,
+        'proc_rate': 3.5,
+        'haste_scales': True,
+        'trigger': 'all_attacks',
+    },
     'mark_of_the_thunderlord': {
         'stat': 'stats',
         'value': {'crit':500},
@@ -198,7 +225,7 @@ allowed_melee_enchants = {
     },
     'dancing_steel': {
         'stat': 'highest',
-        'value': {'agi':83, 'str':83},
+        'value': {'agi':65, 'str':65},
         'duration': 12,
         'proc_name': 'Dancing Steel',
         'type': 'rppm',
@@ -210,7 +237,7 @@ allowed_melee_enchants = {
     },
     'elemental_force': {
         'stat': 'spell_damage',
-        'value': 150,
+        'value': 188,
         'duration': 0,
         'proc_name': 'Elemental Force',
         'type': 'rppm',

@@ -45,8 +45,8 @@ test_buffs = buffs.Buffs(
     )
 
 # Set up weapons.
-test_mh = stats.Weapon(420.5/1.8, 1.8, 'dagger', 'dancing_steel')
-test_oh = stats.Weapon(420.5/1.8, 1.8, 'dagger', 'dancing_steel')
+test_mh = stats.Weapon(420.5, 1.8, 'dagger', 'dancing_steel')
+test_oh = stats.Weapon(420.5, 1.8, 'dagger', 'dancing_steel')
 
 # Set up procs.
 test_procs = procs.ProcsList( ('ticking_ebon_detonator', 580), ('haromms_talisman', 580))

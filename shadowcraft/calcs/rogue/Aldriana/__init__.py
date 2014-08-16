@@ -287,19 +287,22 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     def get_stat_mod(self, stat):
         if stat == 'agi':
             return self.agi_multiplier
+        if stat == self.spec_stat_bonus:
+            return 1.05
         return 1
     
     def get_proc_damage_contribution(self, proc, proc_count, current_stats, average_ap, damage_breakdown):
+        crit_multiplier = self.crit_damage_modifiers()
+        crit_rate = self.crit_rate(crit=current_stats['crit'])
+        
         if proc.stat == 'spell_damage':
             multiplier = self.raid_settings_modifiers('spell')
-            crit_multiplier = self.crit_damage_modifiers()
-            crit_rate = self.crit_rate(crit=current_stats['crit'])
         elif proc.stat == 'physical_damage':
             multiplier = self.raid_settings_modifiers('physical')
-            crit_multiplier = self.crit_damage_modifiers()
-            crit_rate = self.crit_rate(crit=current_stats['crit'])
+        elif proc.stat == 'physical_dot':
+            multiplier = self.raid_settings_modifiers('bleed')
         else:
-            return 0, 0
+            return 0
 
         if proc.can_crit == False:
             crit_rate = 0
@@ -308,7 +311,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #280+75% AP
         if proc is getattr(self.stats.procs, 'legendary_capacitive_meta'):
             crit_rate = self.crit_rate(crit=current_stats['crit'])
-            proc_value = average_ap * .75 + 280
+            proc_value = average_ap * .75 + 50
         
         if proc is getattr(self.stats.procs, 'fury_of_xuen'):
             crit_rate = self.crit_rate(crit=current_stats['crit'])
@@ -316,6 +319,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         average_hit = proc_value * multiplier
         average_damage = average_hit * (1 + crit_rate * (crit_multiplier - 1)) * proc_count
+        
+        if proc.stat == 'physical_dot':
+            average_damage *= proc.uptime / proc_count
+        
         return average_damage
 
     def append_damage_on_use(self, average_ap, current_stats, damage_breakdown):
@@ -518,8 +525,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 frequency = 1. / (proc.icd + 0.5 / self.get_procs_per_second(proc, attacks_per_second, crit_rates))
             else:
                 frequency = self.get_procs_per_second(proc, attacks_per_second, crit_rates)
-
-        attacks_per_second[proc.proc_name] = frequency
+        
+        if proc.proc_name in attacks_per_second:
+            attacks_per_second[proc.proc_name] += frequency
+        else:
+            attacks_per_second[proc.proc_name] = frequency
 
     def get_shadow_focus_multiplier(self):
         if self.talents.shadow_focus:
@@ -527,9 +537,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         return 1.
 
     def setup_unique_procs(self):
-        pass
         #modelling specific proc setup would go here
-        #example, RoRO, Matrix Restabilizer, etc.
+        for hand in ('mh', 'oh'):
+            if getattr(getattr(self.stats, hand), 'mark_of_the_shattered_hand'):
+                self.stats.procs.set_proc('mark_of_the_shattered_hand_dot')
+                self.set_rppm_uptime(getattr(self.stats.procs, 'mark_of_the_shattered_hand_dot'))
+                #this is to support the DoT
 
     def get_poison_counts(self, attacks_per_second):
         # Builds a phony 'poison' proc object to count triggers through the proc
@@ -568,14 +581,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     def determine_stats(self, attack_counts_function):
         current_stats = {
             'str': self.base_strength,
-            'agi': self.base_stats['agi'] * self.agi_multiplier,
+            'agi': self.base_stats['agi'] * self.get_stat_mod('agi'),
             'ap': self.base_stats['ap'],
-            'crit': self.base_stats['crit'],
-            'haste': self.base_stats['haste'],
-            'mastery': self.base_stats['mastery'],
-            'readiness': self.base_stats['readiness'],
-            'multistrike': self.base_stats['multistrike'],
-            'versatility': self.base_stats['versatility'],
+            'crit': self.base_stats['crit'] * self.get_stat_mod('crit'),
+            'haste': self.base_stats['haste'] * self.get_stat_mod('haste'),
+            'mastery': self.base_stats['mastery'] * self.get_stat_mod('mastery'),
+            'readiness': self.base_stats['readiness'] * self.get_stat_mod('readiness'),
+            'multistrike': self.base_stats['multistrike'] * self.get_stat_mod('multistrike'),
+            'versatility': self.base_stats['versatility'] * self.get_stat_mod('versatility'),
         }
         self.current_variables = {}
         
@@ -607,14 +620,16 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                         active_procs_icd.append(proc)
                     else:
                         active_procs_no_icd.append(proc)
-            elif proc.stat in ('spell_damage', 'physical_damage'):
+            elif proc.stat in ('spell_damage', 'physical_damage', 'physical_dot'):
                 damage_procs.append(proc)
             elif proc.stat == 'extra_weapon_damage':
                 weapon_damage_procs.append(proc)
                 
         #calculate weapon procs
         weapon_enchants = set([])
-        for hand, enchant in [(x, y) for x in ('mh', 'oh') for y in ('dancing_steel', 'elemental_force')]:
+        for hand, enchant in [(x, y) for x in ('mh', 'oh') for y in ('dancing_steel', 'elemental_force', 'mark_of_the_frostwolf',
+                                                                     'mark_of_the_shattered_hand', 'mark_of_the_thunderlord',
+                                                                     'mark_of_the_bleeding_hollow')]:
             proc = getattr(getattr(self.stats, hand), enchant)
             if proc:
                 setattr(proc, '_'.join((hand, 'only')), True)
@@ -626,7 +641,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                             active_procs_icd.append(proc)
                         else:
                             active_procs_no_icd.append(proc)
-                elif enchant in ('elemental_force',):
+                elif enchant in ('elemental_force', 'mark_of_the_shattered_hand'):
                     damage_procs.append(proc)
                 elif proc.stat == 'highest' and 'agi' in proc.value:
                     proc.stat = 'stats'
@@ -673,14 +688,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         while need_converge or self.spec_needs_converge:
             current_stats = {
                 'str': self.base_strength,
-                'agi': self.base_stats['agi'] * self.agi_multiplier,
+                'agi': self.base_stats['agi'] * self.get_stat_mod('agi'),
                 'ap': self.base_stats['ap'],
-                'crit': self.base_stats['crit'],
-                'haste': self.base_stats['haste'],
-                'mastery': self.base_stats['mastery'],
-                'readiness': self.base_stats['readiness'],
-                'multistrike': self.base_stats['multistrike'],
-                'versatility': self.base_stats['versatility'],
+                'crit': self.base_stats['crit'] * self.get_stat_mod('crit'),
+                'haste': self.base_stats['haste'] * self.get_stat_mod('haste'),
+                'mastery': self.base_stats['mastery'] * self.get_stat_mod('mastery'),
+                'readiness': self.base_stats['readiness'] * self.get_stat_mod('readiness'),
+                'multistrike': self.base_stats['multistrike'] * self.get_stat_mod('multistrike'),
+                'versatility': self.base_stats['versatility'] * self.get_stat_mod('versatility'),
             }
             for k in static_proc_stats:
                 current_stats[k] +=  static_proc_stats[k]
@@ -758,7 +773,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         for proc in damage_procs:
             self.update_with_damaging_proc(proc, attacks_per_second, crit_rates)
-
+        
         for proc in weapon_damage_procs:
             self.set_uptime(proc, attacks_per_second, crit_rates)
                                 
@@ -794,6 +809,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #set readiness coefficient
         self.readiness_spec_conversion = self.assassination_readiness_conversion
         self.spec_convergence_stats = ['haste', 'crit', 'readiness']
+        self.spec_stat_bonus = 'mastery'
         
         # Assassasins's Resolve
         self.damage_modifier_cache = 1.20
@@ -1176,6 +1192,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #set readiness coefficient
         self.readiness_spec_conversion = self.combat_readiness_conversion
         self.spec_convergence_stats = ['haste', 'mastery', 'readiness']
+        self.spec_stat_bonus = 'haste'
         
         #spec specific glyph behaviour
         if self.glyphs.disappearance:
@@ -1482,6 +1499,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #set readiness coefficient
         self.readiness_spec_conversion = self.subtlety_readiness_conversion
         self.spec_convergence_stats = ['haste', 'mastery', 'readiness']
+        self.spec_stat_bonus = 'multistrike'
         
         #overrides setting, using Ambush + Vanish on CD is critical
         self.settings.use_opener = 'always'

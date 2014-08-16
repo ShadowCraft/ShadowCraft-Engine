@@ -271,6 +271,11 @@ class RogueDamageCalculator(DamageCalculator):
             multistrike_damage += multistrike_multiplier * damage_breakdown[ability]
         damage_breakdown['multistrike'] = multistrike_damage
         
+        #DW DOT FIX
+        if getattr(getattr(self.stats, 'mh'), 'mark_of_the_shattered_hand') and getattr(getattr(self.stats, 'oh'), 'mark_of_the_shattered_hand'):
+            #damage_breakdown['Mark of the Shattered Hand'] *= 2.
+            damage_breakdown['Mark of the Shattered Hand DOT'] *= 2.
+        
         self.add_exported_data(damage_breakdown)
 
         return damage_breakdown

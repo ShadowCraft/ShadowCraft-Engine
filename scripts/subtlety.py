@@ -40,8 +40,8 @@ test_buffs = buffs.Buffs(
     )
 
 # Set up weapons.
-test_mh = stats.Weapon(395.5, 1.8, 'dagger', 'dancing_steel')
-test_oh = stats.Weapon(395.5, 1.8, 'dagger', 'dancing_steel')
+test_mh = stats.Weapon(420.5, 1.8, 'dagger', 'dancing_steel')
+test_oh = stats.Weapon(420.5, 1.8, 'dagger', 'dancing_steel')
 
 # Set up procs.
 test_procs = procs.ProcsList(('assurance_of_consequence', 580), ('haromms_talisman', 580), 'legendary_capacitive_meta', 'fury_of_xuen' )
