@@ -323,7 +323,7 @@ class RogueDamageCalculator(DamageCalculator):
         return .320 * ap
 
     def main_gauche_damage(self, ap):
-        return 1.5 * self.oh_penalty() * self.get_weapon_damage('oh', ap)
+        return 2.25 * self.oh_penalty() * self.get_weapon_damage('oh', ap)
 
     def mh_killing_spree_damage(self, ap):
         return 1.0 * self.get_weapon_damage('mh', ap)
@@ -350,10 +350,10 @@ class RogueDamageCalculator(DamageCalculator):
         return .0685 * cp * ap
 
     def eviscerate_damage(self, ap, cp):
-        return .38436 * cp * ap
+        return .577 * cp * ap
 
     def envenom_damage(self, ap, cp):
-        return .306 * cp * ap
+        return .4505 * cp * ap
 
     def fan_of_knives_damage(self, ap):
         return .231 * ap
