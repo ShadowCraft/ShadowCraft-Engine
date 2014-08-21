@@ -264,12 +264,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.base_speed_multiplier = 1.4 * self.buffs.haste_multiplier()
         if self.race.berserking:
             self.true_haste_mod *= (1 + .15 * 10. / (180 + self.settings.response_time))
-        if self.race.time_is_money:
-            self.true_haste_mod *= 1.01
-        if self.race.touch_of_elune and not self.settings.is_day:
-            self.true_haste_mod *= 1.01
-        if self.race.nimble_fingers:
-            self.true_haste_mod *= 1.01
+        self.true_haste_mod *= 1 + self.race.get_racial_haste() #doesn't include Berserking
             
         #hit chances
         self.dw_mh_hit_chance = self.dual_wield_mh_hit_chance()

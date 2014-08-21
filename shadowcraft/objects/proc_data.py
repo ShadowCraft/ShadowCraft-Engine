@@ -71,10 +71,39 @@ allowed_procs = {
         'haste_scales': True,
         'trigger': 'all_attacks'
     },
+    #6.0 procs
+    'primal_combatants_ioc': {
+        'stat': 'stats',
+        'value': {'agi':505},
+        'duration': 20,
+        'proc_name': 'Primal Combatants Insignia of Conquest',
+        'upgradable': True,
+        'scaling': 2.9730000496, #needs to be corrected
+        'item_level': 620,
+        'type': 'perc',
+        'source': 'trinket',
+        'icd': 115,
+        'proc_rate': 0.15,
+        'trigger': 'all_attacks'
+    },
+    'primal_combatants_boc': {
+        'stat': 'stats',
+        'value': {'agi':358},
+        'duration': 20,
+        'proc_name': 'Primal Combatants Badge of Conquest',
+        'upgradable': True,
+        'scaling': 2.9730000496, #needs to be corrected
+        'item_level': 620,
+        'type': 'perc',
+        'source': 'trinket',
+        'icd': 60,
+        'proc_rate': 1.0, #this simulates on use mechanics
+        'trigger': 'all_attacks'
+    },
     #5.4 procs
     'assurance_of_consequence': {
         'stat': 'stats',
-        'value': {'agi':14037}, # not 100% accurate
+        'value': {'agi':14037},
         'duration': 20,
         'proc_name': 'Assurance of Consequence',
         'upgradable': True,
