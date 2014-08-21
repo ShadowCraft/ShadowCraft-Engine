@@ -130,7 +130,7 @@ class RogueDamageCalculator(DamageCalculator):
         average_ap = current_stats['ap'] + current_stats['agi']
         average_ap *= self.buffs.attack_power_multiplier()
         if self.settings.is_combat_rogue():
-            average_ap *= 1.40 # vitality spec perk
+            average_ap *= 1.30 # vitality spec perk
 
         damage_breakdown = {}
         
@@ -311,7 +311,7 @@ class RogueDamageCalculator(DamageCalculator):
         return .78 * [1., 1.4][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap)
 
     def hemorrhage_tick_damage(self, ap):
-        return self.hemorrhage_damage(ap) / 8. #24s, 3s per tick
+        return .42 * ap / 12. #24s, 2s per tick
 
     def ambush_damage(self, ap):
         return 3.0 * [1., 1.4][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap) 
