@@ -582,7 +582,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         current_stats = {
             'str': self.base_strength,
             'agi': self.base_stats['agi'] * self.get_stat_mod('agi'),
-            'ap': self.base_stats['ap'],
+            'ap': self.base_stats['ap'] * self.get_stat_mod('ap'),
             'crit': self.base_stats['crit'] * self.get_stat_mod('crit'),
             'haste': self.base_stats['haste'] * self.get_stat_mod('haste'),
             'mastery': self.base_stats['mastery'] * self.get_stat_mod('mastery'),
@@ -598,6 +598,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         active_procs_no_icd = []
         damage_procs = []
         weapon_damage_procs = []
+        #print '------'
+        #print 'SORTING PROCS'
         
         #some procs need specific prep, think RoRO/VoS
         self.setup_unique_procs()
@@ -612,6 +614,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         #sort the procs into groups
         for proc in self.stats.procs.get_all_procs_for_stat():
+            #print proc.proc_name
             if (proc.stat == 'stats') and not proc.is_ppm():
                 if proc.is_real_ppm():
                     active_procs_rppm.append(proc)
@@ -632,6 +635,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                                                                      'mark_of_the_bleeding_hollow')]:
             proc = getattr(getattr(self.stats, hand), enchant)
             if proc:
+                #print proc.proc_name
                 setattr(proc, '_'.join((hand, 'only')), True)
                 if (proc.stat in current_stats or proc.stat == 'stats'):
                     if proc.is_real_ppm():
@@ -656,6 +660,19 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                             active_procs_icd.append(proc)
                         else:
                             active_procs_no_icd.append(proc)
+        
+        #print 'rppm:'
+        #for e in active_procs_rppm:
+        #    print e.proc_name
+        #print 'no-icd:'
+        #for e in active_procs_no_icd:
+        #    print e.proc_name
+        #print 'icd:'
+        #for e in active_procs_icd:
+        #    print e.proc_name
+        #print 'damage:'
+        #for e in damage_procs:
+        #    print e.proc_name
         
         static_proc_stats = {
             'str': 0,
@@ -689,7 +706,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             current_stats = {
                 'str': self.base_strength,
                 'agi': self.base_stats['agi'] * self.get_stat_mod('agi'),
-                'ap': self.base_stats['ap'],
+                'ap': self.base_stats['ap'] * self.get_stat_mod('ap'),
                 'crit': self.base_stats['crit'] * self.get_stat_mod('crit'),
                 'haste': self.base_stats['haste'] * self.get_stat_mod('haste'),
                 'mastery': self.base_stats['mastery'] * self.get_stat_mod('mastery'),
@@ -776,7 +793,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         for proc in weapon_damage_procs:
             self.set_uptime(proc, attacks_per_second, crit_rates)
-                                
+        
+        #print '-------------'
+        #print 'current_stats'
+        #print current_stats
+        #print 'APS'
+        #print attacks_per_second
         return current_stats, attacks_per_second, crit_rates, damage_procs
     
     def compute_damage_from_aps(self, current_stats, attacks_per_second, crit_rates, damage_procs):
@@ -1220,9 +1242,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.race.expansive_mind:
             self.max_energy = round(self.max_energy * 1.05, 0)
         ar_duration = 15
-        self.ksp_buff = 0.5
         self.revealing_strike_multiplier = 1.35
-        self.extra_cp_chance = .2 # Assume all casts during RvS
+        self.extra_cp_chance = .25 # Assume all casts during RvS
         self.rvs_duration = 24
         if self.settings.dmg_poison == 'dp' and self.level == 100:
             self.settings.dmg_poison = 'sp'
@@ -1266,9 +1287,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         for key in damage_breakdown:
             if key in ('killing_spree', 'mh_killing_spree', 'oh_killing_spree'):
                 if self.settings.cycle.ksp_immediately:
-                    damage_breakdown[key] *= self.bandits_guile_multiplier * (1. + self.ksp_buff)
+                    damage_breakdown[key] *= self.bandits_guile_multiplier
                 else:
-                    damage_breakdown[key] *= self.max_bandits_guile_buff * (1. + self.ksp_buff)
+                    damage_breakdown[key] *= self.max_bandits_guile_buff
                 if self.stats.gear_buffs.rogue_t16_4pc_bonus():
                     #http://elitistjerks.com/f78/t132793-5_4_changes_discussion/p2/#post2301780
                     #http://www.wolframalpha.com/input/?i=%28sum+of+1.5*1.1%5Ex+from+x%3D1+to+7%29+%2F+%281.5*7%29
@@ -1354,11 +1375,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         #Base actions
         rvs_interval = self.rvs_duration
-        if self.settings.cycle.revealing_strike_pooling and not ar:
+        if self.settings.cycle.revealing_strike_pooling:
             min_energy_while_pooling = energy_regen * gcd_size
             max_energy_while_pooling = self.max_energy - 20
-            average_pooling = max(0, (max_energy_while_pooling - min_energy_while_pooling)) / 2
-            rvs_interval += average_pooling / energy_regen
+            rvs_interval += (max_energy_while_pooling - min_energy_while_pooling) / energy_regen
         
         #Minicycle sizes and cpg_per_finisher stats
         if self.talents.anticipation:
@@ -1430,11 +1450,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.bandits_guile_multiplier = 1 + .1 * avg_stacks
         
         if not ar:
+            ks_duration = 3
+            if self.stats.gear_buffs.rogue_pvp_wod_4pc:
+                ks_duration += 1
             final_ks_cd = self.rb_actual_cd(attacks_per_second, self.tmp_phase_length) + self.major_cd_delay
             if not self.settings.cycle.ksp_immediately:
                 final_ks_cd += (3 * time_at_level)/2 * (3 * time_at_level)/cycle_duration
-            attacks_per_second['mh_killing_spree'] = 7 / (final_ks_cd + self.settings.response_time)
-            attacks_per_second['oh_killing_spree'] = 7 / (final_ks_cd + self.settings.response_time)
+            attacks_per_second['mh_killing_spree'] = (1 + 2*ks_duration) / (final_ks_cd + self.settings.response_time)
+            attacks_per_second['oh_killing_spree'] = (1 + 2*ks_duration) / (final_ks_cd + self.settings.response_time)
             attacks_per_second['main_gauche'] += attacks_per_second['mh_killing_spree'] * main_gauche_proc_rate
         
         self.get_poison_counts(attacks_per_second)

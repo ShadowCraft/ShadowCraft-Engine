@@ -14,7 +14,7 @@ class Stats(object):
     mastery_rating_conversion_values     = {60:13.0, 70:14.0,  80:15.0,  85:17.0,  90:23.0,  100:110.0}
     multistrike_rating_conversion_values = {60:3.0,  70:4.0,   80:5.0,   85:6.0,   90:7.0,   100:33.0}
     readiness_rating_conversion_values   = {60:13.0, 70:14.0,  80:15.0,  85:17.0,  90:23.0,  100:110.0}
-    versatility_rating_conversion_values = {60:13.0, 70:14.0,  80:15.0,  85:17.0,  90:23.0,  100:110.0}
+    versatility_rating_conversion_values = {60:13.0, 70:14.0,  80:15.0,  85:17.0,  90:23.0,  100:98.0}
     pvp_power_rating_conversion_values   = {60:7.96, 70:12.55, 80:26.11, 85:79.12, 90:400.0, 100:800.0}
     pvp_resil_rating_conversion_values   = {60:9.29, 70:14.65, 80:30.46, 85:92.31, 90:310.0, 100:600.0}
 
@@ -176,6 +176,7 @@ class GearBuffs(object):
         'gear_specialization',          # Increase stat by 5%, previously leather specialization
         'chaotic_metagem',              # Increase critical damage by 3%
         'rogue_pvp_4pc',                # 30 Extra Energy
+        'rogue_pvp_wod_4pc',            # +1s KSpree - Combat, 5CP and 100% crit after vanish - Assassination, 100 versatility after feint 5s- Sub
         'rogue_t14_2pc',                # Venom Wound damage by 20%, Sinister Strike by 15%, Backstab by 10%
         'rogue_t14_4pc',                # Shadow Blades by +12s
         'rogue_t15_2pc',                # Extra CP per finisher (max of 6)

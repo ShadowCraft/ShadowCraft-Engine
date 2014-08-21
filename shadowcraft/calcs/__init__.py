@@ -327,7 +327,11 @@ class DamageCalculator(object):
         # weapons they are on, are computed by get_weapon_ep.
         ep_values = {}
         baseline_dps = self.get_dps()
-        normalize_dps = self.ep_helper(normalize_ep_stat)
+        if normalize_ep_stat == 'dps':
+            normalize_dps_difference = 1.
+        else:
+            normalize_dps = self.ep_helper(normalize_ep_stat)
+            normalize_dps_difference = normalize_dps - baseline_dps
 
         procs_list = []
         gear_buffs_list = []
@@ -344,7 +348,7 @@ class DamageCalculator(object):
             # engineering gizmos are handled as gear buffs by the engine.
             setattr(self.stats.gear_buffs, i, not getattr(self.stats.gear_buffs, i))
             new_dps = self.get_dps()
-            ep_values[i] = abs(new_dps - baseline_dps) / (normalize_dps - baseline_dps)
+            ep_values[i] = abs(new_dps - baseline_dps) / (normalize_dps_difference)
             setattr(self.stats.gear_buffs, i, not getattr(self.stats.gear_buffs, i))
 
         for i in procs_list:
@@ -354,7 +358,7 @@ class DamageCalculator(object):
                 else:
                     self.stats.procs.set_proc(i)
                 new_dps = self.get_dps()
-                ep_values[i] = abs(new_dps - baseline_dps) / (normalize_dps - baseline_dps)
+                ep_values[i] = abs(new_dps - baseline_dps) / (normalize_dps_difference)
                 if getattr(self.stats.procs, i):
                     delattr(self.stats.procs, i)
                 else:

@@ -58,8 +58,8 @@ test_gear_buffs = stats.GearBuffs('gear_specialization') #tier buffs located her
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          agi=1957,
                          stam=2426,
-                         crit=794,
-                         haste=645,
+                         crit=494,
+                         haste=945,
                          mastery=557,
                          readiness=0,
                          versatility=154,
@@ -87,7 +87,7 @@ total_dps = sum(entry[1] for entry in dps_breakdown.items())
 
 # Compute EP values.
 ep_values = calculator.get_ep(baseline_dps=total_dps)
-tier_ep_values = calculator.get_other_ep(['rogue_t16_2pc', 'rogue_t16_4pc'])
+#tier_ep_values = calculator.get_other_ep(['rogue_t16_2pc', 'rogue_t16_4pc'])
 #mh_enchants_and_dps_ep_values, oh_enchants_and_dps_ep_values = calculator.get_weapon_ep(dps=True, enchants=True)
 
 trinkets_list = {
@@ -104,7 +104,7 @@ trinkets_list = {
 
 # Compute weapon type modifier.
 #weapon_type_mod = calculator.get_oh_weapon_modifier()
-talent_ranks = calculator.get_talents_ranking()
+#talent_ranks = calculator.get_talents_ranking()
 
 def max_length(dict_list):
     max_len = 0
@@ -131,12 +131,12 @@ def pretty_print(dict_list, total_sum = 1., show_percent=False):
 
 dicts_for_pretty_print = [
     ep_values,
-    tier_ep_values,
+    #tier_ep_values,
     #mh_enchants_and_dps_ep_values,
     #oh_enchants_and_dps_ep_values,
     #trinkets_ep_value,
     #glyph_values,
-    talent_ranks,
+    #talent_ranks,
 ]
 pretty_print(dicts_for_pretty_print)
 pretty_print([dps_breakdown], total_sum=total_dps, show_percent=True)

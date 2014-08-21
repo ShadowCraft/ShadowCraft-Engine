@@ -305,7 +305,7 @@ class RogueDamageCalculator(DamageCalculator):
         return 2.0 * self.oh_penalty() * self.get_weapon_damage('oh', ap)
 
     def sinister_strike_damage(self, ap):
-        return 1.02 * self.get_weapon_damage('mh', ap)
+        return 1.0 * self.get_weapon_damage('mh', ap)
 
     def hemorrhage_damage(self, ap):
         return .78 * [1., 1.4][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap)
@@ -317,7 +317,7 @@ class RogueDamageCalculator(DamageCalculator):
         return 3.0 * [1., 1.4][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap) 
 
     def revealing_strike_damage(self, ap):
-        return .96 * self.get_weapon_damage('mh', ap, is_normalized=False)
+        return .75 * self.get_weapon_damage('mh', ap)
 
     def venomous_wounds_damage(self, ap):
         return .320 * ap
@@ -353,7 +353,7 @@ class RogueDamageCalculator(DamageCalculator):
         return .577 * cp * ap
 
     def envenom_damage(self, ap, cp):
-        return .4505 * cp * ap
+        return .306 * cp * ap
 
     def fan_of_knives_damage(self, ap):
         return .231 * ap
