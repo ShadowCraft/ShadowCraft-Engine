@@ -66,14 +66,14 @@ test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          multistrike=121,)
 
 # Initialize talents..
-test_talents = talents.Talents('332213', test_class, test_level)
+test_talents = talents.Talents('3322133', test_class, test_level)
 
 # Set up glyphs.
 glyph_list = ['energy', 'disappearance']
 test_glyphs = glyphs.Glyphs(test_class, *glyph_list)
 
 # Set up settings.
-test_cycle = settings.CombatCycle(revealing_strike_pooling=True, blade_flurry=False)
+test_cycle = settings.CombatCycle(revealing_strike_pooling=True, blade_flurry=False, dfa_during_ar=True)
 test_settings = settings.Settings(test_cycle, response_time=.5, duration=360, dmg_poison='dp', utl_poison='lp', is_pvp=False,
                                   latency=.03, merge_damage=True, use_opener='always', opener_name='ambush',
                                   num_boss_adds=0.0, adv_params="", potion=True, prepot=True) # 0.2 = 20% of the fight is an add present
@@ -86,7 +86,7 @@ dps_breakdown = calculator.get_dps_breakdown()
 total_dps = sum(entry[1] for entry in dps_breakdown.items())
 
 # Compute EP values.
-ep_values = calculator.get_ep(baseline_dps=total_dps)
+#ep_values = calculator.get_ep(baseline_dps=total_dps)
 #tier_ep_values = calculator.get_other_ep(['rogue_t16_2pc', 'rogue_t16_4pc'])
 #mh_enchants_and_dps_ep_values, oh_enchants_and_dps_ep_values = calculator.get_weapon_ep(dps=True, enchants=True)
 
@@ -130,7 +130,7 @@ def pretty_print(dict_list, total_sum = 1., show_percent=False):
         print '-' * (max_len + 15)
 
 dicts_for_pretty_print = [
-    ep_values,
+    #ep_values,
     #tier_ep_values,
     #mh_enchants_and_dps_ep_values,
     #oh_enchants_and_dps_ep_values,
