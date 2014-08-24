@@ -66,7 +66,7 @@ test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          multistrike=121,)
 
 # Initialize talents..
-test_talents = talents.Talents('122213', test_class, test_level)
+test_talents = talents.Talents('3322133', test_class, test_level)
 
 # Set up glyphs.
 glyph_list = ['recuperate', 'sprint', 'vendetta'] #just to have something
@@ -90,7 +90,7 @@ execute_breakdown = calculator.assassination_dps_breakdown_execute()
 execute_total = sum(entry[1] for entry in execute_breakdown.items())
 
 # Compute EP values.
-ep_values = calculator.get_ep()
+#ep_values = calculator.get_ep()
 #tier_ep_values = calculator.get_other_ep(['rogue_t14_4pc', 'rogue_t14_2pc', 'rogue_t15_4pc', 'rogue_t15_2pc', 'rogue_t16_2pc', 'rogue_t16_4pc'])
 #mh_enchants_and_dps_ep_values, oh_enchants_and_dps_ep_values = calculator.get_weapon_ep(dps=True, enchants=True)
 
@@ -106,7 +106,7 @@ trinkets_list = [
 ]
 # trinkets_ep_value = calculator.get_upgrades_ep_fast(trinkets_list)
 
-talent_ranks = calculator.get_talents_ranking()
+#talent_ranks = calculator.get_talents_ranking()
 
 def max_length(dict_list):
     max_len = 0
@@ -132,13 +132,13 @@ def pretty_print(dict_list, total_sum = 1., show_percent=False):
         print '-' * (max_len + 15)
 
 dicts_for_pretty_print = [
-    ep_values,
+    #ep_values,
     #tier_ep_values,
     #mh_enchants_and_dps_ep_values,
     #oh_enchants_and_dps_ep_values,
     #trinkets_ep_value,
     #glyph_values,
-    talent_ranks,
+    #talent_ranks,
 ]
 pretty_print(dicts_for_pretty_print)
 

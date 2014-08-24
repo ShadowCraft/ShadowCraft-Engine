@@ -20,9 +20,9 @@ class RogueDamageCalculator(DamageCalculator):
                      'eviscerate', 'envenom', 'ambush', 'garrote',
                      'sinister_strike', 'revealing_strike', 'main_gauche', 'mh_killing_spree', 'oh_killing_spree',
                      'backstab', 'hemorrhage', 
-                     'mutilate', 'mh_mutilate', 'oh_mutilate', 'dispatch']
+                     'mutilate', 'mh_mutilate', 'oh_mutilate', 'dispatch', "death_from_above_strike"]
     other_attacks = ['deadly_instant_poison', 'swift_poison']
-    aoe_attacks = ['fan_of_knives', 'crimson_tempest']
+    aoe_attacks = ['fan_of_knives', 'crimson_tempest', "death_from_above_pulse"]
     dot_ticks = ['rupture_ticks', 'garrote_ticks', 'deadly_poison', 'hemorrhage_dot']
     ranged_attacks = ['shuriken_toss', 'throw']
     non_dot_attacks = melee_attacks + ranged_attacks + aoe_attacks
@@ -57,6 +57,7 @@ class RogueDamageCalculator(DamageCalculator):
             'shuriken_toss':       (40, 'strike'),
             'shiv':                (20, 'strike'),
             'feint':               (20, 'buff'),
+            'death_from_above':    (50, 'strike'),
     }
     ability_cds = {
             'tricks_of_the_trade': 30,
@@ -70,6 +71,7 @@ class RogueDamageCalculator(DamageCalculator):
             'shadowmeld':          120,
             'marked_for_death':    60,
             'preparation':         300,
+            'death_from_above':    20,
         }
     cd_reduction_table = {'assassination': ['vanish', 'vendetta'],
                           'combat': ['adrenaline_rush', 'killing_spree'],
@@ -244,6 +246,30 @@ class RogueDamageCalculator(DamageCalculator):
                 dps_tuple = self.get_dps_contribution(dps_tuple, crit_rates['eviscerate'], attacks_per_second['eviscerate'][i], crit_damage_modifier)
                 average_dps += dps_tuple
             damage_breakdown['eviscerate'] = average_dps
+        
+        if 'death_from_above_strike' in attacks_per_second:
+            if self.settings.get_spec() == 'assassination':
+                average_dps = 0
+                for i in xrange(1, 6):
+                    dps_tuple = self.envenom_damage(average_ap, i) * potent_poisons_mod * spell_modifier * 1.5
+                    dps_tuple = self.get_dps_contribution(dps_tuple, crit_rates['death_from_above_strike'], attacks_per_second['death_from_above_strike'][i], crit_damage_modifier)
+                    average_dps += dps_tuple
+                damage_breakdown['death_from_above_strike'] = average_dps
+            else:
+                average_dps = 0
+                for i in xrange(1, 6):
+                    dps_tuple = self.eviscerate_damage(average_ap, i) * physical_modifier * executioner_mod * 1.5
+                    dps_tuple = self.get_dps_contribution(dps_tuple, crit_rates['death_from_above_strike'], attacks_per_second['death_from_above_strike'][i], crit_damage_modifier)
+                    average_dps += dps_tuple
+                damage_breakdown['death_from_above_strike'] = average_dps
+            
+        if 'death_from_above_pulse' in attacks_per_second:
+            average_dps = 0
+            for i in xrange(1, 6):
+                dps_tuple = self.death_from_above_pulse_damage(average_ap, i) * physical_modifier * executioner_mod
+                dps_tuple = self.get_dps_contribution(dps_tuple, crit_rates['death_from_above_pulse'], attacks_per_second['death_from_above_pulse'][i], crit_damage_modifier)
+                average_dps += dps_tuple
+            damage_breakdown['death_from_above_pulse'] = average_dps
                    
         for proc in damage_procs:
             if proc.proc_name not in damage_breakdown:
@@ -372,6 +398,10 @@ class RogueDamageCalculator(DamageCalculator):
 
     def shuriken_toss_damage(self, ap):
         return 1.2 * ap
+        
+    #Check this formula with SimC    
+    def death_from_above_pulse_damage(self, ap, cp):
+		return 0.132 * ap * cp
     
     def get_formula(self, name):
         formulas = {
@@ -390,7 +420,8 @@ class RogueDamageCalculator(DamageCalculator):
             'wound_poison':          self.wound_poison_damage,
             'deadly_instant_poison': self.deadly_instant_poison_damage,
             'swift_poison':          self.swift_poison_damage,
-            'shuriken_toss':         self.shuriken_toss_damage
+            'shuriken_toss':         self.shuriken_toss_damage,
+            'death_from_above_pulse':self.death_from_above_pulse_damage
         }
         return formulas[name]
 

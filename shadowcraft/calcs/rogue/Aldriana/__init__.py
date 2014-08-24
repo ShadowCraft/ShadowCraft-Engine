@@ -2,6 +2,7 @@
 import gettext
 import __builtin__
 import math
+from operator import add
 
 __builtin__._ = gettext.gettext
 
@@ -204,9 +205,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         elif self.settings.dmg_poison == 'sp':
             poisons = ('swift_poison', )
 
+        talent_attacks = ()
+        if self.talents.death_from_above:
+            talent_attacks = ('death_from_above', 'death_from_above_strike', 'death_from_above_pulse')
+
         openers = tuple([self.settings.opener_name])
 
-        for attack in spec_attacks + poisons + openers:
+        for attack in spec_attacks + poisons + openers + talent_attacks:
             if attack is None:
                 pass
             crit_rates[attack] = base_melee_crit_rate
@@ -386,6 +391,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.swing_reset_spacing is not None:
             attacks_per_second['mh_autoattacks'] *= (1 - max((1 - .5 * self.stats.mh.speed / kwargs['attack_speed_multiplier']), 0) / self.swing_reset_spacing)
             attacks_per_second['oh_autoattacks'] *= (1 - max((1 - .5 * self.stats.oh.speed / kwargs['attack_speed_multiplier']), 0) / self.swing_reset_spacing)
+        
+        #Account for dfa auto attack loss--2 seconds is an approximation
+        if self.talents.death_from_above:
+            attacks_per_second['mh_autoattacks'] = (20*attacks_per_second['mh_autoattacks']-math.floor(2*attacks_per_second['mh_autoattacks']))/20
+            attacks_per_second['oh_autoattacks'] = (20*attacks_per_second['oh_autoattacks']-math.floor(2*attacks_per_second['mh_autoattacks']))/20        
+
         if not args or 'autoattack_hits' in args:
             attacks_per_second['mh_autoattack_hits'] = attacks_per_second['mh_autoattacks'] * self.dw_mh_hit_chance
             attacks_per_second['oh_autoattack_hits'] = attacks_per_second['oh_autoattacks'] * self.dw_oh_hit_chance
@@ -558,7 +569,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.settings.is_assassination_rogue():
             poison_base_proc_rate += .2
             poison_envenom_proc_rate = poison_base_proc_rate + .3
-            envenom_uptime = min(sum([(1 + cps + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp()) * attacks_per_second['envenom'][cps] for cps in xrange(1, 6)]), 1)
+            aps_envenom = attacks_per_second['envenom']
+            if self.talents.death_from_above: 
+                aps_envenom = map(add, attacks_per_second['death_from_above_strike'], attacks_per_second['envenom'])
+            envenom_uptime = min(sum([(1 + cps + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp()) * aps_envenom[cps] for cps in xrange(1, 6)]), 1)
             avg_poison_proc_rate = poison_base_proc_rate * (1 - envenom_uptime) + poison_envenom_proc_rate * envenom_uptime
         else:
             avg_poison_proc_rate = poison_base_proc_rate
@@ -1022,14 +1036,35 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         energy_for_rupture = cpg_per_rupture * cpg_energy_cost + self.get_spell_stats('rupture', cost_mod=ability_cost_modifier)[0]
         energy_for_rupture -= avg_rupture_size * self.relentless_strikes_energy_return_per_cp
-        energy_for_envenoms = energy_per_cycle - energy_for_rupture
+        
+        energy_for_dfa = 0        
+        if self.talents.death_from_above:
+            #dfa_gap probably should be handled more accurately especially in the non-anticipation case
+            dfa_gap = 0 + .5 * (.5 * self.settings.response_time)
+            dfa_interval = 1./(self.get_spell_cd('death_from_above') + dfa_gap)
+            energy_for_dfa = cpg_per_finisher * cpg_energy_cost + self.get_spell_stats('death_from_above', cost_mod=ability_cost_modifier)[0]
+            energy_for_dfa -= cp_per_finisher * self.relentless_strikes_energy_return_per_cp
+
+            attacks_per_second['death_from_above'] = dfa_interval
+            attacks_per_second['death_from_above_strike'] = [finisher_chance * dfa_interval for finisher_chance in envenom_size_breakdown]
+            attacks_per_second['death_from_above_pulse'] = [finisher_chance * dfa_interval for finisher_chance in envenom_size_breakdown]
+
+            #Normalize DfA energy intervals to rupture intervals
+            energy_for_dfa *= (avg_cycle_length)/(1./dfa_interval)
+
+
+        energy_for_envenoms = energy_per_cycle - energy_for_rupture - energy_for_dfa
 
         envenom_energy_cost = cpg_per_finisher * cpg_energy_cost + self.get_spell_stats('envenom', cost_mod=ability_cost_modifier)[0]
         envenom_energy_cost -= cp_per_finisher * self.relentless_strikes_energy_return_per_cp
         envenoms_per_cycle = energy_for_envenoms / envenom_energy_cost
 
         envenoms_per_second = envenoms_per_cycle / avg_cycle_length
-        cpgs_per_second = envenoms_per_second * cpg_per_finisher + attacks_per_second['rupture'] * cpg_per_rupture
+        finishers_per_second = envenoms_per_second + attacks_per_second['rupture']
+        if self.talents.death_from_above:
+            finishers_per_second += attacks_per_second['death_from_above']
+        cpgs_per_second = cpg_per_finisher * finishers_per_second
+
         if cpg in attacks_per_second:
             attacks_per_second[cpg] += cpgs_per_second
         else:
@@ -1068,6 +1103,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.update_with_autoattack_passives(attacks_per_second,
                 attack_speed_multiplier=attack_speed_multiplier)
 
+        for i in attacks_per_second:
+            print i, attacks_per_second[i]   
+        print "--------------------"        
         return attacks_per_second, crit_rates
     
     def assassination_attack_counts_anticipation(self, current_stats, cpg, crit_rates=None):
@@ -1140,15 +1178,33 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         cpg_per_finisher = cp_per_finisher / avg_cp_per_cpg
         
         energy_for_rupture = cpg_per_finisher * cpg_energy_cost + self.get_spell_stats('rupture', cost_mod=ability_cost_modifier)[0]
-        energy_for_rupture -= cp_per_finisher * self.relentless_strikes_energy_return_per_cp
-        energy_for_envenoms = energy_per_cycle - energy_for_rupture
+        energy_for_rupture -= cp_per_finisher * self.relentless_strikes_energy_return_per_cp  
+        
+        energy_for_dfa = 0        
+        if self.talents.death_from_above:
+            dfa_gap = 0 + .5 * (.5 * self.settings.response_time)
+            dfa_interval = 1./(self.get_spell_cd('death_from_above') + dfa_gap)
+            energy_for_dfa = cpg_per_finisher * cpg_energy_cost + self.get_spell_stats('death_from_above', cost_mod=ability_cost_modifier)[0]
+            energy_for_dfa -= cp_per_finisher * self.relentless_strikes_energy_return_per_cp
+
+            attacks_per_second['death_from_above'] = dfa_interval
+            attacks_per_second['death_from_above_strike'] = [0, 0, 0, 0, 0, dfa_interval]
+            attacks_per_second['death_from_above_pulse'] = [0, 0, 0, 0, 0, dfa_interval]
+
+            #Normalize DfA energy intervals to rupture intervals
+            energy_for_dfa *= (avg_cycle_length)/(1./dfa_interval)
+	
+        energy_for_envenoms = energy_per_cycle - energy_for_rupture - energy_for_dfa
 
         envenom_energy_cost = cpg_per_finisher * cpg_energy_cost + self.get_spell_stats('envenom', cost_mod=ability_cost_modifier)[0]
         envenom_energy_cost -= cp_per_finisher * self.relentless_strikes_energy_return_per_cp
         envenoms_per_cycle = energy_for_envenoms / envenom_energy_cost
 
         envenoms_per_second = envenoms_per_cycle / avg_cycle_length
-        cpgs_per_second = envenoms_per_second * cpg_per_finisher + attacks_per_second['rupture'] * cpg_per_finisher
+        finishers_per_second = envenoms_per_second + attacks_per_second['rupture']
+        if self.talents.death_from_above:
+            finishers_per_second += attacks_per_second['death_from_above']
+        cpgs_per_second = cpg_per_finisher * finishers_per_second
         if cpg in attacks_per_second:
             attacks_per_second[cpg] += cpgs_per_second
         else:
@@ -1182,6 +1238,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.update_with_autoattack_passives(attacks_per_second,
                 attack_speed_multiplier=attack_speed_multiplier)
         
+
         #print attacks_per_second
         return attacks_per_second, crit_rates
 
@@ -1352,6 +1409,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if self.swing_reset_spacing is not None:
                 attacks_per_second['mh_autoattacks'] *= (1 - max((1 - .5 * self.stats.mh.speed / self.attack_speed_increase), 0) / self.swing_reset_spacing)
                 attacks_per_second['oh_autoattacks'] *= (1 - max((1 - .5 * self.stats.oh.speed / self.attack_speed_increase), 0) / self.swing_reset_spacing)
+
+        #Account for dfa auto attack loss--2 seconds is an approximation
+        if self.talents.death_from_above and (self.settings.cycle.dfa_during_ar or not ar):
+            attacks_per_second['mh_autoattacks'] = (20*attacks_per_second['mh_autoattacks']-math.floor(2*attacks_per_second['mh_autoattacks']))/20
+            attacks_per_second['oh_autoattacks'] = (20*attacks_per_second['oh_autoattacks']-math.floor(2*attacks_per_second['mh_autoattacks']))/20        
+
         attacks_per_second['mh_autoattack_hits'] = attacks_per_second['mh_autoattacks'] * self.dw_mh_hit_chance
         attacks_per_second['oh_autoattack_hits'] = attacks_per_second['oh_autoattacks'] * self.dw_oh_hit_chance
         attacks_per_second['main_gauche'] = attacks_per_second['mh_autoattack_hits'] * main_gauche_proc_rate
@@ -1398,9 +1461,25 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.talents.marked_for_death:
             energy_regen -= 10. / marked_for_death_cd
         energy_regen -= revealing_strike_energy_cost / rvs_interval
-        
+    
+        energy_for_dfa = 0        
+        if self.talents.death_from_above and (self.settings.cycle.dfa_during_ar or not ar):
+            #dfa_gap probably should be handled more accurately especially in the non-anticipation case
+            dfa_gap = 0 + .5 * (.5 * self.settings.response_time)
+            dfa_interval = 1./(self.get_spell_cd('death_from_above') + dfa_gap)
+            energy_for_dfa = ss_per_finisher * sinister_strike_energy_cost + self.get_spell_stats('death_from_above', cost_mod=cost_modifier)[0]
+            energy_for_dfa -= cp_per_finisher * self.relentless_strikes_energy_return_per_cp          
+            energy_for_dfa *= dfa_interval
+
+            attacks_per_second['death_from_above'] = dfa_interval
+            attacks_per_second['death_from_above_strike'] = [0, 0, 0, 0, 0, dfa_interval]
+            attacks_per_second['death_from_above_pulse'] = [0, 0, 0, 0, 0, dfa_interval]
+
         #Base CPGs
         attacks_per_second['sinister_strike_base'] = ss_per_snd / snd_duration
+        if self.talents.death_from_above and (self.settings.cycle.dfa_during_ar or not ar):
+            attacks_per_second['sinister_strike_base'] += ss_per_finisher / (1/dfa_interval)
+
         attacks_per_second['revealing_strike'] = 1. / rvs_interval
         extra_finishers_per_second = attacks_per_second['revealing_strike'] / (5/cp_per_cpg)
         #Scaling CPGs
@@ -1408,12 +1487,16 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         free_gcd -= 1./snd_duration + (attacks_per_second['sinister_strike_base'] + attacks_per_second['revealing_strike'] + extra_finishers_per_second)
         if self.talents.marked_for_death:
             free_gcd -= (1. / marked_for_death_cd)
-        energy_available_for_evis = energy_regen - energy_spent_on_snd
+        #2 seconds is an approximation of GCD loss while in air        
+        if self.talents.death_from_above and (self.settings.cycle.dfa_during_ar or not ar):
+            free_gcd -= dfa_interval * (1 + (2 / gcd_size))
+        energy_available_for_evis = energy_regen - energy_spent_on_snd - energy_for_dfa
         total_evis_per_second = energy_available_for_evis / total_eviscerate_cost
         evisc_actions_per_second = (total_evis_per_second * ss_per_finisher + total_evis_per_second)
         attacks_per_second['sinister_strike'] = total_evis_per_second * ss_per_finisher
         # If GCD capped
         if evisc_actions_per_second > free_gcd:
+            print "GCD LOCK"
             gcd_cap_mod = evisc_actions_per_second / free_gcd
             wasted_energy = (attacks_per_second['sinister_strike'] - attacks_per_second['sinister_strike'] / gcd_cap_mod) / sinister_strike_energy_cost
             attacks_per_second['sinister_strike'] = attacks_per_second['sinister_strike'] / gcd_cap_mod
@@ -1457,13 +1540,16 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         self.get_poison_counts(attacks_per_second)
         
-        #print attacks_per_second
+        #print attacks_per_second   
         return attacks_per_second, crit_rates
     
     def rb_actual_cds(self, attacks_per_second, base_cds, avg_rb_effect=10):
         final_cds = {}
         # If it's best to always use 5CP finishers as combat now, it should continue to be so, this is simpler and faster
         offensive_finisher_rate = attacks_per_second['eviscerate'][5]
+        if self.talents.death_from_above:
+            offensive_finisher_rate += attacks_per_second['death_from_above']
+
         #should never happen, catch error just in case
         if offensive_finisher_rate != 0:
             for cd_name in base_cds:
@@ -1475,6 +1561,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         final_cd = base_cd
         # If it's best to always use 5CP finishers as combat now, it should continue to be so, this is simpler and faster
         offensive_finisher_rate = attacks_per_second['eviscerate'][5]
+        if self.talents.death_from_above  and self.settings.cycle.dfa_during_ar:
+            offensive_finisher_rate += attacks_per_second['death_from_above']
+
         #should never happen, catch error just in case
         if offensive_finisher_rate != 0:
             return base_cd * (1 - avg_rb_effect / (1. / offensive_finisher_rate + avg_rb_effect))
@@ -1482,6 +1571,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     def rb_cd_modifier(self, attacks_per_second, avg_rb_effect=10):
         # If it's best to always use 5CP finishers as combat now, it should continue to be so, this is simpler and faster
         offensive_finisher_rate = attacks_per_second['eviscerate'][5]
+        if self.talents.death_from_above  and self.settings.cycle.dfa_during_ar:
+            offensive_finisher_rate += attacks_per_second['death_from_above']
+
         if offensive_finisher_rate != 0:
             #should never happen, catch divide-by-zero error just in case
             return (1 - avg_rb_effect / (1. / offensive_finisher_rate + avg_rb_effect))
