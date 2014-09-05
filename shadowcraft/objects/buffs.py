@@ -127,10 +127,13 @@ class Buffs(object):
         bonus_haste = 0
         bonus_haste += 50 * self.food_wod_haste_50 * [1, 2][race]
         bonus_haste += 75 * self.food_wod_haste * [1, 2][race]
-        return 0
+        return bonus_haste
     
     def buff_crit(self, race=False):
-        return 0
+        bonus_crit = 0
+        bonus_crit += 50 * self.food_wod_haste_50 * [1, 2][race]
+        bonus_crit += 75 * self.food_wod_haste * [1, 2][race]
+        return bonus_crit
     
     def buff_mast(self, race=False):
         bonus_mastery = 0
@@ -140,10 +143,16 @@ class Buffs(object):
         return bonus_mastery
     
     def buff_versatility(self, race=False):
-        return 0
+        bonus_versatility = 0
+        bonus_versatility += 50 * self.food_wod_haste_50 * [1, 2][race]
+        bonus_versatility += 75 * self.food_wod_haste * [1, 2][race]
+        return bonus_versatility
     
     def buff_multistrike(self, race=False):
-        return 0
+        bonus_multistrike = 0
+        bonus_multistrike += 50 * self.food_wod_haste_50 * [1, 2][race]
+        bonus_multistrike += 75 * self.food_wod_haste * [1, 2][race]
+        return bonus_multistrike
     
     def buff_readiness(self, race=False):
         return 0

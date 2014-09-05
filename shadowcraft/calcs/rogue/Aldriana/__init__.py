@@ -564,7 +564,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         proc_multiplier = 1
         if self.settings.is_combat_rogue():
             if self.settings.cycle.blade_flurry:
-                proc_multiplier += math.min(self.settings.num_boss_adds, [4, 999][self.level==100])
+                proc_multiplier += min(self.settings.num_boss_adds, [4, 999][self.level==100])
 
         if self.settings.is_assassination_rogue():
             poison_base_proc_rate += .2
@@ -1302,7 +1302,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         self.set_constants()
         
-        cds = {'ar':self.get_spell_cd('adrenaline_rush')}
+        cds = {'ar':self.get_spell_cd('adrenaline_rush'),
+               'ks':self.get_spell_cd('killing_spree')}
         
         # actual damage calculations here
         phases = {}
@@ -1314,6 +1315,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             cds[e] -= ar_duration / self.rb_cd_modifier(aps)
             
         #none
+        self.tmp_ks_cd = cds['ks']
         self.tmp_phase_length = cds['ar'] #This is to approximate the value of a full energy bar to be used when not during AR or SB
         stats, aps, crits, procs = self.determine_stats(self.combat_attack_counts_none)
         phases['none'] = (self.rb_actual_cds(aps, cds)['ar'] + self.settings.response_time + self.major_cd_delay,
@@ -1331,7 +1333,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             damage_breakdown['blade_flurry'] = 0
             for key in damage_breakdown:
                 if key in self.melee_attacks:
-                    damage_breakdown['blade_flurry'] += bf_mod * damage_breakdown[key] * math.min(self.settings.num_boss_adds, bf_max_targets)
+                    damage_breakdown['blade_flurry'] += bf_mod * damage_breakdown[key] * min(self.settings.num_boss_adds, bf_max_targets)
         
         return damage_breakdown
     
@@ -1398,6 +1400,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         revealing_strike_energy_cost -= cost_reducer
         sinister_strike_energy_cost =  self.get_spell_stats('sinister_strike', cost_mod=cost_modifier)[0]
         sinister_strike_energy_cost -= cost_reducer
+        death_from_above_energy_cost = self.get_spell_stats('death_from_above', cost_mod=cost_modifier)[0]
+        death_from_above_energy_cost -= cost_reducer
         if self.stats.gear_buffs.rogue_t16_2pc_bonus():
             sinister_strike_energy_cost -= 15 * self.extra_cp_chance
         
@@ -1465,9 +1469,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         energy_for_dfa = 0        
         if self.talents.death_from_above and (self.settings.cycle.dfa_during_ar or not ar):
             #dfa_gap probably should be handled more accurately especially in the non-anticipation case
-            dfa_gap = 0 + .5 * (.5 * self.settings.response_time)
+            dfa_gap = self.settings.response_time
             dfa_interval = 1./(self.get_spell_cd('death_from_above') + dfa_gap)
-            energy_for_dfa = ss_per_finisher * sinister_strike_energy_cost + self.get_spell_stats('death_from_above', cost_mod=cost_modifier)[0]
+            energy_for_dfa = ss_per_finisher * sinister_strike_energy_cost + death_from_above_energy_cost
             energy_for_dfa -= cp_per_finisher * self.relentless_strikes_energy_return_per_cp          
             energy_for_dfa *= dfa_interval
 
@@ -1489,7 +1493,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             free_gcd -= (1. / marked_for_death_cd)
         #2 seconds is an approximation of GCD loss while in air        
         if self.talents.death_from_above and (self.settings.cycle.dfa_during_ar or not ar):
-            free_gcd -= dfa_interval * (1 + (2 / gcd_size))
+            free_gcd -= dfa_interval * (1 + (1.5 / gcd_size))
         energy_available_for_evis = energy_regen - energy_spent_on_snd - energy_for_dfa
         total_evis_per_second = energy_available_for_evis / total_eviscerate_cost
         evisc_actions_per_second = (total_evis_per_second * ss_per_finisher + total_evis_per_second)
@@ -1504,7 +1508,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             total_evis_per_second = total_evis_per_second / gcd_cap_mod
         # Reintroduce flat gcds
         attacks_per_second['sinister_strike'] += attacks_per_second['sinister_strike_base']
-        attacks_per_second['main_gauche'] += (attacks_per_second['sinister_strike'] + attacks_per_second['revealing_strike'] + total_evis_per_second) * main_gauche_proc_rate
+        attacks_per_second['main_gauche'] += (attacks_per_second['sinister_strike'] + attacks_per_second['revealing_strike'] +
+                                              total_evis_per_second + attacks_per_second['death_from_above_strike'][5]) * main_gauche_proc_rate
         
         #attacks_per_second['eviscerate'] = [finisher_chance * total_evis_per_second for finisher_chance in finisher_size_breakdown]
         attacks_per_second['eviscerate'] = [0,0,0,0,0,total_evis_per_second]
@@ -1531,12 +1536,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             ks_duration = 3
             if self.stats.gear_buffs.rogue_pvp_wod_4pc:
                 ks_duration += 1
-            final_ks_cd = self.rb_actual_cd(attacks_per_second, self.tmp_phase_length) + self.major_cd_delay
+            final_ks_cd = self.rb_actual_cd(attacks_per_second, self.tmp_ks_cd) + self.major_cd_delay
             if not self.settings.cycle.ksp_immediately:
                 final_ks_cd += (3 * time_at_level)/2 * (3 * time_at_level)/cycle_duration
             attacks_per_second['mh_killing_spree'] = (1 + 2*ks_duration) / (final_ks_cd + self.settings.response_time)
             attacks_per_second['oh_killing_spree'] = (1 + 2*ks_duration) / (final_ks_cd + self.settings.response_time)
             attacks_per_second['main_gauche'] += attacks_per_second['mh_killing_spree'] * main_gauche_proc_rate
+            print 'ks: ', final_ks_cd
         
         self.get_poison_counts(attacks_per_second)
         

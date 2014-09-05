@@ -132,7 +132,7 @@ class RogueDamageCalculator(DamageCalculator):
         average_ap = current_stats['ap'] + current_stats['agi']
         average_ap *= self.buffs.attack_power_multiplier()
         if self.settings.is_combat_rogue():
-            average_ap *= 1.30 # vitality spec perk
+            average_ap *= 1.40 # vitality spec perk
 
         damage_breakdown = {}
         
