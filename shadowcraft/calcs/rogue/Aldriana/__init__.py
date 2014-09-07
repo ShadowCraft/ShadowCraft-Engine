@@ -1388,7 +1388,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if ar:
             gcd_size -= .2
         cp_per_cpg = 1.
-        dfa_cd = self.get_spell_cd('death_from_above') + self.settings.response_time
+        dfa_cd = self.get_spell_cd('death_from_above') + self.settings.response_time + 6 #artificial delay, needs convergence support
             
         # Combine energy cost scalers to reduce function calls (ie, 40% reduced energy cost). Assume multiplicative.
         cost_modifier = self.stats.gear_buffs.rogue_t15_4pc_modifier()
@@ -1411,8 +1411,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         white_swing_downtime = 0
         if self.swing_reset_spacing is not None and not ar:
             white_swing_downtime += .5 / self.swing_reset_spacing
-        if self.talents.death_from_above:
-            white_swing_downtime += 1. / dfa_cd
+        if self.talents.death_from_above and not ar:
+            white_swing_downtime += .5 / dfa_cd #.5 is 1s delay divided by 2 due to assumed even distribution
         attacks_per_second['mh_autoattacks'] = self.attack_speed_increase / self.stats.mh.speed * (1 - white_swing_downtime)
         attacks_per_second['oh_autoattacks'] = self.attack_speed_increase / self.stats.oh.speed * (1 - white_swing_downtime)
         
@@ -1464,7 +1464,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         energy_regen -= revealing_strike_energy_cost / rvs_interval
     
         energy_for_dfa = 0        
-        if self.talents.death_from_above and (self.settings.cycle.dfa_during_ar or not ar):
+        if self.talents.death_from_above and not ar:
             #dfa_gap probably should be handled more accurately especially in the non-anticipation case
             dfa_interval = 1./(dfa_cd)
             energy_for_dfa = energy_cost_for_cpgs + death_from_above_energy_cost
@@ -1473,11 +1473,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
             attacks_per_second['death_from_above'] = dfa_interval
             attacks_per_second['death_from_above_strike'] = [0, 0, 0, 0, 0, dfa_interval]
-            attacks_per_second['death_from_above_pulse'] = [0, 0, 0, 0, 0, dfa_interval]
+            attacks_per_second['death_from_above_pulse'] = [0, 0, 0, 0, 0, dfa_interval * (self.settings.num_boss_adds+1)]
 
         #Base CPGs
         attacks_per_second['sinister_strike_base'] = ss_per_snd / snd_duration
-        if self.talents.death_from_above and (self.settings.cycle.dfa_during_ar or not ar):
+        if self.talents.death_from_above and not ar:
             attacks_per_second['sinister_strike_base'] += ss_per_finisher / (1/dfa_interval)
 
         attacks_per_second['revealing_strike'] = 1. / rvs_interval
@@ -1488,8 +1488,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.talents.marked_for_death:
             free_gcd -= (1. / marked_for_death_cd)
         #2 seconds is an approximation of GCD loss while in air        
-        if self.talents.death_from_above and (self.settings.cycle.dfa_during_ar or not ar):
-            free_gcd -= dfa_interval * (1 + (1.5 / gcd_size))
+        if self.talents.death_from_above and not ar:
+            free_gcd -= dfa_interval * (2 / gcd_size)
         energy_available_for_evis = energy_regen - energy_spent_on_snd - energy_for_dfa
         total_evis_per_second = energy_available_for_evis / total_eviscerate_cost
         evisc_actions_per_second = (total_evis_per_second * ss_per_finisher + total_evis_per_second)
@@ -1505,7 +1505,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attacks_per_second['sinister_strike'] += attacks_per_second['sinister_strike_base']
         attacks_per_second['main_gauche'] += (attacks_per_second['sinister_strike'] + attacks_per_second['revealing_strike'] +
                                               total_evis_per_second) * main_gauche_proc_rate
-        if self.talents.death_from_above:
+        if self.talents.death_from_above and not ar:
             attacks_per_second['main_gauche'] += attacks_per_second['death_from_above_strike'][5] * main_gauche_proc_rate
         
         #attacks_per_second['eviscerate'] = [finisher_chance * total_evis_per_second for finisher_chance in finisher_size_breakdown]
@@ -1539,7 +1539,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second['mh_killing_spree'] = (1 + 2*ks_duration) / (final_ks_cd + self.settings.response_time)
             attacks_per_second['oh_killing_spree'] = (1 + 2*ks_duration) / (final_ks_cd + self.settings.response_time)
             attacks_per_second['main_gauche'] += attacks_per_second['mh_killing_spree'] * main_gauche_proc_rate
-            print 'ks: ', final_ks_cd
         
         self.get_poison_counts(attacks_per_second)
         
@@ -1550,7 +1549,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         final_cds = {}
         # If it's best to always use 5CP finishers as combat now, it should continue to be so, this is simpler and faster
         offensive_finisher_rate = attacks_per_second['eviscerate'][5]
-        if self.talents.death_from_above:
+        if 'death_from_above' in attacks_per_second:
             offensive_finisher_rate += attacks_per_second['death_from_above']
 
         #should never happen, catch error just in case
@@ -1564,7 +1563,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         final_cd = base_cd
         # If it's best to always use 5CP finishers as combat now, it should continue to be so, this is simpler and faster
         offensive_finisher_rate = attacks_per_second['eviscerate'][5]
-        if self.talents.death_from_above  and self.settings.cycle.dfa_during_ar:
+        if 'death_from_above' in attacks_per_second:
             offensive_finisher_rate += attacks_per_second['death_from_above']
 
         #should never happen, catch error just in case
@@ -1574,7 +1573,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     def rb_cd_modifier(self, attacks_per_second, avg_rb_effect=10):
         # If it's best to always use 5CP finishers as combat now, it should continue to be so, this is simpler and faster
         offensive_finisher_rate = attacks_per_second['eviscerate'][5]
-        if self.talents.death_from_above  and self.settings.cycle.dfa_during_ar:
+        if 'death_from_above' in attacks_per_second:
             offensive_finisher_rate += attacks_per_second['death_from_above']
 
         if offensive_finisher_rate != 0:
