@@ -363,7 +363,7 @@ allowed_melee_enchants = {
     'mark_of_the_thunderlord': {
         'stat': 'stats',
         'value': {'crit':500},
-        'duration': 6,
+        'duration': 12,
         'proc_name': 'Mark of the Thunderlord',
         'type': 'rppm',
         'source': 'weapon',
@@ -382,6 +382,18 @@ allowed_melee_enchants = {
         'item_level': 100,
         'icd': 0,
         'proc_rate': 2.3,
+        'trigger': 'all_melee_attacks'
+    },
+    'mark_of_warsong': {
+        'stat': 'stats',
+        'value': {'haste':5.5*100},
+        'duration': 20,
+        'proc_name': 'Mark of the Bleeding Hollow',
+        'type': 'rppm',
+        'source': 'weapon',
+        'item_level': 100,
+        'icd': 0,
+        'proc_rate': 1.15,
         'trigger': 'all_melee_attacks'
     },
     #5.0

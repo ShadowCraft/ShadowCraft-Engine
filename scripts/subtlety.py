@@ -31,12 +31,13 @@ test_buffs = buffs.Buffs(
         'crit_chance_buff',
         'mastery_buff',
         'haste_buff',
+        'multistrike_buff',
+        'versatility_buff',
         'attack_power_buff',
-        'armor_debuff',
         'physical_vulnerability_debuff',
         'spell_damage_debuff',
-        'agi_flask_mop',
-        'food_300_agi'
+        'flask_wod_agi',
+        'food_mop_agi'
     )
 
 # Set up weapons.
@@ -44,10 +45,10 @@ test_mh = stats.Weapon(420.5, 1.8, 'dagger', 'dancing_steel')
 test_oh = stats.Weapon(420.5, 1.8, 'dagger', 'dancing_steel')
 
 # Set up procs.
-test_procs = procs.ProcsList(('assurance_of_consequence', 580), ('haromms_talisman', 580), 'legendary_capacitive_meta', 'fury_of_xuen' )
+test_procs = procs.ProcsList(('primal_combatants_ioc', 620), ('primal_combatants_boc', 620)) #trinkets, other things (legendary procs)
 
 # Set up gear buffs.
-test_gear_buffs = stats.GearBuffs('rogue_t16_2pc', 'rogue_t15_2pc', 'leather_specialization')
+test_gear_buffs = stats.GearBuffs('gear_specialization') #tier buffs located here
 
 # Set up a calcs object..
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
@@ -61,7 +62,7 @@ test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          multistrike=121,)
 
 # Initialize talents..
-test_talents = talents.Talents('3222121', test_class, test_level)
+test_talents = talents.Talents('3222123', test_class, test_level)
 
 # Set up glyphs.
 glyph_list = []
