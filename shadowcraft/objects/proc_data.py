@@ -72,6 +72,118 @@ allowed_procs = {
         'trigger': 'all_attacks'
     },
     #6.0 procs
+    'humming_blackiron_trigger': {
+        'stat': 'stats',
+        'value': {'crit':131},
+        'duration': 10,
+        'proc_name': 'Humming Blackiron Trigger',
+        'upgradable': True,
+        'scaling': 0.2703000009 * 10.5, #needs to be corrected
+        'item_level': 665,
+        'type': 'rppm',
+        'source': 'trinket',
+        'icd': 0,
+        'proc_rate': 0.92,
+        'trigger': 'all_attacks'
+    },
+    'meaty_dragonspine_trophy': {
+        'stat': 'stats',
+        'value': {'haste':1913},
+        'duration': 10,
+        'proc_name': 'Meaty Dragonspine Trophy',
+        'upgradable': True,
+        'scaling': 2.9730000496, #needs to be corrected
+        'item_level': 665,
+        'type': 'rppm',
+        'source': 'trinket',
+        'icd': 0,
+        'proc_rate': 0.92,
+        'trigger': 'all_attacks'
+    },
+    'formidable_jar_of_doom': {
+        'stat': 'stats',
+        'value': {'mastery':1743},
+        'duration': 10,
+        'proc_name': 'Formidable Jar of Doom',
+        'upgradable': True,
+        'scaling': 2.9730000496, #needs to be corrected
+        'item_level': 665,
+        'type': 'rppm',
+        'source': 'trinket',
+        'icd': 0,
+        'proc_rate': 0.92,
+        'trigger': 'all_attacks'
+    },
+    'scales_of_doom': {
+        'stat': 'stats',
+        'value': {'multistrike':1743},
+        'duration': 10,
+        'proc_name': 'Scales of Doom',
+        'upgradable': True,
+        'scaling': 2.9730000496, #needs to be corrected
+        'item_level': 665,
+        'type': 'rppm',
+        'source': 'trinket',
+        'icd': 0,
+        'proc_rate': 0.92,
+        'trigger': 'all_attacks'
+    },
+    'blackheart_enforcers_medallion': {
+        'stat': 'stats',
+        'value': {'multistrike':1665},
+        'duration': 10,
+        'proc_name': 'Blackheart Enforcers Medallion',
+        'upgradable': True,
+        'scaling': 2.9730000496, #needs to be corrected
+        'item_level': 665,
+        'type': 'rppm',
+        'source': 'trinket',
+        'icd': 0,
+        'proc_rate': 0.92,
+        'trigger': 'all_attacks'
+    },
+    'lucky_doublesided_coin': {
+        'stat': 'stats',
+        'value': {'agi':1467},
+        'duration': 20,
+        'proc_name': 'Lucky Double-sided Coin',
+        'upgradable': True,
+        'scaling': 2.9730000496, #needs to be corrected
+        'item_level': 665,
+        'type': 'icd',
+        'source': 'trinket',
+        'icd': 120,
+        'proc_rate': 1.0, #this simulates on use mechanics
+        'trigger': 'all_attacks'
+    },
+    'beating_heart_of_the_mountain': {
+        'stat': 'stats',
+        'value': {'multistrike':1467},
+        'duration': 20,
+        'proc_name': 'Beating Heart of the Mountain',
+        'upgradable': True,
+        'scaling': 2.9730000496, #needs to be corrected
+        'item_level': 665,
+        'type': 'icd',
+        'source': 'trinket',
+        'icd': 120,
+        'proc_rate': 1.0, #this simulates on use mechanics
+        'trigger': 'all_attacks'
+    },
+    'skull_of_war': {
+        'stat': 'stats',
+        'value': {'crit':1396},
+        'duration': 20,
+        'proc_name': 'Skull of War',
+        'upgradable': True,
+        'scaling': 2.9730000496, #needs to be corrected
+        'item_level': 640,
+        'type': 'icd',
+        'source': 'trinket',
+        'icd': 115,
+        'proc_rate': 0.15, #this simulates on use mechanics
+        'trigger': 'all_attacks'
+    },
     'primal_combatants_ioc': {
         'stat': 'stats',
         'value': {'agi':505},
@@ -98,6 +210,76 @@ allowed_procs = {
         'source': 'trinket',
         'icd': 60,
         'proc_rate': 1.0, #this simulates on use mechanics
+        'trigger': 'all_attacks'
+    },
+    'gorashans_lodestone_spike': {
+        'stat': 'stats',
+        'value': {'multistrike':1060},
+        'duration': 15,
+        'proc_name': 'Gorashans Lodestone Spike',
+        'upgradable': True,
+        'scaling': 2.9730000496, #needs to be corrected
+        'item_level': 630,
+        'type': 'icd',
+        'source': 'trinket',
+        'icd': 90,
+        'proc_rate': 1.0, #this simulates on use mechanics
+        'trigger': 'all_attacks'
+    },
+    'turbulent_vial_of_toxin': {
+        'stat': 'stats',
+        'value': {'mastery':1060},
+        'duration': 15,
+        'proc_name': 'Turbulent Vial of Toxin',
+        'upgradable': True,
+        'scaling': 2.9730000496, #needs to be corrected
+        'item_level': 630,
+        'type': 'icd',
+        'source': 'trinket',
+        'icd': 90,
+        'proc_rate': 1.0, #this simulates on use mechanics
+        'trigger': 'all_attacks'
+    },
+    'kihras_adrenaline_injector': {
+        'stat': 'stats',
+        'value': {'mastery':1060},
+        'duration': 20,
+        'proc_name': 'Kihras Adrenaline Injector',
+        'upgradable': True,
+        'scaling': 2.9730000496, #needs to be corrected
+        'item_level': 630,
+        'type': 'icd',
+        'source': 'trinket',
+        'icd': 120,
+        'proc_rate': 1.0, #this simulates on use mechanics
+        'trigger': 'all_attacks'
+    },
+    'witherbarks_branch': {
+        'stat': 'stats',
+        'value': {'haste':1383},
+        'duration': 10,
+        'proc_name': 'Witherbarks Branch',
+        'upgradable': True,
+        'scaling': 2.9730000496, #needs to be corrected
+        'item_level': 630,
+        'type': 'rppm',
+        'source': 'trinket',
+        'icd': 0,
+        'proc_rate': 0.92,
+        'trigger': 'all_attacks'
+    },
+    'munificent_emblem_of_terror': {
+        'stat': 'stats',
+        'value': {'crit':1200},
+        'duration': 10,
+        'proc_name': 'Munificent Emblem of Terror',
+        'upgradable': True,
+        'scaling': 2.9730000496, #needs to be corrected
+        'item_level': 615,
+        'type': 'rppm',
+        'source': 'trinket',
+        'icd': 0,
+        'proc_rate': 0.92,
         'trigger': 'all_attacks'
     },
     #5.4 procs

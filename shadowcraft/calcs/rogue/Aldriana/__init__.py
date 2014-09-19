@@ -766,7 +766,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         # and has no impact on the cycle
         if self.stats.gear_buffs.rogue_t16_4pc_bonus() and self.settings.is_assassination_rogue():
             #20 stacks of 250 mastery, lasts 5 seconds
-            mas_per_stack = 250.
+            mas_per_stack = 38.
             max_stacks = 20.
             buff_duration = 5.
             extra_duration = buff_duration - self.settings.response_time
@@ -1619,7 +1619,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.stats.mh.type != 'dagger' and self.settings.cycle.use_hemorrhage != 'always':
             raise InputNotModeledException(_('Subtlety modeling requires a MH dagger if Hemorrhage is not the main combo point builder'))
 
-        if self.settings.cycle.use_hemorrhage not in ('always', 'never'):
+        if self.settings.cycle.use_hemorrhage not in ('always', 'never', 'uptime'):
             if float(self.settings.cycle.use_hemorrhage) <= 0:
                 raise InputNotModeledException(_('Hemorrhage usage must be set to always, never or a positive number'))
             if float(self.settings.cycle.use_hemorrhage) > self.settings.duration:
@@ -1740,6 +1740,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         cp_per_shd_ambush = cp_per_ambush
         vanish_bonus_stealth = 0 + 3 * self.talents.subterfuge * [1, 2][self.glyphs.vanish]
         rupture_cd = 24
+        hemo_cd = 24
         snd_cd = 36
         dfa_cd = self.get_spell_cd('death_from_above') + self.settings.response_time #artificial delay, needs convergence support
         base_cp_per_second = hat_cp_per_second * (self.shd_cd-8.)/self.shd_cd + self.total_openers_per_second * 2
@@ -1754,6 +1755,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #sinister calling mechanic
         sc_scaler = .5 / (.5 + self.sc_trigger_rate)
         rupture_cd *= sc_scaler
+        hemo_cd *= sc_scaler
         
         #passive energy regen
         energy_regen = self.base_energy_regen * haste_multiplier + self.bonus_energy_regen + self.max_energy / self.settings.duration + er_energy
@@ -1803,7 +1805,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
            
         #base CPs, CPGs, and finishers 
         if self.settings.cycle.use_hemorrhage != 'always' and self.settings.cycle.use_hemorrhage != 'never':
-            hemo_per_second = 1. / float(self.settings.cycle.use_hemorrhage)
+            if self.settings.cycle.use_hemorrhage == 'uptime':
+                hemo_per_second = 1. / hemo_cd
+            else:
+                hemo_per_second = 1. / float(self.settings.cycle.use_hemorrhage)
             energy_regen -= hemo_per_second
             base_cp_per_second += hemo_per_second
             attacks_per_second['hemorrhage'] += hemo_per_second
@@ -1902,8 +1907,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if self.settings.cycle.use_hemorrhage == 'always':
                 hemo_gap = 1 / attacks_per_second['hemorrhage']
             else:
-                hemo_gap = float(self.settings.cycle.use_hemorrhage)
-            ticks_per_second = min((1. / 3) / sc_scaler, 8. / hemo_gap)
+                hemo_gap = hemo_cd
+            ticks_per_second = min(1. / (3 * sc_scaler), 8. / hemo_gap)
             attacks_per_second['hemorrhage_ticks'] = ticks_per_second
         
         sc_ms_chance = self.stats.get_multistrike_chance_from_rating(rating=current_stats['multistrike']) + self.buffs.multistrike_bonus()
