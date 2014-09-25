@@ -319,7 +319,7 @@ class RogueDamageCalculator(DamageCalculator):
         return .75 * oh_damage(ap, armor=armor) #update?
 
     def backstab_damage(self, ap):
-        return 1.56 * self.get_weapon_damage('mh', ap)
+        return 1.75 * self.get_weapon_damage('mh', ap)
 
     def dispatch_damage(self, ap):
         return 3.15 * self.get_weapon_damage('mh', ap)
@@ -331,10 +331,10 @@ class RogueDamageCalculator(DamageCalculator):
         return 2.0 * self.oh_penalty() * self.get_weapon_damage('oh', ap)
 
     def sinister_strike_damage(self, ap):
-        return 1.0 * self.get_weapon_damage('mh', ap)
+        return 1.6 * self.get_weapon_damage('mh', ap)
 
     def hemorrhage_damage(self, ap):
-        return .78 * [1., 1.4][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap)
+        return .40 * [1., 1.4][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap)
 
     def hemorrhage_tick_damage(self, ap):
         return .42 * ap / 12. #24s, 2s per tick
@@ -343,13 +343,13 @@ class RogueDamageCalculator(DamageCalculator):
         return 3.0 * [1., 1.4][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap) 
 
     def revealing_strike_damage(self, ap):
-        return .75 * self.get_weapon_damage('mh', ap)
+        return 1.2 * self.get_weapon_damage('mh', ap)
 
     def venomous_wounds_damage(self, ap):
         return .320 * ap
 
     def main_gauche_damage(self, ap):
-        return 2.25 * self.oh_penalty() * self.get_weapon_damage('oh', ap)
+        return 1.4 * self.oh_penalty() * self.get_weapon_damage('oh', ap)
 
     def mh_killing_spree_damage(self, ap):
         return 1.0 * self.get_weapon_damage('mh', ap)

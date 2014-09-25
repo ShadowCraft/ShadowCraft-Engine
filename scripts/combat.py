@@ -45,8 +45,8 @@ test_buffs = buffs.Buffs(
     )
 
 # Set up weapons: dancing_steel mark_of_the_shattered_hand
-#test_mh = stats.Weapon(607., 2.6, 'sword', 'mark_of_the_shattered_hand')
-test_mh = stats.Weapon(420.5, 1.8, 'dagger', 'mark_of_the_shattered_hand')
+test_mh = stats.Weapon(607., 2.6, 'sword', 'mark_of_the_shattered_hand')
+#test_mh = stats.Weapon(420.5, 1.8, 'dagger', 'mark_of_the_shattered_hand')
 test_oh = stats.Weapon(607., 2.6, 'sword', 'mark_of_the_shattered_hand')
 
 # Set up procs.

@@ -413,10 +413,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 if 'mh_autoattack_hits' in attacks_per_second:
                     triggers_per_second += attacks_per_second['mh_autoattack_hits']
         if proc.procs_off_strikes():
-            for ability in ('mutilate', 'dispatch', 'backstab', 'revealing_strike', 'sinister_strike', 'ambush', 'hemorrhage', 'mh_killing_spree', 'main_gauche', 'shuriken_toss'):
-                if ability == 'main_gauche' and not proc.procs_off_procced_strikes():
-                    pass
-                elif ability in attacks_per_second:
+            for ability in ('mutilate', 'dispatch', 'backstab', 'revealing_strike', 'sinister_strike', 'ambush', 'hemorrhage', 'mh_killing_spree', 'shuriken_toss'):
+                if ability in attacks_per_second:
                     if proc.procs_off_crit_only():
                         triggers_per_second += attacks_per_second[ability] * crit_rates[ability]
                     else:
@@ -543,6 +541,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         return 1.
 
     def setup_unique_procs(self):
+        #getattr(self.stats.procs, 'rocket_barrage'):
+        if self.stats.procs.rocket_barrage:
+            getattr(self.stats.procs, 'rocket_barrage').value = 1 + self.level * 2 #need to update
+        if self.stats.procs.touch_of_the_grave:
+            getattr(self.stats.procs, 'touch_of_the_grave').value #need to update
         #modelling specific proc setup would go here
         for hand in ('mh', 'oh'):
             if getattr(getattr(self.stats, hand), 'mark_of_the_shattered_hand'):
@@ -965,13 +968,15 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             mut_seal_fate_proc_rate = 1 - (1 - crit_rates['mutilate']) ** 2
             dsp_seal_fate_proc_rate = crit_rates['dispatch']
             if self.stats.gear_buffs.rogue_t17_2pc:
-                cpg_energy_cost -= 10 * mut_seal_fate_proc_rate
+                cpg_energy_cost -= 7 * (mut_seal_fate_proc_rate + dsp_seal_fate_proc_rate)
             
             cpg_energy_cost = cpg_energy_cost * (1 - dispatch_as_cpg_chance) #+ 0 * dispatch_as_cpg_chance  # blindside costs nothing
             seal_fate_proc_rate = mut_seal_fate_proc_rate * (1 - dispatch_as_cpg_chance) + dsp_seal_fate_proc_rate * dispatch_as_cpg_chance
             base_cp_per_cpg = 1
             mutilate_extra_cp_chance = 1 - dispatch_as_cpg_chance # in non execute the ratio of mutilate attacks is (1 - dispatch_as_cpg_chance)
         else:
+            if self.stats.gear_buffs.rogue_t17_2pc:
+                cpg_energy_cost -= 7 * crit_rates['dispatch']
             seal_fate_proc_rate = crit_rates['dispatch']
             base_cp_per_cpg = 1
             mutilate_extra_cp_chance = 0 # never using mutilate, so no extra cp chance
@@ -1153,12 +1158,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         blindside_cost = 0
         mutilate_cost = self.get_spell_stats('mutilate', cost_mod=ability_cost_modifier)[0]
         if self.stats.gear_buffs.rogue_t17_2pc:
-            mutilate_cost -= 10 * (1 - (1 - crit_rates['mutilate']) ** 2)
+            mutilate_cost -= 7 * ( (1 - (1 - crit_rates['mutilate']) ** 2) + crit_rates['dispatch'])
         
         if cpg == 'mutilate':
             cpg_energy_cost = blindside_cost + mutilate_cost
         else:
             cpg_energy_cost = self.get_spell_stats('dispatch', cost_mod=ability_cost_modifier)[0]
+            if self.stats.gear_buffs.rogue_t17_2pc:
+                cpg_energy_cost -= 7 * crit_rates['dispatch']
         mutilate_cps = 3 - (1 - crit_rates['mutilate']) ** 2 # 1 - (1 - crit_rates['mutilate']) ** 2 is the Seal Fate CP
         dispatch_cps = 1 + crit_rates['dispatch']
         if cpg == 'mutilate':
@@ -1428,7 +1435,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         white_swing_downtime = 0
         if self.swing_reset_spacing is not None and not ar:
             white_swing_downtime += .5 / self.swing_reset_spacing
+        self.spec_needs_converge = False
         if self.talents.death_from_above and not ar:
+            self.spec_needs_converge = True
             white_swing_downtime += .5 / dfa_cd #.5 is 1s delay divided by 2 due to assumed even distribution
         attacks_per_second['mh_autoattacks'] = self.attack_speed_increase / self.stats.mh.speed * (1 - white_swing_downtime)
         attacks_per_second['oh_autoattacks'] = self.attack_speed_increase / self.stats.oh.speed * (1 - white_swing_downtime)
