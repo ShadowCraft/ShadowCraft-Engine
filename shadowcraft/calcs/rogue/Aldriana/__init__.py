@@ -303,6 +303,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             multiplier = self.raid_settings_modifiers('physical')
         elif proc.stat == 'physical_dot':
             multiplier = self.raid_settings_modifiers('bleed')
+        elif proc.stat == 'bleed_damage':
+            multiplier = self.raid_settings_modifiers('bleed')
         else:
             return 0
 

@@ -705,7 +705,7 @@ allowed_melee_enchants = {
         'trigger': 'all_melee_attacks'
     },
     'mark_of_the_shattered_hand': {
-        'stat': 'physical_damage',
+        'stat': 'bleed_damage',
         'value': 1500, #triggers mark_of_the_shattered_hand_dot
         'duration': 0,
         'proc_name': 'Mark of the Shattered Hand',

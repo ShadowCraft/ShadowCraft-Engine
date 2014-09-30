@@ -45,6 +45,8 @@ class DamageCalculator(object):
         #racials
         if self.race.race_name == 'undead':
             self.stats.procs.set_proc('touch_of_the_grave')
+        if self.race.race_name == 'goblin':
+            self.stats.procs.set_proc('rocket_barrage')
         
         if self.settings.is_pvp:
             self.level_difference = 0

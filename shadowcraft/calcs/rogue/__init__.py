@@ -279,7 +279,7 @@ class RogueDamageCalculator(DamageCalculator):
                 # attacks_per_second is already being updated with that key.
                 damage_breakdown[proc.proc_name] = self.get_proc_damage_contribution(proc, attacks_per_second[proc.proc_name], current_stats, average_ap, damage_breakdown)
 
-        self.append_damage_on_use(average_ap, current_stats, damage_breakdown)
+        #self.append_damage_on_use(average_ap, current_stats, damage_breakdown)
 
         if self.talents.nightstalker:
             nightstalker_mod = .50
