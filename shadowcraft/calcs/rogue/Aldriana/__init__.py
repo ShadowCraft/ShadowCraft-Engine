@@ -262,6 +262,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         self.base_strength = self.stats.str + self.buffs.buff_str() + self.race.racial_str
         self.base_strength *= self.buffs.stat_multiplier()
+        self.base_intellect = self.stats.int + self.race.racial_int
+        self.base_intellect *= self.buffs.stat_multiplier()
 
         self.relentless_strikes_energy_return_per_cp = 5 #.20 * 25
         
@@ -540,18 +542,23 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             return (1 - .75)
         return 1.
 
-    def setup_unique_procs(self):
+    def setup_unique_procs(self, current_stats, average_ap):
         #getattr(self.stats.procs, 'rocket_barrage'):
         if self.stats.procs.rocket_barrage:
-            getattr(self.stats.procs, 'rocket_barrage').value = 1 + self.level * 2 #need to update
+            getattr(self.stats.procs, 'rocket_barrage').value = 0.42900 * self.base_intellect + .5 * average_ap + 1 + self.level * 2 #need to update
         if self.stats.procs.touch_of_the_grave:
-            getattr(self.stats.procs, 'touch_of_the_grave').value #need to update
+            getattr(self.stats.procs, 'touch_of_the_grave').value = 8 * self.tools.get_constant_scaling_point(self.level) # +/- 15% spread
         #modelling specific proc setup would go here
+        shatt_hand = False
         for hand in ('mh', 'oh'):
             if getattr(getattr(self.stats, hand), 'mark_of_the_shattered_hand'):
+                shatt_hand = True
                 self.stats.procs.set_proc('mark_of_the_shattered_hand_dot')
                 self.set_rppm_uptime(getattr(self.stats.procs, 'mark_of_the_shattered_hand_dot'))
                 #this is to support the DoT
+        if not shatt_hand:
+            #getattr(self.stats.procs, 'mark_of_the_shattered_hand_dot')
+            self.stats.procs.del_proc('mark_of_the_shattered_hand_dot')
 
     def get_poison_counts(self, attacks_per_second):
         # Builds a phony 'poison' proc object to count triggers through the proc
@@ -610,11 +617,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         active_procs_no_icd = []
         damage_procs = []
         weapon_damage_procs = []
-        #print '------'
-        #print 'SORTING PROCS'
         
         #some procs need specific prep, think RoRO/VoS
-        self.setup_unique_procs()
+        self.setup_unique_procs(current_stats, current_stats['agi']+current_stats['ap'])
         
         #set 'highest' procs to agi
         for proc in self.stats.procs.get_all_procs_for_stat('highest'):
@@ -626,7 +631,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         #sort the procs into groups
         for proc in self.stats.procs.get_all_procs_for_stat():
-            #print proc.proc_name
             if (proc.stat == 'stats') and not proc.is_ppm():
                 if proc.is_real_ppm():
                     active_procs_rppm.append(proc)
@@ -647,7 +651,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                                                                      'mark_of_the_bleeding_hollow', 'mark_of_warsong')]:
             proc = getattr(getattr(self.stats, hand), enchant)
             if proc:
-                #print proc.proc_name
                 setattr(proc, '_'.join((hand, 'only')), True)
                 if (proc.stat in current_stats or proc.stat == 'stats'):
                     if proc.is_real_ppm():
@@ -672,19 +675,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                             active_procs_icd.append(proc)
                         else:
                             active_procs_no_icd.append(proc)
-        
-        #print 'rppm:'
-        #for e in active_procs_rppm:
-        #    print e.proc_name
-        #print 'no-icd:'
-        #for e in active_procs_no_icd:
-        #    print e.proc_name
-        #print 'icd:'
-        #for e in active_procs_icd:
-        #    print e.proc_name
-        #print 'damage:'
-        #for e in damage_procs:
-        #    print e.proc_name
         
         static_proc_stats = {
             'str': 0,
@@ -714,7 +704,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         convergence_stats = False
         if len(active_procs_no_icd) > 0:
             need_converge = True
-        while need_converge or self.spec_needs_converge:
+        while (need_converge or self.spec_needs_converge):
             current_stats = {
                 'str': self.base_strength,
                 'agi': self.base_stats['agi'] * self.get_stat_mod('agi'),
@@ -740,7 +730,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             
             #only have to converge with specific procs
             #check if... assassination:crit/haste, combat:mastery/haste, sub:haste/mastery
-            if not convergence_stats:
+            if not convergence_stats and not self.spec_needs_converge:
                 break
             
             old_attacks_per_second = attacks_per_second
@@ -760,7 +750,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 current_stats[ e ] += proc.uptime * proc.value[e] * self.get_stat_mod(e)
         
         #if no new stats are added, skip this step
-        if len(active_procs_icd) > 0:
+        if len(active_procs_icd) > 0 or self.spec_needs_converge:
             if recalculate_crit:
                 crit_rates = None
             attacks_per_second, crit_rates = attack_counts_function(current_stats, crit_rates=crit_rates)
@@ -805,12 +795,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         for proc in weapon_damage_procs:
             self.set_uptime(proc, attacks_per_second, crit_rates)
-        
-        #print '-------------'
-        #print 'current_stats'
-        #print current_stats
-        #print 'APS'
-        #print attacks_per_second
+                
         return current_stats, attacks_per_second, crit_rates, damage_procs
     
     def compute_damage_from_aps(self, current_stats, attacks_per_second, crit_rates, damage_procs):
@@ -1304,6 +1289,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         #combat specific constants
         self.max_bandits_guile_buff = 1.3
+        self.combat_cd_delay = 0 #this is for DFA convergence, mostly
         if self.level == 100:
             self.max_bandits_guile_buff += .2
             self.dw_miss_penalty = 0
@@ -1325,6 +1311,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.settings.dmg_poison = 'sp'
         
         self.set_constants()
+        if self.talents.death_from_above:
+            self.spec_needs_converge = True
         
         cds = {'ar':self.get_spell_cd('adrenaline_rush'),
                'ks':self.get_spell_cd('killing_spree')}
@@ -1412,7 +1400,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if ar:
             gcd_size -= .2
         cp_per_cpg = 1.
-        dfa_cd = self.get_spell_cd('death_from_above') + self.settings.response_time + 6 #artificial delay, needs convergence support
+        dfa_cd = self.get_spell_cd('death_from_above') + self.settings.response_time + self.combat_cd_delay
             
         # Combine energy cost scalers to reduce function calls (ie, 40% reduced energy cost). Assume multiplicative.
         cost_modifier = self.stats.gear_buffs.rogue_t15_4pc_modifier()
@@ -1435,9 +1423,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         white_swing_downtime = 0
         if self.swing_reset_spacing is not None and not ar:
             white_swing_downtime += .5 / self.swing_reset_spacing
-        self.spec_needs_converge = False
         if self.talents.death_from_above and not ar:
-            self.spec_needs_converge = True
             white_swing_downtime += .5 / dfa_cd #.5 is 1s delay divided by 2 due to assumed even distribution
         attacks_per_second['mh_autoattacks'] = self.attack_speed_increase / self.stats.mh.speed * (1 - white_swing_downtime)
         attacks_per_second['oh_autoattacks'] = self.attack_speed_increase / self.stats.oh.speed * (1 - white_swing_downtime)
@@ -1449,10 +1435,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         #Base energy
         bonus_energy_from_openers = self.get_bonus_energy_from_openers('sinister_strike', 'revealing_strike')
-        combat_potency_regen += combat_potency_from_mg * attacks_per_second['main_gauche']
         if self.settings.opener_name in ('ambush', 'garrote'):
             attacks_per_second[self.settings.opener_name] = self.total_openers_per_second
             attacks_per_second['main_gauche'] += self.total_openers_per_second * main_gauche_proc_rate
+        combat_potency_regen += combat_potency_from_mg * attacks_per_second['main_gauche']
         energy_regen = self.base_energy_regen * haste_multiplier + self.bonus_energy_regen + combat_potency_regen + bonus_energy_from_openers
         #Rough idea to factor in a full energy bar
         if not ar:
@@ -1484,7 +1470,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         #Base Actions
         #marked for death CD
-        marked_for_death_cd = self.get_spell_cd('marked_for_death') + (.5 * total_eviscerate_cost) / (2 * energy_regen) + self.settings.response_time
+        self.combat_cd_delay = (.5 * total_eviscerate_cost) / (2 * energy_regen)
+        marked_for_death_cd = self.get_spell_cd('marked_for_death') + self.combat_cd_delay + self.settings.response_time
         if self.talents.marked_for_death:
             energy_regen -= 10. / marked_for_death_cd
         energy_regen -= revealing_strike_energy_cost / rvs_interval
@@ -1633,9 +1620,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 raise InputNotModeledException(_('Hemorrhage usage must be set to always, never or a positive number'))
             if float(self.settings.cycle.use_hemorrhage) > self.settings.duration:
                 raise InputNotModeledException(_('Interval between Hemorrhages cannot be higher than the fight duration'))
-        
-        #sinister calling requires convergence to calculate (for now?)
-        self.spec_needs_converge = True
             
         #set readiness coefficient
         self.readiness_spec_conversion = self.subtlety_readiness_conversion
@@ -1654,6 +1638,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             getattr(self.stats.procs, 'legendary_capacitive_meta').proc_rate_modifier = 1.114
         
         self.set_constants()
+        #sinister calling requires convergence to calculate (for now?)
+        self.spec_needs_converge = True
         self.agi_multiplier *= 1.15
         
         self.base_energy_regen = 10.
@@ -1748,12 +1734,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         cp_per_ambush = 2
         cp_per_shd_ambush = cp_per_ambush
         vanish_bonus_stealth = 0 + 3 * self.talents.subterfuge * [1, 2][self.glyphs.vanish]
-        rupture_cd = 24
-        hemo_cd = 24
-        snd_cd = 36
+        rupture_ticks_per_cast = 12.
+        rupture_cd = 24.
+        hemo_cd = 24.
+        snd_cd = 36.
         dfa_cd = self.get_spell_cd('death_from_above') + self.settings.response_time #artificial delay, needs convergence support
         base_cp_per_second = hat_cp_per_second * (self.shd_cd-8.)/self.shd_cd + self.total_openers_per_second * 2
         if self.stats.gear_buffs.rogue_t15_2pc:
+            rupture_ticks_per_cast += 2
             rupture_cd += 4
             snd_cd += 6
         cpg_denom = self.shd_duration
@@ -1827,7 +1815,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         base_cp_per_second += 2. / self.get_spell_cd('vanish') * (self.settings.duration-50.)/self.settings.duration
         #rupture
         attacks_per_second['rupture'] = 1. / rupture_cd
-        attacks_per_second['rupture_ticks'][5] = 12. / rupture_cd
+        attacks_per_second['rupture_ticks'][5] = rupture_ticks_per_cast / rupture_cd
         base_cp_per_second -= 5. / rupture_cd
         energy_regen -= (self.base_rupture_cost - 25) / rupture_cd
         #no need to add slice and dice to attacks per second
@@ -1921,6 +1909,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second['hemorrhage_ticks'] = ticks_per_second
         
         sc_ms_chance = self.stats.get_multistrike_chance_from_rating(rating=current_stats['multistrike']) + self.buffs.multistrike_bonus()
+        #this is a cache for convergence
         self.sc_trigger_rate = attacks_per_second['ambush'] * sc_ms_chance
         if 'backstab' in attacks_per_second:
             self.sc_trigger_rate += attacks_per_second['backstab'] * sc_ms_chance

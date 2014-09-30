@@ -157,6 +157,9 @@ class ProcsList(object):
 
     def set_proc(self, proc):
         setattr(self, proc, Proc(**self.allowed_procs[proc]))
+    
+    def del_proc(self, proc):
+        setattr(self, proc, False)
 
     def __getattr__(self, proc):
         # Any proc we haven't assigned a value to, we don't have.

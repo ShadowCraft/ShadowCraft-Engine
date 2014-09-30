@@ -133,6 +133,8 @@ class RogueDamageCalculator(DamageCalculator):
         average_ap *= self.buffs.attack_power_multiplier()
         if self.settings.is_combat_rogue():
             average_ap *= 1.40 # vitality spec perk
+        
+        self.setup_unique_procs(current_stats, average_ap)
 
         damage_breakdown = {}
         
@@ -313,10 +315,10 @@ class RogueDamageCalculator(DamageCalculator):
         return self.oh_penalty() * self.get_weapon_damage('oh', ap, is_normalized=False)
     
     def mh_shuriken(self, ap):
-        return .75 * mh_damage(ap, armor=armor) #update?
+        return .75 * mh_damage(ap) #update?
     
     def oh_shuriken(self, ap):
-        return .75 * oh_damage(ap, armor=armor) #update?
+        return .75 * oh_damage(ap) #update?
 
     def backstab_damage(self, ap):
         return 1.75 * self.get_weapon_damage('mh', ap)
@@ -337,7 +339,7 @@ class RogueDamageCalculator(DamageCalculator):
         return .40 * [1., 1.4][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap)
 
     def hemorrhage_tick_damage(self, ap):
-        return .42 * ap / 12. #24s, 2s per tick
+        return .035 * ap
 
     def ambush_damage(self, ap):
         return 3.0 * [1., 1.4][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap) 
@@ -370,10 +372,10 @@ class RogueDamageCalculator(DamageCalculator):
         return .218 * ap
 
     def garrote_tick_damage(self, ap):
-        return .2241 * ap #what is this again?
+        return .2241 * ap
 
     def rupture_tick_damage(self, ap, cp):
-        return .0685 * cp * ap
+        return .0822 * cp * ap
 
     def eviscerate_damage(self, ap, cp):
         return .577 * cp * ap
