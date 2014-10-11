@@ -293,7 +293,7 @@ class RogueDamageCalculator(DamageCalculator):
         
         #calculate multistrike here, really cheap to calculate
         #turns out the 2 chance system yields a very basic linear pattern, the damage modifier is 30% of the multistrike %!
-        multistrike_multiplier = .3 * (self.stats.get_multistrike_chance_from_rating(rating=current_stats['multistrike']) + self.buffs.multistrike_bonus())
+        multistrike_multiplier = .3 * 2 * (self.stats.get_multistrike_chance_from_rating(rating=current_stats['multistrike']) + self.buffs.multistrike_bonus())
         multistrike_damage = 0
         for ability in damage_breakdown:
             multistrike_damage += multistrike_multiplier * damage_breakdown[ability]
