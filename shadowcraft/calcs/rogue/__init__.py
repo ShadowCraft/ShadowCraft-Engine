@@ -354,9 +354,9 @@ class RogueDamageCalculator(DamageCalculator):
         return 1.60 * 1.8 * 0.924 * ap / 3.5
 
     def death_from_above_pulse_damage(self, ap, cp):
-        return 1.333 * ap
+        return 0.266 * cp * ap
     def death_from_above_pulse_sr_damage(self, ap, cp):
-        return 1.333 * 0.924 * ap
+        return 0.266 * cp * 0.924 * ap
     
     def dispatch_damage(self, ap):
         return 3.15 * self.get_weapon_damage('mh', ap)
@@ -438,13 +438,13 @@ class RogueDamageCalculator(DamageCalculator):
         return .25014 * ap
 
     def deadly_instant_poison_damage(self, ap):
-        return .1287 * ap
+        return .1287000030 * ap
 
     def swift_poison_damage(self, ap):
         return .264 * ap
 
     def wound_poison_damage(self, ap):
-        return .218 * ap
+        return .2179999948 * ap
     
     #unused
     def fan_of_knives_damage(self, ap):

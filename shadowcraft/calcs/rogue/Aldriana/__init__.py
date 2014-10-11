@@ -213,7 +213,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         for attack in spec_attacks + poisons + openers + talent_attacks:
             #for handling odd crit rates
-            if attack is in ('eviscerate', 'envenom') and self.stats.gear_buffs.rogue_t15_4pc:
+            if attack in ('eviscerate', 'envenom') and self.stats.gear_buffs.rogue_t15_4pc:
                 crit_rates[attack] = base_melee_crit_rate + .2
             else:
                 crit_rates[attack] = base_melee_crit_rate
