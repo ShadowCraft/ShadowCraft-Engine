@@ -77,7 +77,7 @@ test_glyphs = glyphs.Glyphs(test_class, *glyph_list)
 test_cycle = settings.CombatCycle(revealing_strike_pooling=True, blade_flurry=False, dfa_during_ar=True)
 test_settings = settings.Settings(test_cycle, response_time=.5, duration=360, dmg_poison='dp', utl_poison='lp', is_pvp=False,
                                   latency=.03, merge_damage=True, use_opener='always', opener_name='ambush',
-                                  num_boss_adds=0.0, adv_params="", potion=True, prepot=True) # 0.2 = 20% of the fight is an add present
+                                  num_boss_adds=0.0, adv_params="") # 0.2 = 20% of the fight is an add present
 
 # Build a DPS object.
 calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_glyphs, test_buffs, test_race, test_settings, test_level)

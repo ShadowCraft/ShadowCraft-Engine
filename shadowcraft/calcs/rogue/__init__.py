@@ -328,7 +328,8 @@ class RogueDamageCalculator(DamageCalculator):
         self.add_exported_data(damage_breakdown)
 
         return damage_breakdown
-
+    
+    #autoattacks
     def mh_damage(self, ap):
         return self.get_weapon_damage('mh', ap, is_normalized=False)
 
@@ -340,46 +341,99 @@ class RogueDamageCalculator(DamageCalculator):
     
     def oh_shuriken(self, ap):
         return .75 * oh_damage(ap) #update?
-
+    
+    #abilities
+    def ambush_damage(self, ap):
+        return 2.75 * [1., 1.4][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap)
+    def ambush_sr_damage(self, ap):
+        return 2.75 * 1.8 * 0.924 * ap / 3.5
+    
     def backstab_damage(self, ap):
         return 1.60 * self.get_weapon_damage('mh', ap)
+    def backstab_sr_damage(self, ap):
+        return 1.60 * 1.8 * 0.924 * ap / 3.5
 
+    def death_from_above_pulse_damage(self, ap, cp):
+        return 1.333 * ap
+    def death_from_above_pulse_sr_damage(self, ap, cp):
+        return 1.333 * 0.924 * ap
+    
     def dispatch_damage(self, ap):
         return 3.15 * self.get_weapon_damage('mh', ap)
-
-    def mh_mutilate_damage(self, ap):
-        return 2.0 * self.get_weapon_damage('mh', ap)
-
-    def oh_mutilate_damage(self, ap):
-        return 2.0 * self.oh_penalty() * self.get_weapon_damage('oh', ap)
-
-    def sinister_strike_damage(self, ap):
-        return 1.6 * self.get_weapon_damage('mh', ap)
-
+    def dispatch_sr_damage(self, ap):
+        return 3.15 * 1.8 * 0.924 * ap / 3.5
+    
+    def envenom_damage(self, ap, cp):
+        return .306 * cp * ap
+    def envenom_sr_damage(self, ap, cp):
+        return .306 * cp * 0.924 * ap
+    
+    def eviscerate_damage(self, ap, cp):
+        return .508 * cp * ap
+    def eviscerate_sr_damage(self, ap, cp):
+        return .508 * cp * 0.924 * ap
+    
+    def garrote_tick_damage(self, ap):
+        return .2241 * ap
+    def garrote_tick_sr_damage(self, ap):
+        return .2241 * 0.924 * ap
+    
     def hemorrhage_damage(self, ap):
         return .40 * [1., 1.4][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap)
+    def hemorrhage_sr_damage(self, ap):
+        return .4 * 1.8 * 0.924 * ap / 3.5
 
     def hemorrhage_tick_damage(self, ap):
         return .035 * ap
-
-    def ambush_damage(self, ap):
-        return 2.75 * [1., 1.4][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap) 
-
-    def revealing_strike_damage(self, ap):
-        return 1.2 * self.get_weapon_damage('mh', ap)
-
-    def venomous_wounds_damage(self, ap):
-        return .320 * ap
-
-    def main_gauche_damage(self, ap):
-        return 1.4 * self.oh_penalty() * self.get_weapon_damage('oh', ap)
+    def hemorrhage_tick_sr_damage(self, ap):
+        return .035 * 0.924 * ap
 
     def mh_killing_spree_damage(self, ap):
         return 1.0 * self.get_weapon_damage('mh', ap)
+    def mh_killing_spree_sr_damage(self, ap):
+        return 1.0 * 1.8 * 0.924 * ap / 3.5
 
     def oh_killing_spree_damage(self, ap):
         return 1.0 * self.oh_penalty() * self.get_weapon_damage('oh', ap)
+    def oh_killing_spree_sr_damage(self, ap):
+        return 1.0 * 1.8 * 0.924 * ap / 3.5 * 0.5
+    
+    def main_gauche_damage(self, ap):
+        return 1.4 * self.oh_penalty() * self.get_weapon_damage('oh', ap)
+    def main_gauche_sr_damage(self, ap):
+        return 1.4 * 1.8 * 0.924 * ap / 3.5
+    
+    def mh_mutilate_damage(self, ap):
+        return 2.0 * self.get_weapon_damage('mh', ap)
+    def mh_mutilate_sr_damage(self, ap):
+        return 2.0 * 1.8 * 0.924 * ap / 3.5
 
+    def oh_mutilate_damage(self, ap):
+        return 2.0 * self.oh_penalty() * self.get_weapon_damage('oh', ap)
+    def oh_mutilate_sr_damage(self, ap):
+        return 2.0 * 1.8 * 0.924 * ap / 3.5 * 0.5
+
+    def revealing_strike_damage(self, ap):
+        return 1.2 * self.get_weapon_damage('mh', ap)
+    def revealing_strike_sr_damage(self, ap):
+        return 1.2 * 1.8 * 0.924 * ap / 3.5
+    
+    def rupture_tick_damage(self, ap, cp):
+        return .07225 * cp * ap
+    def rupture_tick_sr_damage(self, ap, cp):
+        return .07225 * 0.924 * ap
+    
+    def sinister_strike_damage(self, ap):
+        return 1.6 * self.get_weapon_damage('mh', ap)
+    def sinister_strike_sr_damage(self, ap):
+        return 1.6 * 1.8 * 0.924 * ap / 3.5
+    
+    def venomous_wounds_damage(self, ap):
+        return .320 * ap
+    def venomous_wounds_sr_damage(self, ap):
+        return .320 * 0.924 * ap
+
+    #poisons
     def deadly_poison_tick_damage(self, ap):
         return .25014 * ap
 
@@ -391,19 +445,8 @@ class RogueDamageCalculator(DamageCalculator):
 
     def wound_poison_damage(self, ap):
         return .218 * ap
-
-    def garrote_tick_damage(self, ap):
-        return .2241 * ap
-
-    def rupture_tick_damage(self, ap, cp):
-        return .07225 * cp * ap
-
-    def eviscerate_damage(self, ap, cp):
-        return .508 * cp * ap
-
-    def envenom_damage(self, ap, cp):
-        return .306 * cp * ap
-
+    
+    #unused
     def fan_of_knives_damage(self, ap):
         return .231 * ap
 
@@ -421,10 +464,6 @@ class RogueDamageCalculator(DamageCalculator):
 
     def shuriken_toss_damage(self, ap):
         return 1.2 * ap
-        
-    #Check this formula with SimC    
-    def death_from_above_pulse_damage(self, ap, cp):
-		return 1.333 * ap
     
     def get_formula(self, name):
         formulas = {

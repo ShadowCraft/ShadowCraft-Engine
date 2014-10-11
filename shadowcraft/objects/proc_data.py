@@ -453,6 +453,7 @@ allowed_procs = {
         'proc_name': 'Talisman of Bloodlust',
         'upgradable': True,
         'scaling': 0.5189999938,
+        'max_stacks': 5,
         'item_level': 541,
         'type': 'rppm',
         'source': 'trinket',

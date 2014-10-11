@@ -213,9 +213,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         for attack in spec_attacks + poisons + openers + talent_attacks:
             #for handling odd crit rates
-            if attack is None:
-                pass
-            crit_rates[attack] = base_melee_crit_rate
+            if attack is in ('eviscerate', 'envenom') and self.stats.gear_buffs.rogue_t15_4pc:
+                crit_rates[attack] = base_melee_crit_rate + .2
+            else:
+                crit_rates[attack] = base_melee_crit_rate
 
         for attack, crit_rate in crit_rates.items():
             if crit_rate > 1:
@@ -278,6 +279,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.race.berserking:
             self.true_haste_mod *= (1 + .15 * 10. / (180 + self.settings.response_time))
         self.true_haste_mod *= 1 + self.race.get_racial_haste() #doesn't include Berserking
+        if self.stats.gear_buffs.rogue_t14_4pc:
+            self.true_haste_mod *= 1.05
             
         #hit chances
         self.dw_mh_hit_chance = self.dual_wield_mh_hit_chance()
@@ -1447,7 +1450,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second[self.settings.opener_name] = self.total_openers_per_second
             attacks_per_second['main_gauche'] += self.total_openers_per_second * main_gauche_proc_rate
         if self.talents.death_from_above and not ar:
-            attacks_per_second['main_gauche'] += main_gauche_proc_rate / dfa_cd
+            attacks_per_second['main_gauche'] += (1 + self.settings.num_boss_adds) * main_gauche_proc_rate / dfa_cd
         combat_potency_regen += combat_potency_from_mg * attacks_per_second['main_gauche']
         energy_regen = self.base_energy_regen * haste_multiplier + self.bonus_energy_regen + combat_potency_regen + bonus_energy_from_openers
         #Rough idea to factor in a full energy bar
@@ -1633,7 +1636,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             
         #set readiness coefficient
         self.readiness_spec_conversion = self.subtlety_readiness_conversion
-        self.spec_convergence_stats = ['haste', 'mastery', 'multistrike', 'readiness']
+        self.spec_convergence_stats = ['haste', 'multistrike']
         self.spec_stat_bonus = 'multistrike'
         
         #overrides setting, using Ambush + Vanish on CD is critical
