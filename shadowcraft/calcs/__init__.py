@@ -565,6 +565,14 @@ class DamageCalculator(object):
 
     def armor_mitigation_multiplier(self, armor):
         return armor_mitigation.multiplier(armor, cached_parameter=self.armor_mitigation_parameter)
+    
+    def get_trinket_cd_reducer(self):
+        trinket_cd_reducer_value = .0
+        proc = getattr(self.stats.procs, 'assurance_of_consequence')
+        if proc and proc.scaling:
+            trinket_cd_reducer_value = 0.0098999999 / 100 * self.tools.get_random_prop_point(proc.item_level)
+            return 1 / (1 + trinket_cd_reducer_value)
+        return 1
 
     def armor_mitigate(self, damage, armor):
         # Pass in raw physical damage and armor value, get armor-mitigated

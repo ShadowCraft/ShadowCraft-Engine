@@ -299,6 +299,27 @@ class RogueDamageCalculator(DamageCalculator):
             multistrike_damage += multistrike_multiplier * damage_breakdown[ability]
         damage_breakdown['multistrike'] = multistrike_damage
         
+        # multistrike
+        proc = getattr(self.stats.procs, 'haromms_talisman')
+        if proc and proc.scaling:
+            proc_chance = 0.0353999995 / 1000 * self.tools.get_random_prop_point(proc.item_level)
+            dmg_multistrike = 0.
+            for attack in damage_breakdown:
+                if attack not in ('deadly_instant_poison'):
+                    dmg_multistrike += damage_breakdown[attack] / 3. * proc_chance
+            damage_breakdown['multistrike_trinket'] = dmg_multistrike
+            
+        # cleave
+        proc = getattr(self.stats.procs, 'sigil_of_rampage')
+        if proc and proc.scaling:
+            proc_chance = 0.0785999969 / 10000 * self.tools.get_random_prop_point(proc.item_level)
+            dmg_cleave = 0.
+            for attack in damage_breakdown:
+                if attack not in ('deadly_instant_poison', 'multistrike', 'multistrike_trinket'):
+                    # does not do damage to your primary target, only adds
+                    dmg_cleave += damage_breakdown[attack] * proc_chance * self.settings.num_boss_adds
+            damage_breakdown['cleave_trinket'] = dmg_cleave
+        
         #DW DOT FIX
         if getattr(getattr(self.stats, 'mh'), 'mark_of_the_shattered_hand') and getattr(getattr(self.stats, 'oh'), 'mark_of_the_shattered_hand'):
             #damage_breakdown['Mark of the Shattered Hand'] *= 2.
@@ -321,7 +342,7 @@ class RogueDamageCalculator(DamageCalculator):
         return .75 * oh_damage(ap) #update?
 
     def backstab_damage(self, ap):
-        return 1.75 * self.get_weapon_damage('mh', ap)
+        return 1.60 * self.get_weapon_damage('mh', ap)
 
     def dispatch_damage(self, ap):
         return 3.15 * self.get_weapon_damage('mh', ap)
@@ -342,7 +363,7 @@ class RogueDamageCalculator(DamageCalculator):
         return .035 * ap
 
     def ambush_damage(self, ap):
-        return 3.0 * [1., 1.4][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap) 
+        return 2.75 * [1., 1.4][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap) 
 
     def revealing_strike_damage(self, ap):
         return 1.2 * self.get_weapon_damage('mh', ap)
@@ -375,10 +396,10 @@ class RogueDamageCalculator(DamageCalculator):
         return .2241 * ap
 
     def rupture_tick_damage(self, ap, cp):
-        return .0822 * cp * ap
+        return .07225 * cp * ap
 
     def eviscerate_damage(self, ap, cp):
-        return .577 * cp * ap
+        return .508 * cp * ap
 
     def envenom_damage(self, ap, cp):
         return .306 * cp * ap
@@ -387,7 +408,7 @@ class RogueDamageCalculator(DamageCalculator):
         return .231 * ap
 
     def crimson_tempest_damage(self, ap, cp):
-        return .0602 * cp * ap
+        return .0903 * cp * ap
 
     def crimson_tempest_tick_damage(self, ap, cp):
         return self.crimson_tempest_damage(ap, cp) * (2.4 / 6)
@@ -403,7 +424,7 @@ class RogueDamageCalculator(DamageCalculator):
         
     #Check this formula with SimC    
     def death_from_above_pulse_damage(self, ap, cp):
-		return 0.132 * ap * cp
+		return 1.333 * ap
     
     def get_formula(self, name):
         formulas = {
@@ -434,7 +455,8 @@ class RogueDamageCalculator(DamageCalculator):
     def get_spell_cd(self, ability):
         #need to update list of affected abilities
         if ability in self.cd_reduction_table[self.settings.get_spec()]:
-            return self.ability_cds[ability] * self.stats.get_readiness_multiplier_from_rating(readiness_conversion=self.readiness_spec_conversion)
+            #self.stats.get_readiness_multiplier_from_rating(readiness_conversion=self.readiness_spec_conversion)
+            return self.ability_cds[ability] * self.get_trinket_cd_reducer()
         else:
             return self.ability_cds[ability]
 

@@ -142,7 +142,7 @@ allowed_procs = {
         'duration': 10,
         'proc_name': 'Humming Blackiron Trigger',
         'upgradable': True,
-        'scaling': 0.2703000009 * 10.5, #needs to be corrected
+        'scaling': 0.2703000009 * 10.5,
         'item_level': 665,
         'type': 'rppm',
         'source': 'trinket',
@@ -156,7 +156,7 @@ allowed_procs = {
         'duration': 10,
         'proc_name': 'Meaty Dragonspine Trophy',
         'upgradable': True,
-        'scaling': 2.9730000496, #needs to be corrected
+        'scaling': 2.9730000496,
         'item_level': 665,
         'type': 'rppm',
         'source': 'trinket',
@@ -170,7 +170,7 @@ allowed_procs = {
         'duration': 10,
         'proc_name': 'Formidable Jar of Doom',
         'upgradable': True,
-        'scaling': 2.9730000496, #needs to be corrected
+        'scaling': 2.9730000496,
         'item_level': 665,
         'type': 'rppm',
         'source': 'trinket',
@@ -184,7 +184,7 @@ allowed_procs = {
         'duration': 10,
         'proc_name': 'Scales of Doom',
         'upgradable': True,
-        'scaling': 2.9730000496, #needs to be corrected
+        'scaling': 2.9730000496,
         'item_level': 665,
         'type': 'rppm',
         'source': 'trinket',
@@ -198,7 +198,7 @@ allowed_procs = {
         'duration': 10,
         'proc_name': 'Blackheart Enforcers Medallion',
         'upgradable': True,
-        'scaling': 2.9730000496, #needs to be corrected
+        'scaling': 2.9730000496,
         'item_level': 665,
         'type': 'rppm',
         'source': 'trinket',
@@ -212,12 +212,12 @@ allowed_procs = {
         'duration': 20,
         'proc_name': 'Lucky Double-sided Coin',
         'upgradable': True,
-        'scaling': 2.9730000496, #needs to be corrected
+        'scaling': 2.9730000496,
         'item_level': 665,
         'type': 'icd',
         'source': 'trinket',
         'icd': 120,
-        'proc_rate': 1.0, #this simulates on use mechanics
+        'proc_rate': 1.0,
         'trigger': 'all_attacks'
     },
     'beating_heart_of_the_mountain': {
@@ -226,12 +226,12 @@ allowed_procs = {
         'duration': 20,
         'proc_name': 'Beating Heart of the Mountain',
         'upgradable': True,
-        'scaling': 2.9730000496, #needs to be corrected
+        'scaling': 2.9730000496,
         'item_level': 665,
         'type': 'icd',
         'source': 'trinket',
         'icd': 120,
-        'proc_rate': 1.0, #this simulates on use mechanics
+        'proc_rate': 1.0,
         'trigger': 'all_attacks'
     },
     'skull_of_war': {
@@ -240,12 +240,12 @@ allowed_procs = {
         'duration': 20,
         'proc_name': 'Skull of War',
         'upgradable': True,
-        'scaling': 2.9730000496, #needs to be corrected
+        'scaling': 2.9730000496,
         'item_level': 640,
         'type': 'icd',
         'source': 'trinket',
         'icd': 115,
-        'proc_rate': 0.15, #this simulates on use mechanics
+        'proc_rate': 0.15,
         'trigger': 'all_attacks'
     },
     'primal_combatants_ioc': {
@@ -254,7 +254,7 @@ allowed_procs = {
         'duration': 20,
         'proc_name': 'Primal Combatants Insignia of Conquest',
         'upgradable': True,
-        'scaling': 2.9730000496, #needs to be corrected
+        'scaling': 2.9730000496,
         'item_level': 620,
         'type': 'icd',
         'source': 'trinket',
@@ -268,12 +268,12 @@ allowed_procs = {
         'duration': 20,
         'proc_name': 'Primal Combatants Badge of Conquest',
         'upgradable': True,
-        'scaling': 2.9730000496, #needs to be corrected
+        'scaling': 2.9730000496,
         'item_level': 620,
         'type': 'icd',
         'source': 'trinket',
         'icd': 60,
-        'proc_rate': 1.0, #this simulates on use mechanics
+        'proc_rate': 1.0,
         'trigger': 'all_attacks'
     },
     'gorashans_lodestone_spike': {
@@ -282,12 +282,12 @@ allowed_procs = {
         'duration': 15,
         'proc_name': 'Gorashans Lodestone Spike',
         'upgradable': True,
-        'scaling': 2.9730000496, #needs to be corrected
+        'scaling': 2.9730000496,
         'item_level': 630,
         'type': 'icd',
         'source': 'trinket',
         'icd': 90,
-        'proc_rate': 1.0, #this simulates on use mechanics
+        'proc_rate': 1.0,
         'trigger': 'all_attacks'
     },
     'turbulent_vial_of_toxin': {
@@ -296,12 +296,12 @@ allowed_procs = {
         'duration': 15,
         'proc_name': 'Turbulent Vial of Toxin',
         'upgradable': True,
-        'scaling': 2.9730000496, #needs to be corrected
+        'scaling': 2.9730000496,
         'item_level': 630,
         'type': 'icd',
         'source': 'trinket',
         'icd': 90,
-        'proc_rate': 1.0, #this simulates on use mechanics
+        'proc_rate': 1.0,
         'trigger': 'all_attacks'
     },
     'kihras_adrenaline_injector': {
@@ -310,12 +310,12 @@ allowed_procs = {
         'duration': 20,
         'proc_name': 'Kihras Adrenaline Injector',
         'upgradable': True,
-        'scaling': 2.9730000496, #needs to be corrected
+        'scaling': 2.9730000496,
         'item_level': 630,
         'type': 'icd',
         'source': 'trinket',
         'icd': 120,
-        'proc_rate': 1.0, #this simulates on use mechanics
+        'proc_rate': 1.0,
         'trigger': 'all_attacks'
     },
     'witherbarks_branch': {
@@ -324,7 +324,7 @@ allowed_procs = {
         'duration': 10,
         'proc_name': 'Witherbarks Branch',
         'upgradable': True,
-        'scaling': 2.9730000496, #needs to be corrected
+        'scaling': 2.9730000496,
         'item_level': 630,
         'type': 'rppm',
         'source': 'trinket',
@@ -338,7 +338,7 @@ allowed_procs = {
         'duration': 10,
         'proc_name': 'Munificent Emblem of Terror',
         'upgradable': True,
-        'scaling': 2.9730000496, #needs to be corrected
+        'scaling': 2.9730000496,
         'item_level': 615,
         'type': 'rppm',
         'source': 'trinket',
@@ -347,13 +347,13 @@ allowed_procs = {
         'trigger': 'all_attacks'
     },
     #5.4 procs
-    'assurance_of_consequence': {
+    'assurance_of_consequence': { #DBC - 197491
         'stat': 'stats',
-        'value': {'agi':14037},
+        'value': {'agi':268},
         'duration': 20,
         'proc_name': 'Assurance of Consequence',
         'upgradable': True,
-        'scaling': 2.9730000496,
+        'scaling': 4.000,
         'item_level': 572,
         'type': 'icd',
         'source': 'trinket',
@@ -361,9 +361,9 @@ allowed_procs = {
         'proc_rate': 0.15,
         'trigger': 'all_attacks'
     },
-    'haromms_talisman': {
+    'haromms_talisman': { #DBC - 203539
         'stat': 'stats',
-        'value': {'agi':14037}, # not 100% accurate
+        'value': {'agi':14037},
         'duration': 10,
         'proc_name': 'Haromms Talisman',
         'upgradable': True,
@@ -377,11 +377,11 @@ allowed_procs = {
     },
     'sigil_of_rampage': {
         'stat': 'stats',
-        'value': {'agi':14037}, # not 100% accurate
+        'value': {'agi':14037},
         'duration': 15,
         'proc_name': 'Sigil of Rampage',
         'upgradable': True,
-        'scaling': 2.9730000496,
+        'scaling': 3.3333330154,
         'item_level': 572,
         'type': 'icd',
         'source': 'trinket',
@@ -391,7 +391,7 @@ allowed_procs = {
     },
     'ticking_ebon_detonator': {
         'stat': 'stats',
-        'value': {'agi':1275 * 10.5}, # probably not accurate
+        'value': {'agi':1275 * 10.5},
         'duration': 10,
         'proc_name': 'Ticking Ebon Detonator',
         'upgradable': True,
@@ -405,7 +405,7 @@ allowed_procs = {
     },
     'thoks_tail_tip': {
         'stat': 'stats',
-        'value': {'str':14037}, # not 100% accurate
+        'value': {'str':14037},
         'duration': 20,
         'proc_name': 'Thoks Tail Tip',
         'upgradable': True,
@@ -474,7 +474,7 @@ allowed_procs = {
         'proc_rate': 1.21,
         'trigger': 'all_attacks'
     },
-    'talisman_of_the_shado-pan_assault': {
+    'vicious_talisman_of_the_shado-pan_assault': {
         'stat': 'stats',
         'value': {'agi':8800},
         'duration': 20,
@@ -494,7 +494,7 @@ allowed_procs = {
         'duration': 20,
         'proc_name': 'Terror in the Mists',
         'upgradable': True,
-        'scaling': 2.9700000286,
+        'scaling': 4.000,
         'item_level': 496,
         'type': 'icd',
         'source': 'trinket',
@@ -508,7 +508,7 @@ allowed_procs = {
         'duration': 20,
         'proc_name': 'Bottle of Infinite Stars',
         'upgradable': True,
-        'scaling': 1.4850000143,
+        'scaling': 2.000,
         'item_level': 496,
         'type': 'icd',
         'source': 'trinket',
@@ -537,7 +537,7 @@ allowed_procs = {
         'duration': 15,
         'proc_name': 'Corens Cold Chromium Coaster',
         'upgradable': True,
-        'scaling': 1.5684000254,
+        'scaling': 2.9719998837,
         'item_level': 476,
         'type': 'icd',
         'source': 'trinket',
@@ -552,7 +552,7 @@ allowed_procs = {
         'duration': 25,
         'proc_name': 'Searing Words',
         'upgradable': True,
-        'scaling': 1.9800000191,
+        'scaling': 2.2666659355,
         'item_level': 463,
         'type': 'icd',
         'source': 'trinket',
@@ -567,7 +567,7 @@ allowed_procs = {
         'duration': 20,
         'proc_name': 'Windswept Pages',
         'upgradable': True,
-        'scaling': 1.9800000191,
+        'scaling': 2.1666660309,
         'item_level': 463,
         'type': 'icd',
         'source': 'trinket',
@@ -581,7 +581,7 @@ allowed_procs = {
         'duration': 15,
         'proc_name': 'Kiroptyric Sigil',
         'upgradable': True,
-        'scaling': 1.9800000191,
+        'scaling': 2.4760000706,
         'item_level': 463,
         'type': 'icd',
         'source': 'trinket',
@@ -595,7 +595,7 @@ allowed_procs = {
         'duration': 20,
         'proc_name': 'Rickets Magnetic Fireball',
         'upgradable': True,
-        'scaling': 1.9800000191,
+        'scaling': 2.4779999256,
         'item_level': 463,
         'type': 'icd',
         'source': 'trinket',
@@ -609,7 +609,7 @@ allowed_procs = {
         'duration': 15,
         'proc_name': 'Ancient Petrified Seed',
         'upgradable': True,
-        'scaling': 1.9800000191,
+        'scaling': 1.6480000019,
         'item_level': 463,
         'type': 'icd',
         'source': 'trinket',
@@ -623,7 +623,7 @@ allowed_procs = {
         'duration': 20,
         'proc_name': 'Gerps Perfect Arrow',
         'upgradable': True,
-        'scaling': 1.9800000191,
+        'scaling': 2.4749999046,
         'item_level': 463,
         'type': 'icd',
         'source': 'trinket',
@@ -637,7 +637,7 @@ allowed_procs = {
         'duration': 15,
         'proc_name': 'Woundripper Medallion',
         'upgradable': True,
-        'scaling': 1.9800000191,
+        'scaling': 1.6499999762,
         'item_level': 463,
         'type': 'icd',
         'source': 'trinket',
@@ -651,7 +651,7 @@ allowed_procs = {
         'duration': 15,
         'proc_name': 'Flashing Steel Talisman',
         'upgradable': True,
-        'scaling': 1.9800000191,
+        'scaling': 2.4749999046,
         'item_level': 463,
         'type': 'icd',
         'source': 'trinket',
@@ -665,7 +665,7 @@ allowed_procs = {
         'duration': 15,
         'proc_name': 'Hawkmasters Talon',
         'upgradable': True,
-        'scaling': 1.9800000191,
+        'scaling': 1.6499999762,
         'item_level': 463,
         'type': 'icd',
         'source': 'trinket',
@@ -679,7 +679,7 @@ allowed_procs = {
         'duration': 15,
         'proc_name': 'Jade Bandit Figurine',
         'upgradable': True,
-        'scaling': 1.9800000191,
+        'scaling': 1.6499999762,
         'item_level': 463,
         'type': 'icd',
         'source': 'trinket',
@@ -768,12 +768,12 @@ allowed_melee_enchants = {
     },
     'dancing_steel': {
         'stat': 'highest',
-        'value': {'agi':65, 'str':65},
+        'value': {'agi':103, 'str':103},
         'duration': 12,
         'proc_name': 'Dancing Steel',
         'type': 'rppm',
         'source': 'weapon',
-        'item_level': 90, #rely on player level here, due to enchants scaling with level (to a point)
+        'item_level': 90,
         'icd': 0,
         'proc_rate': 2.53,
         'trigger': 'all_melee_attacks'

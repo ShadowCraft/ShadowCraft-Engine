@@ -50,7 +50,7 @@ test_mh = stats.Weapon(607., 2.6, 'sword', 'mark_of_the_shattered_hand')
 test_oh = stats.Weapon(607., 2.6, 'sword', 'mark_of_the_shattered_hand')
 
 # Set up procs.
-test_procs = procs.ProcsList(('primal_combatants_ioc', 620), ('primal_combatants_boc', 620)) #trinkets, other things (legendary procs)
+test_procs = procs.ProcsList(('primal_combatants_ioc', 620), ('primal_combatants_boc', 620), 'virmens_bite', 'virmens_bite_prepot') #trinkets, other things (legendary procs)
 
 # Set up gear buffs.
 test_gear_buffs = stats.GearBuffs('gear_specialization') #tier buffs located here

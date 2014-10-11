@@ -212,6 +212,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         openers = tuple([self.settings.opener_name])
 
         for attack in spec_attacks + poisons + openers + talent_attacks:
+            #for handling odd crit rates
             if attack is None:
                 pass
             crit_rates[attack] = base_melee_crit_rate
@@ -257,6 +258,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         for boost in self.race.get_racial_stat_boosts():
             if boost['stat'] in self.base_stats:
                 self.base_stats[boost['stat']] += boost['value'] * boost['duration'] * 1.0 / (boost['cooldown'] + self.settings.response_time)
+        
+        if self.stats.procs.virmens_bite:
+            getattr(self.stats.procs, 'virmens_bite').icd = self.settings.duration
+        if self.stats.procs.virmens_bite_prepot:
+            getattr(self.stats.procs, 'virmens_bite_prepot').icd = self.settings.duration
 
         self.agi_multiplier = self.buffs.stat_multiplier() * self.stats.gear_buffs.gear_specialization_multiplier()
 
@@ -1339,7 +1345,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #average it together
         damage_breakdown = self.average_damage_breakdowns(phases, denom = total_duration)
         
-        bf_mod = .40
+        bf_mod = .30
         bf_max_targets = 4
         if self.level == 100:
             bf_max_targets = 999 #this is the "no more target cap" limit, screw extra if statements
@@ -1440,6 +1446,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.settings.opener_name in ('ambush', 'garrote'):
             attacks_per_second[self.settings.opener_name] = self.total_openers_per_second
             attacks_per_second['main_gauche'] += self.total_openers_per_second * main_gauche_proc_rate
+        if self.talents.death_from_above and not ar:
+            attacks_per_second['main_gauche'] += main_gauche_proc_rate / dfa_cd
         combat_potency_regen += combat_potency_from_mg * attacks_per_second['main_gauche']
         energy_regen = self.base_energy_regen * haste_multiplier + self.bonus_energy_regen + combat_potency_regen + bonus_energy_from_openers
         #Rough idea to factor in a full energy bar
