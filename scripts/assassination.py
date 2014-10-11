@@ -49,7 +49,7 @@ test_mh = stats.Weapon(420.5, 1.8, 'dagger', 'dancing_steel')
 test_oh = stats.Weapon(420.5, 1.8, 'dagger', 'dancing_steel')
 
 # Set up procs.
-test_procs = procs.ProcsList( ('assurance_of_consequence', 580), ('haromms_talisman', 580))
+test_procs = procs.ProcsList( ('sigil_of_rampage', 580), ('haromms_talisman', 580))
 
 # Set up gear buffs.
 test_gear_buffs = stats.GearBuffs('leather_specialization')

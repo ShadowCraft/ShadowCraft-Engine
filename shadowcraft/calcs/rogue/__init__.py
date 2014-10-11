@@ -298,21 +298,11 @@ class RogueDamageCalculator(DamageCalculator):
         for ability in damage_breakdown:
             multistrike_damage += multistrike_multiplier * damage_breakdown[ability]
         damage_breakdown['multistrike'] = multistrike_damage
-        
-        # multistrike
-        proc = getattr(self.stats.procs, 'haromms_talisman')
-        if proc and proc.scaling:
-            proc_chance = 0.0353999995 / 1000 * self.tools.get_random_prop_point(proc.item_level)
-            dmg_multistrike = 0.
-            for attack in damage_breakdown:
-                if attack not in ('deadly_instant_poison'):
-                    dmg_multistrike += damage_breakdown[attack] / 3. * proc_chance
-            damage_breakdown['multistrike_trinket'] = dmg_multistrike
-            
+             
         # cleave
         proc = getattr(self.stats.procs, 'sigil_of_rampage')
         if proc and proc.scaling:
-            proc_chance = 0.0785999969 / 10000 * self.tools.get_random_prop_point(proc.item_level)
+            proc_chance = 2.0058600903 / 10000 * self.tools.get_random_prop_point(proc.item_level)
             dmg_cleave = 0.
             for attack in damage_breakdown:
                 if attack not in ('deadly_instant_poison', 'multistrike', 'multistrike_trinket'):
