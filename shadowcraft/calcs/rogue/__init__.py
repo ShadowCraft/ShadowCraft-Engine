@@ -409,9 +409,9 @@ class RogueDamageCalculator(DamageCalculator):
         return 1.2 * 1.8 * 0.924 * ap / 3.5
     
     def rupture_tick_damage(self, ap, cp):
-        return .07225 * cp * ap
+        return .08220 * cp * ap
     def rupture_tick_sr_damage(self, ap, cp):
-        return .07225 * 0.924 * ap
+        return .08220 * 0.924 * ap
     
     def sinister_strike_damage(self, ap):
         return 1.6 * self.get_weapon_damage('mh', ap)
