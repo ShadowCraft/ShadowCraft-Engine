@@ -324,7 +324,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #280+75% AP
         if proc is getattr(self.stats.procs, 'legendary_capacitive_meta'):
             crit_rate = self.crit_rate(crit=current_stats['crit'])
-            proc_value = average_ap * .75 + 50
+            proc_value = average_ap * 1.5 + 50
         
         if proc is getattr(self.stats.procs, 'fury_of_xuen'):
             crit_rate = self.crit_rate(crit=current_stats['crit'])
