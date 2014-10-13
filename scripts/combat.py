@@ -24,7 +24,7 @@ i18n.set_language(test_language)
 start = time.time()
 
 # Set up level/class/race
-test_level = 100
+test_level = 90
 test_race = race.Race('troll')
 test_class = 'rogue'
 
@@ -45,29 +45,29 @@ test_buffs = buffs.Buffs(
     )
 
 # Set up weapons: dancing_steel mark_of_the_shattered_hand mark_of_warsong
-test_mh = stats.Weapon(607., 2.6, 'sword', 'mark_of_the_shattered_hand')
+test_mh = stats.Weapon(410., 2.6, 'sword', 'dancing_steel')
 #test_mh = stats.Weapon(420.5, 1.8, 'dagger', 'mark_of_the_shattered_hand')
-test_oh = stats.Weapon(607., 2.6, 'sword', 'mark_of_the_shattered_hand')
+test_oh = stats.Weapon(410., 2.6, 'sword', 'dancing_steel')
 
 # Set up procs.
-test_procs = procs.ProcsList(('primal_combatants_ioc', 620), ('primal_combatants_boc', 620), 'virmens_bite', 'virmens_bite_prepot') #trinkets, other things (legendary procs)
+test_procs = procs.ProcsList(('assurance_of_consequence', 588), ('haromms_talisman', 588), 'virmens_bite', 'virmens_bite_prepot') #trinkets, other things (legendary procs)
 
 # Set up gear buffs.
-test_gear_buffs = stats.GearBuffs('gear_specialization') #tier buffs located here
+test_gear_buffs = stats.GearBuffs('gear_specialization', 'rogue_t16_2pc', 'rogue_t16_4pc') #tier buffs located here
 
 # Set up a calcs object..
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
-                         agi=1957,
-                         stam=2426,
-                         crit=494,
-                         haste=945,
-                         mastery=557,
+                         agi=1299,
+                         stam=1634,
+                         crit=326,
+                         haste=674,
+                         mastery=494,
                          readiness=0,
-                         versatility=154,
-                         multistrike=121,)
+                         versatility=0,
+                         multistrike=107,)
 
 # Initialize talents..
-test_talents = talents.Talents('3322133', test_class, test_level)
+test_talents = talents.Talents('311113', test_class, test_level)
 
 # Set up glyphs.
 glyph_list = ['energy', 'disappearance']

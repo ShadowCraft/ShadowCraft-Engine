@@ -1314,7 +1314,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.max_energy += 20
         if self.race.expansive_mind:
             self.max_energy = round(self.max_energy * 1.05, 0)
-        ar_duration = 15
+        self.ar_duration = 15
         self.revealing_strike_multiplier = 1.35
         self.extra_cp_chance = .25 # Assume all casts during RvS
         self.rvs_duration = 24
@@ -1332,10 +1332,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         phases = {}
         #AR phase
         stats, aps, crits, procs = self.determine_stats(self.combat_attack_counts_ar)
-        phases['ar'] = (ar_duration,
+        phases['ar'] = (self.ar_duration,
                         self.update_with_bandits_guile(self.compute_damage_from_aps(stats, aps, crits, procs)) )
         for e in cds:
-            cds[e] -= ar_duration / self.rb_cd_modifier(aps)
+            cds[e] -= self.ar_duration / self.rb_cd_modifier(aps)
             
         #none
         self.tmp_ks_cd = cds['ks']
@@ -1343,8 +1343,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         stats, aps, crits, procs = self.determine_stats(self.combat_attack_counts_none)
         phases['none'] = (self.rb_actual_cds(aps, cds)['ar'] + self.settings.response_time + self.major_cd_delay,
                             self.update_with_bandits_guile(self.compute_damage_from_aps(stats, aps, crits, procs)) )
-            
-        total_duration = phases['ar'][0] + phases['none'][0] 
+        
+        total_duration = phases['ar'][0] + phases['none'][0]
         #average it together
         damage_breakdown = self.average_damage_breakdowns(phases, denom = total_duration)
         
@@ -1559,7 +1559,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             ks_duration = 3
             if self.stats.gear_buffs.rogue_pvp_wod_4pc:
                 ks_duration += 1
-            final_ks_cd = self.rb_actual_cd(attacks_per_second, self.tmp_ks_cd) + self.major_cd_delay
+            final_ks_cd = self.rb_actual_cd(attacks_per_second, self.tmp_ks_cd) + self.major_cd_delay + self.ar_duration/2.
             if not self.settings.cycle.ksp_immediately:
                 final_ks_cd += (3 * time_at_level)/2 * (3 * time_at_level)/cycle_duration
             attacks_per_second['mh_killing_spree'] = (1 + 2*ks_duration) / (final_ks_cd + self.settings.response_time)
