@@ -842,7 +842,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.spec_stat_bonus = 'mastery'
         
         # Assassasins's Resolve
-        self.damage_modifier_cache = 1.15
+        self.damage_modifier_cache = 1.10
         
         #update spec specific proc rates
         if getattr(self.stats.procs, 'legendary_capacitive_meta'):
