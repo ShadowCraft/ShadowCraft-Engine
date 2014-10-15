@@ -24,13 +24,13 @@ i18n.set_language(test_language)
 start = clock()
 
 # Set up level/class/race
-test_level = 100
-test_race = race.Race('pandaren')
+test_level = 90
+test_race = race.Race('none')
 test_class = 'rogue'
 
 # Set up buffs.
 test_buffs = buffs.Buffs(
-        'short_term_haste_buff',
+        #'short_term_haste_buff',
         'stat_multiplier_buff',
         'crit_chance_buff',
         'mastery_buff',
@@ -45,28 +45,29 @@ test_buffs = buffs.Buffs(
     )
 
 # Set up weapons.
-test_mh = stats.Weapon(420.5, 1.8, 'dagger', 'dancing_steel')
-test_oh = stats.Weapon(420.5, 1.8, 'dagger', 'dancing_steel')
+test_mh = stats.Weapon(283.5, 1.8, 'dagger', 'dancing_steel')
+test_oh = stats.Weapon(283.5, 1.8, 'dagger', 'dancing_steel')
 
 # Set up procs.
-test_procs = procs.ProcsList( ('sigil_of_rampage', 580), ('haromms_talisman', 580))
+test_procs = procs.ProcsList( ('assurance_of_consequence', 588), ('haromms_talisman', 588), 'virmens_bite', 'virmens_bite_prepot',
+                              'legendary_capacitive_meta', 'fury_of_xuen')
 
 # Set up gear buffs.
-test_gear_buffs = stats.GearBuffs('leather_specialization')
+test_gear_buffs = stats.GearBuffs('gear_specialization', 'rogue_t16_2pc', 'rogue_t16_4pc')
 
 # Set up a calcs object..
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
-                         agi=1957,
-                         stam=2426,
-                         crit=794,
-                         haste=645,
-                         mastery=557,
+                         agi=1303,
+                         stam=1637,
+                         crit=332,
+                         haste=592,
+                         mastery=573,
                          readiness=0,
-                         versatility=154,
-                         multistrike=121,)
+                         versatility=0,
+                         multistrike=107,)
 
 # Initialize talents..
-test_talents = talents.Talents('3322130', test_class, test_level)
+test_talents = talents.Talents('332213', test_class, test_level)
 
 # Set up glyphs.
 glyph_list = ['recuperate', 'sprint', 'vendetta'] #just to have something
@@ -90,8 +91,8 @@ execute_breakdown = calculator.assassination_dps_breakdown_execute()
 execute_total = sum(entry[1] for entry in execute_breakdown.items())
 
 # Compute EP values.
-#ep_values = calculator.get_ep()
-tier_ep_values = calculator.get_other_ep(['rogue_t14_4pc', 'rogue_t14_2pc', 'rogue_t15_4pc', 'rogue_t15_2pc', 'rogue_t16_2pc', 'rogue_t16_4pc'])
+ep_values = calculator.get_ep()
+#tier_ep_values = calculator.get_other_ep(['rogue_t14_4pc', 'rogue_t14_2pc', 'rogue_t15_4pc', 'rogue_t15_2pc', 'rogue_t16_2pc', 'rogue_t16_4pc'])
 #mh_enchants_and_dps_ep_values, oh_enchants_and_dps_ep_values = calculator.get_weapon_ep(dps=True, enchants=True)
 
 trinkets_list = [
@@ -132,8 +133,8 @@ def pretty_print(dict_list, total_sum = 1., show_percent=False):
         print '-' * (max_len + 15)
 
 dicts_for_pretty_print = [
-    #ep_values,
-    tier_ep_values,
+    ep_values,
+    #tier_ep_values,
     #mh_enchants_and_dps_ep_values,
     #oh_enchants_and_dps_ep_values,
     #trinkets_ep_value,

@@ -275,10 +275,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.relentless_strikes_energy_return_per_cp = 5 #.20 * 25
         
         #should only include bloodlust if the spec can average it in, deal with this later
-        self.base_speed_multiplier = 1.4 * self.buffs.haste_multiplier()
+        self.base_speed_multiplier = 1.4
         if self.race.berserking:
             self.true_haste_mod *= (1 + .15 * 10. / (180 + self.settings.response_time))
         self.true_haste_mod *= 1 + self.race.get_racial_haste() #doesn't include Berserking
+        self.true_haste_mod *= self.buffs.haste_multiplier()
         if self.stats.gear_buffs.rogue_t14_4pc:
             self.true_haste_mod *= 1.05
             
@@ -528,7 +529,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             #http://us.battle.net/wow/en/forum/topic/8197741003?page=4#79
             haste = 1.
             if proc.haste_scales:
-                haste *= self.buffs.haste_multiplier() * self.true_haste_mod * self.stats.get_haste_multiplier_from_rating(self.base_stats['haste'])
+                haste *= self.true_haste_mod * self.stats.get_haste_multiplier_from_rating(self.base_stats['haste'])
             #The 1.1307 is a value that increases the proc rate due to bad luck prevention. It /should/ be constant among all rppm proc styles
             if not proc.icd:
                 frequency = haste * 1.1307 * proc.get_rppm_proc_rate() / 60
@@ -931,6 +932,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         energy_regen = self.base_energy_regen * haste_multiplier
         energy_regen += self.bonus_energy_regen
         if cpg == 'dispatch':
+            #this is for the effects of pooling going into execute phase
             energy_regen += (self.max_energy - 10) / (self.settings.duration * self.settings.time_in_execute_range)
 
         vw_energy_return = 10
@@ -941,10 +943,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         opener_net_cost = self.get_net_energy_cost(self.settings.opener_name)
         opener_net_cost *= self.get_shadow_focus_multiplier()
         opener_net_cost *= ability_cost_modifier
-
-        if self.settings.opener_name == 'garrote':
-            energy_regen += vw_energy_return / self.settings.duration # Only the first tick at the start of the fight
-            attacks_per_second['venomous_wounds'] = 1. / self.settings.duration
 
         energy_regen -= opener_net_cost * self.total_openers_per_second
         if self.talents.marked_for_death:
@@ -1137,19 +1135,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.settings.opener_name == 'envenom':
             opener_net_cost = 0
         
-        if self.settings.opener_name == 'garrote':
-            # Only the first tick at the start of the fight. Not precise but better than nothing.
-            energy_regen += vw_energy_return / self.settings.duration
-            attacks_per_second['venomous_wounds'] = 1. / self.settings.duration
-            
         energy_regen -= opener_net_cost * self.total_openers_per_second
         if cpg == 'dispatch':
+            #this is for the effects of pooling going into execute phase
             energy_regen += (self.max_energy - 10) / (self.settings.duration * self.settings.time_in_execute_range)
 
         attacks_per_second[self.settings.opener_name] = self.total_openers_per_second
-
-        attack_speed_multiplier = self.base_speed_multiplier * haste_multiplier
-        self.attack_speed_increase = attack_speed_multiplier
+        
+        self.attack_speed_increase = self.base_speed_multiplier * haste_multiplier
 
         blindside_cost = 0
         mutilate_cost = self.get_spell_stats('mutilate', cost_mod=ability_cost_modifier)[0]
@@ -1259,7 +1252,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         self.get_poison_counts(attacks_per_second)
 
-        #print attacks_per_second
         return attacks_per_second, crit_rates
 
     def assassination_attack_counts_non_execute(self, current_stats, crit_rates=None):
