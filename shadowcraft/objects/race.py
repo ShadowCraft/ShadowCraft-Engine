@@ -167,6 +167,8 @@ class Race(object):
             crit_bonus = .01
         if self.touch_of_elune and is_day:
             crit_bonus = .01
+        if self.arcane_acuity:
+            crit_bonus = .01
 
         return crit_bonus
 
