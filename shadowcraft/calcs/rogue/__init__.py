@@ -366,10 +366,11 @@ class RogueDamageCalculator(DamageCalculator):
     def garrote_tick_sr_damage(self, ap):
         return .2241 * 0.924 * ap
     
+    #20% damage more hotfix
     def hemorrhage_damage(self, ap):
-        return .40 * [1., 1.4][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap)
+        return 1.2 * .40 * [1., 1.4][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap)
     def hemorrhage_sr_damage(self, ap):
-        return .4 * 1.8 * 0.924 * ap / 3.5
+        return 1.2 * .4 * 1.8 * 0.924 * ap / 3.5
 
     def hemorrhage_tick_damage(self, ap):
         return .035 * ap
@@ -432,7 +433,7 @@ class RogueDamageCalculator(DamageCalculator):
         return .264 * ap
 
     def wound_poison_damage(self, ap):
-        return .2179999948 * ap
+        return .6 * .2179999948 * ap #40% reduction hotfix
     
     #unused
     def fan_of_knives_damage(self, ap):
