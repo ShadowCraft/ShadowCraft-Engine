@@ -89,26 +89,12 @@ class AssassinationCycle(Cycle):
 
     allowed_values = (1, 2, 3, 4, 5)
 
-    def __init__(self, min_envenom_size_non_execute=4, min_envenom_size_execute=5, prioritize_rupture_uptime_non_execute=True, prioritize_rupture_uptime_execute=True):
+    def __init__(self, min_envenom_size_non_execute=4, min_envenom_size_execute=5):
         assert min_envenom_size_non_execute in self.allowed_values
         self.min_envenom_size_non_execute = min_envenom_size_non_execute
 
         assert min_envenom_size_execute in self.allowed_values
         self.min_envenom_size_execute = min_envenom_size_execute
-        
-        # There are two fundamental ways you can manage rupture; one is to
-        # reapply with whatever CP you have as soon as you can after the old
-        # rupture drops; we will call this priorotizing uptime over size.
-        # The second is to use ruptures that are the same size as your
-        # envenoms, which we will call prioritizing size over uptime. True
-        # means the first of these options; False means the second.
-        # There are theoretically other things you can do (say, 4+ envenom and
-        # 5+ ruptures) but such things are significantly harder to model so I'm
-        # not going to worry about them until we have reason to believe they're
-        # actually better.
-        self.prioritize_rupture_uptime_non_execute = prioritize_rupture_uptime_non_execute
-        self.prioritize_rupture_uptime_execute = prioritize_rupture_uptime_execute
-
 
 class CombatCycle(Cycle):
     _cycle_type = 'combat'

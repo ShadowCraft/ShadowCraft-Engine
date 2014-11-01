@@ -30,8 +30,8 @@ class DamageCalculator(object):
     normalize_ep_stat = None
 
     def __init__(self, stats, talents, glyphs, buffs, race, settings=None, level=100, target_level=None, char_class='rogue'):
-        self.WOW_BUILD_TARGET = '6.0.0' # should reflect the game patch being targetted
-        self.SHADOWCRAFT_BUILD = '0.22' # <1 for beta builds, 1.00 is GM, >1 for any bug fixes, reset for each warcraft patch
+        self.WOW_BUILD_TARGET = '6.0.2' # should reflect the game patch being targetted
+        self.SHADOWCRAFT_BUILD = '0.9' # <1 for beta builds, 1.00 is GM, >1 for any bug fixes, reset for each warcraft patch
         self.tools = class_data.Util()
         self.stats = stats
         self.talents = talents
@@ -120,7 +120,7 @@ class DamageCalculator(object):
         #http://iam.yellingontheinternet.com/2013/04/12/theorycraft-201-advanced-rppm/
         haste = 1.
         if proc.haste_scales:
-            haste *= self.stats.get_haste_multiplier_from_rating(self.base_stats['haste']) * self.buffs.haste_multiplier() * self.true_haste_mod
+            haste *= self.stats.get_haste_multiplier_from_rating(self.base_stats['haste']) * self.true_haste_mod
         #The 1.1307 is a value that increases the proc rate due to bad luck prevention. It /should/ be constant among all rppm proc styles
         if not proc.icd:
             if proc.max_stacks <= 1:

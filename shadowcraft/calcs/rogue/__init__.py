@@ -72,11 +72,12 @@ class RogueDamageCalculator(DamageCalculator):
             'marked_for_death':    60,
             'preparation':         300,
             'death_from_above':    20,
+            'shadow_reflection':   120,
         }
     cd_reduction_table = {'assassination': ['vanish', 'vendetta'],
                           'combat': ['adrenaline_rush', 'killing_spree'],
-                          'subtlety': ['vanish', 'shadow_dance']
-                         }#Cloak, Evasion, Sprint affect all 3 specs, not needed in list
+                          'subtlety': ['shadow_dance']
+                         }
     
     def __setattr__(self, name, value):
         object.__setattr__(self, name, value)
@@ -131,8 +132,10 @@ class RogueDamageCalculator(DamageCalculator):
     def get_damage_breakdown(self, current_stats, attacks_per_second, crit_rates, damage_procs):
         average_ap = current_stats['ap'] + current_stats['agi']
         average_ap *= self.buffs.attack_power_multiplier()
+        run_multistrike = True
         if self.settings.is_combat_rogue():
             average_ap *= 1.40 # vitality spec perk
+            run_multistrike = False
         
         self.setup_unique_procs(current_stats, average_ap)
 
@@ -272,14 +275,24 @@ class RogueDamageCalculator(DamageCalculator):
                 dps_tuple = self.get_dps_contribution(dps_tuple, crit_rates['death_from_above_pulse'], attacks_per_second['death_from_above_pulse'][i], crit_damage_modifier)
                 average_dps += dps_tuple
             damage_breakdown['death_from_above_pulse'] = average_dps
+        
+        for ability in attacks_per_second:
+            if 'sr_' in ability:
+                if type(attacks_per_second[ability]) in (tuple, list):
+                    average_dps = 0
+                    for i in xrange(1, 6):
+                        dps_tuple = self.self.get_formula(ability)(average_ap, i)
+                        dps_tuple = self.get_dps_contribution(dps_tuple, crit_rates[ability[3:]], attacks_per_second[ability][i], crit_damage_modifier)
+                        average_dps += dps_tuple
+                    damage_breakdown[ability] = average_dps
+                else:
+                    damage_breakdown[ability] = self.get_formula(ability)(average_ap)
                    
         for proc in damage_procs:
             if proc.proc_name not in damage_breakdown:
                 # Toss multiple damage procs with the same name (Avalanche):
                 # attacks_per_second is already being updated with that key.
                 damage_breakdown[proc.proc_name] = self.get_proc_damage_contribution(proc, attacks_per_second[proc.proc_name], current_stats, average_ap, damage_breakdown)
-
-        #self.append_damage_on_use(average_ap, current_stats, damage_breakdown)
 
         if self.talents.nightstalker:
             nightstalker_mod = .50
@@ -291,12 +304,13 @@ class RogueDamageCalculator(DamageCalculator):
             modifier = 1 + nightstalker_mod * nightstalker_percent
             damage_breakdown[self.settings.opener_name] *= modifier
         
-        #calculate multistrike here, really cheap to calculate
+        #calculate multistrike here for Sub and Assassination, really cheap to calculate
         #turns out the 2 chance system yields a very basic linear pattern, the damage modifier is 30% of the multistrike %!
-        multistrike_multiplier = .3 * 2 * (self.stats.get_multistrike_chance_from_rating(rating=current_stats['multistrike']) + self.buffs.multistrike_bonus())
-        for ability in damage_breakdown:
-            damage_breakdown[ability] *= (1 + multistrike_multiplier)
-             
+        if run_multistrike:
+            multistrike_multiplier = .3 * 2 * (self.stats.get_multistrike_chance_from_rating(rating=current_stats['multistrike']) + self.buffs.multistrike_bonus())
+            for ability in damage_breakdown:
+                damage_breakdown[ability] *= (1 + multistrike_multiplier)
+        
         # cleave
         proc = getattr(self.stats.procs, 'sigil_of_rampage')
         if proc and proc.scaling:
@@ -472,7 +486,21 @@ class RogueDamageCalculator(DamageCalculator):
             'deadly_instant_poison': self.deadly_instant_poison_damage,
             'swift_poison':          self.swift_poison_damage,
             'shuriken_toss':         self.shuriken_toss_damage,
-            'death_from_above_pulse':self.death_from_above_pulse_damage
+            'death_from_above_pulse':self.death_from_above_pulse_damage,
+            #shadow reflection abilities
+            'sr_backstab':           self.backstab_sr_damage,
+            'sr_hemorrhage':         self.hemorrhage_sr_damage,
+            'sr_sinister_strike':    self.sinister_strike_sr_damage,
+            'sr_revealing_strike':   self.revealing_strike_sr_damage,
+            'sr_main_gauche':        self.main_gauche_sr_damage,
+            'sr_ambush':             self.ambush_sr_damage,
+            'sr_eviscerate':         self.eviscerate_sr_damage,
+            'sr_dispatch':           self.dispatch_sr_damage,
+            'sr_mh_mutilate':        self.mh_mutilate_sr_damage,
+            'sr_oh_mutilate':        self.oh_mutilate_sr_damage,
+            'sr_mh_killing_spree':   self.mh_killing_spree_sr_damage,
+            'sr_oh_killing_spree':   self.oh_killing_spree_sr_damage,
+            'sr_venomous_wounds':    self.venomous_wounds_sr_damage,
         }
         return formulas[name]
 

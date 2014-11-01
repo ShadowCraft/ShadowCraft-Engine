@@ -24,7 +24,7 @@ i18n.set_language(test_language)
 start = time.time()
 
 # Set up level/class/race
-test_level = 90
+test_level = 100
 test_race = race.Race('troll')
 test_class = 'rogue'
 

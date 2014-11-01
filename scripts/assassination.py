@@ -15,16 +15,16 @@ from shadowcraft.objects import glyphs
 
 from shadowcraft.core import i18n
 
-from time import clock
+import time
 
 # Set up language. Use 'en_US', 'es_ES', 'fr' for specific languages.
 test_language = 'local'
 i18n.set_language(test_language)
 
-start = clock()
+start = time.time()
 
 # Set up level/class/race
-test_level = 90
+test_level = 100
 test_race = race.Race('none')
 test_class = 'rogue'
 
@@ -67,15 +67,14 @@ test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          multistrike=107,)
 
 # Initialize talents..
-test_talents = talents.Talents('332213', test_class, test_level)
+test_talents = talents.Talents('332210', test_class, test_level)
 
 # Set up glyphs.
 glyph_list = ['recuperate', 'sprint', 'vendetta'] #just to have something
 test_glyphs = glyphs.Glyphs(test_class, *glyph_list)
 
 # Set up settings.
-test_cycle = settings.AssassinationCycle(min_envenom_size_non_execute=4, min_envenom_size_execute=5,
-                                         prioritize_rupture_uptime_non_execute=True, prioritize_rupture_uptime_execute=True)
+test_cycle = settings.AssassinationCycle(min_envenom_size_non_execute=4, min_envenom_size_execute=5)
 test_settings = settings.Settings(test_cycle, response_time=.5, duration=360, dmg_poison='dp', utl_poison='lp', is_pvp=False,
                                   use_opener='always', opener_name='envenom')
 
@@ -146,7 +145,7 @@ pretty_print(dicts_for_pretty_print)
 pretty_print([dps_breakdown], total_sum=total_dps, show_percent=True)
 print ' ' * (max_length([dps_breakdown]) + 1), total_dps, _("total damage per second.")
 print ''
-print "Request time: %s sec" % (clock() - start)
+print "Request time: %s sec" % (time.time() - start)
 
 
 print 'non-execute breakdown: '

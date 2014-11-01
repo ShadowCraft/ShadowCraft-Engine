@@ -3,6 +3,7 @@ import gettext
 import __builtin__
 import math
 from operator import add
+from copy import copy
 
 __builtin__._ = gettext.gettext
 
@@ -125,12 +126,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     def get_cp_distribution_for_cycle(self, cp_distribution_per_move, target_cp_quantity):
         avg_cp_per_cpg = sum([key * cp_distribution_per_move[key] for key in cp_distribution_per_move])
-        if self.talents.anticipation:
-            # TODO: The combat model is not yet updated to figure the distribution
-            dist = {(5, 5 / avg_cp_per_cpg): 1}
-            time_spent_at_cp = [0, 0, 0, 0, 0, 1]
-            return dist, time_spent_at_cp, avg_cp_per_cpg
-
+        
         time_spent_at_cp = [0, 0, 0, 0, 0, 0]
         cur_min_cp = 0
         cur_dist = {(0, 0): 1}
@@ -339,29 +335,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         return average_damage
 
-    def append_damage_on_use(self, average_ap, current_stats, damage_breakdown):
-        on_use_damage_list = []
-        if self.race.rocket_barrage:
-            rocket_barrage_dict = {'stat': 'spell_damage', 'cooldown': 120, 'name': 'Rocket Barrage'}
-            rocket_barrage_dict['value'] = self.race.calculate_rocket_barrage(average_ap, 0, 0)
-            on_use_damage_list.append(rocket_barrage_dict)
-
-        for item in on_use_damage_list:
-            if item['stat'] == 'physical_damage':
-                modifier = self.raid_settings_modifiers('physical')
-                crit_multiplier = self.crit_damage_modifiers()
-                crit_rate = self.crit_rate(crit=current_stats['crit'])
-            elif item['stat'] == 'spell_damage':
-                modifier = self.raid_settings_modifiers('spell')
-                crit_multiplier = self.crit_damage_modifiers()
-                crit_rate = self.crit_rate(crit=current_stats['crit'])
-            average_hit = item['value'] * modifier
-            frequency = 1. / (item['cooldown'] + self.settings.response_time)
-            average_dps = average_hit * (1 + crit_rate * (crit_multiplier - 1)) * frequency
-            crit_contribution = average_hit * crit_multiplier * crit_rate * frequency
-
-            damage_breakdown[item['name']] = average_dps, crit_contribution
-
     def set_openers(self):
         # Sets the swing_reset_spacing and total_openers_per_second variables.
         opener_cd = [10, 20][self.settings.opener_name == 'garrote']
@@ -555,22 +528,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         return 1.
 
     def setup_unique_procs(self, current_stats, average_ap):
-        #getattr(self.stats.procs, 'rocket_barrage'):
         if self.stats.procs.rocket_barrage:
             getattr(self.stats.procs, 'rocket_barrage').value = 0.42900 * self.base_intellect + .5 * average_ap + 1 + self.level * 2 #need to update
         if self.stats.procs.touch_of_the_grave:
             getattr(self.stats.procs, 'touch_of_the_grave').value = 8 * self.tools.get_constant_scaling_point(self.level) # +/- 15% spread
-        #modelling specific proc setup would go here
-        shatt_hand = False
-        for hand in ('mh', 'oh'):
-            if getattr(getattr(self.stats, hand), 'mark_of_the_shattered_hand'):
-                shatt_hand = True
-                self.stats.procs.set_proc('mark_of_the_shattered_hand_dot')
-                self.set_rppm_uptime(getattr(self.stats.procs, 'mark_of_the_shattered_hand_dot'))
-                #this is to support the DoT
-        if not shatt_hand:
-            #getattr(self.stats.procs, 'mark_of_the_shattered_hand_dot')
-            self.stats.procs.del_proc('mark_of_the_shattered_hand_dot')
 
     def get_poison_counts(self, attacks_per_second):
         # Builds a phony 'poison' proc object to count triggers through the proc
@@ -630,8 +591,15 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         damage_procs = []
         weapon_damage_procs = []
         
-        #some procs need specific prep, think RoRO/VoS
-        self.setup_unique_procs(current_stats, current_stats['agi']+current_stats['ap'])
+        shatt_hand = False
+        for hand in ('mh', 'oh'):
+            if getattr(getattr(self.stats, hand), 'mark_of_the_shattered_hand'):
+                shatt_hand = True
+                self.stats.procs.set_proc('mark_of_the_shattered_hand_dot')
+                self.set_rppm_uptime(getattr(self.stats.procs, 'mark_of_the_shattered_hand_dot'))
+                #this is to support the DoT
+        if not shatt_hand:
+            self.stats.procs.del_proc('mark_of_the_shattered_hand_dot')
         
         #set 'highest' procs to agi
         for proc in self.stats.procs.get_all_procs_for_stat('highest'):
@@ -801,7 +769,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 uptime = buff_duration / attack_spacing
                 res = self.vendetta_duration * uptime * mas_per_stack * avg_stacks_per_attack / self.get_spell_cd('vendetta')
             current_stats['mastery'] += res
-
+        
+        #some procs need specific prep, think RoRO/VoS
+        self.setup_unique_procs(current_stats, current_stats['agi']+current_stats['ap'])
+        
         for proc in damage_procs:
             self.update_with_damaging_proc(proc, attacks_per_second, crit_rates)
         
@@ -866,8 +837,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.max_energy += 20
         if self.race.expansive_mind:
             self.max_energy = round(self.max_energy * 1.05, 0)
-        
-        #TODO: Handle crit from Enhanced Vendetta, and damage from Empowered Envenom
             
         self.set_constants()
 
@@ -906,329 +875,218 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 
         return dps_breakdown
 
-    def update_damage_breakdown_for_vendetta(self, damage_breakdown):
+    def update_assassination_breakdown_with_modifiers(self, damage_breakdown):
         for key in damage_breakdown:
             if key != 'Elemental Force':
                 damage_breakdown[key] *= self.vendetta_mult
+            if self.level == 100 and key in ('mutilate', 'dispatch'):
+                damage_breakdown[key] *= self.emp_envenom_percentage
 
     def assassination_dps_breakdown_non_execute(self):
         damage_breakdown = self.compute_damage(self.assassination_attack_counts_non_execute)
-        self.update_damage_breakdown_for_vendetta(damage_breakdown)
+        self.update_assassination_breakdown_with_modifiers(damage_breakdown)
         return damage_breakdown
 
     def assassination_dps_breakdown_execute(self):
         damage_breakdown = self.compute_damage(self.assassination_attack_counts_execute)
-        self.update_damage_breakdown_for_vendetta(damage_breakdown)
+        self.update_assassination_breakdown_with_modifiers(damage_breakdown)
         return damage_breakdown
-
+    
+    def assassination_cp_distribution_for_finisher(self, current_cp, crit_rates, ability_count, size_breakdown, cp_limit=4, blindside_proc=0, execute=False):
+        current_sizes = copy(size_breakdown)
+        if (current_cp >= cp_limit and not blindside_proc and not execute) or current_cp >= 5:
+            final_cp = min(current_cp, 5)
+            current_sizes[final_cp] += 1
+            return final_cp, blindside_proc, ability_count, current_sizes
+        avg_count = {'mutilate':0, 'dispatch':0}
+        avg_breakdown = [0,0,0,0,0,0]
+        new_count = copy(ability_count)
+        
+        if blindside_proc or execute:
+            new_count['dispatch'] += 1
+            
+            n_chance = 1 - crit_rates['dispatch']
+            n_value, n_proc, n_count, n_breakdown = self.assassination_cp_distribution_for_finisher(current_cp+1, crit_rates, new_count, current_sizes, cp_limit=cp_limit, execute=execute)
+            c_chance = crit_rates['dispatch']
+            c_value, c_proc, c_count, c_breakdown = self.assassination_cp_distribution_for_finisher(current_cp+2, crit_rates, new_count, current_sizes, cp_limit=cp_limit, execute=execute)
+            
+            avg_cp = n_chance*n_value + c_chance*c_value
+            avg_bs_afterwards = n_chance*n_proc + c_chance*c_proc
+            for key in new_count:
+                avg_count[key] = n_chance*n_count[key] + c_chance*c_count[key]
+            for i in xrange(1, 6):
+                avg_breakdown[i] = n_chance*n_breakdown[i] + c_chance*c_breakdown[i]
+            return avg_cp, avg_bs_afterwards, avg_count, avg_breakdown
+        else:
+            bs_proc_rate = .3
+            new_count['mutilate'] += 1
+            
+            n_chance = ((1 - crit_rates['mutilate']) ** 2)  * (1-bs_proc_rate)
+            n_value, n_proc, n_count, n_breakdown = self.assassination_cp_distribution_for_finisher(current_cp+2, crit_rates, new_count, current_sizes, cp_limit=cp_limit)
+            n_bs_chance = ((1 - crit_rates['mutilate']) ** 2)  * bs_proc_rate
+            n_bs_value, n_bs_proc, n_bs_count, n_bs_breakdown = self.assassination_cp_distribution_for_finisher(current_cp+2, crit_rates, new_count, current_sizes, cp_limit=cp_limit, blindside_proc=1.)
+            
+            c_chance = (1 - (1 - crit_rates['mutilate']) ** 2)  * (1-bs_proc_rate)
+            c_value, c_proc, c_count, c_breakdown = self.assassination_cp_distribution_for_finisher(current_cp+3, crit_rates, new_count, current_sizes, cp_limit=cp_limit)
+            c_bs_chance = (1 - (1 - crit_rates['mutilate']) ** 2)  * bs_proc_rate
+            c_bs_value, c_bs_proc, c_bs_count, c_bs_breakdown = self.assassination_cp_distribution_for_finisher(current_cp+3, crit_rates, new_count, current_sizes, cp_limit=cp_limit, blindside_proc=1.)
+            
+            avg_cp = n_chance*n_value + n_bs_chance*n_bs_value + c_chance*c_value + c_bs_chance*c_bs_value
+            avg_bs_afterwards = n_chance*n_proc + n_bs_chance*n_bs_proc + c_chance*c_proc + c_bs_chance*c_bs_proc
+            for key in new_count:
+                avg_count[key] = n_chance*n_count[key] + n_bs_chance*n_bs_count[key] + c_chance*c_count[key] + c_bs_chance*c_bs_count[key]
+            for i in xrange(1, 6):
+                avg_breakdown[i] = n_chance*n_breakdown[i] + n_bs_chance*n_bs_breakdown[i] + c_chance*c_breakdown[i] + c_bs_chance*c_bs_breakdown[i]
+            return avg_cp, avg_bs_afterwards, avg_count, avg_breakdown
+    
     def assassination_attack_counts(self, current_stats, cpg, finisher_size, crit_rates=None):
         attacks_per_second = {}
-        if crit_rates == None:
-            crit_rates = self.get_crit_rates(current_stats)
-
+        #can't rely on a cache, due to the Cold Blood perk
+        crit_rates = self.get_crit_rates(current_stats)
+        
         haste_multiplier = self.stats.get_haste_multiplier_from_rating(current_stats['haste']) * self.true_haste_mod
         ability_cost_modifier = self.stats.gear_buffs.rogue_t15_4pc_reduced_cost()
-
+        
         energy_regen = self.base_energy_regen * haste_multiplier
+        if self.stats.gear_buffs.rogue_t17_4pc_lfr:
+            #http://www.wolframalpha.com/input/?i=1.1307+*+%281+-+e+**+%28-1+*+1.1+*+6%2F+60%29%29
+            #https://twitter.com/Celestalon/status/525350819856535552
+            energy_regen *= 1 + (.11778034322021550695 * .3) #11% uptime on 30% boost)
         energy_regen += self.bonus_energy_regen
         if cpg == 'dispatch':
             #this is for the effects of pooling going into execute phase
             energy_regen += (self.max_energy - 10) / (self.settings.duration * self.settings.time_in_execute_range)
-
-        vw_energy_return = 10
-
-        blindside_proc_rate = [0, .3][cpg == 'mutilate']
-        dispatch_as_cpg_chance = blindside_proc_rate / (1 + blindside_proc_rate)
-
-        opener_net_cost = self.get_net_energy_cost(self.settings.opener_name)
-        opener_net_cost *= self.get_shadow_focus_multiplier()
-        opener_net_cost *= ability_cost_modifier
-
-        energy_regen -= opener_net_cost * self.total_openers_per_second
-        if self.talents.marked_for_death:
-            energy_regen -= 10. / self.get_spell_cd('marked_for_death') # 35-25
-
-        attacks_per_second[self.settings.opener_name] = self.total_openers_per_second
-
-        energy_regen_with_rupture = energy_regen + 0.5 * vw_energy_return
-
-        attack_speed_multiplier = self.base_speed_multiplier * haste_multiplier
-        self.attack_speed_increase = attack_speed_multiplier
-
-        cpg_energy_cost = self.get_net_energy_cost(cpg)
-        cpg_energy_cost *= self.stats.gear_buffs.rogue_t15_4pc_reduced_cost()
-
-        if cpg == 'mutilate':
-            mut_seal_fate_proc_rate = 1 - (1 - crit_rates['mutilate']) ** 2
-            dsp_seal_fate_proc_rate = crit_rates['dispatch']
-            if self.stats.gear_buffs.rogue_t17_2pc:
-                cpg_energy_cost -= 7 * (mut_seal_fate_proc_rate + dsp_seal_fate_proc_rate)
-            
-            cpg_energy_cost = cpg_energy_cost * (1 - dispatch_as_cpg_chance) #+ 0 * dispatch_as_cpg_chance  # blindside costs nothing
-            seal_fate_proc_rate = mut_seal_fate_proc_rate * (1 - dispatch_as_cpg_chance) + dsp_seal_fate_proc_rate * dispatch_as_cpg_chance
-            base_cp_per_cpg = 1
-            mutilate_extra_cp_chance = 1 - dispatch_as_cpg_chance # in non execute the ratio of mutilate attacks is (1 - dispatch_as_cpg_chance)
-        else:
-            if self.stats.gear_buffs.rogue_t17_2pc:
-                cpg_energy_cost -= 7 * crit_rates['dispatch']
-            seal_fate_proc_rate = crit_rates['dispatch']
-            base_cp_per_cpg = 1
-            mutilate_extra_cp_chance = 0 # never using mutilate, so no extra cp chance
-        
-        if self.stats.gear_buffs.rogue_t16_2pc_bonus():
-            cpg_energy_cost -= 6 * seal_fate_proc_rate
-
-        # This should be handled by the cp_distribution method or something
-        # alike. For now, let's have each sub-distribution computed here.
-        # If we find out a different set of finisher sizes can output a
-        # higher dps, perhaps we'll need to let that be configurable by the
-        # user.
-        cp_distribution = {}
-        rupture_sizes = [0, 0, 0, 0, 0, 0]
-        avg_cp_per_cpg = 0
-        uptime_and_dists_tuples = []
-        if cpg == 'mutilate':
-            for blindside in (True, False):
-                # blindside uptime as the amount of connecting cpgs that get 'turned' into dipatches
-                if blindside:
-                    uptime = dispatch_as_cpg_chance
-                    cp_per_cpg = self.get_cp_per_cpg(1, dsp_seal_fate_proc_rate)
-                    current_finisher_size = finisher_size + 1
-                elif not blindside:
-                    uptime = 1 - dispatch_as_cpg_chance
-                    cp_per_cpg = self.get_cp_per_cpg(base_cp_per_cpg, mut_seal_fate_proc_rate)
-                    current_finisher_size = finisher_size
-                dists = self.get_cp_distribution_for_cycle(cp_per_cpg, current_finisher_size)
-                uptime_and_dists_tuples.append((uptime, dists))
-        else:
-            uptime = 1
-            cp_per_cpg = self.get_cp_per_cpg(base_cp_per_cpg, seal_fate_proc_rate)
-            current_finisher_size = finisher_size
-            
-            dists = self.get_cp_distribution_for_cycle(cp_per_cpg, current_finisher_size)
-            uptime_and_dists_tuples.append((uptime, dists))
-
-        for uptime, dists in uptime_and_dists_tuples:
-            for i in dists[0]:
-                cp_distribution.setdefault(i, 0)
-                cp_distribution[i] += dists[0][i] * uptime
-            rupture_sizes = [i + j * uptime for i, j in zip(rupture_sizes, dists[1])]
-            avg_cp_per_cpg += dists[2] * uptime
-
-        avg_rupture_size = sum([i * rupture_sizes[i] for i in xrange(6)])
-        avg_rupture_length = 4. * (1 + avg_rupture_size + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp())
-        avg_gap = 0 + .5 * (.5 * self.settings.response_time)
-        avg_cycle_length = avg_gap + avg_rupture_length
-        energy_per_cycle = avg_rupture_length * energy_regen_with_rupture + avg_gap * energy_regen
-
-        cpg_per_rupture = avg_rupture_size / avg_cp_per_cpg
-
-        cpg_per_finisher = 0
-        cp_per_finisher = 0
-        envenom_size_breakdown = [0, 0, 0, 0, 0, 0]
-        for (cps, cpgs), probability in cp_distribution.items():
-            cpg_per_finisher += cpgs * probability
-            cp_per_finisher += cps * probability
-            envenom_size_breakdown[cps] += probability
-
-        attacks_per_second['rupture'] = 1 / avg_cycle_length
-
-        energy_for_rupture = cpg_per_rupture * cpg_energy_cost + self.get_spell_stats('rupture', cost_mod=ability_cost_modifier)[0]
-        energy_for_rupture -= avg_rupture_size * self.relentless_strikes_energy_return_per_cp
-        
-        energy_for_dfa = 0        
-        if self.talents.death_from_above:
-            dfa_cd = self.get_spell_cd('death_from_above') + self.settings.response_time
-            dfa_cd += energy_for_rupture / (2 * energy_regen_with_rupture)
-            dfa_interval = 1./dfa_cd
-            energy_for_dfa = cpg_per_finisher * cpg_energy_cost + self.get_spell_stats('death_from_above', cost_mod=ability_cost_modifier)[0]
-            energy_for_dfa -= cp_per_finisher * self.relentless_strikes_energy_return_per_cp
-
-            attacks_per_second['death_from_above'] = dfa_interval
-            attacks_per_second['death_from_above_strike'] = [finisher_chance * dfa_interval for finisher_chance in envenom_size_breakdown]
-            attacks_per_second['death_from_above_pulse'] = [finisher_chance * dfa_interval for finisher_chance in envenom_size_breakdown]
-
-            #Normalize DfA energy intervals to rupture intervals
-            energy_for_dfa *= (avg_cycle_length)/(1./dfa_interval)
-
-
-        energy_for_envenoms = energy_per_cycle - energy_for_rupture - energy_for_dfa
-
-        envenom_energy_cost = cpg_per_finisher * cpg_energy_cost + self.get_spell_stats('envenom', cost_mod=ability_cost_modifier)[0]
-        envenom_energy_cost -= cp_per_finisher * self.relentless_strikes_energy_return_per_cp
-        envenoms_per_cycle = energy_for_envenoms / envenom_energy_cost
-
-        envenoms_per_second = envenoms_per_cycle / avg_cycle_length
-        finishers_per_second = envenoms_per_second + attacks_per_second['rupture']
-        if self.talents.death_from_above:
-            finishers_per_second += attacks_per_second['death_from_above']
-        cpgs_per_second = cpg_per_finisher * finishers_per_second
-
-        if cpg in attacks_per_second:
-            attacks_per_second[cpg] += cpgs_per_second
-        else:
-            attacks_per_second[cpg] = cpgs_per_second
-        if cpg == 'mutilate':
-            attacks_per_second['mutilate'] *= 1 - dispatch_as_cpg_chance
-            attacks_per_second['dispatch'] = cpgs_per_second * dispatch_as_cpg_chance
-        if self.settings.opener_name == 'mutilate':
-            attacks_per_second['mutilate'] += self.total_openers_per_second
-            attacks_per_second['dispatch'] += self.total_openers_per_second * blindside_proc_rate
-
-        attacks_per_second['envenom'] = [finisher_chance * envenoms_per_second for finisher_chance in envenom_size_breakdown]
-        if self.talents.marked_for_death:
-            attacks_per_second['envenom'][5] += 1. / self.get_spell_cd('marked_for_death')
-
-        attacks_per_second['rupture_ticks'] = [0, 0, 0, 0, 0, 0]
-        for i in xrange(1, 6):
-            ticks_per_rupture = 2 * (1 + i + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp())
-            attacks_per_second['rupture_ticks'][i] = ticks_per_rupture * attacks_per_second['rupture'] * rupture_sizes[i]
-
-        total_rupture_ticks_per_second = sum(attacks_per_second['rupture_ticks'])
-        if 'venomous_wounds' in attacks_per_second:
-            attacks_per_second['venomous_wounds'] += total_rupture_ticks_per_second
-        else:
-            attacks_per_second['venomous_wounds'] = total_rupture_ticks_per_second
-
-        if 'garrote' in attacks_per_second:
-            attacks_per_second['garrote_ticks'] = 6 * attacks_per_second['garrote']
-        for opener, cps in [('ambush', 2), ('garrote', 1)]:
-            if opener in attacks_per_second:
-                if opener == 'ambush':
-                    cps += crit_rates[opener]
-                extra_finishers_per_second = attacks_per_second[opener] * cps / 5
-                attacks_per_second['envenom'][5] += extra_finishers_per_second
-
-        white_swing_downtime = 0
-        if self.swing_reset_spacing is not None:
-            white_swing_downtime += .5 / self.swing_reset_spacing
-        if self.talents.death_from_above:
-            white_swing_downtime += .5 / dfa_cd #.5 is 1s delay divided by 2 due to assumed even distribution
-        attacks_per_second['mh_autoattacks'] = self.attack_speed_increase / self.stats.mh.speed * (1 - white_swing_downtime)
-        attacks_per_second['oh_autoattacks'] = self.attack_speed_increase / self.stats.oh.speed * (1 - white_swing_downtime)
-        
-        attacks_per_second['mh_autoattack_hits'] = attacks_per_second['mh_autoattacks'] * self.dw_mh_hit_chance
-        attacks_per_second['oh_autoattack_hits'] = attacks_per_second['oh_autoattacks'] * self.dw_oh_hit_chance
-        
-        self.get_poison_counts(attacks_per_second)
-
-        return attacks_per_second, crit_rates
-    
-    def assassination_attack_counts_anticipation(self, current_stats, cpg, crit_rates=None):
-        attacks_per_second = {}
-        if crit_rates == None:
-            crit_rates = self.get_crit_rates(current_stats)
-
-        haste_multiplier = self.stats.get_haste_multiplier_from_rating(current_stats['haste']) * self.true_haste_mod
-        ability_cost_modifier = self.stats.gear_buffs.rogue_t15_4pc_reduced_cost()
-
-        energy_regen = self.base_energy_regen * haste_multiplier
-        energy_regen += self.bonus_energy_regen
 
         vw_energy_return = 10
         vw_energy_per_bleed_tick = vw_energy_return
-
+        
         blindside_proc_rate = [0, .3][cpg == 'mutilate']
-        dispatch_as_cpg_chance = blindside_proc_rate / (1 + blindside_proc_rate)
 
         opener_net_cost = self.get_spell_stats(self.settings.opener_name, cost_mod=ability_cost_modifier*self.get_shadow_focus_multiplier())[0]
-        if self.settings.opener_name == 'envenom':
-            opener_net_cost = 0
+        opener_net_cost *= self.get_shadow_focus_multiplier()
+        opener_net_cost *= ability_cost_modifier
         
         energy_regen -= opener_net_cost * self.total_openers_per_second
-        if cpg == 'dispatch':
-            #this is for the effects of pooling going into execute phase
-            energy_regen += (self.max_energy - 10) / (self.settings.duration * self.settings.time_in_execute_range)
-
         attacks_per_second[self.settings.opener_name] = self.total_openers_per_second
+        if self.talents.marked_for_death:
+            energy_regen -= 10. / self.get_spell_cd('marked_for_death') # 35-25
         
-        self.attack_speed_increase = self.base_speed_multiplier * haste_multiplier
-
-        blindside_cost = 0
-        mutilate_cost = self.get_spell_stats('mutilate', cost_mod=ability_cost_modifier)[0]
-        if self.stats.gear_buffs.rogue_t17_2pc:
-            mutilate_cost -= 7 * ( (1 - (1 - crit_rates['mutilate']) ** 2) + crit_rates['dispatch'])
+        attacks_per_second['venomous_wounds'] = .5
+        energy_regen_with_rupture = energy_regen + .5 * vw_energy_return
         
-        if cpg == 'mutilate':
-            cpg_energy_cost = blindside_cost + mutilate_cost
-        else:
-            cpg_energy_cost = self.get_spell_stats('dispatch', cost_mod=ability_cost_modifier)[0]
-            if self.stats.gear_buffs.rogue_t17_2pc:
-                cpg_energy_cost -= 7 * crit_rates['dispatch']
-        mutilate_cps = 3 - (1 - crit_rates['mutilate']) ** 2 # 1 - (1 - crit_rates['mutilate']) ** 2 is the Seal Fate CP
-        dispatch_cps = 1 + crit_rates['dispatch']
-        if cpg == 'mutilate':
-            avg_cp_per_cpg = mutilate_cps + dispatch_cps * blindside_proc_rate
-        else:
-            avg_cp_per_cpg = dispatch_cps
+        attack_speed_multiplier = self.base_speed_multiplier * haste_multiplier
+        self.attack_speed_increase = attack_speed_multiplier
+        
         seal_fate_proc_rate = crit_rates['dispatch']
         if cpg == 'mutilate':
             seal_fate_proc_rate *= blindside_proc_rate
             seal_fate_proc_rate += 1 - (1 - crit_rates['mutilate']) ** 2
+        
+        if self.talents.anticipation:
+            avg_finisher_size = 5
+            avg_size_breakdown = [0,0,0,0,0,1.] #this is for determining the % likelyhood of sizes, not frequency of the sizes
+            cp_needed_per_finisher = 5
+            if self.stats.gear_buffs.rogue_t17_4pc:
+                cp_needed_per_finisher -= 1
+            
+            mutilate_cps = 3 - (1 - crit_rates['mutilate']) ** 2 # 1 - (1 - crit_rates['mutilate']) ** 2 is the Seal Fate CP
+            dispatch_cps = 1 + crit_rates['dispatch']
+            if cpg == 'mutilate':
+                avg_cp_per_cpg = mutilate_cps + dispatch_cps * blindside_proc_rate
+            else:
+                avg_cp_per_cpg = dispatch_cps
+            
+            avg_cpgs_per_finisher = cp_needed_per_finisher / avg_cp_per_cpg
+        else:
+            ability_count = {'mutilate':0, 'dispatch':0}
+            finisher_size_breakdown = [0,0,0,0,0,0]
+            
+            #This is incredibly verbose, but functional. It exhaustively calculates the potential finisher size outcomes using recursion.
+            #avg_finisher_size - measures average finisher size
+            #avg_bs_afterwards - likelyhood of finishing with a blindside proc active
+            #avg_count - number of ability casts per finisher (dictionary of both Mutilate and Dispatch)
+            #avg_breakdown - frequency of finisher sizes (should sum to 100% or 1)
+            execute = False
+            base_cp = 0
+            if cpg == 'dispatch':
+                execute = True
+            if self.stats.gear_buffs.rogue_t17_4pc:
+                base_cp = 1
+            avg_finisher_size, avg_bs, avg_count, avg_size_breakdown  = self.assassination_cp_distribution_for_finisher(base_cp, crit_rates,
+                                                                        ability_count, finisher_size_breakdown, cp_limit=4, execute=execute)
+            if avg_bs > 0:
+                mut_start_chance = 1/(1+avg_bs)
+                bs_start_chance = 1 - mut_start_chance
+                extra_tuple = self.assassination_cp_distribution_for_finisher(base_cp, crit_rates, ability_count, finisher_size_breakdown, cp_limit=4, blindside_proc=1)
+                
+                avg_finisher_size = avg_finisher_size*mut_start_chance + extra_tuple[0]*bs_start_chance
+                for key in ability_count:
+                    avg_count[key] = avg_count[key]*mut_start_chance + extra_tuple[2][key]*bs_start_chance
+                for i in xrange(1,6):
+                    avg_size_breakdown[i] = avg_size_breakdown[i]*mut_start_chance + extra_tuple[3][i]*bs_start_chance
+            
+            avg_cpgs_per_finisher = avg_count[cpg]
+        
+        cpg_energy_cost = self.get_spell_stats(cpg, cost_mod=ability_cost_modifier)[0]
+        if self.stats.gear_buffs.rogue_t17_2pc:
+            cpg_energy_cost -= 7 * seal_fate_proc_rate
         if self.stats.gear_buffs.rogue_t16_2pc_bonus():
             cpg_energy_cost -= 6 * seal_fate_proc_rate
+        
+        avg_cycle_length = 4. * (1 + avg_finisher_size + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp())
             
-        cp_per_finisher = 5
-        avg_rupture_length = 4. * (6 + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp()) # 1+5 since all 5CP ruptures
-        avg_cycle_length = avg_rupture_length
+        energy_for_rupture = avg_cpgs_per_finisher * cpg_energy_cost + self.get_spell_stats('rupture', cost_mod=ability_cost_modifier)[0]
+        energy_for_rupture -= avg_finisher_size * self.relentless_strikes_energy_return_per_cp
+        
         attacks_per_second['rupture'] = 1. / avg_cycle_length
-        rupture_ticks_per_second = 2 * (6 + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp()) / avg_cycle_length # 1+5 since all 5CP ruptures
-        attacks_per_second['rupture_ticks'] = [0, 0, 0, 0, 0, rupture_ticks_per_second]
-        
-        energy_regen_with_rupture = energy_regen + attacks_per_second['rupture_ticks'][5] * vw_energy_return
-        energy_per_cycle = avg_rupture_length * energy_regen_with_rupture
-        cpg_per_finisher = cp_per_finisher / avg_cp_per_cpg
-        
-        energy_for_rupture = cpg_per_finisher * cpg_energy_cost + self.get_spell_stats('rupture', cost_mod=ability_cost_modifier)[0]
-        energy_for_rupture -= cp_per_finisher * self.relentless_strikes_energy_return_per_cp  
+        energy_per_cycle = avg_cycle_length * energy_regen_with_rupture
         
         energy_for_dfa = 0        
         if self.talents.death_from_above:
             dfa_cd = self.get_spell_cd('death_from_above') + self.settings.response_time
             dfa_cd += energy_for_rupture / (4 * energy_regen_with_rupture)
             dfa_interval = 1./dfa_cd
-            energy_for_dfa = cpg_per_finisher * cpg_energy_cost + self.get_spell_stats('death_from_above', cost_mod=ability_cost_modifier)[0]
-            energy_for_dfa -= cp_per_finisher * self.relentless_strikes_energy_return_per_cp
+            energy_for_dfa = avg_cpgs_per_finisher * cpg_energy_cost + self.get_spell_stats('death_from_above', cost_mod=ability_cost_modifier)[0]
+            energy_for_dfa -= avg_finisher_size * self.relentless_strikes_energy_return_per_cp
 
             attacks_per_second['death_from_above'] = dfa_interval
-            attacks_per_second['death_from_above_strike'] = [0, 0, 0, 0, 0, dfa_interval]
-            attacks_per_second['death_from_above_pulse'] = [0, 0, 0, 0, 0, dfa_interval]
+            attacks_per_second['death_from_above_strike'] = [finisher_chance * dfa_interval for finisher_chance in avg_size_breakdown]
+            attacks_per_second['death_from_above_pulse'] = [finisher_chance * dfa_interval * self.settings.num_boss_adds for finisher_chance in avg_size_breakdown]
 
             #Normalize DfA energy intervals to rupture intervals
             energy_for_dfa *= (avg_cycle_length)/(1./dfa_interval)
-	
+        
         energy_for_envenoms = energy_per_cycle - energy_for_rupture - energy_for_dfa
 
-        envenom_energy_cost = cpg_per_finisher * cpg_energy_cost + self.get_spell_stats('envenom', cost_mod=ability_cost_modifier)[0]
-        envenom_energy_cost -= cp_per_finisher * self.relentless_strikes_energy_return_per_cp
+        envenom_energy_cost = avg_cpgs_per_finisher * cpg_energy_cost + self.get_spell_stats('envenom', cost_mod=ability_cost_modifier)[0]
+        envenom_energy_cost -= avg_finisher_size * self.relentless_strikes_energy_return_per_cp
         envenoms_per_cycle = energy_for_envenoms / envenom_energy_cost
 
         envenoms_per_second = envenoms_per_cycle / avg_cycle_length
         finishers_per_second = envenoms_per_second + attacks_per_second['rupture']
         if self.talents.death_from_above:
             finishers_per_second += attacks_per_second['death_from_above']
-        cpgs_per_second = cpg_per_finisher * finishers_per_second
+        cpgs_per_second = avg_cpgs_per_finisher * finishers_per_second
         if cpg in attacks_per_second:
             attacks_per_second[cpg] += cpgs_per_second
         else:
             attacks_per_second[cpg] = cpgs_per_second
         if cpg == 'mutilate':
-            if 'dispatch' in attacks_per_second:
-                attacks_per_second['dispatch'] += cpgs_per_second * blindside_proc_rate
-            else:
-                attacks_per_second['dispatch'] = cpgs_per_second * blindside_proc_rate
-        if self.settings.opener_name == 'mutilate' and cpg == 'dispatch':
-            attacks_per_second['mutilate'] += self.total_openers_per_second
-            attacks_per_second['dispatch'] += self.total_openers_per_second * blindside_proc_rate
-
-        #attacks_per_second['envenom'] = [finisher_chance * envenoms_per_second for finisher_chance in envenom_size_breakdown]
-        attacks_per_second['envenom'] = [0, 0, 0, 0, 0, envenoms_per_second]
-
-        if 'venomous_wounds' in attacks_per_second:
-            attacks_per_second['venomous_wounds'] += rupture_ticks_per_second
+            attacks_per_second['dispatch'] = cpgs_per_second * blindside_proc_rate
+        
+        
+        attacks_per_second['rupture_ticks'] = [0,0,0,0,0,.5]
+        if self.talents.anticipation:
+            attacks_per_second['envenom'] = [0, 0, 0, 0, 0, envenoms_per_second]
         else:
-            attacks_per_second['venomous_wounds'] = rupture_ticks_per_second
-
+            attacks_per_second['envenom'] = [finisher_chance * envenoms_per_second for finisher_chance in avg_size_breakdown]
+            for i in xrange(1, 6):
+                ticks_per_rupture = 2 * (1 + i + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp())
+                attacks_per_second['rupture_ticks'][i] = ticks_per_rupture * attacks_per_second['rupture'] * avg_size_breakdown[i]
+                
+        if self.talents.marked_for_death:
+            attacks_per_second['envenom'][5] += 1. / self.get_spell_cd('marked_for_death')
+        
         if 'garrote' in attacks_per_second:
             attacks_per_second['garrote_ticks'] = 6 * attacks_per_second['garrote']
         for opener, cps in [('ambush', 2), ('garrote', 1)]:
@@ -1238,6 +1096,20 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 attacks_per_second['envenom'][5] += attacks_per_second[opener] * cps / 5
         attacks_per_second['envenom'][5] += 1. / 180
         
+        if self.level == 100:
+            finisher_per_second = sum(attacks_per_second['envenom']) + attacks_per_second['rupture']
+            if self.talents.death_from_above:
+                finisher_per_second += attacks_per_second['death_from_above_strike']
+            self.emp_envenom_percentage = 1 + .3 * (1 - attacks_per_second['rupture']/finisher_per_second)
+        
+        if self.talents.shadow_reflection:
+            sr_uptime = 8. / self.get_spell_cd('shadow_reflection')
+            for ability in ('mutilate', 'envenom', 'rupture_ticks', 'dispatch'):
+                if type(attacks_per_second[ability]) in (tuple, list):
+                    for i in xrange(1, 6):
+                        attacks_per_second['sr_'+ability][i] = sr_uptime * attacks_per_second[ability][i]
+                else:
+                    attacks_per_second['sr_'+ability] = sr_uptime * attacks_per_second[ability]
         
         white_swing_downtime = 0
         if self.swing_reset_spacing is not None:
@@ -1251,17 +1123,20 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attacks_per_second['oh_autoattack_hits'] = attacks_per_second['oh_autoattacks'] * self.dw_oh_hit_chance
         
         self.get_poison_counts(attacks_per_second)
+        
+        if self.level == 100:
+            #this is to update the crit rate for envenom due to the 'crit on Vendetta cast' perk, unlikely to ever be another ability
+            crit_uptime = (1./(self.get_spell_cd('vendetta') + self.settings.response_time + self.major_cd_delay)) / sum(attacks_per_second['envenom'])
+            #this takes the difference between normal and guaranteed crits (1 - crit_rate), and multiplies it by the "uptime" across all envenoms
+            #it's then added back to the original crit rate
+            crit_rates['envenom'] += crit_uptime * (1 - crit_rates['envenom'])
 
         return attacks_per_second, crit_rates
-
+    
     def assassination_attack_counts_non_execute(self, current_stats, crit_rates=None):
-        if self.talents.anticipation:
-            return self.assassination_attack_counts_anticipation(current_stats, 'mutilate')
         return self.assassination_attack_counts(current_stats, 'mutilate', self.settings.cycle.min_envenom_size_non_execute, crit_rates=crit_rates)
 
     def assassination_attack_counts_execute(self, current_stats, crit_rates=None):
-        if self.talents.anticipation:
-            return self.assassination_attack_counts_anticipation(current_stats, 'dispatch')
         return self.assassination_attack_counts(current_stats, 'dispatch', self.settings.cycle.min_envenom_size_execute, crit_rates=crit_rates)
 
     ###########################################################################
@@ -1309,6 +1184,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.ar_duration = 15
         self.revealing_strike_multiplier = 1.35
         self.extra_cp_chance = .25 # Assume all casts during RvS
+        if self.stats.gear_buffs.rogue_t17_2pc:
+            self.extra_cp_chance *= 1.2
         self.rvs_duration = 24
         if self.settings.dmg_poison == 'dp' and self.level == 100:
             self.settings.dmg_poison = 'sp'
@@ -1350,6 +1227,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 if key in self.melee_attacks:
                     damage_breakdown['blade_flurry'] += bf_mod * damage_breakdown[key] * min(self.settings.num_boss_adds, bf_max_targets)
         
+        #combat gets it's own MS calculation due to BF mechanics
+        #calculate multistrike here, really cheap to calculate
+        #turns out the 2 chance system yields a very basic linear pattern, the damage modifier is 30% of the multistrike %!
+        multistrike_multiplier = .3 * 2 * (self.stats.get_multistrike_chance_from_rating(rating=stats['multistrike']) + self.buffs.multistrike_bonus())
+        for ability in damage_breakdown:
+            if ability != 'blade_flurry':
+                damage_breakdown[ability] *= (1 + multistrike_multiplier)
+        
         return damage_breakdown
     
     def update_with_bandits_guile(self, damage_breakdown):
@@ -1372,6 +1257,19 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 damage_breakdown[key] *= self.bandits_guile_multiplier #* self.ksp_multiplier
                 
         return damage_breakdown
+    
+    def combat_cpg_per_finisher(self, current_cp, ability_count, cp_limit=5):
+        if current_cp >= cp_limit:
+            return ability_count
+        new_count = copy(ability_count)
+        new_count += 1
+            
+        n_chance = 1 - self.extra_cp_chance
+        n_count = self.combat_cpg_per_finisher(current_cp+1, new_count)
+        c_chance = self.extra_cp_chance
+        c_count = self.combat_cpg_per_finisher(current_cp+2, new_count)
+            
+        return n_chance*n_count + c_chance*c_count
     
     def combat_attack_counts(self, current_stats, ar=False, crit_rates=None):
         attacks_per_second = {}
@@ -1412,6 +1310,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         eviscerate_energy_cost =  self.get_spell_stats('eviscerate', cost_mod=cost_modifier)[0]
         eviscerate_energy_cost -= cost_reducer
+        #http://www.wolframalpha.com/input/?i=sum+of+.2%5Ex+from+x%3D1+to+inf
+        #This increases the frequency of Eviscerates by 25% for every Evisc cast
+        if self.stats.gear_buffs.rogue_t17_4pc:
+            eviscerate_energy_cost *= 1.25
         revealing_strike_energy_cost =  self.get_spell_stats('revealing_strike', cost_mod=cost_modifier)[0]
         revealing_strike_energy_cost -= cost_reducer
         sinister_strike_energy_cost =  self.get_spell_stats('sinister_strike', cost_mod=cost_modifier)[0]
@@ -1444,7 +1346,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.talents.death_from_above and not ar:
             attacks_per_second['main_gauche'] += (1 + self.settings.num_boss_adds) * main_gauche_proc_rate / dfa_cd
         combat_potency_regen += combat_potency_from_mg * attacks_per_second['main_gauche']
-        energy_regen = self.base_energy_regen * haste_multiplier + self.bonus_energy_regen + combat_potency_regen + bonus_energy_from_openers
+        energy_regen = self.base_energy_regen * haste_multiplier
+        if self.stats.gear_buffs.rogue_t17_4pc_lfr:
+            #http://www.wolframalpha.com/input/?i=1.1307+*+%281+-+e+**+%28-1+*+1.1+*+6%2F+60%29%29
+            #https://twitter.com/Celestalon/status/525350819856535552
+            energy_regen *= 1 + (.11778034322021550695 * .3) #11% uptime on 30% boost)
+        energy_regen += self.bonus_energy_regen + combat_potency_regen + bonus_energy_from_openers
         #Rough idea to factor in a full energy bar
         if not ar:
             energy_regen += self.max_energy / self.settings.duration
@@ -1460,8 +1367,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.talents.anticipation:
             ss_per_finisher = (FINISHER_SIZE - ruthlessness_value) / (cp_per_cpg + self.extra_cp_chance)
         else:
-            #cp_per_ss = self.get_cp_per_cpg(1, self.extra_cp_chance)
-            ss_per_finisher = 3.742
+            ss_per_finisher = self.combat_cpg_per_finisher(1, 0)
         cp_per_finisher = FINISHER_SIZE
         energy_cost_for_cpgs = ss_per_finisher * sinister_strike_energy_cost
         total_eviscerate_cost = energy_cost_for_cpgs + eviscerate_energy_cost - cp_per_finisher * self.relentless_strikes_energy_return_per_cp
@@ -1511,13 +1417,15 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         energy_available_for_evis = energy_regen - energy_spent_on_snd - energy_for_dfa
         total_evis_per_second = energy_available_for_evis / total_eviscerate_cost
         evisc_actions_per_second = (total_evis_per_second * ss_per_finisher + total_evis_per_second)
+        if self.stats.gear_buffs.rogue_t17_4pc:
+            evisc_actions_per_second += total_evis_per_second * .25
         attacks_per_second['sinister_strike'] = total_evis_per_second * ss_per_finisher
         # If GCD capped
         if evisc_actions_per_second > free_gcd:
             gcd_cap_mod = evisc_actions_per_second / free_gcd
             wasted_energy = (attacks_per_second['sinister_strike'] - attacks_per_second['sinister_strike'] / gcd_cap_mod) / sinister_strike_energy_cost
             attacks_per_second['sinister_strike'] = attacks_per_second['sinister_strike'] / gcd_cap_mod
-            wasted_energy = (total_evis_per_second - total_evis_per_second / gcd_cap_mod) / eviscerate_energy_cost
+            wasted_energy = (total_evis_per_second - (eviscerate_gcd * total_evis_per_second) / gcd_cap_mod) / eviscerate_energy_cost
             total_evis_per_second = total_evis_per_second / gcd_cap_mod
         # Reintroduce flat gcds
         attacks_per_second['sinister_strike'] += attacks_per_second['sinister_strike_base']
@@ -1534,6 +1442,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attacks_per_second['eviscerate'][5] += extra_finishers_per_second
         if self.talents.marked_for_death:
             attacks_per_second['eviscerate'][5] += 1. / marked_for_death_cd
+        if self.stats.gear_buffs.rogue_t17_4pc:
+            attacks_per_second['eviscerate'][5] *= 1.25
         
         #self.current_variables['cp_spent_on_damage_finishers_per_second'] = (total_evis_per_second) * cp_per_finisher
         if 'garrote' in attacks_per_second:
@@ -1557,6 +1467,15 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second['mh_killing_spree'] = (1 + 2*ks_duration) / (final_ks_cd + self.settings.response_time)
             attacks_per_second['oh_killing_spree'] = (1 + 2*ks_duration) / (final_ks_cd + self.settings.response_time)
             attacks_per_second['main_gauche'] += attacks_per_second['mh_killing_spree'] * main_gauche_proc_rate
+        
+        if self.talents.shadow_reflection:
+            sr_uptime = 8. / self.get_spell_cd('shadow_reflection')
+            for ability in ('sinister_strike', 'eviscerate', 'revealing_strike', 'mh_killing_spree', 'oh_killing_spree'):
+                if type(attacks_per_second[ability]) in (tuple, list):
+                    for i in xrange(1, 6):
+                        attacks_per_second['sr_'+ability][i] = sr_uptime * attacks_per_second[ability][i]
+                else:
+                    attacks_per_second['sr_'+ability] = sr_uptime * attacks_per_second[ability]
         
         self.get_poison_counts(attacks_per_second)
         
@@ -1760,10 +1679,19 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         hemo_cd *= sc_scaler
         
         #passive energy regen
-        energy_regen = self.base_energy_regen * haste_multiplier + self.bonus_energy_regen + self.max_energy / self.settings.duration + er_energy
+        energy_regen = self.base_energy_regen * haste_multiplier
+        if self.stats.gear_buffs.rogue_t17_4pc_lfr:
+            #http://www.wolframalpha.com/input/?i=1.1307+*+%281+-+e+**+%28-1+*+1.1+*+6%2F+60%29%29
+            #https://twitter.com/Celestalon/status/525350819856535552
+            energy_regen *= 1 + (.11778034322021550695 * .3) #11% uptime on 30% boost)
+        energy_regen += self.bonus_energy_regen + self.max_energy / self.settings.duration + er_energy
         energy_regen += self.get_bonus_energy_from_openers()
         if self.stats.gear_buffs.rogue_t16_2pc_bonus():
             energy_regen += 2 * hat_cp_per_second
+        if self.stats.gear_buffs.rogue_t17_2pc:
+            energy_regen += 60. / self.shd_cd
+        if self.stats.gear_buffs.rogue_t17_4pc:
+            energy_regen -= (self.base_eviscerate_cost - 25) / self.shd_cd
         
         ##calculations dependent on energy regen
         cpg_costs = self.base_backstab_energy_cost * 5
@@ -1899,6 +1827,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             filler_cycles_per_second = energy_regen / typical_cycle_size
             attacks_per_second[cpg_name] += filler_cycles_per_second * 5
             attacks_per_second['eviscerate'][5] += filler_cycles_per_second
+        if self.stats.gear_buffs.rogue_t17_4pc:
+            attacks_per_second['eviscerate'][5] += 1. / self.shd_cd
         
         #t16 4pc
         if cpg_name == 'backstab' and self.stats.gear_buffs.rogue_t16_4pc:
@@ -1913,14 +1843,21 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             ticks_per_second = min(1. / (3 * sc_scaler), 8. / hemo_gap)
             attacks_per_second['hemorrhage_ticks'] = ticks_per_second
         
-        sc_ms_chance = self.stats.get_multistrike_chance_from_rating(rating=current_stats['multistrike']) + self.buffs.multistrike_bonus()
+        sc_ms_chance = 2 * self.stats.get_multistrike_chance_from_rating(rating=current_stats['multistrike']) + self.buffs.multistrike_bonus()
         #this is a cache for convergence
         self.sc_trigger_rate = attacks_per_second['ambush'] * sc_ms_chance
         if 'backstab' in attacks_per_second:
             self.sc_trigger_rate += attacks_per_second['backstab'] * sc_ms_chance
         
-        self.get_poison_counts(attacks_per_second)
+        if self.talents.shadow_reflection:
+            sr_uptime = 8. / self.get_spell_cd('shadow_reflection')
+            for ability in ('backstab', 'ambush', 'eviscerate', 'rupture_ticks', 'hemorrhage'):
+                if type(attacks_per_second[ability]) in (tuple, list):
+                    for i in xrange(1, 6):
+                        attacks_per_second['sr_'+ability][i] = sr_uptime * attacks_per_second[ability][i]
+                else:
+                    attacks_per_second['sr_'+ability] = sr_uptime * attacks_per_second[ability]
         
-        #print attacks_per_second
+        self.get_poison_counts(attacks_per_second)
         
         return attacks_per_second, crit_rates

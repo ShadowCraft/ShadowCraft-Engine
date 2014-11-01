@@ -183,8 +183,9 @@ class GearBuffs(object):
         'rogue_t15_4pc',                # Abilities cast during Shadow Blades cost 40% less
         'rogue_t16_2pc',                # Stacking energy cost reduction (up to 5, up to 5 stacks) on NEXT RvS cast, Seal Fate Proc, or HAT proc
         'rogue_t16_4pc',                # 10% KS damage every time it hits, stacking mastery during vendetta (250 mastery, up to 20 stacks), % chance for backstab to become ambush
-        'rogue_t17_2pc',                # 
-        'rogue_t17_4pc',                # 
+        'rogue_t17_2pc',                # Mut and Dispatch crits generate 7 energy, RvS has 20% higher chance to generate a CP, generate 60e when casting ShD
+        'rogue_t17_4pc',                # Envenom generates 1 CP, finishers have a 20% chance to generate 5CP and next Evisc costs 0, 5 CP at the end of ShD
+        'rogue_t17_4pc_lfr',            # 1.1 RPPM, 30% energy generation for 6s
     ]
 
     allowed_buffs = frozenset(other_gear_buffs)
