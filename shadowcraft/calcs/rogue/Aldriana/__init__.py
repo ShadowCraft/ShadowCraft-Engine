@@ -962,12 +962,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         blindside_proc_rate = [0, .3][cpg == 'mutilate']
 
-        opener_net_cost = self.get_spell_stats(self.settings.opener_name, cost_mod=ability_cost_modifier*self.get_shadow_focus_multiplier())[0]
-        opener_net_cost *= self.get_shadow_focus_multiplier()
-        opener_net_cost *= ability_cost_modifier
-        
-        energy_regen -= opener_net_cost * self.total_openers_per_second
-        attacks_per_second[self.settings.opener_name] = self.total_openers_per_second
+        if self.settings.opener_name in ('mutilate', 'dispatch', 'envenom'):
+            opener_net_cost = self.get_spell_stats(self.settings.opener_name, cost_mod=ability_cost_modifier*(1-self.get_shadow_focus_multiplier()))[0]
+            energy_regen += opener_net_cost * self.total_openers_per_second
+        else:
+            opener_net_cost = self.get_spell_stats(self.settings.opener_name, cost_mod=ability_cost_modifier*self.get_shadow_focus_multiplier())[0]
+            energy_regen -= opener_net_cost * self.total_openers_per_second
+            attacks_per_second[self.settings.opener_name] = self.total_openers_per_second
         if self.talents.marked_for_death:
             energy_regen -= 10. / self.get_spell_cd('marked_for_death') # 35-25
         
@@ -1329,7 +1330,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.swing_reset_spacing is not None and not ar:
             white_swing_downtime += .5 / self.swing_reset_spacing
         if self.talents.death_from_above and not ar:
-            white_swing_downtime += .5 / dfa_cd #.5 is 1s delay divided by 2 due to assumed even distribution
+            white_swing_downtime += .55 / dfa_cd #should have a better implementation, but it's close
         attacks_per_second['mh_autoattacks'] = self.attack_speed_increase / self.stats.mh.speed * (1 - white_swing_downtime)
         attacks_per_second['oh_autoattacks'] = self.attack_speed_increase / self.stats.oh.speed * (1 - white_swing_downtime)
         
@@ -1405,7 +1406,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second['sinister_strike_base'] += ss_per_finisher / (1/dfa_interval)
 
         attacks_per_second['revealing_strike'] = 1. / rvs_interval
-        extra_finishers_per_second = attacks_per_second['revealing_strike'] / (5/cp_per_cpg)
+        extra_finishers_per_second = attacks_per_second['revealing_strike'] / 5.
+        if self.talents.death_from_above and not ar:
+            extra_finishers_per_second += (1 + self.settings.num_boss_adds) / (5. * dfa_cd)
         #Scaling CPGs
         free_gcd = 1./gcd_size
         free_gcd -= 1./snd_duration + (attacks_per_second['sinister_strike_base'] + attacks_per_second['revealing_strike'] + extra_finishers_per_second)

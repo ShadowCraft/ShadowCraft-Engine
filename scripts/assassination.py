@@ -76,7 +76,7 @@ test_glyphs = glyphs.Glyphs(test_class, *glyph_list)
 # Set up settings.
 test_cycle = settings.AssassinationCycle(min_envenom_size_non_execute=4, min_envenom_size_execute=5)
 test_settings = settings.Settings(test_cycle, response_time=.5, duration=360, dmg_poison='dp', utl_poison='lp', is_pvp=False,
-                                  use_opener='always', opener_name='envenom')
+                                  use_opener='always', opener_name='mutilate')
 
 # Build a DPS object.
 calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_glyphs, test_buffs, test_race, test_settings, test_level)
@@ -106,7 +106,7 @@ trinkets_list = [
 ]
 # trinkets_ep_value = calculator.get_upgrades_ep_fast(trinkets_list)
 
-#talent_ranks = calculator.get_talents_ranking()
+talent_ranks = calculator.get_talents_ranking()
 
 def max_length(dict_list):
     max_len = 0
@@ -138,7 +138,7 @@ dicts_for_pretty_print = [
     #oh_enchants_and_dps_ep_values,
     #trinkets_ep_value,
     #glyph_values,
-    #talent_ranks,
+    talent_ranks,
 ]
 pretty_print(dicts_for_pretty_print)
 
