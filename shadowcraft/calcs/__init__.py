@@ -558,13 +558,16 @@ class DamageCalculator(object):
         # this is what callers will (initially) be looking at.
         pass
 
-    def get_all_activated_stat_boosts(self):
-        racial_boosts = self.race.get_racial_stat_boosts()
-        gear_boosts = self.stats.gear_buffs.get_all_activated_boosts()
-        return racial_boosts + gear_boosts
+    #def get_all_activated_stat_boosts(self):
+    #    racial_boosts = self.race.get_racial_stat_boosts()
+    #    gear_boosts = self.stats.gear_buffs.get_all_activated_boosts()
+    #    return racial_boosts + gear_boosts
 
     def armor_mitigation_multiplier(self, armor):
         return armor_mitigation.multiplier(armor, cached_parameter=self.armor_mitigation_parameter)
+    
+    def max_level_armor_multiplier(self):
+        return 3610.0 / (3610.0 + 1938.0)
     
     def get_trinket_cd_reducer(self):
         trinket_cd_reducer_value = .0

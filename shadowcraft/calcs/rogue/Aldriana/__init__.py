@@ -1107,6 +1107,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             sr_uptime = 8. / self.get_spell_cd('shadow_reflection')
             for ability in ('mutilate', 'envenom', 'rupture_ticks', 'dispatch'):
                 if type(attacks_per_second[ability]) in (tuple, list):
+                    attacks_per_second['sr_'+ability] = [0,0,0,0,0,0]
                     for i in xrange(1, 6):
                         attacks_per_second['sr_'+ability][i] = sr_uptime * attacks_per_second[ability][i]
                 else:
@@ -1232,6 +1233,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #calculate multistrike here, really cheap to calculate
         #turns out the 2 chance system yields a very basic linear pattern, the damage modifier is 30% of the multistrike %!
         multistrike_multiplier = .3 * 2 * (self.stats.get_multistrike_chance_from_rating(rating=stats['multistrike']) + self.buffs.multistrike_bonus())
+        multistrike_multiplier = min(.6, multistrike_multiplier)
         for ability in damage_breakdown:
             if ability != 'blade_flurry':
                 damage_breakdown[ability] *= (1 + multistrike_multiplier)
@@ -1473,8 +1475,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         if self.talents.shadow_reflection:
             sr_uptime = 8. / self.get_spell_cd('shadow_reflection')
-            for ability in ('sinister_strike', 'eviscerate', 'revealing_strike', 'mh_killing_spree', 'oh_killing_spree'):
+            lst = ('sinister_strike', 'eviscerate', 'revealing_strike')
+            if not ar:
+                lst += ('mh_killing_spree', 'oh_killing_spree')
+            for ability in lst:
                 if type(attacks_per_second[ability]) in (tuple, list):
+                    attacks_per_second['sr_'+ability] = [0,0,0,0,0,0]
                     for i in xrange(1, 6):
                         attacks_per_second['sr_'+ability][i] = sr_uptime * attacks_per_second[ability][i]
                 else:
@@ -1611,11 +1617,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         damage_breakdown = self.compute_damage(self.subtlety_attack_counts)
 
         armor_value = self.target_armor()
-        if self.settings.is_pvp:
-            armor_reduction = .5
-        else:
-            armor_reduction = 0 #100% armor ignore now
-        find_weakness_damage_boost = self.armor_mitigation_multiplier(armor_reduction * armor_value) / self.armor_mitigation_multiplier(armor_value)
+        find_weakness_damage_boost = 1. / self.max_level_armor_multiplier()
         find_weakness_multiplier = 1 + (find_weakness_damage_boost - 1) * self.find_weakness_uptime
 
         for key in damage_breakdown:
@@ -1856,6 +1858,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             sr_uptime = 8. / self.get_spell_cd('shadow_reflection')
             for ability in ('backstab', 'ambush', 'eviscerate', 'rupture_ticks', 'hemorrhage'):
                 if type(attacks_per_second[ability]) in (tuple, list):
+                    attacks_per_second['sr_'+ability] = [0,0,0,0,0,0]
                     for i in xrange(1, 6):
                         attacks_per_second['sr_'+ability][i] = sr_uptime * attacks_per_second[ability][i]
                 else:
