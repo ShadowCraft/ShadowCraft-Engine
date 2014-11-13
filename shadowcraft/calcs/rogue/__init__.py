@@ -509,6 +509,7 @@ class RogueDamageCalculator(DamageCalculator):
             'sr_mh_killing_spree':   self.mh_killing_spree_sr_damage,
             'sr_oh_killing_spree':   self.oh_killing_spree_sr_damage,
             'sr_venomous_wounds':    self.venomous_wounds_sr_damage,
+            'sr_rupture_ticks':      self.rupture_tick_sr_damage,
         }
         return formulas[name]
 

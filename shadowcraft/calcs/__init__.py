@@ -30,8 +30,8 @@ class DamageCalculator(object):
     normalize_ep_stat = None
 
     def __init__(self, stats, talents, glyphs, buffs, race, settings=None, level=100, target_level=None, char_class='rogue'):
-        self.WOW_BUILD_TARGET = '6.0.2' # should reflect the game patch being targetted
-        self.SHADOWCRAFT_BUILD = '0.91' # <1 for beta builds, 1.00 is GM, >1 for any bug fixes, reset for each warcraft patch
+        self.WOW_BUILD_TARGET = '6.0.3' # should reflect the game patch being targetted
+        self.SHADOWCRAFT_BUILD = '1.0' # <1 for beta builds, 1.00 is GM, >1 for any bug fixes, reset for each warcraft patch
         self.tools = class_data.Util()
         self.stats = stats
         self.talents = talents

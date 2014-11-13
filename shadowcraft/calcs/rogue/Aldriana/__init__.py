@@ -1428,9 +1428,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         # If GCD capped
         if evisc_actions_per_second > free_gcd:
             gcd_cap_mod = evisc_actions_per_second / free_gcd
-            wasted_energy = (attacks_per_second['sinister_strike'] - attacks_per_second['sinister_strike'] / gcd_cap_mod) / sinister_strike_energy_cost
             attacks_per_second['sinister_strike'] = attacks_per_second['sinister_strike'] / gcd_cap_mod
-            wasted_energy = (total_evis_per_second - (eviscerate_gcd * total_evis_per_second) / gcd_cap_mod) / eviscerate_energy_cost
             total_evis_per_second = total_evis_per_second / gcd_cap_mod
         # Reintroduce flat gcds
         attacks_per_second['sinister_strike'] += attacks_per_second['sinister_strike_base']
