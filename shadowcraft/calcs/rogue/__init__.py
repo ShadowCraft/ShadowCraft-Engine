@@ -283,16 +283,19 @@ class RogueDamageCalculator(DamageCalculator):
                     modifier *= spell_modifier
                 else:
                     modifier *= physical_modifier
+                crit_name = ability[3:]
+                if 'mh_' in crit_name or 'oh_' in crit_name:
+                    crit_name = crit_name[3:]
                 if type(attacks_per_second[ability]) in (tuple, list):
                     average_dps = 0
                     for i in xrange(1, 6):
                         dps_tuple = self.get_formula(ability)(average_ap, i)
-                        dps_tuple = self.get_dps_contribution(dps_tuple, crit_rates[ability[3:]], attacks_per_second[ability][i], crit_damage_modifier)
+                        dps_tuple = self.get_dps_contribution(dps_tuple, crit_rates[crit_name], attacks_per_second[ability][i], crit_damage_modifier)
                         average_dps += dps_tuple
                     damage_breakdown[ability] = average_dps
                 else:
                     dps = self.get_formula(ability)(average_ap) * modifier
-                    dps = self.get_dps_contribution(dps, crit_rates[ability[3:]], attacks_per_second[ability], crit_damage_modifier)
+                    dps = self.get_dps_contribution(dps, crit_rates[crit_name], attacks_per_second[ability], crit_damage_modifier)
                     damage_breakdown[ability] = dps
                    
         for proc in damage_procs:
@@ -503,6 +506,7 @@ class RogueDamageCalculator(DamageCalculator):
             'sr_main_gauche':        self.main_gauche_sr_damage,
             'sr_ambush':             self.ambush_sr_damage,
             'sr_eviscerate':         self.eviscerate_sr_damage,
+            'sr_envenom':            self.envenom_sr_damage,
             'sr_dispatch':           self.dispatch_sr_damage,
             'sr_mh_mutilate':        self.mh_mutilate_sr_damage,
             'sr_oh_mutilate':        self.oh_mutilate_sr_damage,

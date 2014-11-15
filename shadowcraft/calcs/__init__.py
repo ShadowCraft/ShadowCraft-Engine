@@ -31,7 +31,7 @@ class DamageCalculator(object):
 
     def __init__(self, stats, talents, glyphs, buffs, race, settings=None, level=100, target_level=None, char_class='rogue'):
         self.WOW_BUILD_TARGET = '6.0.3' # should reflect the game patch being targetted
-        self.SHADOWCRAFT_BUILD = '1.0' # <1 for beta builds, 1.00 is GM, >1 for any bug fixes, reset for each warcraft patch
+        self.SHADOWCRAFT_BUILD = '1.01' # <1 for beta builds, 1.00 is GM, >1 for any bug fixes, reset for each warcraft patch
         self.tools = class_data.Util()
         self.stats = stats
         self.talents = talents
@@ -574,6 +574,8 @@ class DamageCalculator(object):
         proc = getattr(self.stats.procs, 'assurance_of_consequence')
         if proc and proc.scaling:
             trinket_cd_reducer_value = 0.2532840073 / 100 * self.tools.get_random_prop_point(proc.item_level)
+            if self.level == 100:
+                trinket_cd_reducer_value *= 23./110.
             return 1 / (1 + trinket_cd_reducer_value)
         return 1
 

@@ -1100,18 +1100,21 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.level == 100:
             finisher_per_second = sum(attacks_per_second['envenom']) + attacks_per_second['rupture']
             if self.talents.death_from_above:
-                finisher_per_second += attacks_per_second['death_from_above_strike']
+                finisher_per_second += sum(attacks_per_second['death_from_above_strike'])
             self.emp_envenom_percentage = 1 + .3 * (1 - attacks_per_second['rupture']/finisher_per_second)
         
         if self.talents.shadow_reflection:
             sr_uptime = 8. / self.get_spell_cd('shadow_reflection')
-            for ability in ('mutilate', 'envenom', 'rupture_ticks', 'dispatch'):
+            for ability in ('envenom', 'rupture_ticks', 'dispatch'):
                 if type(attacks_per_second[ability]) in (tuple, list):
                     attacks_per_second['sr_'+ability] = [0,0,0,0,0,0]
                     for i in xrange(1, 6):
                         attacks_per_second['sr_'+ability][i] = sr_uptime * attacks_per_second[ability][i]
                 else:
                     attacks_per_second['sr_'+ability] = sr_uptime * attacks_per_second[ability]
+            if 'mutilate' in attacks_per_second:
+                attacks_per_second['sr_mh_mutilate'] = sr_uptime * attacks_per_second['mutilate']
+                attacks_per_second['sr_oh_mutilate'] = sr_uptime * attacks_per_second['mutilate']
         
         white_swing_downtime = 0
         if self.swing_reset_spacing is not None:
