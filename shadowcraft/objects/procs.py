@@ -132,7 +132,7 @@ class Proc(object):
         raise InvalidProcException(_('Invalid data for proc {proc}').format(proc=self.proc_name))
     
     def is_rppm(self):
-        return is_real_ppm()
+        return self.is_real_ppm()
     def is_real_ppm(self):
         if self.type == 'rppm':
             return True

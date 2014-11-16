@@ -130,11 +130,9 @@ class RogueDamageCalculator(DamageCalculator):
         return average_hit * frequency
     
     def get_damage_breakdown(self, current_stats, attacks_per_second, crit_rates, damage_procs):
-        average_ap = current_stats['ap'] + current_stats['agi']
-        average_ap *= self.buffs.attack_power_multiplier()
+        average_ap = current_stats['ap'] + current_stats['agi'] * self.stat_multipliers['ap']
         run_multistrike = True
         if self.settings.is_combat_rogue():
-            average_ap *= 1.40 # vitality spec perk
             run_multistrike = False
         
         self.setup_unique_procs(current_stats, average_ap)

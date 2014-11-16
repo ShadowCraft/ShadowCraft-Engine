@@ -372,6 +372,48 @@ allowed_procs = {
         'proc_rate': 0.92,
         'trigger': 'all_attacks'
     },
+    'void-touched_totem': {
+        'stat': 'stats',
+        'value': {'mastery':540},
+        'duration': 20,
+        'proc_name': 'Void-Touched Totem',
+        'upgradable': True,
+        'scaling': 2.3333330154,
+        'item_level': 604,
+        'type': 'icd',
+        'source': 'trinket',
+        'icd': 115, #correct?
+        'proc_rate': 0.15,
+        'trigger': 'all_attacks'
+    },
+    'smoldering_heart_of_hyperious': {
+        'stat': 'stats',
+        'value': {'mastery':540},
+        'duration': 20,
+        'proc_name': 'Smoldering Heart of Hyperious',
+        'upgradable': True,
+        'scaling': 2.3333330154,
+        'item_level': 607,
+        'type': 'icd',
+        'source': 'trinket',
+        'icd': 115, #correct?
+        'proc_rate': 0.15,
+        'trigger': 'all_attacks'
+    },
+    'draenic_philosophers_stone': {
+        'stat': 'highest',
+        'value': {'str':771, 'agi':771},
+        'duration': 15,
+        'proc_name': 'Draenic Philosophers Stone',
+        'upgradable': True,
+        'scaling': 2.6670000553,
+        'item_level': 620,
+        'type': 'icd',
+        'source': 'trinket',
+        'icd': 55, #correct?
+        'proc_rate': 0.35,
+        'trigger': 'all_attacks'
+    },
     #5.4 procs
     'assurance_of_consequence': { #DBC - 197491
         'stat': 'stats',

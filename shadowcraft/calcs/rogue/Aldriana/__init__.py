@@ -248,6 +248,17 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             'multistrike': (self.stats.multistrike + self.buffs.buff_multistrike(race=self.race.epicurean)),
             'versatility': (self.stats.versatility + self.buffs.buff_versatility(race=self.race.epicurean)),
         }
+        self.stat_multipliers = {
+            'str': 1.,
+            'agi': self.buffs.stat_multiplier() * self.stats.gear_buffs.gear_specialization_multiplier(),
+            'ap': self.buffs.attack_power_multiplier(),
+            'crit': 1.,
+            'haste': 1.,
+            'mastery': 1.,
+            'readiness': 1.,
+            'multistrike': 1.,
+            'versatility': 1.,
+        }
         
         if self.race.human_spirit:
             self.base_stats['versatility'] += self.race.versatility_bonuses[self.level]
@@ -260,8 +271,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             getattr(self.stats.procs, 'virmens_bite').icd = self.settings.duration
         if self.stats.procs.virmens_bite_prepot:
             getattr(self.stats.procs, 'virmens_bite_prepot').icd = self.settings.duration
-
-        self.agi_multiplier = self.buffs.stat_multiplier() * self.stats.gear_buffs.gear_specialization_multiplier()
 
         self.base_strength = self.stats.str + self.buffs.buff_str() + self.race.racial_str
         self.base_strength *= self.buffs.stat_multiplier()
@@ -291,13 +300,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         self.settings.is_day = self.get_adv_param('is_day', self.settings.is_day, ignore_bounds=True)
         self.get_version_number = self.get_adv_param('print_version', False, ignore_bounds=True)
-        
-    def get_stat_mod(self, stat):
-        if stat == 'agi':
-            return self.agi_multiplier
-        if stat == self.spec_stat_bonus:
-            return 1.05
-        return 1
     
     def get_proc_damage_contribution(self, proc, proc_count, current_stats, average_ap, damage_breakdown):
         crit_multiplier = self.crit_damage_modifiers()
@@ -573,18 +575,19 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     def determine_stats(self, attack_counts_function):
         current_stats = {
             'str': self.base_strength,
-            'agi': self.base_stats['agi'] * self.get_stat_mod('agi'),
-            'ap': self.base_stats['ap'] * self.get_stat_mod('ap'),
-            'crit': self.base_stats['crit'] * self.get_stat_mod('crit'),
-            'haste': self.base_stats['haste'] * self.get_stat_mod('haste'),
-            'mastery': self.base_stats['mastery'] * self.get_stat_mod('mastery'),
-            'readiness': self.base_stats['readiness'] * self.get_stat_mod('readiness'),
-            'multistrike': self.base_stats['multistrike'] * self.get_stat_mod('multistrike'),
-            'versatility': self.base_stats['versatility'] * self.get_stat_mod('versatility'),
+            'agi': self.base_stats['agi'] * self.stat_multipliers['agi'],
+            'ap': self.base_stats['ap'] * self.stat_multipliers['ap'],
+            'crit': self.base_stats['crit'] * self.stat_multipliers['crit'],
+            'haste': self.base_stats['haste'] * self.stat_multipliers['haste'],
+            'mastery': self.base_stats['mastery'] * self.stat_multipliers['mastery'],
+            'readiness': self.base_stats['readiness'] * self.stat_multipliers['readiness'],
+            'multistrike': self.base_stats['multistrike'] * self.stat_multipliers['multistrike'],
+            'versatility': self.base_stats['versatility'] * self.stat_multipliers['versatility'],
         }
         self.current_variables = {}
         
         #arrys to store different types of procs
+        active_procs_rppm_stat_mods = []
         active_procs_rppm = []
         active_procs_icd = []
         active_procs_no_icd = []
@@ -611,7 +614,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         #sort the procs into groups
         for proc in self.stats.procs.get_all_procs_for_stat():
-            if (proc.stat in ('stats', 'stats_modifier')) and not proc.is_ppm():
+            if (proc.stat == 'stats'):
                 if proc.is_real_ppm():
                     active_procs_rppm.append(proc)
                 else:
@@ -619,6 +622,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                         active_procs_icd.append(proc)
                     else:
                         active_procs_no_icd.append(proc)
+            elif proc.stat == 'stats_modifier':
+                active_procs_rppm_stat_mods.append(proc)
             elif proc.stat in ('spell_damage', 'physical_damage', 'physical_dot'):
                 damage_procs.append(proc)
             elif proc.stat == 'extra_weapon_damage':
@@ -668,17 +673,17 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             'versatility': 0,
         }
         
-        for proc in active_procs_rppm:
+        for proc in active_procs_rppm_stat_mods:
             self.set_rppm_uptime(proc)
+            for e in proc.value:
+                self.stat_multipliers[e] *= 1 + proc.uptime * proc.value[e]
+                current_stats[e] *= 1 + proc.uptime * proc.value[e]
+                #other stats work here too
+        for proc in active_procs_rppm:
             if proc.stat == 'stats':
+                self.set_rppm_uptime(proc)
                 for e in proc.value:
-                    static_proc_stats[ e ] += proc.uptime * proc.value[e] * self.get_stat_mod(e)
-            elif proc.stat == 'stats_modifier':
-                for e in proc.value:
-                    if e == 'agi':
-                        self.agi_multiplier *= 1 + proc.uptime * proc.value[e]
-                        current_stats['agi'] *= 1 + proc.uptime * proc.value[e]
-                    #other stats work here too
+                    static_proc_stats[ e ] += proc.uptime * proc.value[e] * self.stat_multipliers[e]
         
         for k in static_proc_stats:
             current_stats[k] +=  static_proc_stats[ k ]
@@ -694,14 +699,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         while (need_converge or self.spec_needs_converge):
             current_stats = {
                 'str': self.base_strength,
-                'agi': self.base_stats['agi'] * self.get_stat_mod('agi'),
-                'ap': self.base_stats['ap'] * self.get_stat_mod('ap'),
-                'crit': self.base_stats['crit'] * self.get_stat_mod('crit'),
-                'haste': self.base_stats['haste'] * self.get_stat_mod('haste'),
-                'mastery': self.base_stats['mastery'] * self.get_stat_mod('mastery'),
-                'readiness': self.base_stats['readiness'] * self.get_stat_mod('readiness'),
-                'multistrike': self.base_stats['multistrike'] * self.get_stat_mod('multistrike'),
-                'versatility': self.base_stats['versatility'] * self.get_stat_mod('versatility'),
+                'agi': self.base_stats['agi'] * self.stat_multipliers['agi'],
+                'ap': self.base_stats['ap'] * self.stat_multipliers['ap'],
+                'crit': self.base_stats['crit'] * self.stat_multipliers['crit'],
+                'haste': self.base_stats['haste'] * self.stat_multipliers['haste'],
+                'mastery': self.base_stats['mastery'] * self.stat_multipliers['mastery'],
+                'readiness': self.base_stats['readiness'] * self.stat_multipliers['readiness'],
+                'multistrike': self.base_stats['multistrike'] * self.stat_multipliers['multistrike'],
+                'versatility': self.base_stats['versatility'] * self.stat_multipliers['versatility'],
             }
             for k in static_proc_stats:
                 current_stats[k] +=  static_proc_stats[k]
@@ -713,7 +718,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                         convergence_stats = True
                     if e == 'crit':
                         recalculate_crit = True
-                    current_stats[ e ] += proc.uptime * proc.value[e] * self.get_stat_mod(e)
+                    current_stats[ e ] += proc.uptime * proc.value[e] * self.stat_multipliers[e]
             
             #only have to converge with specific procs
             #check if... assassination:crit/haste, combat:mastery/haste, sub:haste/mastery
@@ -734,7 +739,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             for e in proc.value:
                 if e == 'crit':
                     recalculate_crit = True
-                current_stats[ e ] += proc.uptime * proc.value[e] * self.get_stat_mod(e)
+                current_stats[ e ] += proc.uptime * proc.value[e] * self.stat_multipliers[e]
         
         #if no new stats are added, skip this step
         if len(active_procs_icd) > 0 or self.spec_needs_converge:
@@ -818,7 +823,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #set readiness coefficient
         self.readiness_spec_conversion = self.assassination_readiness_conversion
         self.spec_convergence_stats = ['haste', 'crit', 'readiness']
-        self.spec_stat_bonus = 'mastery'
         
         # Assassasins's Resolve
         self.damage_modifier_cache = 1.10
@@ -846,6 +850,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.max_energy = round(self.max_energy * 1.05, 0)
             
         self.set_constants()
+        self.stat_multipliers['mastery'] *= 1.05
 
         self.vendetta_duration = 20 + 10 * self.glyphs.vendetta
         self.vendetta_uptime = self.vendetta_duration / (self.get_spell_cd('vendetta') + self.settings.response_time + self.major_cd_delay)
@@ -1165,7 +1170,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #set readiness coefficient
         self.readiness_spec_conversion = self.combat_readiness_conversion
         self.spec_convergence_stats = ['haste', 'mastery', 'readiness']
-        self.spec_stat_bonus = 'haste'
         
         #spec specific glyph behaviour
         if self.glyphs.disappearance:
@@ -1203,6 +1207,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.settings.dmg_poison = 'sp'
         
         self.set_constants()
+        self.stat_multipliers['haste'] *= 1.05
+        self.stat_multipliers['ap'] *= 1.40
+        
         if self.talents.death_from_above:
             self.spec_needs_converge = True
         
@@ -1277,12 +1284,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         new_count = copy(ability_count)
         new_count += 1
             
-        n_chance = 1 - self.extra_cp_chance
-        n_count = self.combat_cpg_per_finisher(current_cp+1, new_count)
-        c_chance = self.extra_cp_chance
-        c_count = self.combat_cpg_per_finisher(current_cp+2, new_count)
+        normal = self.combat_cpg_per_finisher(current_cp+1, new_count)
+        rvs_proc = self.combat_cpg_per_finisher(current_cp+2, new_count)
             
-        return n_chance*n_count + c_chance*c_count
+        return (1 - self.extra_cp_chance)*normal + self.extra_cp_chance*rvs_proc
     
     def combat_attack_counts(self, current_stats, ar=False, crit_rates=None):
         attacks_per_second = {}
@@ -1565,7 +1570,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #set readiness coefficient
         self.readiness_spec_conversion = self.subtlety_readiness_conversion
         self.spec_convergence_stats = ['haste', 'multistrike']
-        self.spec_stat_bonus = 'multistrike'
         
         #overrides setting, using Ambush + Vanish on CD is critical
         self.settings.use_opener = 'always'
@@ -1579,9 +1583,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             getattr(self.stats.procs, 'legendary_capacitive_meta').proc_rate_modifier = 1.114
         
         self.set_constants()
+        self.stat_multipliers['multistrike'] *= 1.05
+        self.stat_multipliers['agi'] *= 1.05
         #sinister calling requires convergence to calculate (for now?)
         self.spec_needs_converge = True
-        self.agi_multiplier *= 1.15
         
         self.base_energy_regen = 10.
         self.max_energy = 100.
