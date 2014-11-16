@@ -611,7 +611,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         #sort the procs into groups
         for proc in self.stats.procs.get_all_procs_for_stat():
-            if (proc.stat == 'stats') and not proc.is_ppm():
+            if (proc.stat in ('stats', 'stats_modifier')) and not proc.is_ppm():
                 if proc.is_real_ppm():
                     active_procs_rppm.append(proc)
                 else:
@@ -623,7 +623,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 damage_procs.append(proc)
             elif proc.stat == 'extra_weapon_damage':
                 weapon_damage_procs.append(proc)
-                
+        
         #calculate weapon procs
         weapon_enchants = set([])
         for hand, enchant in [(x, y) for x in ('mh', 'oh') for y in ('dancing_steel', 'elemental_force', 'mark_of_the_frostwolf',
@@ -670,8 +670,15 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         for proc in active_procs_rppm:
             self.set_rppm_uptime(proc)
-            for e in proc.value:
-                static_proc_stats[ e ] += proc.uptime * proc.value[e] * self.get_stat_mod(e)
+            if proc.stat == 'stats':
+                for e in proc.value:
+                    static_proc_stats[ e ] += proc.uptime * proc.value[e] * self.get_stat_mod(e)
+            elif proc.stat == 'stats_modifier':
+                for e in proc.value:
+                    if e == 'agi':
+                        self.agi_multiplier *= 1 + proc.uptime * proc.value[e]
+                        current_stats['agi'] *= 1 + proc.uptime * proc.value[e]
+                    #other stats work here too
         
         for k in static_proc_stats:
             current_stats[k] +=  static_proc_stats[ k ]

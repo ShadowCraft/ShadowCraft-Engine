@@ -135,6 +135,32 @@ allowed_procs = {
         'haste_scales': True,
         'trigger': 'all_attacks'
     },
+    'archmages_incandescence': {
+        'stat':'stats_modifier',
+        'value': {'agi':.10},
+        'duration': 10,
+        'proc_name': 'Archmages Incandescence',
+        'scaling': 0.0,
+        'item_level': 541,
+        'type': 'rppm',
+        'source': 'unique',
+        'icd': 1,
+        'proc_rate': 0.92,
+        'trigger': 'all_attacks'
+    },
+    'archmages_greater_incandescence': {
+        'stat':'stats_modifier',
+        'value': {'agi':.15},
+        'duration': 10,
+        'proc_name': 'Archmages Greater Incandescence',
+        'scaling': 0.0,
+        'item_level': 541,
+        'type': 'rppm',
+        'source': 'unique',
+        'icd': 1,
+        'proc_rate': 0.92,
+        'trigger': 'all_attacks'
+    },
     #6.0 procs
     'humming_blackiron_trigger': {
         'stat': 'stats',

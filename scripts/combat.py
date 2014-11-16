@@ -50,7 +50,7 @@ test_mh = stats.Weapon(410., 2.6, 'sword', 'dancing_steel')
 test_oh = stats.Weapon(410., 2.6, 'sword', 'dancing_steel')
 
 # Set up procs.
-test_procs = procs.ProcsList(('assurance_of_consequence', 588), ('haromms_talisman', 588), 'virmens_bite', 'virmens_bite_prepot') #trinkets, other things (legendary procs)
+test_procs = procs.ProcsList(('assurance_of_consequence', 588), ('haromms_talisman', 588), 'virmens_bite', 'virmens_bite_prepot', 'archmages_incandescence') #trinkets, other things (legendary procs)
 
 # Set up gear buffs.
 test_gear_buffs = stats.GearBuffs('gear_specialization', 'rogue_t16_2pc', 'rogue_t16_4pc') #tier buffs located here

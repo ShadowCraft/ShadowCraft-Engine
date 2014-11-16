@@ -49,8 +49,7 @@ test_mh = stats.Weapon(283.5, 1.8, 'dagger', 'dancing_steel')
 test_oh = stats.Weapon(283.5, 1.8, 'dagger', 'dancing_steel')
 
 # Set up procs.
-test_procs = procs.ProcsList( ('assurance_of_consequence', 588), ('haromms_talisman', 588), 'virmens_bite', 'virmens_bite_prepot',
-                              'legendary_capacitive_meta', 'fury_of_xuen')
+test_procs = procs.ProcsList( ('assurance_of_consequence', 588), ('haromms_talisman', 588), 'virmens_bite', 'virmens_bite_prepot', 'archmages_incandescence')
 
 # Set up gear buffs.
 test_gear_buffs = stats.GearBuffs('gear_specialization', 'rogue_t16_2pc', 'rogue_t16_4pc')

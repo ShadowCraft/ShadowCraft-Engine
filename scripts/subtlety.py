@@ -45,7 +45,7 @@ test_mh = stats.Weapon(420.5, 1.8, 'dagger', 'dancing_steel')
 test_oh = stats.Weapon(420.5, 1.8, 'dagger', 'dancing_steel')
 
 # Set up procs.
-test_procs = procs.ProcsList(('primal_combatants_ioc', 620), ('primal_combatants_boc', 620)) #trinkets, other things (legendary procs)
+test_procs = procs.ProcsList(('primal_combatants_ioc', 620), ('primal_combatants_boc', 620), 'archmages_incandescence') #trinkets, other things (legendary procs)
 
 # Set up gear buffs.
 test_gear_buffs = stats.GearBuffs('gear_specialization') #tier buffs located here
