@@ -401,8 +401,8 @@ allowed_procs = {
         'trigger': 'all_attacks'
     },
     'draenic_philosophers_stone': {
-        'stat': 'highest',
-        'value': {'str':771, 'agi':771},
+        'stat': 'stats',
+        'value': {'agi':771},
         'duration': 15,
         'proc_name': 'Draenic Philosophers Stone',
         'upgradable': True,
@@ -412,6 +412,62 @@ allowed_procs = {
         'source': 'trinket',
         'icd': 55, #correct?
         'proc_rate': 0.35,
+        'trigger': 'all_attacks'
+    },
+    'rabid_talbuk_horn': {
+        'stat': 'stats',
+        'value': {'agi':430},
+        'duration': 20,
+        'proc_name': 'Rabid Talbuk Horn',
+        'upgradable': True,
+        'scaling': 2.0000000000,
+        'item_level': 608,
+        'type': 'icd',
+        'source': 'trinket',
+        'icd': 55,
+        'proc_rate': 0.15,
+        'trigger': 'all_attacks'
+    },
+    'excavated_highmaul_knicknack': {
+        'stat': 'stats',
+        'value': {'agi':430},
+        'duration': 20,
+        'proc_name': 'Excavated Highmaul Knicknack',
+        'upgradable': True,
+        'scaling': 2.0000000000,
+        'item_level': 608,
+        'type': 'icd',
+        'source': 'trinket',
+        'icd': 55,
+        'proc_rate': 0.15,
+        'trigger': 'all_attacks'
+    },
+    'springrain_stone_of_rage': {
+        'stat': 'stats',
+        'value': {'mastery':572},
+        'duration': 20,
+        'proc_name': 'Springrain Stone of Rage',
+        'upgradable': True,
+        'scaling': 2.3333330154,
+        'item_level': 608,
+        'type': 'icd',
+        'source': 'trinket',
+        'icd': 55, #correct?
+        'proc_rate': 0.15,
+        'trigger': 'all_attacks'
+    },
+    'tormented_tooth_of_ferocity': {
+        'stat': 'stats',
+        'value': {'haste':800},
+        'duration': 20,
+        'proc_name': 'Tormented Tooth of Ferocity',
+        'upgradable': True,
+        'scaling': 3.3333330154,
+        'item_level': 608,
+        'type': 'icd',
+        'source': 'trinket',
+        'icd': 120,
+        'proc_rate': 1.0,
         'trigger': 'all_attacks'
     },
     #5.4 procs
@@ -836,8 +892,8 @@ allowed_melee_enchants = {
         'trigger': 'all_attacks'
     },
     'dancing_steel': {
-        'stat': 'highest',
-        'value': {'agi':103, 'str':103},
+        'stat': 'stats',
+        'value': {'agi':103},
         'duration': 12,
         'proc_name': 'Dancing Steel',
         'type': 'rppm',

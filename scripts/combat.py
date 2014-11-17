@@ -50,21 +50,21 @@ test_mh = stats.Weapon(410., 2.6, 'sword', 'dancing_steel')
 test_oh = stats.Weapon(410., 2.6, 'sword', 'dancing_steel')
 
 # Set up procs.
-test_procs = procs.ProcsList(('assurance_of_consequence', 588), ('haromms_talisman', 588), 'virmens_bite', 'virmens_bite_prepot', 'archmages_incandescence') #trinkets, other things (legendary procs)
+test_procs = procs.ProcsList(('assurance_of_consequence', 588), ('draenic_philosophers_stone', 620), 'virmens_bite', 'virmens_bite_prepot', 'archmages_incandescence') #trinkets, other things (legendary procs)
 
 # Set up gear buffs.
 test_gear_buffs = stats.GearBuffs('gear_specialization', 'rogue_t16_2pc', 'rogue_t16_4pc') #tier buffs located here
 
 # Set up a calcs object..
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
-                         agi=1299,
-                         stam=1634,
-                         crit=326,
-                         haste=674,
-                         mastery=494,
+                         agi=1957,
+                         stam=2426,
+                         crit=794,
+                         haste=645,
+                         mastery=557,
                          readiness=0,
-                         versatility=0,
-                         multistrike=107,)
+                         versatility=154,
+                         multistrike=121,)
 
 # Initialize talents..
 test_talents = talents.Talents('3111131', test_class, test_level)

@@ -604,14 +604,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if not shatt_hand:
             self.stats.procs.del_proc('mark_of_the_shattered_hand_dot')
         
-        #set 'highest' procs to agi
-        for proc in self.stats.procs.get_all_procs_for_stat('highest'):
-            if 'agi' in proc.value:
-                proc.stat = 'stats'
-                for e in proc.value:
-                    if proc.value[e] is not 'agi':
-                        proc.value[e] = 0
-        
         #sort the procs into groups
         for proc in self.stats.procs.get_all_procs_for_stat():
             if (proc.stat == 'stats'):
@@ -1278,8 +1270,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 
         return damage_breakdown
     
-    def combat_cpg_per_finisher(self, current_cp, ability_count, cp_limit=5):
-        if current_cp >= cp_limit:
+    def combat_cpg_per_finisher(self, current_cp, ability_count):
+        if current_cp >= 5:
             return ability_count
         new_count = copy(ability_count)
         new_count += 1
