@@ -90,8 +90,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 'marked_for_death',
                 'anticipation',
                 'lemon_zest',
-                #'death_from_above',
-                #'shadow_reflection',
+                'death_from_above',
+                'shadow_reflection',
             ]
         return super(AldrianasRogueDamageCalculator, self).get_talents_ranking(list)
 
@@ -271,6 +271,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             getattr(self.stats.procs, 'virmens_bite').icd = self.settings.duration
         if self.stats.procs.virmens_bite_prepot:
             getattr(self.stats.procs, 'virmens_bite_prepot').icd = self.settings.duration
+        if self.stats.procs.draenic_agi_pot:
+            getattr(self.stats.procs, 'draenic_agi_pot').icd = self.settings.duration
+        if self.stats.procs.draenic_agi_prepot:
+            getattr(self.stats.procs, 'draenic_agi_prepot').icd = self.settings.duration
 
         self.base_strength = self.stats.str + self.buffs.buff_str() + self.race.racial_str
         self.base_strength *= self.buffs.stat_multiplier()
@@ -287,7 +291,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.true_haste_mod *= self.buffs.haste_multiplier()
         if self.stats.gear_buffs.rogue_t14_4pc:
             self.true_haste_mod *= 1.05
-            
+                    
         #hit chances
         self.dw_mh_hit_chance = self.dual_wield_mh_hit_chance()
         self.dw_oh_hit_chance = self.dual_wield_oh_hit_chance()
@@ -846,8 +850,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         self.vendetta_duration = 20 + 10 * self.glyphs.vendetta
         self.vendetta_uptime = self.vendetta_duration / (self.get_spell_cd('vendetta') + self.settings.response_time + self.major_cd_delay)
-        vendetta_multiplier = .3 - .05 * self.glyphs.vendetta
-        self.vendetta_mult = 1 + vendetta_multiplier * self.vendetta_uptime
+        self.vendetta_multiplier = .3 - .05 * self.glyphs.vendetta
+        self.vendetta_mult = 1 + self.vendetta_multiplier * self.vendetta_uptime
 
     def assassination_dps_estimate(self):
         non_execute_dps = self.assassination_dps_estimate_non_execute() * (1 - self.settings.time_in_execute_range)
@@ -881,9 +885,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     def update_assassination_breakdown_with_modifiers(self, damage_breakdown):
         for key in damage_breakdown:
-            if key != 'Elemental Force':
+            if (key != 'Elemental Force') and ('sr_' not in key):
                 damage_breakdown[key] *= self.vendetta_mult
-            if self.level == 100 and key in ('mutilate', 'dispatch'):
+            elif 'sr_' in key:
+                damage_breakdown[key] *= self.vendetta_multiplier
+            if self.level == 100 and key in ('mutilate', 'dispatch', 'sr_mutilate', 'sr_mh_mutilate', 'sr_oh_mutilate', 'sr_dispatch'):
                 damage_breakdown[key] *= self.emp_envenom_percentage
 
     def assassination_dps_breakdown_non_execute(self):
@@ -1576,7 +1582,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         self.set_constants()
         self.stat_multipliers['multistrike'] *= 1.05
-        self.stat_multipliers['agi'] *= 1.05
+        self.stat_multipliers['agi'] *= 1.15
         #sinister calling requires convergence to calculate (for now?)
         self.spec_needs_converge = True
         
@@ -1626,7 +1632,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         find_weakness_multiplier = 1 + (find_weakness_damage_boost - 1) * self.find_weakness_uptime
 
         for key in damage_breakdown:
-            if key in ('eviscerate', 'hemorrhage', 'shuriken_toss') or key in ('hemorrhage_dot'): #'burning_wounds'
+            if key in ('eviscerate', 'hemorrhage', 'shuriken_toss', 'hemorrhage_dot'): #'burning_wounds'
                 damage_breakdown[key] *= find_weakness_multiplier
             if key == 'autoattack':
                 damage_breakdown[key] *=  1 + self.autoattack_fw_rate * (find_weakness_damage_boost - 1)
@@ -1634,7 +1640,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 damage_breakdown[key] *= 1 + ((1 - self.ambush_no_fw_rate) * (find_weakness_damage_boost - 1))
             if key == 'backstab':
                 damage_breakdown[key] *= 1 + self.backstab_fw_rate * (find_weakness_damage_boost - 1)
-            if key == 'rupture':
+            if key in ('rupture', 'sr_rupture'):
                 damage_breakdown[key] *= 1.1
             damage_breakdown[key] *= mos_multiplier
         
@@ -1870,5 +1876,5 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                     attacks_per_second['sr_'+ability] = sr_uptime * attacks_per_second[ability]
         
         self.get_poison_counts(attacks_per_second)
-        
+                
         return attacks_per_second, crit_rates

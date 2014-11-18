@@ -49,7 +49,7 @@ test_mh = stats.Weapon(283.5, 1.8, 'dagger', 'dancing_steel')
 test_oh = stats.Weapon(283.5, 1.8, 'dagger', 'dancing_steel')
 
 # Set up procs.
-test_procs = procs.ProcsList( ('assurance_of_consequence', 588), ('haromms_talisman', 588), 'virmens_bite', 'virmens_bite_prepot', 'archmages_incandescence')
+test_procs = procs.ProcsList( ('assurance_of_consequence', 588), ('haromms_talisman', 588), 'draenic_agi_pot', 'draenic_agi_prepot', 'archmages_incandescence')
 
 # Set up gear buffs.
 test_gear_buffs = stats.GearBuffs('gear_specialization', 'rogue_t16_2pc', 'rogue_t16_4pc')
@@ -69,7 +69,7 @@ test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
 test_talents = talents.Talents('3322102', test_class, test_level)
 
 # Set up glyphs.
-glyph_list = ['recuperate', 'sprint', 'vendetta'] #just to have something
+glyph_list = ['disappearance', 'sprint', 'vendetta'] #just to have something
 test_glyphs = glyphs.Glyphs(test_class, *glyph_list)
 
 # Set up settings.

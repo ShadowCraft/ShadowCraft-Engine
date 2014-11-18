@@ -41,25 +41,26 @@ test_buffs = buffs.Buffs(
     )
 
 # Set up weapons.
-test_mh = stats.Weapon(420.5, 1.8, 'dagger', 'dancing_steel')
-test_oh = stats.Weapon(420.5, 1.8, 'dagger', 'dancing_steel')
+test_mh = stats.Weapon(812.0, 1.8, 'dagger', 'mark_of_the_frostwolf')
+test_oh = stats.Weapon(812.0, 1.8, 'dagger', 'mark_of_the_frostwolf')
 
-# Set up procs.
-test_procs = procs.ProcsList(('primal_combatants_ioc', 620), ('primal_combatants_boc', 620), 'archmages_incandescence') #trinkets, other things (legendary procs)
+# Set up procs. - trinkets, other things (legendary procs)
+test_procs = procs.ProcsList(('scales_of_doom', 691), ('beating_heart_of_the_mountain', 701),
+                             'draenic_agi_pot', 'draenic_agi_prepot', 'archmages_greater_incandescence')
 
 # Set up gear buffs.
 test_gear_buffs = stats.GearBuffs('gear_specialization') #tier buffs located here
 
 # Set up a calcs object..
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
-                         agi=1957,
+                         agi=3650,
                          stam=2426,
-                         crit=794,
-                         haste=645,
-                         mastery=557,
+                         crit=1039,
+                         haste=0,
+                         mastery=1115,
                          readiness=0,
-                         versatility=154,
-                         multistrike=121,)
+                         versatility=122,
+                         multistrike=2034,)
 
 # Initialize talents..
 test_talents = talents.Talents('3222123', test_class, test_level)
