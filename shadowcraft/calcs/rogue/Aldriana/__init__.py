@@ -832,6 +832,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #spec specific glyph behaviour
         if self.glyphs.disappearance:
             self.ability_cds['vanish'] = 60
+        else:
+            self.ability_cds['vanish'] = 120
         
         self.base_energy_regen = 10
         self.max_energy = 120.
@@ -1172,6 +1174,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #spec specific glyph behaviour
         if self.glyphs.disappearance:
             self.ability_cds['vanish'] = 60
+        else:
+            self.ability_cds['vanish'] = 120
         
         #update spec specific proc rates
         if getattr(self.stats.procs, 'legendary_capacitive_meta'):
@@ -1423,7 +1427,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attacks_per_second['revealing_strike'] = 1. / rvs_interval
         extra_finishers_per_second = attacks_per_second['revealing_strike'] / 5.
         if self.talents.death_from_above and not ar:
-            extra_finishers_per_second += (1 + self.settings.num_boss_adds) / (5. * dfa_cd)
+            extra_finishers_per_second += (2 + self.settings.num_boss_adds) / (5. * dfa_cd)
         #Scaling CPGs
         free_gcd = 1./gcd_size
         free_gcd -= 1./snd_duration + (attacks_per_second['sinister_strike_base'] + attacks_per_second['revealing_strike'] + extra_finishers_per_second)
@@ -1787,6 +1791,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             base_cp_per_second += cpg_per_second
             attacks_per_second[cpg_name] += cpg_per_second
         attacks_per_second['eviscerate'][5] += base_cp_per_second / 5
+        energy_regen -= (base_cp_per_second / 5) * (self.base_eviscerate_cost - 25)
         
         #calculate shd ambush cycles
         shd_cycle_cost = 2 * self.sd_ambush_cost + (self.base_eviscerate_cost - 25)
