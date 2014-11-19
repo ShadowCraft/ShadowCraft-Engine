@@ -553,6 +553,13 @@ class DamageCalculator(object):
         
         return talents_ranking
 
+    def get_engine_info(self):
+        data = {
+            'wow_build_target': self.WOW_BUILD_TARGET,
+            'shadowcraft_build': self.SHADOWCRAFT_BUILD
+        }
+        return data
+
     def get_dps(self):
         # Overwrite this function with your calculations/simulations/whatever;
         # this is what callers will (initially) be looking at.
