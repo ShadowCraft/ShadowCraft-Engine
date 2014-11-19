@@ -63,7 +63,7 @@ test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          multistrike=2034,)
 
 # Initialize talents..
-test_talents = talents.Talents('3222123', test_class, test_level)
+test_talents = talents.Talents('3222133', test_class, test_level)
 
 # Set up glyphs.
 glyph_list = []
@@ -76,6 +76,10 @@ test_settings = settings.Settings(test_cycle, response_time=.5, duration=360, dm
 
 # Build a DPS object.
 calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_glyphs, test_buffs, test_race, test_settings, test_level)
+
+# Compute DPS Breakdown.
+dps_breakdown = calculator.get_dps_breakdown()
+total_dps = sum(entry[1] for entry in dps_breakdown.items())
 
 # Compute EP values.
 ep_values = calculator.get_ep()
@@ -93,10 +97,7 @@ trinkets_list = [
     'fury_of_xuen',
 ]
 
-# Compute DPS Breakdown.
-dps_breakdown = calculator.get_dps_breakdown()
-total_dps = sum(entry[1] for entry in dps_breakdown.items())
-talent_ranks = calculator.get_talents_ranking()
+#talent_ranks = calculator.get_talents_ranking()
 
 def max_length(dict_list):
     max_len = 0
@@ -123,7 +124,7 @@ def pretty_print(dict_list):
 dicts_for_pretty_print = [
     ep_values,
     tier_ep_values,
-    talent_ranks,
+    #talent_ranks,
     #trinkets_ep_value,
     dps_breakdown
 ]

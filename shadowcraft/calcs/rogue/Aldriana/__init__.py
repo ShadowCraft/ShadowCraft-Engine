@@ -1790,11 +1790,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         #calculate shd ambush cycles
         shd_cycle_cost = 2 * self.sd_ambush_cost + (self.base_eviscerate_cost - 25)
-        shd_eviscerates = shd_energy / shd_cycle_cost / self.shd_cd
+        shd_eviscerates = min(shd_energy / shd_cycle_cost, 8./3) #8/3 is the max GCDs
         shd_ambushes = shd_eviscerates * 2
-        attacks_per_second['ambush'] += shd_ambushes * ((self.settings.duration - fw_duration) / self.settings.duration)
-        attacks_per_second['eviscerate'][5] += shd_eviscerates * ((self.settings.duration - fw_duration) / self.settings.duration)
-        energy_regen -= shd_energy / self.shd_cd * ((self.settings.duration - fw_duration) / self.settings.duration)
+        attacks_per_second['ambush'] += (shd_ambushes / self.shd_cd) * ((self.settings.duration - fw_duration) / self.settings.duration)
+        attacks_per_second['eviscerate'][5] += (shd_eviscerates / self.shd_cd) * ((self.settings.duration - fw_duration) / self.settings.duration)
+        energy_regen -= (shd_cycle_cost * shd_eviscerates) / self.shd_cd * ((self.settings.duration - fw_duration) / self.settings.duration)
         
         #calculate percentage of ambushes with FW
         ambush_no_fw = shadowmeld_ambushes + 1. / self.shd_cd + self.total_openers_per_second
@@ -1840,21 +1840,17 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             ticks_per_second = min(1. / (3 * sc_scaler), 8. / hemo_gap)
             attacks_per_second['hemorrhage_ticks'] = ticks_per_second
         
-        sc_ms_chance = 2 * (self.stats.get_multistrike_chance_from_rating(rating=current_stats['multistrike']) + self.buffs.multistrike_bonus())
+        sc_ms_chance = min(2 * (self.stats.get_multistrike_chance_from_rating(rating=current_stats['multistrike']) + self.buffs.multistrike_bonus()), 2)
         #this is a cache for convergence
         self.sc_trigger_rate = attacks_per_second['ambush'] * sc_ms_chance
         if 'backstab' in attacks_per_second:
             self.sc_trigger_rate += attacks_per_second['backstab'] * sc_ms_chance
         
         if self.talents.shadow_reflection:
-            sr_uptime = 8. / self.get_spell_cd('shadow_reflection')
-            for ability in ('backstab', 'ambush', 'eviscerate', 'rupture_ticks', 'hemorrhage'):
-                if type(attacks_per_second[ability]) in (tuple, list):
-                    attacks_per_second['sr_'+ability] = [0,0,0,0,0,0]
-                    for i in xrange(1, 6):
-                        attacks_per_second['sr_'+ability][i] = sr_uptime * attacks_per_second[ability][i]
-                else:
-                    attacks_per_second['sr_'+ability] = sr_uptime * attacks_per_second[ability]
+            sr_cd = self.get_spell_cd('shadow_reflection')
+            attacks_per_second['sr_eviscerate'] = [0,0,0,0,0, shd_eviscerates / sr_cd]
+            attacks_per_second['sr_rupture_ticks'] = [0,0,0,0,0, 12. / sr_cd]
+            attacks_per_second['sr_ambush'] = shd_ambushes / sr_cd
         
         self.get_poison_counts(attacks_per_second)
                 
