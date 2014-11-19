@@ -309,7 +309,8 @@ class RogueDamageCalculator(DamageCalculator):
             if self.settings.opener_name in ('eviscerate', 'envenom'):
                 ability = attacks_per_second[self.settings.opener_name][5]
             else:
-                ability = attacks_per_second[self.settings.opener_name]
+                if self.settings.opener_name in attacks_per_second:
+                    ability = attacks_per_second[self.settings.opener_name]
             nightstalker_percent = self.total_openers_per_second / (ability)
             modifier = 1 + nightstalker_mod * nightstalker_percent
             damage_breakdown[self.settings.opener_name] *= modifier
