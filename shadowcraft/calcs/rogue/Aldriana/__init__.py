@@ -1602,11 +1602,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if key in ('eviscerate', 'hemorrhage', 'shuriken_toss', 'hemorrhage_dot', 'autoattack'): #'burning_wounds'
                 damage_breakdown[key] *= find_weakness_multiplier
             if key == 'ambush':
-                damage_breakdown[key] *= find_weakness_multiplier
-                #damage_breakdown[key] *= 1 + ((1 - additional_info['ambush_no_fw_rate']) * (find_weakness_damage_boost - 1))
+                #damage_breakdown[key] *= find_weakness_multiplier
+                damage_breakdown[key] *= 1 + ((1 - additional_info['ambush_no_fw_rate']) * (find_weakness_damage_boost - 1))
             if key == 'backstab':
-                damage_breakdown[key] *= find_weakness_multiplier
-                #damage_breakdown[key] *= 1 + additional_info['backstab_fw_rate'] * (find_weakness_damage_boost - 1)
+                #damage_breakdown[key] *= find_weakness_multiplier
+                damage_breakdown[key] *= 1 + additional_info['backstab_fw_rate'] * (find_weakness_damage_boost - 1)
             if key in ('rupture', 'sr_rupture'):
                 damage_breakdown[key] *= 1.1
             damage_breakdown[key] *= mos_multiplier
