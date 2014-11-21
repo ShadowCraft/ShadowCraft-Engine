@@ -63,7 +63,7 @@ test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          multistrike=2034,)
 
 # Initialize talents..
-test_talents = talents.Talents('3222133', test_class, test_level)
+test_talents = talents.Talents('0000000', test_class, test_level)
 
 # Set up glyphs.
 glyph_list = []
@@ -82,20 +82,9 @@ dps_breakdown = calculator.get_dps_breakdown()
 total_dps = sum(entry[1] for entry in dps_breakdown.items())
 
 # Compute EP values.
-ep_values = calculator.get_ep()
-tier_ep_values = calculator.get_other_ep(['rogue_t16_2pc', 'rogue_t16_4pc'])
-
-trinkets_list = [
-    #5.4
-    'assurance_of_consequence',
-    'haromms_talisman',
-    'sigil_of_rampage',
-    'sigil_of_rampage',
-    'ticking_ebon_detonator',
-    'thoks_tail_tip',
-    'discipline_of_xuen',
-    'fury_of_xuen',
-]
+ep_values = calculator.get_ep(baseline_dps=total_dps)
+#ep_values = calculator.get_ep()
+#tier_ep_values = calculator.get_other_ep(['rogue_t17_2pc', 'rogue_t17_4pc', 'rogue_t17_4pc_lfr'])
 
 #talent_ranks = calculator.get_talents_ranking()
 
@@ -123,7 +112,7 @@ def pretty_print(dict_list):
 
 dicts_for_pretty_print = [
     ep_values,
-    tier_ep_values,
+    #tier_ep_values,
     #talent_ranks,
     #trinkets_ep_value,
     dps_breakdown

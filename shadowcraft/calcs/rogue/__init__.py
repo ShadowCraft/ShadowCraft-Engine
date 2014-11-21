@@ -129,7 +129,7 @@ class RogueDamageCalculator(DamageCalculator):
         average_hit = base_damage * (1 - crit_rate) + base_damage * crit_rate * crit_modifier
         return average_hit * frequency
     
-    def get_damage_breakdown(self, current_stats, attacks_per_second, crit_rates, damage_procs):
+    def get_damage_breakdown(self, current_stats, attacks_per_second, crit_rates, damage_procs, additional_info):
         average_ap = current_stats['ap'] + current_stats['agi'] * self.stat_multipliers['ap']
         run_multistrike = True
         if self.settings.is_combat_rogue():
@@ -280,8 +280,12 @@ class RogueDamageCalculator(DamageCalculator):
                 if 'sr_' in ability:
                     modifier = 1.
                     if ability[3:] in ('envenom'):
-                        modifier *= spell_modifier
+                        modifier *= spell_modifier * potent_poisons_mod
+                    elif ability == 'sr_rupture_ticks':
+                        modifier *= bleed_modifier
                     else:
+                        if ability == 'sr_eviscerate':
+                            modifier *= executioner_mod
                         modifier *= physical_modifier
                     crit_name = ability[3:]
                     if 'mh_' in crit_name or 'oh_' in crit_name:
@@ -341,7 +345,7 @@ class RogueDamageCalculator(DamageCalculator):
         
         self.add_exported_data(damage_breakdown)
 
-        return damage_breakdown
+        return damage_breakdown, additional_info
     
     #autoattacks
     def mh_damage(self, ap):
