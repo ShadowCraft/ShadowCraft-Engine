@@ -643,19 +643,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                             active_procs_no_icd.append(proc)
                 elif enchant in ('elemental_force', 'mark_of_the_shattered_hand'):
                     damage_procs.append(proc)
-                elif proc.stat == 'highest' and 'agi' in proc.value:
-                    proc.stat = 'stats'
-                    #need to make sure all 'highest' procs are restrained to a single stat
-                    for s in proc.value:
-                        if s != 'agi':
-                            proc.value[s] = 0
-                    if proc.is_real_ppm():
-                        active_procs_rppm.append(proc)
-                    else:
-                        if proc.icd:
-                            active_procs_icd.append(proc)
-                        else:
-                            active_procs_no_icd.append(proc)
         
         static_proc_stats = {
             'str': 0,
@@ -1583,6 +1570,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         # Sanguinary Vein
         self.damage_modifier_cache = 1.2
         
+        self.sc_trigger_rate = 0
+        mos_value = .1
+        # leveling perks
+        if self.level == 100:
+            mos_value += .05
+            self.ability_cds['vanish'] = 90
+        
         #update spec specific proc rates
         if getattr(self.stats.procs, 'legendary_capacitive_meta'):
             getattr(self.stats.procs, 'legendary_capacitive_meta').proc_rate_modifier = 1.114
@@ -1593,13 +1587,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #sinister calling requires convergence to calculate (for now?)
         self.spec_needs_converge = True
         
-        self.sc_trigger_rate = 0
-        mos_value = .1
-        # leveling perks
-        if self.level == 100:
-            mos_value += .05
-            self.ability_cds['vanish'] = 90
-            #enhanced FOK
         self.settings.cycle.raid_crits_per_second = self.get_adv_param('hat_triggers_per_second', self.settings.cycle.raid_crits_per_second, min_bound=0, max_bound=600)
             
         self.vanish_rate = 1. / (self.get_spell_cd('vanish') + self.settings.response_time) + 1. / (self.get_spell_cd('preparation') + self.settings.response_time * 3) #vanish CD + Prep CD
@@ -1785,7 +1772,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         base_cp_per_second += self.vanish_rate * 2
         #if we've consumed more CP's than we have for base functionality, lets generate some more CPs
         if base_cp_per_second < 0:
-            print 'not enough cps!'
             cpg_per_second = math.fabs(base_cp_per_second)
             base_cp_per_second += cpg_per_second
             attacks_per_second[cpg_name] += cpg_per_second
@@ -1794,7 +1780,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             elif cpg_name == 'hemorrhage':
                 energy_regen -= base_hemo_cost * cpg_per_second
             if energy_regen < 0:
-                print 'CATASTROPHIC FAILURE'
+                raise InputNotModeledException(_('Catastrophic failure: cycle not sustainable.'))
         attacks_per_second['eviscerate'][5] += base_cp_per_second / 5
         
         #calculate shd ambush cycles

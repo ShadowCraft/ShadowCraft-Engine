@@ -79,7 +79,10 @@ calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_glyph
 
 # Compute DPS Breakdown.
 dps_breakdown = calculator.get_dps_breakdown()
+dps_breakdown2 = calculator.get_dps_breakdown()
 total_dps = sum(entry[1] for entry in dps_breakdown.items())
+total_dps2 = sum(entry[1] for entry in dps_breakdown2.items())
+print total_dps, total_dps2, calculator.get_dps(), calculator.get_dps()
 
 # Compute EP values.
 ep_values = calculator.get_ep(baseline_dps=total_dps)
