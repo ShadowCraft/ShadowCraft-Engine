@@ -878,7 +878,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if (key != 'Elemental Force') and ('sr_' not in key):
                 damage_breakdown[key] *= self.vendetta_mult
             elif 'sr_' in key:
-                damage_breakdown[key] *= self.vendetta_multiplier
+                damage_breakdown[key] *= 1 + self.vendetta_multiplier
             if self.level == 100 and key in ('mutilate', 'dispatch', 'sr_mutilate', 'sr_mh_mutilate', 'sr_oh_mutilate', 'sr_dispatch'):
                 damage_breakdown[key] *= self.emp_envenom_percentage
 
@@ -1106,13 +1106,15 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         if self.talents.shadow_reflection:
             sr_uptime = 8. / self.get_spell_cd('shadow_reflection')
-            for ability in ('envenom', 'rupture_ticks', 'dispatch'):
+            for ability in ('rupture_ticks', 'dispatch'):
                 if type(attacks_per_second[ability]) in (tuple, list):
                     attacks_per_second['sr_'+ability] = [0,0,0,0,0,0]
                     for i in xrange(1, 6):
                         attacks_per_second['sr_'+ability][i] = sr_uptime * attacks_per_second[ability][i]
                 else:
                     attacks_per_second['sr_'+ability] = sr_uptime * attacks_per_second[ability]
+            attacks_per_second['sr_envenom'] = [finisher_chance * 3. / self.get_spell_cd('shadow_reflection') for finisher_chance in avg_size_breakdown]
+            crit_rates['sr_envenom'] = 1. / 3. + 2./3. * crit_rates['envenom']
             if 'mutilate' in attacks_per_second:
                 attacks_per_second['sr_mh_mutilate'] = sr_uptime * attacks_per_second['mutilate']
                 attacks_per_second['sr_oh_mutilate'] = sr_uptime * attacks_per_second['mutilate']
@@ -1779,9 +1781,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 energy_regen -= base_backstab_energy_cost * cpg_per_second
             elif cpg_name == 'hemorrhage':
                 energy_regen -= base_hemo_cost * cpg_per_second
-            if energy_regen < 0:
-                raise InputNotModeledException(_('Catastrophic failure: cycle not sustainable.'))
-        attacks_per_second['eviscerate'][5] += base_cp_per_second / 5
+        extra_evisc = base_cp_per_second / 5
+        energy_regen -= (base_eviscerate_cost - 25) * extra_evisc
+        attacks_per_second['eviscerate'][5] += extra_evisc
+        if energy_regen < 0:
+            raise InputNotModeledException(_('Catastrophic failure: cycle not sustainable.'))
         
         #calculate shd ambush cycles
         shd_cycle_cost = 2 * sd_ambush_cost + (base_eviscerate_cost - 25)
@@ -1838,5 +1842,5 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second['sr_ambush'] = shd_ambushes / sr_cd
         
         self.get_poison_counts(attacks_per_second)
-                
+                        
         return attacks_per_second, crit_rates, additional_info

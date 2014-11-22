@@ -287,9 +287,11 @@ class RogueDamageCalculator(DamageCalculator):
                         if ability == 'sr_eviscerate':
                             modifier *= executioner_mod
                         modifier *= physical_modifier
-                    crit_name = ability[3:]
-                    if 'mh_' in crit_name or 'oh_' in crit_name:
-                        crit_name = crit_name[3:]
+                    crit_name = ability
+                    if ability not in crit_rates:
+                        crit_name = ability[3:]
+                        if 'mh_' in crit_name or 'oh_' in crit_name:
+                            crit_name = crit_name[3:]
                     if type(attacks_per_second[ability]) in (tuple, list):
                         average_dps = 0
                         for i in xrange(1, 6):
@@ -298,9 +300,9 @@ class RogueDamageCalculator(DamageCalculator):
                             average_dps += dps_tuple
                         damage_breakdown[ability] = average_dps
                     else:
-                        dps = self.get_formula(ability)(average_ap) * modifier
-                        dps = self.get_dps_contribution(dps, crit_rates[crit_name], attacks_per_second[ability], crit_damage_modifier)
-                        damage_breakdown[ability] = dps
+                        average_dps = self.get_formula(ability)(average_ap) * modifier
+                        average_dps = self.get_dps_contribution(average_dps, crit_rates[crit_name], attacks_per_second[ability], crit_damage_modifier)
+                        damage_breakdown[ability] = average_dps
                    
         for proc in damage_procs:
             if proc.proc_name not in damage_breakdown:
@@ -344,7 +346,7 @@ class RogueDamageCalculator(DamageCalculator):
             damage_breakdown['Mark of the Shattered Hand DOT'] *= 2.
         
         self.add_exported_data(damage_breakdown)
-
+                
         return damage_breakdown, additional_info
     
     #autoattacks

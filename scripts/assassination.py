@@ -56,14 +56,14 @@ test_gear_buffs = stats.GearBuffs('gear_specialization', 'rogue_t16_2pc', 'rogue
 
 # Set up a calcs object..
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
-                         agi=1303,
-                         stam=1637,
-                         crit=332,
-                         haste=592,
-                         mastery=573,
+                         agi=3650,
+                         stam=2426,
+                         crit=1539,
+                         haste=0,
+                         mastery=1615,
                          readiness=0,
-                         versatility=0,
-                         multistrike=107,)
+                         versatility=122,
+                         multistrike=1034,)
 
 # Initialize talents..
 test_talents = talents.Talents('3322102', test_class, test_level)
@@ -105,7 +105,7 @@ trinkets_list = [
 ]
 # trinkets_ep_value = calculator.get_upgrades_ep_fast(trinkets_list)
 
-talent_ranks = calculator.get_talents_ranking()
+#talent_ranks = calculator.get_talents_ranking()
 
 def max_length(dict_list):
     max_len = 0
@@ -137,7 +137,7 @@ dicts_for_pretty_print = [
     #oh_enchants_and_dps_ep_values,
     #trinkets_ep_value,
     #glyph_values,
-    talent_ranks,
+    #talent_ranks,
 ]
 pretty_print(dicts_for_pretty_print)
 
