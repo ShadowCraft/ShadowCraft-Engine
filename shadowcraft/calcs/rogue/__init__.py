@@ -295,7 +295,7 @@ class RogueDamageCalculator(DamageCalculator):
                     if type(attacks_per_second[ability]) in (tuple, list):
                         average_dps = 0
                         for i in xrange(1, 6):
-                            dps_tuple = self.get_formula(ability)(average_ap, i)
+                            dps_tuple = self.get_formula(ability)(average_ap, i) * modifier
                             dps_tuple = self.get_dps_contribution(dps_tuple, crit_rates[crit_name], attacks_per_second[ability][i], crit_damage_modifier)
                             average_dps += dps_tuple
                         damage_breakdown[ability] = average_dps
