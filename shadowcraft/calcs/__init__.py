@@ -255,6 +255,34 @@ class DamageCalculator(object):
 
         return mh_ep_values, oh_ep_values
 
+    def get_weapon_type_ep(self, normalize_ep_stat=None):
+        if not normalize_ep_stat:
+            normalize_ep_stat = self.normalize_ep_stat
+        weapons = ('mh', 'oh')
+
+        baseline_dps = self.get_dps()
+        normalize_dps = self.ep_helper(normalize_ep_stat)
+
+        mh_ep_values = {}
+        oh_ep_values = {}
+        for hand in weapons:
+            ep_values = {}
+
+            old_type = getattr(self.stats, hand).type
+            for wtype in ('dagger', 'one-hander'):
+                getattr(self.stats, hand).type = wtype
+                new_dps = self.get_dps()
+                ep = (new_dps - baseline_dps) / (normalize_dps - baseline_dps)
+                ep_values[hand + '_type_' + wtype] = ep
+            getattr(self.stats, hand).type = old_type
+
+            if hand == 'mh':
+                mh_ep_values = ep_values
+            elif hand == 'oh':
+                oh_ep_values = ep_values
+
+        return mh_ep_values, oh_ep_values
+
     def get_weapon_type_modifier_helper(self, setups=None):
         # Use this method if you want to test different weapon setups. It will
         # return one value per setup including the current one. It takes setups
