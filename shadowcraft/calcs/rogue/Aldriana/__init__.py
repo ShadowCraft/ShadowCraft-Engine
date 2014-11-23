@@ -962,19 +962,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         vw_energy_per_bleed_tick = vw_energy_return
         
         blindside_proc_rate = [0, .3][cpg == 'mutilate']
-
-        if self.settings.opener_name in ('mutilate', 'dispatch', 'envenom'):
-            opener_net_cost = self.get_spell_stats(self.settings.opener_name, cost_mod=ability_cost_modifier*(1-self.get_shadow_focus_multiplier()))[0]
-            energy_regen += opener_net_cost * self.total_openers_per_second
-        else:
-            opener_net_cost = self.get_spell_stats(self.settings.opener_name, cost_mod=ability_cost_modifier*self.get_shadow_focus_multiplier())[0]
-            energy_regen -= opener_net_cost * self.total_openers_per_second
-            attacks_per_second[self.settings.opener_name] = self.total_openers_per_second
+        attacks_per_second['envenom'] = [0,0,0,0,0,0]
+        attacks_per_second['dispatch'] = 0
+        
         if self.talents.marked_for_death:
             energy_regen -= 10. / self.get_spell_cd('marked_for_death') # 35-25
-        
-        attacks_per_second['venomous_wounds'] = .5
-        energy_regen_with_rupture = energy_regen + .5 * vw_energy_return
         
         attack_speed_multiplier = self.base_speed_multiplier * haste_multiplier
         self.attack_speed_increase = attack_speed_multiplier
@@ -984,6 +976,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             seal_fate_proc_rate *= blindside_proc_rate
             seal_fate_proc_rate += 1 - (1 - crit_rates['mutilate']) ** 2
         
+        mutilate_cps = 3 - (1 - crit_rates['mutilate']) ** 2 # 1 - (1 - crit_rates['mutilate']) ** 2 is the Seal Fate CP
+        dispatch_cps = 1 + crit_rates['dispatch']
         if self.talents.anticipation:
             avg_finisher_size = 5
             avg_size_breakdown = [0,0,0,0,0,1.] #this is for determining the % likelyhood of sizes, not frequency of the sizes
@@ -991,8 +985,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if self.stats.gear_buffs.rogue_t17_4pc:
                 cp_needed_per_finisher -= 1
             
-            mutilate_cps = 3 - (1 - crit_rates['mutilate']) ** 2 # 1 - (1 - crit_rates['mutilate']) ** 2 is the Seal Fate CP
-            dispatch_cps = 1 + crit_rates['dispatch']
             if cpg == 'mutilate':
                 avg_cp_per_cpg = mutilate_cps + dispatch_cps * blindside_proc_rate
             else:
@@ -1028,12 +1020,44 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                     avg_size_breakdown[i] = avg_size_breakdown[i]*mut_start_chance + extra_tuple[3][i]*bs_start_chance
             
             avg_cpgs_per_finisher = avg_count[cpg]
+            avg_cp_per_cpg = avg_finisher_size / avg_cpgs_per_finisher
         
         cpg_energy_cost = self.get_spell_stats(cpg, cost_mod=ability_cost_modifier)[0]
+        cpg_cost_reduction = 0
         if self.stats.gear_buffs.rogue_t17_2pc:
-            cpg_energy_cost -= 7 * seal_fate_proc_rate
+            cpg_cost_reduction = 7 * seal_fate_proc_rate
         if self.stats.gear_buffs.rogue_t16_2pc_bonus():
-            cpg_energy_cost -= 6 * seal_fate_proc_rate
+            cpg_cost_reduction = 6 * seal_fate_proc_rate
+        cpg_energy_cost -= cpg_cost_reduction
+            
+        current_opener_name = self.settings.opener_name
+        if self.settings.opener_name == 'cpg':
+            current_opener_name = cpg
+            
+        cp_generated = 0
+        if current_opener_name == 'envenom':
+            opener_net_cost = self.get_spell_stats('envenom', cost_mod=ability_cost_modifier*(1-self.get_shadow_focus_multiplier()))[0]
+            energy_regen += opener_net_cost * self.total_openers_per_second
+        elif current_opener_name == cpg:
+            opener_net_cost = self.get_spell_stats(current_opener_name, cost_mod=(1-self.get_shadow_focus_multiplier()))[0]
+            opener_net_cost += cpg_cost_reduction
+            cp_generated = avg_cp_per_cpg
+            energy_regen += opener_net_cost * self.total_openers_per_second
+        else:
+            opener_net_cost = self.get_spell_stats(current_opener_name, cost_mod=self.get_shadow_focus_multiplier())[0]
+            attacks_per_second[current_opener_name] = self.total_openers_per_second
+            if current_opener_name == 'mutilate':
+                attacks_per_second['dispatch'] += self.total_openers_per_second * blindside_proc_rate
+            if current_opener_name in ('mutilate', 'dispatch', 'cpg'):
+                cp_generated = mutilate_cps + dispatch_cps * blindside_proc_rate
+            elif current_opener_name == 'ambush':
+                cp_generated = 2 + crit_rates['ambush']
+            energy_regen -= opener_net_cost * self.total_openers_per_second
+        for i in xrange(1,6):
+            attacks_per_second['envenom'][i] = self.total_openers_per_second * cp_generated / i * avg_size_breakdown[i]
+        
+        attacks_per_second['venomous_wounds'] = .5
+        energy_regen_with_rupture = energy_regen + .5 * vw_energy_return
         
         avg_cycle_length = 4. * (1 + avg_finisher_size + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp())
             
@@ -1074,14 +1098,15 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         else:
             attacks_per_second[cpg] = cpgs_per_second
         if cpg == 'mutilate':
-            attacks_per_second['dispatch'] = cpgs_per_second * blindside_proc_rate
-        
+            attacks_per_second['dispatch'] += cpgs_per_second * blindside_proc_rate
         
         attacks_per_second['rupture_ticks'] = [0,0,0,0,0,.5]
         if self.talents.anticipation:
-            attacks_per_second['envenom'] = [0, 0, 0, 0, 0, envenoms_per_second]
+            attacks_per_second['envenom'][5] += envenoms_per_second
         else:
-            attacks_per_second['envenom'] = [finisher_chance * envenoms_per_second for finisher_chance in avg_size_breakdown]
+            for i in xrange(1,6):
+                attacks_per_second['envenom'][i] = envenoms_per_second * avg_size_breakdown[i]
+            #attacks_per_second['envenom'] = [finisher_chance * envenoms_per_second for finisher_chance in avg_size_breakdown]
             for i in xrange(1, 6):
                 ticks_per_rupture = 2 * (1 + i + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp())
                 attacks_per_second['rupture_ticks'][i] = ticks_per_rupture * attacks_per_second['rupture'] * avg_size_breakdown[i]
@@ -1091,11 +1116,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         if 'garrote' in attacks_per_second:
             attacks_per_second['garrote_ticks'] = 6 * attacks_per_second['garrote']
-        for opener, cps in [('ambush', 2), ('garrote', 1)]:
-            if opener in attacks_per_second:
-                if opener == 'ambush':
-                    cps += crit_rates[opener]
-                attacks_per_second['envenom'][5] += attacks_per_second[opener] * cps / 5
         attacks_per_second['envenom'][5] += 1. / 180
         
         if self.level == 100:
@@ -1113,7 +1133,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                         attacks_per_second['sr_'+ability][i] = sr_uptime * attacks_per_second[ability][i]
                 else:
                     attacks_per_second['sr_'+ability] = sr_uptime * attacks_per_second[ability]
-            envenom_per_sr = 1.5
+            envenom_per_sr = 1.5 * sum(attacks_per_second['envenom'])
             attacks_per_second['sr_envenom'] = [finisher_chance * envenom_per_sr / self.get_spell_cd('shadow_reflection') for finisher_chance in avg_size_breakdown]
             crit_rates['sr_envenom'] = 1./envenom_per_sr + (1-envenom_per_sr)/envenom_per_sr * crit_rates['envenom']
             if 'mutilate' in attacks_per_second:

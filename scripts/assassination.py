@@ -45,14 +45,15 @@ test_buffs = buffs.Buffs(
     )
 
 # Set up weapons.
-test_mh = stats.Weapon(283.5, 1.8, 'dagger', 'dancing_steel')
-test_oh = stats.Weapon(283.5, 1.8, 'dagger', 'dancing_steel')
+test_mh = stats.Weapon(812.0, 1.8, 'dagger', 'mark_of_the_thunderlord')
+test_oh = stats.Weapon(812.0, 1.8, 'dagger', 'mark_of_the_thunderlord')
 
 # Set up procs.
-test_procs = procs.ProcsList( ('assurance_of_consequence', 588), ('haromms_talisman', 588), 'draenic_agi_pot', 'draenic_agi_prepot', 'archmages_incandescence')
+test_procs = procs.ProcsList(('scales_of_doom', 691), ('beating_heart_of_the_mountain', 701),
+                             'draenic_agi_pot', 'draenic_agi_prepot', 'archmages_greater_incandescence')
 
 # Set up gear buffs.
-test_gear_buffs = stats.GearBuffs('gear_specialization', 'rogue_t16_2pc', 'rogue_t16_4pc')
+test_gear_buffs = stats.GearBuffs('gear_specialization')
 
 # Set up a calcs object..
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
@@ -66,7 +67,7 @@ test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          multistrike=1034,)
 
 # Initialize talents..
-test_talents = talents.Talents('3322102', test_class, test_level)
+test_talents = talents.Talents('3322132', test_class, test_level)
 
 # Set up glyphs.
 glyph_list = ['disappearance', 'sprint', 'vendetta'] #just to have something
@@ -83,13 +84,15 @@ calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_glyph
 # Compute DPS Breakdown.
 dps_breakdown = calculator.get_dps_breakdown()
 total_dps = sum(entry[1] for entry in dps_breakdown.items())
+calculator.init_assassination()
 non_execute_breakdown = calculator.assassination_dps_breakdown_non_execute()
 non_execute_total = sum(entry[1] for entry in non_execute_breakdown.items())
+calculator.init_assassination()
 execute_breakdown = calculator.assassination_dps_breakdown_execute()
 execute_total = sum(entry[1] for entry in execute_breakdown.items())
 
 # Compute EP values.
-ep_values = calculator.get_ep()
+ep_values = calculator.get_ep(baseline_dps=total_dps)
 #tier_ep_values = calculator.get_other_ep(['rogue_t14_4pc', 'rogue_t14_2pc', 'rogue_t15_4pc', 'rogue_t15_2pc', 'rogue_t16_2pc', 'rogue_t16_4pc'])
 #mh_enchants_and_dps_ep_values, oh_enchants_and_dps_ep_values = calculator.get_weapon_ep(dps=True, enchants=True)
 
