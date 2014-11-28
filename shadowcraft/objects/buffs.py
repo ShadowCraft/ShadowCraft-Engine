@@ -131,8 +131,8 @@ class Buffs(object):
     
     def buff_crit(self, race=False):
         bonus_crit = 0
-        bonus_crit += 50 * self.food_wod_haste_50 * [1, 2][race]
-        bonus_crit += 75 * self.food_wod_haste * [1, 2][race]
+        bonus_crit += 50 * self.food_wod_crit_50 * [1, 2][race]
+        bonus_crit += 75 * self.food_wod_crit * [1, 2][race]
         return bonus_crit
     
     def buff_mast(self, race=False):
@@ -144,14 +144,14 @@ class Buffs(object):
     
     def buff_versatility(self, race=False):
         bonus_versatility = 0
-        bonus_versatility += 50 * self.food_wod_haste_50 * [1, 2][race]
-        bonus_versatility += 75 * self.food_wod_haste * [1, 2][race]
+        bonus_versatility += 50 * self.food_wod_versatility_50 * [1, 2][race]
+        bonus_versatility += 75 * self.food_wod_versatility * [1, 2][race]
         return bonus_versatility
     
     def buff_multistrike(self, race=False):
         bonus_multistrike = 0
-        bonus_multistrike += 50 * self.food_wod_haste_50 * [1, 2][race]
-        bonus_multistrike += 75 * self.food_wod_haste * [1, 2][race]
+        bonus_multistrike += 50 * self.food_wod_multistrike_50 * [1, 2][race]
+        bonus_multistrike += 75 * self.food_wod_multistrike * [1, 2][race]
         return bonus_multistrike
     
     def buff_readiness(self, race=False):
