@@ -106,7 +106,7 @@ class RogueDamageCalculator(DamageCalculator):
     def oh_penalty(self):
         return .5
 
-    def get_modifiers(self, damage_type='physical', armor=None, executioner_modifier=1., potent_poisons_modifier=1.):
+    def get_modifiers(self, current_stats, damage_type='physical', armor=None, executioner_modifier=1., potent_poisons_modifier=1.):
         # self.damage_modifier_cache stores common modifiers like Assassin's Resolve that won't change between calculations
         # this cuts down on repetitive if statements
         base_modifier = self.damage_modifier_cache
@@ -121,7 +121,7 @@ class RogueDamageCalculator(DamageCalculator):
         base_modifier *= potent_poisons_modifier
         
         #versatility is a generic damage modifier
-        base_modifier *= (self.stats.get_versatility_multiplier_from_rating() + self.buffs.versatility_bonus())
+        base_modifier *= (self.stats.get_versatility_multiplier_from_rating(rating=current_stats['versatility']) + self.buffs.versatility_bonus())
 
         return base_modifier
     
@@ -150,9 +150,9 @@ class RogueDamageCalculator(DamageCalculator):
         
         # these return the tuple (damage_modifier, crit_multiplier)
         crit_damage_modifier = self.crit_damage_modifiers()
-        physical_modifier = self.get_modifiers(damage_type='physical')
-        spell_modifier = self.get_modifiers(damage_type='spell')
-        bleed_modifier = self.get_modifiers(damage_type='bleed')
+        physical_modifier = self.get_modifiers(current_stats, damage_type='physical')
+        spell_modifier = self.get_modifiers(current_stats, damage_type='spell')
+        bleed_modifier = self.get_modifiers(current_stats, damage_type='bleed')
         
         if 'mh_autoattacks' in attacks_per_second:
             # Assumes mh and oh attacks are both active at the same time. As they should always be.
