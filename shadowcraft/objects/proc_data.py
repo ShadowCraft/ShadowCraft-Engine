@@ -286,7 +286,7 @@ allowed_procs = {
     },
     'primal_combatants_boc': {
         'stat': 'stats',
-        'value': {'agi':358},
+        'value': {'versatility':358},
         'duration': 20,
         'proc_name': 'Primal Combatants Badge of Conquest',
         'upgradable': True,
