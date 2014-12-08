@@ -280,7 +280,7 @@ allowed_procs = {
         'item_level': 620,
         'type': 'icd',
         'source': 'trinket',
-        'icd': 115,
+        'icd': 55,
         'proc_rate': 0.15,
         'trigger': 'all_attacks'
     },
