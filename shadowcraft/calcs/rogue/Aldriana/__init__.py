@@ -773,7 +773,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         for proc in weapon_damage_procs:
             self.set_uptime(proc, attacks_per_second, crit_rates)
-                
         return current_stats, attacks_per_second, crit_rates, damage_procs, additional_info
     
     def compute_damage_from_aps(self, current_stats, attacks_per_second, crit_rates, damage_procs, additional_info):
