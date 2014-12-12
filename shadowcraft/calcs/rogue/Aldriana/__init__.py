@@ -1439,8 +1439,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         attacks_per_second['revealing_strike'] = 1. / rvs_interval
         extra_finishers_per_second = attacks_per_second['revealing_strike'] / 5.
-        if self.talents.death_from_above and not ar:
-            extra_finishers_per_second += (2 + self.settings.num_boss_adds) / (5. * dfa_cd)
         #Scaling CPGs
         free_gcd = 1./gcd_size
         free_gcd -= 1./snd_duration + (attacks_per_second['sinister_strike_base'] + attacks_per_second['revealing_strike'] + extra_finishers_per_second)

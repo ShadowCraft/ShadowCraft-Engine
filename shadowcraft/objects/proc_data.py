@@ -834,7 +834,7 @@ allowed_melee_enchants = {
         'source': 'weapon',
         'item_level': 100,
         'icd': 0,
-        'proc_rate': 3.5,
+        'proc_rate': 2.5,
         'haste_scales': True,
         'trigger': 'all_attacks',
     },
