@@ -368,9 +368,9 @@ class RogueDamageCalculator(DamageCalculator):
         return 2.75 * 1.8 * 0.924 * ap / 3.5
     
     def backstab_damage(self, ap):
-        return 1.80 * self.get_weapon_damage('mh', ap)
+        return 1.2 * 1.80 * self.get_weapon_damage('mh', ap)
     def backstab_sr_damage(self, ap):
-        return 1.80 * 1.8 * 0.924 * ap / 3.5
+        return 1.2 * 1.80 * 1.8 * 0.924 * ap / 3.5
 
     def death_from_above_pulse_damage(self, ap, cp):
         return 0.266 * cp * ap
@@ -399,14 +399,14 @@ class RogueDamageCalculator(DamageCalculator):
     
     #20% damage more hotfix
     def hemorrhage_damage(self, ap):
-        return 1.2 * .40 * [1., 1.4][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap)
+        return 1.3 * 1.2 * .40 * [1., 1.4][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap)
     def hemorrhage_sr_damage(self, ap):
-        return 1.2 * .4 * 1.8 * 0.924 * ap / 3.5
+        return 1.3 * 1.2 * .4 * 1.8 * 0.924 * ap / 3.5
 
     def hemorrhage_tick_damage(self, ap):
-        return .035 * ap
+        return 1.3 * .035 * ap
     def hemorrhage_tick_sr_damage(self, ap):
-        return .035 * 0.924 * ap
+        return 1.3 * .035 * 0.924 * ap
 
     def mh_killing_spree_damage(self, ap):
         return 1.0 * self.get_weapon_damage('mh', ap)
@@ -449,9 +449,9 @@ class RogueDamageCalculator(DamageCalculator):
         return 1.6 * 1.8 * 0.924 * ap / 3.5
     
     def venomous_wounds_damage(self, ap):
-        return .320 * ap
+        return 1.2 * .320 * ap
     def venomous_wounds_sr_damage(self, ap):
-        return .320 * 0.924 * ap
+        return 1.2 * .320 * 0.924 * ap
 
     #poisons
     def deadly_poison_tick_damage(self, ap):

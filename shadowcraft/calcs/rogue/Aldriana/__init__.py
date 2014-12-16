@@ -1250,7 +1250,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #average it together
         damage_breakdown = self.average_damage_breakdowns(phases, denom = total_duration)
         
-        bf_mod = .30
+        bf_mod = .35
         bf_max_targets = 4
         if self.level == 100:
             bf_max_targets = 999 #this is the "no more target cap" limit, screw extra if statements
