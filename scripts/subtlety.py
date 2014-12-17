@@ -40,8 +40,8 @@ test_buffs = buffs.Buffs(
         'food_mop_agi'
     )
 
-# Set up weapons.
-test_mh = stats.Weapon(812.0, 1.8, 'dagger', 'mark_of_the_frostwolf')
+# Set up weapons. mark_of_the_frostwolf mark_of_the_shattered_hand
+test_mh = stats.Weapon(812.0, 1.8, 'dagger', 'mark_of_the_shattered_hand')
 test_oh = stats.Weapon(812.0, 1.8, 'dagger', 'mark_of_the_frostwolf')
 
 # Set up procs. - trinkets, other things (legendary procs)

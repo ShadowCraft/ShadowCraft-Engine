@@ -598,13 +598,17 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         damage_procs = []
         weapon_damage_procs = []
         
-        shatt_hand = False
+        shatt_hand = 0
         for hand in ('mh', 'oh'):
             if getattr(getattr(self.stats, hand), 'mark_of_the_shattered_hand'):
-                shatt_hand = True
-                self.stats.procs.set_proc('mark_of_the_shattered_hand_dot')
-                self.set_rppm_uptime(getattr(self.stats.procs, 'mark_of_the_shattered_hand_dot'))
-                #this is to support the DoT
+                self.stats.procs.set_proc('mark_of_the_shattered_hand_dot') #this enables the proc if it's not active, doesn't duplicate
+                shatt_hand += 1
+        if shatt_hand > 0:
+            if shatt_hand > 1:
+                getattr(self.stats.procs, 'mark_of_the_shattered_hand_dot').proc_rate = 5
+            else:
+                getattr(self.stats.procs, 'mark_of_the_shattered_hand_dot').proc_rate = 2.5
+            self.set_rppm_uptime(getattr(self.stats.procs, 'mark_of_the_shattered_hand_dot'))
         if not shatt_hand:
             self.stats.procs.del_proc('mark_of_the_shattered_hand_dot')
         

@@ -221,10 +221,8 @@ class RogueDamageCalculator(DamageCalculator):
         
         if 'hemorrhage_ticks' in attacks_per_second:
             hemo_hit = self.hemorrhage_tick_damage(average_ap) * bleed_modifier
-            hemo_crit = self.hemorrhage_tick_damage(average_ap) * bleed_modifier * crit_damage_modifier
-            dps_from_hit_hemo = self.get_dps_contribution(hemo_hit, crit_rates['hemorrhage'], attacks_per_second['hemorrhage_ticks'] * (1 - crit_rates['hemorrhage']), crit_damage_modifier)
-            dps_from_crit_hemo = self.get_dps_contribution(hemo_crit, crit_rates['hemorrhage'], attacks_per_second['hemorrhage_ticks'] * crit_rates['hemorrhage'], crit_damage_modifier)
-            damage_breakdown['hemorrhage_dot'] = dps_from_hit_hemo + dps_from_crit_hemo
+            dps_from_hit_hemo = self.get_dps_contribution(hemo_hit, 0, attacks_per_second['hemorrhage_ticks'], crit_damage_modifier)
+            damage_breakdown['hemorrhage_dot'] = dps_from_hit_hemo
         
         if 'rupture_ticks' in attacks_per_second:
             average_dps = 0
@@ -339,13 +337,6 @@ class RogueDamageCalculator(DamageCalculator):
                     dmg_cleave += damage_breakdown[attack] * proc_chance * self.settings.num_boss_adds
             damage_breakdown['cleave_trinket'] = dmg_cleave
         
-        #DW DOT FIX
-        if getattr(getattr(self.stats, 'mh'), 'mark_of_the_shattered_hand') and getattr(getattr(self.stats, 'oh'), 'mark_of_the_shattered_hand'):
-            #damage_breakdown['Mark of the Shattered Hand'] *= 2.
-            damage_breakdown['Mark of the Shattered Hand DOT'] *= 2.
-        
-        self.add_exported_data(damage_breakdown)
-                
         return damage_breakdown, additional_info
     
     #autoattacks
