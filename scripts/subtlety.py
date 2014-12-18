@@ -70,7 +70,7 @@ glyph_list = []
 test_glyphs = glyphs.Glyphs(test_class, *glyph_list)
 
 # Set up settings.
-test_cycle = settings.SubtletyCycle(5, use_hemorrhage='uptime')
+test_cycle = settings.SubtletyCycle(5, use_hemorrhage='never')
 test_settings = settings.Settings(test_cycle, response_time=.5, duration=360, dmg_poison='dp', utl_poison='lp', is_pvp=False,
                                  adv_params="")
 
@@ -79,10 +79,7 @@ calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_glyph
 
 # Compute DPS Breakdown.
 dps_breakdown = calculator.get_dps_breakdown()
-dps_breakdown2 = calculator.get_dps_breakdown()
 total_dps = sum(entry[1] for entry in dps_breakdown.items())
-total_dps2 = sum(entry[1] for entry in dps_breakdown2.items())
-print total_dps, total_dps2, calculator.get_dps(), calculator.get_dps()
 
 # Compute EP values.
 ep_values = calculator.get_ep(baseline_dps=total_dps)

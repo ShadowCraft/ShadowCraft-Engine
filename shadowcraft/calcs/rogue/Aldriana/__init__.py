@@ -374,28 +374,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     def get_net_energy_cost(self, ability):
         return self.get_spell_stats(ability)[0]
 
-    def update_with_autoattack_passives(self, attacks_per_second, *args, **kwargs):
-        # Appends the keys passed in args to attacks_per_second. This includes
-        # autoattack, autoattack_hits, main_gauche and poisons.
-        # If no args passed, it'll attempt to append all of them.
-        if not args or 'swings' in args or 'mh_autoattack' not in attacks_per_second or 'oh_autoattack' not in attacks_per_second:
-            attacks_per_second['mh_autoattacks'] = kwargs['attack_speed_multiplier'] / self.stats.mh.speed
-            attacks_per_second['oh_autoattacks'] = kwargs['attack_speed_multiplier'] / self.stats.oh.speed
-        if self.swing_reset_spacing is not None:
-            attacks_per_second['mh_autoattacks'] *= (1 - max((1 - .5 * self.stats.mh.speed / kwargs['attack_speed_multiplier']), 0) / self.swing_reset_spacing)
-            attacks_per_second['oh_autoattacks'] *= (1 - max((1 - .5 * self.stats.oh.speed / kwargs['attack_speed_multiplier']), 0) / self.swing_reset_spacing)
-        
-        #Account for dfa auto attack loss--2 seconds is an approximation
-        if self.talents.death_from_above:
-            attacks_per_second['mh_autoattacks'] = (20*attacks_per_second['mh_autoattacks']-math.floor(2*attacks_per_second['mh_autoattacks']))/20
-            attacks_per_second['oh_autoattacks'] = (20*attacks_per_second['oh_autoattacks']-math.floor(2*attacks_per_second['mh_autoattacks']))/20        
-
-        if not args or 'autoattack_hits' in args:
-            attacks_per_second['mh_autoattack_hits'] = attacks_per_second['mh_autoattacks'] * self.dw_mh_hit_chance
-            attacks_per_second['oh_autoattack_hits'] = attacks_per_second['oh_autoattacks'] * self.dw_oh_hit_chance
-        if not args or 'poisons' in args:
-            self.get_poison_counts(attacks_per_second)
-
     def get_mh_procs_per_second(self, proc, attacks_per_second, crit_rates):
         triggers_per_second = 0
         if proc.procs_off_auto_attacks():
@@ -1766,7 +1744,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 hemo_per_second = 1. / hemo_cd
             else:
                 hemo_per_second = 1. / float(self.settings.cycle.use_hemorrhage)
-            energy_regen -= hemo_per_second
+            energy_regen -= hemo_per_second * base_hemo_cost
             base_cp_per_second += hemo_per_second
             attacks_per_second['hemorrhage'] += hemo_per_second
         #premed
