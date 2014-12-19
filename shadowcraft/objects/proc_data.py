@@ -77,6 +77,7 @@ allowed_procs = {
         'proc_rate': 2.5,
         'can_crit': False,
         'haste_scales': True,
+        'att_spd_scales': True,
         'trigger': 'all_attacks',
     },
     #racials
@@ -837,6 +838,7 @@ allowed_melee_enchants = {
         'icd': 0,
         'proc_rate': 2.5,
         'haste_scales': True,
+        'att_spd_scales': True,
         'trigger': 'all_attacks',
     },
     'mark_of_the_thunderlord': {

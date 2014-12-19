@@ -221,7 +221,7 @@ class RogueDamageCalculator(DamageCalculator):
         
         if 'hemorrhage_ticks' in attacks_per_second:
             hemo_hit = self.hemorrhage_tick_damage(average_ap) * bleed_modifier
-            dps_from_hit_hemo = self.get_dps_contribution(hemo_hit, 0, attacks_per_second['hemorrhage_ticks'], crit_damage_modifier)
+            dps_from_hit_hemo = self.get_dps_contribution(hemo_hit, crit_rates['hemorrhage'], attacks_per_second['hemorrhage_ticks'], crit_damage_modifier)
             damage_breakdown['hemorrhage_dot'] = dps_from_hit_hemo
         
         if 'rupture_ticks' in attacks_per_second:

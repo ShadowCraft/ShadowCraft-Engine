@@ -487,6 +487,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             haste = 1.
             if proc.haste_scales:
                 haste *= self.true_haste_mod * self.stats.get_haste_multiplier_from_rating(self.base_stats['haste'])
+            if proc.att_spd_scales:
+                haste *= 1.4
             #The 1.1307 is a value that increases the proc rate due to bad luck prevention. It /should/ be constant among all rppm proc styles
             if not proc.icd:
                 frequency = haste * 1.1307 * proc.get_rppm_proc_rate() / 60
