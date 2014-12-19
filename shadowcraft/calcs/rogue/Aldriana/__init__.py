@@ -310,13 +310,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         crit_rate = self.crit_rate(crit=current_stats['crit'])
         
         if proc.stat == 'spell_damage':
-            multiplier = self.raid_settings_modifiers('spell')
+            multiplier = self.get_modifiers(current_stats, damage_type='spell')
         elif proc.stat == 'physical_damage':
-            multiplier = self.raid_settings_modifiers('physical')
+            multiplier = self.get_modifiers(current_stats, damage_type='physical')
         elif proc.stat == 'physical_dot':
-            multiplier = self.raid_settings_modifiers('bleed')
+            multiplier = self.get_modifiers(current_stats, damage_type='bleed')
         elif proc.stat == 'bleed_damage':
-            multiplier = self.raid_settings_modifiers('bleed')
+            multiplier = self.get_modifiers(current_stats, damage_type='bleed')
         else:
             return 0
 
@@ -335,6 +335,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         average_hit = proc_value * multiplier
         average_damage = average_hit * (1 + crit_rate * (crit_multiplier - 1)) * proc_count
+        #print proc.proc_name, average_hit, multiplier
         
         if proc.stat == 'physical_dot':
             average_damage *= proc.uptime / proc_count
