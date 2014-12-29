@@ -857,8 +857,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 
         return dps_breakdown
 
-    def update_assassination_breakdown_with_modifiers(self, damage_breakdown):
+    def update_assassination_breakdown_with_modifiers(self, damage_breakdown, current_stats):
+        #calculate multistrike here for Sub and Assassination, really cheap to calculate
+        #turns out the 2 chance system yields a very basic linear pattern, the damage modifier is 30% of the multistrike %!
+        multistrike_multiplier = .3 * 2 * (self.stats.get_multistrike_chance_from_rating(rating=current_stats['multistrike']) + self.buffs.multistrike_bonus())
+        multistrike_multiplier = min(.6, multistrike_multiplier)
+        
         for key in damage_breakdown:
+            damage_breakdown[key] *= 1 + multistrike_multiplier
             if (key != 'Elemental Force') and ('sr_' not in key):
                 damage_breakdown[key] *= self.vendetta_mult
             elif 'sr_' in key:
@@ -867,13 +873,19 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 damage_breakdown[key] *= self.emp_envenom_percentage
 
     def assassination_dps_breakdown_non_execute(self):
-        damage_breakdown, additional_info = self.compute_damage(self.assassination_attack_counts_non_execute)
-        self.update_assassination_breakdown_with_modifiers(damage_breakdown)
+        #damage_breakdown, additional_info = self.compute_damage(self.assassination_attack_counts_non_execute)
+        current_stats, attacks_per_second, crit_rates, damage_procs, additional_info = self.determine_stats(self.assassination_attack_counts_non_execute)
+        damage_breakdown, additional_info = self.get_damage_breakdown(current_stats, attacks_per_second, crit_rates, damage_procs, additional_info)
+        
+        self.update_assassination_breakdown_with_modifiers(damage_breakdown, current_stats)
         return damage_breakdown
 
     def assassination_dps_breakdown_execute(self):
-        damage_breakdown, additional_info = self.compute_damage(self.assassination_attack_counts_execute)
-        self.update_assassination_breakdown_with_modifiers(damage_breakdown)
+        #damage_breakdown, additional_info = self.compute_damage(self.assassination_attack_counts_execute)
+        current_stats, attacks_per_second, crit_rates, damage_procs, additional_info = self.determine_stats(self.assassination_attack_counts_execute)
+        damage_breakdown, additional_info = self.get_damage_breakdown(current_stats, attacks_per_second, crit_rates, damage_procs, additional_info)
+        
+        self.update_assassination_breakdown_with_modifiers(damage_breakdown, current_stats)
         return damage_breakdown
     
     def assassination_cp_distribution_for_finisher(self, current_cp, crit_rates, ability_count, size_breakdown, cp_limit=4, blindside_proc=0, execute=False):
@@ -1593,16 +1605,22 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.spec_needs_converge = True
         
         self.settings.cycle.raid_crits_per_second = self.get_adv_param('hat_triggers_per_second', self.settings.cycle.raid_crits_per_second, min_bound=0, max_bound=600)
-            
+        
         self.vanish_rate = 1. / (self.get_spell_cd('vanish') + self.settings.response_time) + 1. / (self.get_spell_cd('preparation') + self.settings.response_time * 3) #vanish CD + Prep CD
         mos_multiplier = 1. + mos_value * (6 + 3 * self.talents.subterfuge * [1, 2][self.glyphs.vanish]) * self.vanish_rate
-
-        damage_breakdown, additional_info = self.compute_damage(self.subtlety_attack_counts)
+        
+        stats, aps, crits, procs, additional_info = self.determine_stats(self.subtlety_attack_counts)
+        damage_breakdown, additional_info  = self.compute_damage_from_aps(stats, aps, crits, procs, additional_info)
 
         armor_value = self.target_armor()
         find_weakness_damage_boost = 1. / self.max_level_armor_multiplier()
         find_weakness_multiplier = 1 + (find_weakness_damage_boost - 1) * additional_info['fw_uptime']
-
+        
+        #calculate multistrike here for Sub and Assassination, really cheap to calculate
+        #turns out the 2 chance system yields a very basic linear pattern, the damage modifier is 30% of the multistrike %!
+        multistrike_multiplier = .3 * 2 * (self.stats.get_multistrike_chance_from_rating(rating=stats['multistrike']) + self.buffs.multistrike_bonus())
+        multistrike_multiplier = min(.6, multistrike_multiplier)
+        
         for key in damage_breakdown:
             if key in ('eviscerate', 'hemorrhage', 'shuriken_toss', 'hemorrhage_dot', 'autoattack'): #'burning_wounds'
                 damage_breakdown[key] *= find_weakness_multiplier
@@ -1612,9 +1630,16 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if key == 'backstab':
                 #damage_breakdown[key] *= find_weakness_multiplier
                 damage_breakdown[key] *= 1 + additional_info['backstab_fw_rate'] * (find_weakness_damage_boost - 1)
-            if key in ('rupture', 'sr_rupture'):
+            if key in ('rupture', 'sr_rupture', 'rupture_sc'):
                 damage_breakdown[key] *= 1.1
+            if key is not 'rupture_sc':
+                damage_breakdown[key] *= (1 + multistrike_multiplier)
             damage_breakdown[key] *= mos_multiplier
+        
+        #discard the loose rupture component to clean up the breakdown
+        if 'rupture_sc' in damage_breakdown and self.settings.merge_damage:
+            damage_breakdown['rupture'] += damage_breakdown['rupture_sc']
+            del damage_breakdown['rupture_sc']
         
         return damage_breakdown
 
@@ -1703,16 +1728,17 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.stats.gear_buffs.rogue_t17_4pc:
             energy_regen -= (base_eviscerate_cost - 25) / shd_cd
         
+        #deal with extra subterfuge ambushes
+        if self.talents.subterfuge:
+            attacks_per_second['ambush'] += (1. / self.get_spell_cd('vanish')) * [1., 2.][self.glyphs.vanish]
+            energy_regen -= (normal_ambush_cost / self.get_spell_cd('vanish')) * [1., 2.][self.glyphs.vanish]
+            base_cp_per_second += (2. / self.get_spell_cd('vanish')) * [1., 2.][self.glyphs.vanish]
+        
         ##calculations dependent on energy regen
         cpg_costs_for_cycle = base_backstab_energy_cost * 5
         if self.settings.cycle.use_hemorrhage == 'always':
             cpg_costs_for_cycle = base_hemo_cost * 5
         typical_cycle_size = cpg_costs_for_cycle + (base_eviscerate_cost - 25)
-        
-        shd_cycle_size = sd_ambush_cost * (5. / cp_per_ambush) + (base_eviscerate_cost - 25) #(40 energy per ambush) * (2.5 ambushes till 5CP) + 10 energy for the finisher
-        shd_cycle_gcds = 3
-        #calc energy for Shadow Dance
-        shd_energy = (max_energy - self.get_adv_param('max_pool_reduct', 10, min_bound=0, max_bound=50)) + energy_regen * shd_duration #lasts 8s, assume we pool to ~10 energy below max
         
         #swing timer
         white_swing_downtime = 0
@@ -1756,7 +1782,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         base_cp_per_second += 2. / self.get_spell_cd('vanish') * (self.settings.duration-50.)/self.settings.duration
         #rupture
         attacks_per_second['rupture'] = 1. / rupture_cd
-        attacks_per_second['rupture_ticks'][5] = rupture_ticks_per_cast / rupture_cd
+        attacks_per_second['rupture_ticks'][5] = .5 #rupture_ticks_per_cast / rupture_cd
+        attacks_per_second['rupture_ticks_sc'] = [0,0,0,0,0, (1 - sc_scaler) * rupture_ticks_per_cast / rupture_cd]
         base_cp_per_second -= 5. / rupture_cd
         energy_regen -= (base_rupture_cost - 25) / rupture_cd
         #no need to add slice and dice to attacks per second
@@ -1791,6 +1818,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             raise InputNotModeledException(_('Catastrophic failure: cycle not sustainable.'))
         
         #calculate shd ambush cycles
+        shd_energy = (max_energy - self.get_adv_param('max_pool_reduct', 10, min_bound=0, max_bound=50)) + energy_regen * shd_duration #lasts 8s, assume we pool to ~10 energy below max
         shd_cycle_cost = 2 * sd_ambush_cost + (base_eviscerate_cost - 25)
         shd_eviscerates = min(shd_energy / shd_cycle_cost, 8./3) #8/3 is the max GCDs
         shd_ambushes = shd_eviscerates * 2
@@ -1845,5 +1873,5 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second['sr_ambush'] = shd_ambushes / sr_cd
         
         self.get_poison_counts(attacks_per_second)
-                        
+                                
         return attacks_per_second, crit_rates, additional_info

@@ -45,8 +45,8 @@ test_buffs = buffs.Buffs(
     )
 
 # Set up weapons.
-test_mh = stats.Weapon(812.0, 1.8, 'dagger', 'mark_of_the_thunderlord')
-test_oh = stats.Weapon(812.0, 1.8, 'dagger', 'mark_of_the_thunderlord')
+test_mh = stats.Weapon(812.0, 1.8, 'dagger', 'mark_of_the_shattered_hand')
+test_oh = stats.Weapon(812.0, 1.8, 'dagger', 'mark_of_the_frostwolf')
 
 # Set up procs.
 test_procs = procs.ProcsList(('scales_of_doom', 691), ('beating_heart_of_the_mountain', 701),

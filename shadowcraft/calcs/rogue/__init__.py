@@ -40,24 +40,24 @@ class RogueDamageCalculator(DamageCalculator):
                            'spell':None}
     
     ability_info = {
-            'ambush':              (60, 'strike'),
-            'backstab':            (35, 'strike'),
-            'dispatch':            (30, 'strike'),
-            'envenom':             (35, 'strike'),
-            'eviscerate':          (35, 'strike'),
-            'garrote':             (45, 'strike'),
-            'hemorrhage':          (30, 'strike'),
-            'mutilate':            (55, 'strike'),
-            'recuperate':          (30, 'buff'),
-            'revealing_strike':    (40, 'strike'),
-            'rupture':             (25, 'strike'),
-            'sinister_strike':     (50, 'strike'),
-            'slice_and_dice':      (25, 'buff'),
+            'ambush':              (60., 'strike'),
+            'backstab':            (35., 'strike'),
+            'dispatch':            (30., 'strike'),
+            'envenom':             (35., 'strike'),
+            'eviscerate':          (35., 'strike'),
+            'garrote':             (45., 'strike'),
+            'hemorrhage':          (30., 'strike'),
+            'mutilate':            (55., 'strike'),
+            'recuperate':          (30., 'buff'),
+            'revealing_strike':    (40., 'strike'),
+            'rupture':             (25., 'strike'),
+            'sinister_strike':     (50., 'strike'),
+            'slice_and_dice':      (25., 'buff'),
             'tricks_of_the_trade': (0, 'buff'),
-            'shuriken_toss':       (40, 'strike'),
-            'shiv':                (20, 'strike'),
-            'feint':               (20, 'buff'),
-            'death_from_above':    (50, 'strike'),
+            'shuriken_toss':       (40., 'strike'),
+            'shiv':                (20., 'strike'),
+            'feint':               (20., 'buff'),
+            'death_from_above':    (50., 'strike'),
     }
     ability_cds = {
             'tricks_of_the_trade': 30,
@@ -131,9 +131,6 @@ class RogueDamageCalculator(DamageCalculator):
     
     def get_damage_breakdown(self, current_stats, attacks_per_second, crit_rates, damage_procs, additional_info):
         average_ap = current_stats['ap'] + current_stats['agi'] * self.stat_multipliers['ap']
-        run_multistrike = True
-        if self.settings.is_combat_rogue():
-            run_multistrike = False
         
         self.setup_unique_procs(current_stats, average_ap)
 
@@ -231,6 +228,13 @@ class RogueDamageCalculator(DamageCalculator):
                 dps_tuple = self.get_dps_contribution(dps_tuple, crit_rates['rupture_ticks'], attacks_per_second['rupture_ticks'][i], crit_damage_modifier)
                 average_dps += dps_tuple
             damage_breakdown['rupture'] = average_dps
+        if 'rupture_ticks_sc' in attacks_per_second:
+            average_dps = 0
+            for i in xrange(1, 6):
+                dps_tuple = self.rupture_tick_damage(average_ap, i) * bleed_modifier * executioner_mod
+                dps_tuple = self.get_dps_contribution(dps_tuple, 0, attacks_per_second['rupture_ticks_sc'][i], crit_damage_modifier)
+                average_dps += dps_tuple
+            damage_breakdown['rupture_sc'] = average_dps
     
         if 'envenom' in attacks_per_second:
             average_dps = 0
@@ -318,14 +322,6 @@ class RogueDamageCalculator(DamageCalculator):
             modifier = 1 + nightstalker_mod * nightstalker_percent
             damage_breakdown[self.settings.opener_name] *= modifier
         
-        #calculate multistrike here for Sub and Assassination, really cheap to calculate
-        #turns out the 2 chance system yields a very basic linear pattern, the damage modifier is 30% of the multistrike %!
-        if run_multistrike:
-            multistrike_multiplier = .3 * 2 * (self.stats.get_multistrike_chance_from_rating(rating=current_stats['multistrike']) + self.buffs.multistrike_bonus())
-            multistrike_multiplier = min(.6, multistrike_multiplier)
-            for ability in damage_breakdown:
-                damage_breakdown[ability] *= (1 + multistrike_multiplier)
-        
         # cleave
         proc = getattr(self.stats.procs, 'sigil_of_rampage')
         if proc and proc.scaling:
@@ -356,7 +352,7 @@ class RogueDamageCalculator(DamageCalculator):
     def ambush_damage(self, ap):
         return 2.75 * [1., 1.4][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap)
     def ambush_sr_damage(self, ap):
-        return 2.75 * 1.8 * 0.924 * ap / 3.5
+        return 2.75 * 1.4 * 1.8 * 0.924 * ap / 3.5
     
     def backstab_damage(self, ap):
         return 1.2 * 1.80 * self.get_weapon_damage('mh', ap)
@@ -392,12 +388,12 @@ class RogueDamageCalculator(DamageCalculator):
     def hemorrhage_damage(self, ap):
         return 1.3 * 1.2 * .40 * [1., 1.4][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap)
     def hemorrhage_sr_damage(self, ap):
-        return 1.3 * 1.2 * .4 * 1.8 * 0.924 * ap / 3.5
+        return 1.3 * 1.2 * .4 * 1.4 * 1.8 * 0.924 * ap / 3.5
 
     def hemorrhage_tick_damage(self, ap):
-        return 1.3 * .035 * ap
+        return 1.3 * 1.2 * .035 * ap
     def hemorrhage_tick_sr_damage(self, ap):
-        return 1.3 * .035 * 0.924 * ap
+        return 1.3 * 1.2 * .035 * 0.924 * ap
 
     def mh_killing_spree_damage(self, ap):
         return 1.0 * self.get_weapon_damage('mh', ap)
@@ -430,9 +426,9 @@ class RogueDamageCalculator(DamageCalculator):
         return 1.2 * 1.8 * 0.924 * ap / 3.5
     
     def rupture_tick_damage(self, ap, cp):
-        return .08220 * cp * ap
+        return .0685 * cp * ap
     def rupture_tick_sr_damage(self, ap, cp):
-        return .08220 * 0.924 * ap
+        return .0685 * 0.924 * ap
     
     def sinister_strike_damage(self, ap):
         return 1.6 * self.get_weapon_damage('mh', ap)
