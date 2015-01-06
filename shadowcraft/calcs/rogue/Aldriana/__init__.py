@@ -646,7 +646,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             for e in proc.value:
                 self.stat_multipliers[e] *= 1 + proc.uptime * proc.value[e]
                 current_stats[e] *= 1 + proc.uptime * proc.value[e]
-                #other stats work here too
+
         for proc in active_procs_rppm:
             if proc.stat == 'stats':
                 self.set_rppm_uptime(proc)
@@ -793,7 +793,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.spec_convergence_stats = ['haste', 'crit', 'readiness']
         
         # Assassasins's Resolve
-        self.damage_modifier_cache = 1.10
+        self.damage_modifier_cache = 1.10*1.06
         
         #update spec specific proc rates
         if getattr(self.stats.procs, 'legendary_capacitive_meta'):
@@ -1218,7 +1218,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         self.set_constants()
         self.stat_multipliers['haste'] *= 1.05
-        self.stat_multipliers['ap'] *= 1.40
+        self.stat_multipliers['ap'] *= 1.50
         
         if self.talents.death_from_above:
             self.spec_needs_converge = True
@@ -1585,7 +1585,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.settings.use_opener = 'always'
         self.settings.opener_name = 'ambush'
         # Sanguinary Vein
-        self.damage_modifier_cache = 1.2
+        self.damage_modifier_cache = 1.25
         
         self.sc_trigger_rate = 0
         mos_value = .1
@@ -1605,6 +1605,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.spec_needs_converge = True
         
         self.settings.cycle.raid_crits_per_second = self.get_adv_param('hat_triggers_per_second', self.settings.cycle.raid_crits_per_second, min_bound=0, max_bound=600)
+        self.settings.cycle.clip_fw = self.get_adv_param('clip_fw', self.settings.cycle.clip_fw, ignore_bounds=True)
         
         self.vanish_rate = 1. / (self.get_spell_cd('vanish') + self.settings.response_time) + 1. / (self.get_spell_cd('preparation') + self.settings.response_time * 3) #vanish CD + Prep CD
         mos_multiplier = 1. + mos_value * (6 + 3 * self.talents.subterfuge * [1, 2][self.glyphs.vanish]) * self.vanish_rate
@@ -1691,6 +1692,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         hat_cp_per_second = 1. / (2 + 1. / hat_triggers_per_second)
         er_energy = 8. / 2 #8 energy every 2 seconds, assumed full SnD uptime
         fw_duration = 10. #17.5s
+        if self.settings.cycle.clip_fw:
+            fw_duration -= .5
         attacks_per_second['eviscerate'] = [0,0,0,0,0,0]
         attacks_per_second['rupture_ticks'] = [0,0,0,0,0,0]
         attacks_per_second['ambush'] = self.total_openers_per_second
@@ -1827,7 +1830,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         energy_regen -= (shd_cycle_cost * shd_eviscerates) / shd_cd * ((self.settings.duration - fw_duration) / self.settings.duration)
         
         #calculate percentage of ambushes with FW
-        ambush_no_fw = shadowmeld_ambushes + 1. / shd_cd + self.total_openers_per_second
+        ambush_no_fw = shadowmeld_ambushes + 1. / shd_cd - 1. / self.settings.duration
+        if not self.settings.cycle.clip_fw:
+            ambush_no_fw += self.total_openers_per_second + 1. / self.settings.duration
         additional_info['ambush_no_fw_rate'] = ambush_no_fw / attacks_per_second['ambush']
         #calculate percentage of backstabs with FW
         additional_info['backstab_fw_rate'] = (fw_duration - 1) / self.settings.duration #start of fight

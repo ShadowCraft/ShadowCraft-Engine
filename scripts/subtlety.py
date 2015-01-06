@@ -70,7 +70,7 @@ glyph_list = []
 test_glyphs = glyphs.Glyphs(test_class, *glyph_list)
 
 # Set up settings.
-test_cycle = settings.SubtletyCycle(5, use_hemorrhage='never')
+test_cycle = settings.SubtletyCycle(5, use_hemorrhage='never', clip_fw=False)
 test_settings = settings.Settings(test_cycle, response_time=.5, duration=360, dmg_poison='dp', utl_poison='lp', is_pvp=False,
                                  adv_params="")
 
