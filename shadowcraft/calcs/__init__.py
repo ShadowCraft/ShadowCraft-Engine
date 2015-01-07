@@ -180,7 +180,7 @@ class DamageCalculator(object):
 
     def get_ep(self, ep_stats=None, normalize_ep_stat=None, baseline_dps=None):
         if not normalize_ep_stat:
-            normalize_ep_stat = self.normalize_ep_stat
+            normalize_ep_stat = self.get_adv_param('normalize_stat', self.settings.default_ep_stat, ignore_bounds=True)
         if not ep_stats:
             ep_stats = self.default_ep_stats
         

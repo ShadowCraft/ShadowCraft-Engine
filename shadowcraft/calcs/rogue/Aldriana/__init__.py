@@ -793,7 +793,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.spec_convergence_stats = ['haste', 'crit', 'readiness']
         
         # Assassasins's Resolve
-        self.damage_modifier_cache = 1.10*1.06
+        self.damage_modifier_cache = 1.17
         
         #update spec specific proc rates
         if getattr(self.stats.procs, 'legendary_capacitive_meta'):
@@ -1785,8 +1785,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         base_cp_per_second += 2. / self.get_spell_cd('vanish') * (self.settings.duration-50.)/self.settings.duration
         #rupture
         attacks_per_second['rupture'] = 1. / rupture_cd
-        attacks_per_second['rupture_ticks'][5] = .5 #rupture_ticks_per_cast / rupture_cd
-        attacks_per_second['rupture_ticks_sc'] = [0,0,0,0,0, (1 - sc_scaler) * rupture_ticks_per_cast / rupture_cd]
+        attacks_per_second['rupture_ticks'][5] = rupture_ticks_per_cast / rupture_cd
+        #attacks_per_second['rupture_ticks_sc'] = [0,0,0,0,0, (1 - sc_scaler) * rupture_ticks_per_cast / rupture_cd]
         base_cp_per_second -= 5. / rupture_cd
         energy_regen -= (base_rupture_cost - 25) / rupture_cd
         #no need to add slice and dice to attacks per second
