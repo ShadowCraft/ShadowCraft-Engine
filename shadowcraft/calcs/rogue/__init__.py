@@ -350,9 +350,9 @@ class RogueDamageCalculator(DamageCalculator):
     
     #abilities
     def ambush_damage(self, ap):
-        return 2.75 * [1., 1.4][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap)
+        return 3.10 * [1., 1.4][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap)
     def ambush_sr_damage(self, ap):
-        return 2.75 * 1.4 * 1.8 * 0.924 * ap / 3.5
+        return 3.10 * 1.4 * 1.8 * 0.924 * ap / 3.5
     
     def backstab_damage(self, ap):
         return 1.2 * 1.80 * self.get_weapon_damage('mh', ap)
@@ -365,14 +365,14 @@ class RogueDamageCalculator(DamageCalculator):
         return 0.266 * cp * 0.924 * ap
     
     def dispatch_damage(self, ap):
-        return 3.15 * self.get_weapon_damage('mh', ap)
+        return 3.30 * self.get_weapon_damage('mh', ap)
     def dispatch_sr_damage(self, ap):
-        return 3.15 * 1.8 * 0.924 * ap / 3.5
+        return 3.30 * 1.8 * 0.924 * ap / 3.5
     
     def envenom_damage(self, ap, cp):
-        return .306 * cp * ap
+        return .321 * cp * ap
     def envenom_sr_damage(self, ap, cp):
-        return .306 * cp * 0.924 * ap
+        return .321 * cp * 0.924 * ap
     
     def eviscerate_damage(self, ap, cp):
         return .508 * cp * ap
@@ -411,14 +411,14 @@ class RogueDamageCalculator(DamageCalculator):
         return 1.4 * 1.8 * 0.924 * ap / 3.5
     
     def mh_mutilate_damage(self, ap):
-        return 2.0 * self.get_weapon_damage('mh', ap)
+        return 2.1 * self.get_weapon_damage('mh', ap)
     def mh_mutilate_sr_damage(self, ap):
-        return 2.0 * 1.8 * 0.924 * ap / 3.5
+        return 2.1 * 1.8 * 0.924 * ap / 3.5
 
     def oh_mutilate_damage(self, ap):
-        return 2.0 * self.oh_penalty() * self.get_weapon_damage('oh', ap)
+        return 2.1 * self.oh_penalty() * self.get_weapon_damage('oh', ap)
     def oh_mutilate_sr_damage(self, ap):
-        return 2.0 * 1.8 * 0.924 * ap / 3.5 * 0.5
+        return 2.1 * 1.8 * 0.924 * ap / 3.5 * 0.5
 
     def revealing_strike_damage(self, ap):
         return 1.2 * self.get_weapon_damage('mh', ap)

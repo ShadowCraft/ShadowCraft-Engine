@@ -998,12 +998,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             #avg_breakdown - frequency of finisher sizes (should sum to 100% or 1)
             execute = False
             base_cp = 0
+            min_finisher_size = self.settings.cycle.min_envenom_size_non_execute
             if cpg == 'dispatch':
+                min_finisher_size = self.settings.cycle.min_envenom_size_execute
                 execute = True
             if self.stats.gear_buffs.rogue_t17_4pc:
                 base_cp = 1
             avg_finisher_size, avg_bs, avg_count, avg_size_breakdown  = self.assassination_cp_distribution_for_finisher(base_cp, crit_rates,
-                                                                        ability_count, finisher_size_breakdown, cp_limit=4, execute=execute)
+                                                                        ability_count, finisher_size_breakdown, cp_limit=min_finisher_size, execute=execute)
             if avg_bs > 0:
                 mut_start_chance = 1/(1+avg_bs)
                 bs_start_chance = 1 - mut_start_chance
