@@ -10,7 +10,7 @@ class Stats(object):
     # defined, though the numbers will need to updated for level 85.
 
     crit_rating_conversion_values        = {60:13.0, 70:14.0,  80:15.0,  85:17.0,  90:23.0,  100:110.0}
-    haste_rating_conversion_values       = {60:9.00, 70:10.0,  80:12.0,  85:14.0,  90:20.0,  100:100.0}
+    haste_rating_conversion_values       = {60:9.00, 70:10.0,  80:12.0,  85:14.0,  90:20.0,  100:90.0}
     mastery_rating_conversion_values     = {60:13.0, 70:14.0,  80:15.0,  85:17.0,  90:23.0,  100:110.0}
     multistrike_rating_conversion_values = {60:3.00, 70:4.00,  80:5.00,  85:6.00,  90:14.0,  100:66.0}
     readiness_rating_conversion_values   = {60:13.0, 70:14.0,  80:15.0,  85:17.0,  90:23.0,  100:110.0}
