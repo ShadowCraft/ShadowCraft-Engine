@@ -1265,8 +1265,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         multistrike_multiplier = .3 * 2 * (self.stats.get_multistrike_chance_from_rating(rating=stats['multistrike']) + self.buffs.multistrike_bonus())
         multistrike_multiplier = min(.6, multistrike_multiplier)
         for ability in damage_breakdown:
-            if ability != 'blade_flurry':
-                damage_breakdown[ability] *= (1 + multistrike_multiplier)
+            damage_breakdown[ability] *= (1 + multistrike_multiplier)
         
         return damage_breakdown
     
