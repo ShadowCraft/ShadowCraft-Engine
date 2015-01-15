@@ -534,7 +534,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         proc_multiplier = 1
         if self.settings.is_combat_rogue():
             if self.settings.cycle.blade_flurry:
-                ms_value = 1 + .3 * 2 * (self.stats.get_multistrike_chance_from_rating(rating=current_stats['multistrike']) + self.buffs.multistrike_bonus())
+                ms_value = 1 + min(2 * (self.stats.get_multistrike_chance_from_rating(rating=current_stats['multistrike']) + self.buffs.multistrike_bonus()), 2)
                 proc_multiplier += min(self.settings.num_boss_adds, [4, 999][self.level==100]) * ms_value
 
         if self.settings.is_assassination_rogue():
