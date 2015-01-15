@@ -520,7 +520,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.stats.procs.touch_of_the_grave:
             getattr(self.stats.procs, 'touch_of_the_grave').value = 8 * self.tools.get_constant_scaling_point(self.level) # +/- 15% spread
 
-    def get_poison_counts(self, attacks_per_second):
+    def get_poison_counts(self, attacks_per_second, current_stats):
         # Builds a phony 'poison' proc object to count triggers through the proc
         # methods.
         poison = procs.Proc(**proc_data.allowed_procs['rogue_poison'])
@@ -534,7 +534,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         proc_multiplier = 1
         if self.settings.is_combat_rogue():
             if self.settings.cycle.blade_flurry:
-                proc_multiplier += min(self.settings.num_boss_adds, [4, 999][self.level==100])
+                ms_value = 1 + .3 * 2 * (self.stats.get_multistrike_chance_from_rating(rating=current_stats['multistrike']) + self.buffs.multistrike_bonus())
+                proc_multiplier += min(self.settings.num_boss_adds, [4, 999][self.level==100]) * ms_value
 
         if self.settings.is_assassination_rogue():
             poison_base_proc_rate += .2
@@ -1149,7 +1150,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attacks_per_second['mh_autoattack_hits'] = attacks_per_second['mh_autoattacks'] * self.dw_mh_hit_chance
         attacks_per_second['oh_autoattack_hits'] = attacks_per_second['oh_autoattacks'] * self.dw_oh_hit_chance
         
-        self.get_poison_counts(attacks_per_second)
+        self.get_poison_counts(attacks_per_second, current_stats)
         
         if self.level == 100:
             #this is to update the crit rate for envenom due to the 'crit on Vendetta cast' perk, unlikely to ever be another ability
@@ -1510,7 +1511,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 else:
                     attacks_per_second['sr_'+ability] = sr_uptime * attacks_per_second[ability]
         
-        self.get_poison_counts(attacks_per_second)
+        self.get_poison_counts(attacks_per_second, current_stats)
         
         #print attacks_per_second   
         return attacks_per_second, crit_rates, additional_info
@@ -1878,6 +1879,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second['sr_rupture_ticks'] = [0,0,0,0,0, 12. / sr_cd]
             attacks_per_second['sr_ambush'] = shd_ambushes / sr_cd
         
-        self.get_poison_counts(attacks_per_second)
+        self.get_poison_counts(attacks_per_second, current_stats)
                                 
         return attacks_per_second, crit_rates, additional_info
