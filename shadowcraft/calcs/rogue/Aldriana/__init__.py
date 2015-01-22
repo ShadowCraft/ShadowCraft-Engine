@@ -1136,8 +1136,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second['sr_envenom'] = [finisher_chance * envenom_per_sr / self.get_spell_cd('shadow_reflection') for finisher_chance in avg_size_breakdown]
             crit_rates['sr_envenom'] = 1./envenom_per_sr + (1-envenom_per_sr)/envenom_per_sr * crit_rates['envenom']
             if 'mutilate' in attacks_per_second:
-                attacks_per_second['sr_mh_mutilate'] = sr_uptime * attacks_per_second['mutilate']
-                attacks_per_second['sr_oh_mutilate'] = sr_uptime * attacks_per_second['mutilate']
+                attacks_per_second['sr_mh_mutilate'] = 2 * sr_uptime * attacks_per_second['mutilate']
+                attacks_per_second['sr_oh_mutilate'] = 2 * sr_uptime * attacks_per_second['mutilate']
         
         white_swing_downtime = 0
         if self.swing_reset_spacing is not None:
