@@ -27,16 +27,21 @@ class Buffs(object):
         'food_mop_agi',                     # Sea Mist Rice Noodles
         'flask_wod_agi_200',                #
         'flask_wod_agi',                    # 250
-        'food_wod_mastery',                 # 75
-        'food_wod_mastery_50',              #
+        'food_wod_mastery',                 # 100
+        'food_wod_mastery_75',              # 75
+        'food_wod_mastery_125',             # 125
         'food_wod_crit',                    #
-        'food_wod_crit_50',                 #
+        'food_wod_crit_75',                 #
+        'food_wod_crit_125',                #
         'food_wod_haste',                   #
-        'food_wod_haste_50',                #
+        'food_wod_haste_75',                #
+        'food_wod_haste_125',               #
         'food_wod_versatility',             #
-        'food_wod_versatility_50',          #
+        'food_wod_versatility_75',          #
+        'food_wod_versatility_125',         #
         'food_wod_multistrike',             #
-        'food_wod_multistrike_50',          #
+        'food_wod_multistrike_75',          #
+        'food_wod_multistrike_125',         #
     ])
     
     buffs_debuffs = frozenset([
@@ -55,14 +60,14 @@ class Buffs(object):
         'mortal_wounds_debuff',
     ])
 
-    buff_scaling = {80: 91, 85: 102, 90: 118, 100: 458}
+    buff_scaling = {80: 91, 85: 122, 90: 141, 100: 550}
 
     def __init__(self, *args, **kwargs):
         for buff in args:
             if buff not in self.allowed_buffs:
                 raise InvalidBuffException(_('Invalid buff {buff}').format(buff=buff))
             setattr(self, buff, True)
-        self.level = kwargs.get('level', 85)
+        self.level = kwargs.get('level', 100)
 
     def __getattr__(self, name):
         # Any buff we haven't assigned a value to, we don't have.
@@ -77,12 +82,12 @@ class Buffs(object):
 
     def _set_constants_for_level(self):
         try:
-            self.mast_buff_bonus = round(1.7545000315 * self.buff_scaling[self.level])
+            self.mast_buff_bonus = self.buff_scaling[self.level]
         except KeyError as e:
             raise exceptions.InvalidLevelException(_('No conversion factor available for level {level}').format(level=self.level))
     
     def get_max_buffs(self):
-        return frozenset(buffs_debuffs + ['food_300_agi', 'agi_flask_mop'])
+        return frozenset(buffs_debuffs + ['food_wod_multistrike_125', 'flask_wod_agi'])
 
     def stat_multiplier(self):
         return [1, 1.05][self.stat_multiplier_buff]
@@ -125,33 +130,38 @@ class Buffs(object):
     
     def buff_haste(self, race=False):
         bonus_haste = 0
-        bonus_haste += 50 * self.food_wod_haste_50 * [1, 2][race]
-        bonus_haste += 75 * self.food_wod_haste * [1, 2][race]
+        bonus_haste += 125 * self.food_wod_haste_125 * [1, 2][race]
+        bonus_haste += 100 * self.food_wod_haste * [1, 2][race]
+        bonus_haste += 75 * self.food_wod_haste_75 * [1, 2][race]
         return bonus_haste
     
     def buff_crit(self, race=False):
         bonus_crit = 0
-        bonus_crit += 50 * self.food_wod_crit_50 * [1, 2][race]
-        bonus_crit += 75 * self.food_wod_crit * [1, 2][race]
+        bonus_crit += 125 * self.food_wod_crit_125 * [1, 2][race]
+        bonus_crit += 100 * self.food_wod_crit * [1, 2][race]
+        bonus_crit += 75 * self.food_wod_crit_75 * [1, 2][race]
         return bonus_crit
     
     def buff_mast(self, race=False):
         bonus_mastery = 0
         bonus_mastery += [0, self.mast_buff_bonus][self.mastery_buff]
-        bonus_mastery += 50 * self.food_wod_mastery_50 * [1, 2][race]
-        bonus_mastery += 75 * self.food_wod_mastery * [1, 2][race]
+        bonus_mastery += 125 * self.food_wod_mastery_125 * [1, 2][race]
+        bonus_mastery += 100 * self.food_wod_mastery * [1, 2][race]
+        bonus_mastery += 75 * self.food_wod_mastery_75 * [1, 2][race]
         return bonus_mastery
     
     def buff_versatility(self, race=False):
         bonus_versatility = 0
-        bonus_versatility += 50 * self.food_wod_versatility_50 * [1, 2][race]
-        bonus_versatility += 75 * self.food_wod_versatility * [1, 2][race]
+        bonus_versatility += 125 * self.food_wod_versatility_125 * [1, 2][race]
+        bonus_versatility += 100 * self.food_wod_versatility * [1, 2][race]
+        bonus_versatility += 75 * self.food_wod_versatility_75 * [1, 2][race]
         return bonus_versatility
     
     def buff_multistrike(self, race=False):
         bonus_multistrike = 0
-        bonus_multistrike += 50 * self.food_wod_multistrike_50 * [1, 2][race]
-        bonus_multistrike += 75 * self.food_wod_multistrike * [1, 2][race]
+        bonus_multistrike += 125 * self.food_wod_multistrike_125 * [1, 2][race]
+        bonus_multistrike += 100 * self.food_wod_multistrike * [1, 2][race]
+        bonus_multistrike += 75 * self.food_wod_multistrike_75 * [1, 2][race]
         return bonus_multistrike
     
     def buff_readiness(self, race=False):
