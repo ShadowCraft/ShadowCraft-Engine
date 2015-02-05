@@ -1042,7 +1042,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         cpg_energy_cost = self.get_spell_stats(cpg, cost_mod=ability_cost_modifier)[0]
         cpg_cost_reduction = 0
         if self.stats.gear_buffs.rogue_t17_2pc:
-            cpg_cost_reduction = 7 * seal_fate_proc_rate
+            cpg_cost_reduction = 14 * crit_rates['mutilate'] #7 per hand, double crit is 2 procs
         if self.stats.gear_buffs.rogue_t16_2pc_bonus():
             cpg_cost_reduction = 6 * seal_fate_proc_rate
         cpg_energy_cost -= cpg_cost_reduction
