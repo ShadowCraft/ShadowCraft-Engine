@@ -471,7 +471,25 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             procs_per_second += self.get_oh_procs_per_second(proc, attacks_per_second, crit_rates)
             procs_per_second += self.get_other_procs_per_second(proc, attacks_per_second, crit_rates)
         return procs_per_second
-
+    
+    def lost_swings_from_swing_delay(self, delay, swing_timer):
+        # delay = swing delay = s (see: graphs)
+        # swing timer = x (see: graphs)
+        delay_remainder = delay % .5        #m
+        num_sum = min(swing_timer, delay)   #n
+        
+        #TODO: Wiki Documentation explaining swing delay calculations
+        #OLD SWING DELAY METHODS: delay//swing_timer + (delay%swing_timer)/swing_timer
+        #                       : delay/swing_timer
+        #                       : OH is the same value but 1 lower
+            
+        t0 = max(min( delay_remainder/swing_timer*1.5, 1.5 ),                  0)
+        t1 = max(min( num_sum - delay_remainder,        .5 )/swing_timer,      0)
+        t2 = max(min( num_sum - delay_remainder - .5,   .5 )/swing_timer * .5, 0)
+        
+        #print "total delay: ", t0, t1, t2, (t0+t1+t2)
+        return (t0+t1+t2)/swing_timer
+    
     def set_uptime_for_ramping_proc(self, proc, procs_per_second):
         time_for_one_stack = 1 / procs_per_second
         if time_for_one_stack * proc.max_stacks > self.settings.duration:
@@ -1142,10 +1160,15 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         white_swing_downtime = 0
         if self.swing_reset_spacing is not None:
             white_swing_downtime += .5 / self.swing_reset_spacing
-        if self.talents.death_from_above:
-            white_swing_downtime += .5 / dfa_cd #.5 is 1s delay divided by 2 due to assumed even distribution
         attacks_per_second['mh_autoattacks'] = self.attack_speed_increase / self.stats.mh.speed * (1 - white_swing_downtime)
         attacks_per_second['oh_autoattacks'] = self.attack_speed_increase / self.stats.oh.speed * (1 - white_swing_downtime)
+        
+        if self.talents.death_from_above:
+            lost_swings_mh = self.lost_swings_from_swing_delay(1.3, self.stats.mh.speed / self.attack_speed_increase)
+            lost_swings_oh = self.lost_swings_from_swing_delay(1.3, self.stats.oh.speed / self.attack_speed_increase)
+            
+            attacks_per_second['mh_autoattacks'] -= lost_swings_mh / dfa_cd
+            attacks_per_second['oh_autoattacks'] -= lost_swings_oh / dfa_cd
         
         attacks_per_second['mh_autoattack_hits'] = attacks_per_second['mh_autoattacks'] * self.dw_mh_hit_chance
         attacks_per_second['oh_autoattack_hits'] = attacks_per_second['oh_autoattacks'] * self.dw_oh_hit_chance
@@ -1214,7 +1237,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.revealing_strike_multiplier = 1.35
         self.extra_cp_chance = .25 # Assume all casts during RvS
         if self.stats.gear_buffs.rogue_t17_2pc:
-            self.extra_cp_chance *= 1.2
+            self.extra_cp_chance += 0.2
         self.rvs_duration = 24
         if self.settings.dmg_poison == 'dp' and self.level == 100:
             self.settings.dmg_poison = 'sp'
@@ -1333,7 +1356,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if ar:
             gcd_size -= .2
         cp_per_cpg = 1.
-        dfa_cd = self.get_spell_cd('death_from_above') + self.settings.response_time + self.combat_cd_delay
+        dfa_cd = self.get_spell_cd('death_from_above') + self.settings.response_time
             
         # Combine energy cost scalers to reduce function calls (ie, 40% reduced energy cost). Assume multiplicative.
         cost_modifier = self.stats.gear_buffs.rogue_t15_4pc_modifier()
@@ -1342,6 +1365,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         eviscerate_energy_cost =  self.get_spell_stats('eviscerate', cost_mod=cost_modifier)[0]
         eviscerate_energy_cost -= cost_reducer
+        eviscerate_energy_cost -= FINISHER_SIZE * self.relentless_strikes_energy_return_per_cp
         #http://www.wolframalpha.com/input/?i=sum+of+.2%5Ex+from+x%3D1+to+inf
         #This increases the frequency of Eviscerates by 25% for every Evisc cast
         if self.stats.gear_buffs.rogue_t17_4pc:
@@ -1351,7 +1375,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         sinister_strike_energy_cost =  self.get_spell_stats('sinister_strike', cost_mod=cost_modifier)[0]
         sinister_strike_energy_cost -= cost_reducer
         death_from_above_energy_cost = self.get_spell_stats('death_from_above', cost_mod=cost_modifier)[0]
-        death_from_above_energy_cost -= cost_reducer
+        death_from_above_energy_cost -= cost_reducer * (2 + self.settings.num_boss_adds)
+        #need to reduce the cost of DFA by the strike's MG proc ...
+        #but also the MG procs from the AOE which hits the main target plus each additional add (strike + aoe)
         if self.stats.gear_buffs.rogue_t16_2pc_bonus():
             sinister_strike_energy_cost -= 15 * self.extra_cp_chance
         
@@ -1359,11 +1385,19 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #Autoattacks
         white_swing_downtime = 0
         if self.swing_reset_spacing is not None and not ar:
-            white_swing_downtime += .5 / self.swing_reset_spacing
-        if self.talents.death_from_above and not ar:
-            white_swing_downtime += .55 / dfa_cd #should have a better implementation, but it's close
+            white_swing_downtime += self.settings.response_time / self.swing_reset_spacing #from vanish
+        swing_timer_mh = self.stats.mh.speed / self.attack_speed_increase
+        swing_timer_mh = self.stats.oh.speed / self.attack_speed_increase
+        
         attacks_per_second['mh_autoattacks'] = self.attack_speed_increase / self.stats.mh.speed * (1 - white_swing_downtime)
         attacks_per_second['oh_autoattacks'] = self.attack_speed_increase / self.stats.oh.speed * (1 - white_swing_downtime)
+        #swing delays should be handled here
+        if self.talents.death_from_above and not ar:
+            lost_swings_mh = self.lost_swings_from_swing_delay(1.3, self.stats.mh.speed / self.attack_speed_increase)
+            lost_swings_oh = self.lost_swings_from_swing_delay(1.3, self.stats.oh.speed / self.attack_speed_increase)
+            
+            attacks_per_second['mh_autoattacks'] -= lost_swings_mh / dfa_cd
+            attacks_per_second['oh_autoattacks'] -= lost_swings_oh / dfa_cd
         
         attacks_per_second['mh_autoattack_hits'] = attacks_per_second['mh_autoattacks'] * self.dw_mh_hit_chance
         attacks_per_second['oh_autoattack_hits'] = attacks_per_second['oh_autoattacks'] * self.dw_oh_hit_chance
@@ -1402,7 +1436,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             ss_per_finisher = self.combat_cpg_per_finisher(1, 0)
         cp_per_finisher = FINISHER_SIZE
         energy_cost_for_cpgs = ss_per_finisher * sinister_strike_energy_cost
-        total_eviscerate_cost = energy_cost_for_cpgs + eviscerate_energy_cost - cp_per_finisher * self.relentless_strikes_energy_return_per_cp
+        total_eviscerate_cost = energy_cost_for_cpgs + eviscerate_energy_cost
 
         ss_per_snd = ss_per_finisher
         snd_size = FINISHER_SIZE
@@ -1749,12 +1783,17 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         white_swing_downtime = 0
         if self.swing_reset_spacing is not None:
             white_swing_downtime += .5 / self.swing_reset_spacing
-        if self.talents.death_from_above:
-            dfa_cd = self.get_spell_cd('death_from_above') + self.settings.response_time #artificial delay, needs convergence support
-            white_swing_downtime += .5 / dfa_cd #.5 is 1s delay divided by 2 due to assumed even distribution
-        
         attacks_per_second['mh_autoattacks'] = attack_speed_multiplier / self.stats.mh.speed * (1 - white_swing_downtime)
         attacks_per_second['oh_autoattacks'] = attack_speed_multiplier / self.stats.oh.speed * (1 - white_swing_downtime)
+        if self.talents.death_from_above:
+            dfa_cd = self.get_spell_cd('death_from_above') + self.settings.response_time
+            
+            lost_swings_mh = self.lost_swings_from_swing_delay(1.3, self.stats.mh.speed / self.attack_speed_increase)
+            lost_swings_oh = self.lost_swings_from_swing_delay(1.3, self.stats.oh.speed / self.attack_speed_increase)
+            
+            attacks_per_second['mh_autoattacks'] -= lost_swings_mh / dfa_cd
+            attacks_per_second['oh_autoattacks'] -= lost_swings_oh / dfa_cd
+        
         attacks_per_second['mh_autoattack_hits'] = attacks_per_second['mh_autoattacks'] * self.dw_mh_hit_chance
         attacks_per_second['oh_autoattack_hits'] = attacks_per_second['oh_autoattacks'] * self.dw_oh_hit_chance
         

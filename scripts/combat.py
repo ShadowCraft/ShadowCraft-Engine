@@ -53,7 +53,7 @@ test_oh = stats.Weapon(410., 2.6, 'sword', 'dancing_steel')
 test_procs = procs.ProcsList(('assurance_of_consequence', 588), ('draenic_philosophers_stone', 620), 'virmens_bite', 'virmens_bite_prepot', 'archmages_incandescence') #trinkets, other things (legendary procs)
 
 # Set up gear buffs.
-test_gear_buffs = stats.GearBuffs('gear_specialization', 'rogue_t16_2pc', 'rogue_t16_4pc') #tier buffs located here
+test_gear_buffs = stats.GearBuffs('gear_specialization', 'rogue_t17_2pc', 'rogue_t17_4pc') #tier buffs located here
 
 # Set up a calcs object..
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
@@ -67,7 +67,7 @@ test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          multistrike=121,)
 
 # Initialize talents..
-test_talents = talents.Talents('3111131', test_class, test_level)
+test_talents = talents.Talents('3111133', test_class, test_level)
 
 # Set up glyphs.
 glyph_list = ['energy', 'disappearance']
