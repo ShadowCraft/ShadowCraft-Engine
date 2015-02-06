@@ -1788,8 +1788,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.talents.death_from_above:
             dfa_cd = self.get_spell_cd('death_from_above') + self.settings.response_time
             
-            lost_swings_mh = self.lost_swings_from_swing_delay(1.3, self.stats.mh.speed / self.attack_speed_increase)
-            lost_swings_oh = self.lost_swings_from_swing_delay(1.3, self.stats.oh.speed / self.attack_speed_increase)
+            lost_swings_mh = self.lost_swings_from_swing_delay(1.3, self.stats.mh.speed / attack_speed_multiplier)
+            lost_swings_oh = self.lost_swings_from_swing_delay(1.3, self.stats.oh.speed / attack_speed_multiplier)
             
             attacks_per_second['mh_autoattacks'] -= lost_swings_mh / dfa_cd
             attacks_per_second['oh_autoattacks'] -= lost_swings_oh / dfa_cd

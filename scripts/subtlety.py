@@ -86,7 +86,7 @@ ep_values = calculator.get_ep(baseline_dps=total_dps)
 #ep_values = calculator.get_ep()
 #tier_ep_values = calculator.get_other_ep(['rogue_t17_2pc', 'rogue_t17_4pc', 'rogue_t17_4pc_lfr'])
 
-#talent_ranks = calculator.get_talents_ranking()
+talent_ranks = calculator.get_talents_ranking()
 
 def max_length(dict_list):
     max_len = 0
@@ -113,7 +113,7 @@ def pretty_print(dict_list):
 dicts_for_pretty_print = [
     ep_values,
     #tier_ep_values,
-    #talent_ranks,
+    talent_ranks,
     #trinkets_ep_value,
     dps_breakdown
 ]
