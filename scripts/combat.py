@@ -67,7 +67,7 @@ test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          multistrike=121,)
 
 # Initialize talents..
-test_talents = talents.Talents('3111133', test_class, test_level)
+test_talents = talents.Talents('3111121', test_class, test_level)
 
 # Set up glyphs.
 glyph_list = ['energy', 'disappearance']
@@ -75,7 +75,7 @@ test_glyphs = glyphs.Glyphs(test_class, *glyph_list)
 
 # Set up settings.
 test_cycle = settings.CombatCycle(revealing_strike_pooling=True, blade_flurry=False, dfa_during_ar=True)
-test_settings = settings.Settings(test_cycle, response_time=.5, duration=360, dmg_poison='dp', utl_poison='lp', is_pvp=False,
+test_settings = settings.Settings(test_cycle, response_time=.5, duration=360, dmg_poison='dp', utl_poison='lp',
                                   latency=.03, merge_damage=True, use_opener='always', opener_name='ambush',
                                   num_boss_adds=0.0, adv_params="") # 0.2 = 20% of the fight is an add present
 

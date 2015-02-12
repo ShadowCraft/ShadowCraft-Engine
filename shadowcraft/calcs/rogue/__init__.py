@@ -90,10 +90,6 @@ class RogueDamageCalculator(DamageCalculator):
         super(RogueDamageCalculator, self)._set_constants_for_level()
         self.normalize_ep_stat = self.get_adv_param('norm_ep_stat', self.settings.default_ep_stat, ignore_bounds=True)
         self.damage_modifier_cache = 1
-        # We only check race here (instead of calcs) because we can assume it's an agi food buff and it applies to every possible rogue calc
-        # Otherwise we would be obligated to have a series of conditions to check for classes
-        if self.settings.is_pvp:
-            self.default_ep_stats.append('pvp_power')
 
     def get_weapon_damage(self, hand, ap, is_normalized=True):
         weapon = getattr(self.stats, hand)
@@ -322,16 +318,6 @@ class RogueDamageCalculator(DamageCalculator):
             modifier = 1 + nightstalker_mod * nightstalker_percent
             damage_breakdown[self.settings.opener_name] *= modifier
         
-        # cleave
-        proc = getattr(self.stats.procs, 'sigil_of_rampage')
-        if proc and proc.scaling:
-            proc_chance = 2.0058600903 / 10000 * self.tools.get_random_prop_point(proc.item_level)
-            dmg_cleave = 0.
-            for attack in damage_breakdown:
-                if attack not in ('deadly_instant_poison', 'multistrike', 'multistrike_trinket'):
-                    # does not do damage to your primary target, only adds
-                    dmg_cleave += damage_breakdown[attack] * proc_chance * self.settings.num_boss_adds
-            damage_breakdown['cleave_trinket'] = dmg_cleave
         
         return damage_breakdown, additional_info
     

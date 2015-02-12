@@ -1319,10 +1319,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             return ability_count
         new_count = copy(ability_count)
         new_count += 1
-            
+        
         normal = self.combat_cpg_per_finisher(current_cp+1, new_count)
         rvs_proc = self.combat_cpg_per_finisher(current_cp+2, new_count)
-            
+        
         return (1 - self.extra_cp_chance)*normal + self.extra_cp_chance*rvs_proc
     
     def combat_attack_counts(self, current_stats, ar=False, crit_rates=None):
@@ -1366,10 +1366,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         eviscerate_energy_cost =  self.get_spell_stats('eviscerate', cost_mod=cost_modifier)[0]
         eviscerate_energy_cost -= cost_reducer
         eviscerate_energy_cost -= FINISHER_SIZE * self.relentless_strikes_energy_return_per_cp
-        #http://www.wolframalpha.com/input/?i=sum+of+.2%5Ex+from+x%3D1+to+inf
-        #This increases the frequency of Eviscerates by 25% for every Evisc cast
-        if self.stats.gear_buffs.rogue_t17_4pc:
-            eviscerate_energy_cost *= 1.25
         revealing_strike_energy_cost =  self.get_spell_stats('revealing_strike', cost_mod=cost_modifier)[0]
         revealing_strike_energy_cost -= cost_reducer
         sinister_strike_energy_cost =  self.get_spell_stats('sinister_strike', cost_mod=cost_modifier)[0]
@@ -1484,6 +1480,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         total_evis_per_second = energy_available_for_evis / total_eviscerate_cost
         evisc_actions_per_second = (total_evis_per_second * ss_per_finisher + total_evis_per_second)
         if self.stats.gear_buffs.rogue_t17_4pc:
+            #http://www.wolframalpha.com/input/?i=sum+of+.2%5Ex+from+x%3D1+to+inf
+            #This increases the frequency of Eviscerates by 25% for every Evisc cast
             evisc_actions_per_second += total_evis_per_second * .25
         attacks_per_second['sinister_strike'] = total_evis_per_second * ss_per_finisher
         # If GCD capped

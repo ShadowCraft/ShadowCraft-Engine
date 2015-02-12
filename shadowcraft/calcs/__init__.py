@@ -48,16 +48,10 @@ class DamageCalculator(object):
         if self.race.race_name == 'goblin':
             self.stats.procs.set_proc('rocket_barrage')
         
-        if self.settings.is_pvp:
-            self.level_difference = 0
-            self.base_one_hand_miss_rate = .00
-            self.base_parry_chance = .03
-            self.base_dodge_chance = .03
-        else:
-            self.level_difference = max(self.target_level - level, 0)
-            self.base_one_hand_miss_rate = 0
-            self.base_parry_chance = .01 * self.level_difference
-            self.base_dodge_chance = 0
+        self.level_difference = max(self.target_level - level, 0)
+        self.base_one_hand_miss_rate = 0
+        self.base_parry_chance = .01 * self.level_difference
+        self.base_dodge_chance = 0
         
         self.dw_miss_penalty = .17
         self._set_constants_for_class()
@@ -691,8 +685,6 @@ class DamageCalculator(object):
         # The obscure formulae for the different crit enhancers can be found here
         # http://elitistjerks.com/f31/t13300-shaman_relentless_earthstorm_ele/#post404567
         base_modifier = 2
-        if self.settings.is_pvp:
-            base_modifier = 1.5
         crit_damage_modifier = self.stats.gear_buffs.metagem_crit_multiplier()
         if self.race.might_of_the_mountain:
             crit_damage_modifier *= 1.02 #2x base becomes 2.04x with MotM
@@ -709,18 +701,12 @@ class DamageCalculator(object):
         # This function wraps spell, bleed and physical debuffs from raid
         # along with all-damage buff and armor reduction. It should be called
         # from every damage dealing formula. Armor can be overridden if needed.
-        pvp_mod = 1.
-        if self.settings.is_pvp and affect_resil:
-            power = self.stats.get_pvp_power_multiplier_from_rating()
-            resil = self.stats.get_pvp_resil_multiplier_from_rating()
-            pvp_mod = power*(1.0 - resil)
-            armor = self.stats.pvp_target_armor
         if attack_kind not in ('physical', 'spell', 'bleed'):
             raise exceptions.InvalidInputException(_('Attacks must be categorized as physical, spell or bleed'))
         elif attack_kind == 'spell':
-            return self.buffs.spell_damage_multiplier() * pvp_mod
+            return self.buffs.spell_damage_multiplier()
         elif attack_kind == 'bleed':
-            return self.buffs.bleed_damage_multiplier() * pvp_mod
+            return self.buffs.bleed_damage_multiplier()
         elif attack_kind == 'physical':
             armor_override = self.target_armor(armor)
-            return self.buffs.physical_damage_multiplier() * self.armor_mitigation_multiplier(armor_override) * pvp_mod
+            return self.buffs.physical_damage_multiplier() * self.armor_mitigation_multiplier(armor_override)
