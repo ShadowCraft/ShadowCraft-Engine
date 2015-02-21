@@ -631,7 +631,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         #calculate weapon procs
         weapon_enchants = set([])
-        for hand, enchant in [(x, y) for x in ('mh', 'oh') for y in ('dancing_steel', 'elemental_force', 'mark_of_the_frostwolf',
+        for hand, enchant in [(x, y) for x in ('mh', 'oh') for y in ('dancing_steel', 'mark_of_the_frostwolf',
                                                                      'mark_of_the_shattered_hand', 'mark_of_the_thunderlord',
                                                                      'mark_of_the_bleeding_hollow', 'mark_of_warsong')]:
             proc = getattr(getattr(self.stats, hand), enchant)
@@ -645,7 +645,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                             active_procs_icd.append(proc)
                         else:
                             active_procs_no_icd.append(proc)
-                elif enchant in ('elemental_force', 'mark_of_the_shattered_hand'):
+                elif enchant in ('mark_of_the_shattered_hand', ):
                     damage_procs.append(proc)
         
         static_proc_stats = {
@@ -884,7 +884,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         for key in damage_breakdown:
             damage_breakdown[key] *= 1 + multistrike_multiplier
-            if (key != 'Elemental Force') and ('sr_' not in key):
+            if ('sr_' not in key):
                 damage_breakdown[key] *= self.vendetta_mult
             elif 'sr_' in key:
                 damage_breakdown[key] *= 1 + self.vendetta_multiplier
@@ -1551,39 +1551,20 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     def rb_actual_cds(self, attacks_per_second, base_cds, avg_rb_effect=10):
         final_cds = {}
         # If it's best to always use 5CP finishers as combat now, it should continue to be so, this is simpler and faster
-        offensive_finisher_rate = attacks_per_second['eviscerate'][5]
-        if 'death_from_above' in attacks_per_second:
-            offensive_finisher_rate += attacks_per_second['death_from_above']
-
-        #should never happen, catch error just in case
-        if offensive_finisher_rate != 0:
-            for cd_name in base_cds:
-                final_cds[cd_name] = base_cds[cd_name] * (1 - avg_rb_effect / (1. / offensive_finisher_rate + avg_rb_effect))
-        else:
-            final_cds[cd_name] = base_cds[cd_name]
+        for cd_name in base_cds:
+            final_cds[cd_name] = base_cds[cd_name] * self.rb_cd_modifier(attacks_per_second)
         return final_cds
+    
     def rb_actual_cd(self, attacks_per_second, base_cd, avg_rb_effect=10):
-        final_cd = base_cd
         # If it's best to always use 5CP finishers as combat now, it should continue to be so, this is simpler and faster
-        offensive_finisher_rate = attacks_per_second['eviscerate'][5]
-        if 'death_from_above' in attacks_per_second:
-            offensive_finisher_rate += attacks_per_second['death_from_above']
-
-        #should never happen, catch error just in case
-        if offensive_finisher_rate != 0:
-            return base_cd * (1 - avg_rb_effect / (1. / offensive_finisher_rate + avg_rb_effect))
-        return base_cd
+        return base_cd * self.rb_cd_modifier(attacks_per_second)
+    
     def rb_cd_modifier(self, attacks_per_second, avg_rb_effect=10):
         # If it's best to always use 5CP finishers as combat now, it should continue to be so, this is simpler and faster
         offensive_finisher_rate = attacks_per_second['eviscerate'][5]
         if 'death_from_above' in attacks_per_second:
             offensive_finisher_rate += attacks_per_second['death_from_above']
-
-        if offensive_finisher_rate != 0:
-            #should never happen, catch divide-by-zero error just in case
-            return (1 - avg_rb_effect / (1. / offensive_finisher_rate + avg_rb_effect))
-        else:
-            return 1.
+        return (1./avg_rb_effect) / (offensive_finisher_rate + (1./avg_rb_effect))
     
     def combat_attack_counts_ar(self, current_stats, crit_rates=None):
         return self.combat_attack_counts(current_stats, ar=True, crit_rates=crit_rates)
