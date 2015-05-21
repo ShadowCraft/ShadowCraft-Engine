@@ -10,12 +10,12 @@ class Stats(object):
     # defined, though the numbers will need to updated for level 85.
 
     crit_rating_conversion_values        = {60:13.0, 70:14.0,  80:15.0,  85:17.0,  90:23.0,  100:110.0}
-    haste_rating_conversion_values       = {60:9.0,  70:10.0,  80:12.0,  85:14.0,  90:16.0,  100:100.0}
+    haste_rating_conversion_values       = {60:9.00, 70:10.0,  80:12.0,  85:14.0,  90:20.0,  100:90.0}
     mastery_rating_conversion_values     = {60:13.0, 70:14.0,  80:15.0,  85:17.0,  90:23.0,  100:110.0}
-    multistrike_rating_conversion_values = {60:3.0,  70:4.0,   80:5.0,   85:6.0,   90:7.0,   100:33.0}
+    multistrike_rating_conversion_values = {60:3.00, 70:4.00,  80:5.00,  85:6.00,  90:14.0,  100:66.0}
     readiness_rating_conversion_values   = {60:13.0, 70:14.0,  80:15.0,  85:17.0,  90:23.0,  100:110.0}
-    versatility_rating_conversion_values = {60:13.0, 70:14.0,  80:15.0,  85:17.0,  90:23.0,  100:110.0}
-    pvp_power_rating_conversion_values   = {60:7.96, 70:12.55, 80:26.11, 85:79.12, 90:400.0, 100:800.0}
+    versatility_rating_conversion_values = {60:13.0, 70:14.0,  80:15.0,  85:17.0,  90:27.0,  100:130.0}
+    pvp_power_rating_conversion_values   = {60:5.00, 70:7.00,  80:8.00,  85:9.00,  90:10.0,  100:49.0}
     pvp_resil_rating_conversion_values   = {60:9.29, 70:14.65, 80:30.46, 85:92.31, 90:310.0, 100:600.0}
 
     def __init__(self, mh, oh, procs, gear_buffs, str=0, agi=0, int=0, spirit=0, stam=0, ap=0, crit=0, haste=0, mastery=0, 
@@ -176,14 +176,16 @@ class GearBuffs(object):
         'gear_specialization',          # Increase stat by 5%, previously leather specialization
         'chaotic_metagem',              # Increase critical damage by 3%
         'rogue_pvp_4pc',                # 30 Extra Energy
+        'rogue_pvp_wod_4pc',            # +1s KSpree - Combat, 5CP and 100% crit after vanish - Assassination, 100 versatility after feint 5s- Sub
         'rogue_t14_2pc',                # Venom Wound damage by 20%, Sinister Strike by 15%, Backstab by 10%
         'rogue_t14_4pc',                # Shadow Blades by +12s
         'rogue_t15_2pc',                # Extra CP per finisher (max of 6)
         'rogue_t15_4pc',                # Abilities cast during Shadow Blades cost 40% less
         'rogue_t16_2pc',                # Stacking energy cost reduction (up to 5, up to 5 stacks) on NEXT RvS cast, Seal Fate Proc, or HAT proc
         'rogue_t16_4pc',                # 10% KS damage every time it hits, stacking mastery during vendetta (250 mastery, up to 20 stacks), % chance for backstab to become ambush
-        'rogue_t17_2pc',                # 
-        'rogue_t17_4pc',                # 
+        'rogue_t17_2pc',                # Mut and Dispatch crits generate 7 energy, RvS has 20% higher chance to generate a CP, generate 60e when casting ShD
+        'rogue_t17_4pc',                # Envenom generates 1 CP, finishers have a 20% chance to generate 5CP and next Evisc costs 0, 5 CP at the end of ShD
+        'rogue_t17_4pc_lfr',            # 1.1 RPPM, 30% energy generation for 6s
     ]
 
     allowed_buffs = frozenset(other_gear_buffs)

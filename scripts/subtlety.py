@@ -31,69 +31,61 @@ test_buffs = buffs.Buffs(
         'crit_chance_buff',
         'mastery_buff',
         'haste_buff',
+        'multistrike_buff',
+        'versatility_buff',
         'attack_power_buff',
-        'armor_debuff',
         'physical_vulnerability_debuff',
         'spell_damage_debuff',
-        'agi_flask_mop',
-        'food_300_agi'
+        'flask_wod_agi',
+        'food_mop_agi'
     )
 
-# Set up weapons.
-test_mh = stats.Weapon(420.5, 1.8, 'dagger', 'dancing_steel')
-test_oh = stats.Weapon(420.5, 1.8, 'dagger', 'dancing_steel')
+# Set up weapons. mark_of_the_frostwolf mark_of_the_shattered_hand
+test_mh = stats.Weapon(812.0, 1.8, 'dagger', 'mark_of_the_shattered_hand')
+test_oh = stats.Weapon(812.0, 1.8, 'dagger', 'mark_of_the_frostwolf')
 
-# Set up procs.
-test_procs = procs.ProcsList(('assurance_of_consequence', 580), ('haromms_talisman', 580), 'legendary_capacitive_meta', 'fury_of_xuen' )
+# Set up procs. - trinkets, other things (legendary procs)
+test_procs = procs.ProcsList(('scales_of_doom', 691), ('beating_heart_of_the_mountain', 701),
+                             'draenic_agi_pot', 'draenic_agi_prepot', 'archmages_greater_incandescence')
 
 # Set up gear buffs.
-test_gear_buffs = stats.GearBuffs('rogue_t16_2pc', 'rogue_t15_2pc', 'leather_specialization')
+test_gear_buffs = stats.GearBuffs('gear_specialization') #tier buffs located here
 
 # Set up a calcs object..
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
-                         agi=1957,
+                         agi=3650,
                          stam=2426,
-                         crit=794,
-                         haste=645,
-                         mastery=557,
+                         crit=1039,
+                         haste=0,
+                         mastery=1315,
                          readiness=0,
-                         versatility=154,
-                         multistrike=121,)
+                         versatility=122,
+                         multistrike=1834,)
 
 # Initialize talents..
-test_talents = talents.Talents('3222121', test_class, test_level)
+test_talents = talents.Talents('2000002', test_class, test_level)
 
 # Set up glyphs.
 glyph_list = []
 test_glyphs = glyphs.Glyphs(test_class, *glyph_list)
 
 # Set up settings.
-test_cycle = settings.SubtletyCycle(5, use_hemorrhage=24)
+test_cycle = settings.SubtletyCycle(5, use_hemorrhage='never', clip_fw=False)
 test_settings = settings.Settings(test_cycle, response_time=.5, duration=360, dmg_poison='dp', utl_poison='lp', is_pvp=False,
                                  adv_params="")
 
 # Build a DPS object.
 calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_glyphs, test_buffs, test_race, test_settings, test_level)
 
-# Compute EP values.
-ep_values = calculator.get_ep()
-tier_ep_values = calculator.get_other_ep(['rogue_t16_2pc', 'rogue_t16_4pc'])
-
-trinkets_list = [
-    #5.4
-    'assurance_of_consequence',
-    'haromms_talisman',
-    'sigil_of_rampage',
-    'sigil_of_rampage',
-    'ticking_ebon_detonator',
-    'thoks_tail_tip',
-    'discipline_of_xuen',
-    'fury_of_xuen',
-]
-
 # Compute DPS Breakdown.
 dps_breakdown = calculator.get_dps_breakdown()
 total_dps = sum(entry[1] for entry in dps_breakdown.items())
+
+# Compute EP values.
+ep_values = calculator.get_ep(baseline_dps=total_dps)
+#ep_values = calculator.get_ep()
+#tier_ep_values = calculator.get_other_ep(['rogue_t17_2pc', 'rogue_t17_4pc', 'rogue_t17_4pc_lfr'])
+
 talent_ranks = calculator.get_talents_ranking()
 
 def max_length(dict_list):
@@ -120,7 +112,7 @@ def pretty_print(dict_list):
 
 dicts_for_pretty_print = [
     ep_values,
-    tier_ep_values,
+    #tier_ep_values,
     talent_ranks,
     #trinkets_ep_value,
     dps_breakdown

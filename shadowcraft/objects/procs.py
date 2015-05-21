@@ -11,7 +11,7 @@ class InvalidProcException(exceptions.InvalidInputException):
 class Proc(object):
     def __init__(self, stat, value, duration, proc_name, max_stacks=1, can_crit=True, stats=None, upgradable=False, scaling=None,
                  buffs=None, base_value=0, type='rppm', icd=0, proc_rate=1.0, trigger='all_attacks', haste_scales=False, item_level=1,
-                 on_crit=False, on_procced_strikes=True, proc_rate_modifier=1., source='generic',):
+                 on_crit=False, on_procced_strikes=True, proc_rate_modifier=1., source='generic', att_spd_scales=False,):
         self.stat = stat
         if stats is not None:
             self.stats = set(stats)
@@ -31,6 +31,7 @@ class Proc(object):
         self.proc_rate = proc_rate
         self.trigger = trigger
         self.haste_scales = haste_scales
+        self.att_spd_scales = att_spd_scales
         self.item_level = item_level
         self.on_crit = on_crit
         self.on_procced_strikes = on_procced_strikes
@@ -132,7 +133,7 @@ class Proc(object):
         raise InvalidProcException(_('Invalid data for proc {proc}').format(proc=self.proc_name))
     
     def is_rppm(self):
-        return is_real_ppm()
+        return self.is_real_ppm()
     def is_real_ppm(self):
         if self.type == 'rppm':
             return True
@@ -157,6 +158,9 @@ class ProcsList(object):
 
     def set_proc(self, proc):
         setattr(self, proc, Proc(**self.allowed_procs[proc]))
+    
+    def del_proc(self, proc):
+        setattr(self, proc, False)
 
     def __getattr__(self, proc):
         # Any proc we haven't assigned a value to, we don't have.

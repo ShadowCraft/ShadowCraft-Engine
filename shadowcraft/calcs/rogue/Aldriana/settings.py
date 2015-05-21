@@ -5,7 +5,7 @@ class Settings(object):
 
     def __init__(self, cycle, time_in_execute_range=.35, response_time=.5, latency=.03, dmg_poison='dp', utl_poison=None,
                  duration=300, use_opener='always', opener_name='default', is_pvp=False, shiv_interval=0, adv_params=None,
-                 merge_damage=True, num_boss_adds=0, feint_interval=0, default_ep_stat='ap', potion=True, prepot=True, is_day=False):
+                 merge_damage=True, num_boss_adds=0, feint_interval=0, default_ep_stat='ap', is_day=False):
         self.cycle = cycle
         self.time_in_execute_range = time_in_execute_range
         self.response_time = response_time
@@ -18,8 +18,6 @@ class Settings(object):
         self.is_pvp = is_pvp
         self.feint_interval = feint_interval
         self.merge_damage = merge_damage
-        self.potion = potion
-        self.prepot = prepot
         self.is_day = is_day
         self.num_boss_adds = max(num_boss_adds, 0)
         self.shiv_interval = float(shiv_interval)
@@ -91,26 +89,12 @@ class AssassinationCycle(Cycle):
 
     allowed_values = (1, 2, 3, 4, 5)
 
-    def __init__(self, min_envenom_size_non_execute=4, min_envenom_size_execute=5, prioritize_rupture_uptime_non_execute=True, prioritize_rupture_uptime_execute=True):
+    def __init__(self, min_envenom_size_non_execute=4, min_envenom_size_execute=5):
         assert min_envenom_size_non_execute in self.allowed_values
         self.min_envenom_size_non_execute = min_envenom_size_non_execute
 
         assert min_envenom_size_execute in self.allowed_values
         self.min_envenom_size_execute = min_envenom_size_execute
-        
-        # There are two fundamental ways you can manage rupture; one is to
-        # reapply with whatever CP you have as soon as you can after the old
-        # rupture drops; we will call this priorotizing uptime over size.
-        # The second is to use ruptures that are the same size as your
-        # envenoms, which we will call prioritizing size over uptime. True
-        # means the first of these options; False means the second.
-        # There are theoretically other things you can do (say, 4+ envenom and
-        # 5+ ruptures) but such things are significantly harder to model so I'm
-        # not going to worry about them until we have reason to believe they're
-        # actually better.
-        self.prioritize_rupture_uptime_non_execute = prioritize_rupture_uptime_non_execute
-        self.prioritize_rupture_uptime_execute = prioritize_rupture_uptime_execute
-
 
 class CombatCycle(Cycle):
     _cycle_type = 'combat'
@@ -124,9 +108,10 @@ class CombatCycle(Cycle):
 class SubtletyCycle(Cycle):
     _cycle_type = 'subtlety'
 
-    def __init__(self, raid_crits_per_second, use_hemorrhage='24'):
+    def __init__(self, raid_crits_per_second, use_hemorrhage='uptime', clip_fw=False):
+        self.clip_fw = clip_fw #reduces fw uptime, but increases ambush damage
         self.raid_crits_per_second = raid_crits_per_second #used to calculate HAT procs per second.
         self.use_hemorrhage = use_hemorrhage # Allowed values are 'always' (main CP generator),
                                                                  #'never' (default to backstab),
-                                                                 # or a number denoting the interval in seconds between applications
+                                                                 #'uptime' (cast when hemo is down),
         

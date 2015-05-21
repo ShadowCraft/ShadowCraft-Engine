@@ -30,8 +30,8 @@ class DamageCalculator(object):
     normalize_ep_stat = None
 
     def __init__(self, stats, talents, glyphs, buffs, race, settings=None, level=100, target_level=None, char_class='rogue'):
-        self.WOW_BUILD_TARGET = '6.0.0' # should reflect the game patch being targetted
-        self.SHADOWCRAFT_BUILD = '0.11' # <1 for beta builds, 1.00 is GM, >1 for any bug fixes, reset for each warcraft patch
+        self.WOW_BUILD_TARGET = '6.1.0' # should reflect the game patch being targetted
+        self.SHADOWCRAFT_BUILD = '1.0' # <1 for beta builds, 1.00 is GM, >1 for any bug fixes, reset for each warcraft patch
         self.tools = class_data.Util()
         self.stats = stats
         self.talents = talents
@@ -45,17 +45,13 @@ class DamageCalculator(object):
         #racials
         if self.race.race_name == 'undead':
             self.stats.procs.set_proc('touch_of_the_grave')
+        if self.race.race_name == 'goblin':
+            self.stats.procs.set_proc('rocket_barrage')
         
-        if self.settings.is_pvp:
-            self.level_difference = 0
-            self.base_one_hand_miss_rate = .00
-            self.base_parry_chance = .03
-            self.base_dodge_chance = .03
-        else:
-            self.level_difference = max(self.target_level - level, 0)
-            self.base_one_hand_miss_rate = 0
-            self.base_parry_chance = .01 * self.level_difference
-            self.base_dodge_chance = 0
+        self.level_difference = max(self.target_level - level, 0)
+        self.base_one_hand_miss_rate = 0
+        self.base_parry_chance = .01 * self.level_difference
+        self.base_dodge_chance = 0
         
         self.dw_miss_penalty = .17
         self._set_constants_for_class()
@@ -118,7 +114,9 @@ class DamageCalculator(object):
         #http://iam.yellingontheinternet.com/2013/04/12/theorycraft-201-advanced-rppm/
         haste = 1.
         if proc.haste_scales:
-            haste *= self.stats.get_haste_multiplier_from_rating(self.base_stats['haste']) * self.buffs.haste_multiplier() * self.true_haste_mod
+            haste *= self.stats.get_haste_multiplier_from_rating(self.base_stats['haste']) * self.true_haste_mod
+        if proc.att_spd_scales:
+            haste *= 1.4
         #The 1.1307 is a value that increases the proc rate due to bad luck prevention. It /should/ be constant among all rppm proc styles
         if not proc.icd:
             if proc.max_stacks <= 1:
@@ -176,7 +174,7 @@ class DamageCalculator(object):
 
     def get_ep(self, ep_stats=None, normalize_ep_stat=None, baseline_dps=None):
         if not normalize_ep_stat:
-            normalize_ep_stat = self.normalize_ep_stat
+            normalize_ep_stat = self.get_adv_param('normalize_stat', self.settings.default_ep_stat, ignore_bounds=True)
         if not ep_stats:
             ep_stats = self.default_ep_stats
         
@@ -245,6 +243,34 @@ class DamageCalculator(object):
                     ep = (new_dps - baseline_dps) / (normalize_dps - baseline_dps)
                     ep_values[hand + '_' + str(speed)] = ep
                     getattr(self.stats, hand).speed = old_speed
+
+            if hand == 'mh':
+                mh_ep_values = ep_values
+            elif hand == 'oh':
+                oh_ep_values = ep_values
+
+        return mh_ep_values, oh_ep_values
+
+    def get_weapon_type_ep(self, normalize_ep_stat=None):
+        if not normalize_ep_stat:
+            normalize_ep_stat = self.normalize_ep_stat
+        weapons = ('mh', 'oh')
+
+        baseline_dps = self.get_dps()
+        normalize_dps = self.ep_helper(normalize_ep_stat)
+
+        mh_ep_values = {}
+        oh_ep_values = {}
+        for hand in weapons:
+            ep_values = {}
+
+            old_type = getattr(self.stats, hand).type
+            for wtype in ('dagger', 'one-hander'):
+                getattr(self.stats, hand).type = wtype
+                new_dps = self.get_dps()
+                ep = (new_dps - baseline_dps) / (normalize_dps - baseline_dps)
+                ep_values[hand + '_type_' + wtype] = ep
+            getattr(self.stats, hand).type = old_type
 
             if hand == 'mh':
                 mh_ep_values = ep_values
@@ -327,7 +353,11 @@ class DamageCalculator(object):
         # weapons they are on, are computed by get_weapon_ep.
         ep_values = {}
         baseline_dps = self.get_dps()
-        normalize_dps = self.ep_helper(normalize_ep_stat)
+        if normalize_ep_stat == 'dps':
+            normalize_dps_difference = 1.
+        else:
+            normalize_dps = self.ep_helper(normalize_ep_stat)
+            normalize_dps_difference = normalize_dps - baseline_dps
 
         procs_list = []
         gear_buffs_list = []
@@ -344,7 +374,7 @@ class DamageCalculator(object):
             # engineering gizmos are handled as gear buffs by the engine.
             setattr(self.stats.gear_buffs, i, not getattr(self.stats.gear_buffs, i))
             new_dps = self.get_dps()
-            ep_values[i] = abs(new_dps - baseline_dps) / (normalize_dps - baseline_dps)
+            ep_values[i] = abs(new_dps - baseline_dps) / (normalize_dps_difference)
             setattr(self.stats.gear_buffs, i, not getattr(self.stats.gear_buffs, i))
 
         for i in procs_list:
@@ -354,7 +384,7 @@ class DamageCalculator(object):
                 else:
                     self.stats.procs.set_proc(i)
                 new_dps = self.get_dps()
-                ep_values[i] = abs(new_dps - baseline_dps) / (normalize_dps - baseline_dps)
+                ep_values[i] = abs(new_dps - baseline_dps) / (normalize_dps_difference)
                 if getattr(self.stats.procs, i):
                     delattr(self.stats.procs, i)
                 else:
@@ -547,18 +577,38 @@ class DamageCalculator(object):
         
         return talents_ranking
 
+    def get_engine_info(self):
+        data = {
+            'wow_build_target': self.WOW_BUILD_TARGET,
+            'shadowcraft_build': self.SHADOWCRAFT_BUILD
+        }
+        return data
+
     def get_dps(self):
         # Overwrite this function with your calculations/simulations/whatever;
         # this is what callers will (initially) be looking at.
         pass
 
-    def get_all_activated_stat_boosts(self):
-        racial_boosts = self.race.get_racial_stat_boosts()
-        gear_boosts = self.stats.gear_buffs.get_all_activated_boosts()
-        return racial_boosts + gear_boosts
+    #def get_all_activated_stat_boosts(self):
+    #    racial_boosts = self.race.get_racial_stat_boosts()
+    #    gear_boosts = self.stats.gear_buffs.get_all_activated_boosts()
+    #    return racial_boosts + gear_boosts
 
     def armor_mitigation_multiplier(self, armor):
         return armor_mitigation.multiplier(armor, cached_parameter=self.armor_mitigation_parameter)
+    
+    def max_level_armor_multiplier(self):
+        return 3610.0 / (3610.0 + 1938.0)
+    
+    def get_trinket_cd_reducer(self):
+        trinket_cd_reducer_value = .0
+        proc = getattr(self.stats.procs, 'assurance_of_consequence')
+        if proc and proc.scaling:
+            trinket_cd_reducer_value = 0.2532840073 / 100 * self.tools.get_random_prop_point(proc.item_level)
+            if self.level == 100:
+                trinket_cd_reducer_value *= 23./110.
+            return 1 / (1 + trinket_cd_reducer_value)
+        return 1
 
     def armor_mitigate(self, damage, armor):
         # Pass in raw physical damage and armor value, get armor-mitigated
@@ -635,8 +685,6 @@ class DamageCalculator(object):
         # The obscure formulae for the different crit enhancers can be found here
         # http://elitistjerks.com/f31/t13300-shaman_relentless_earthstorm_ele/#post404567
         base_modifier = 2
-        if self.settings.is_pvp:
-            base_modifier = 1.5
         crit_damage_modifier = self.stats.gear_buffs.metagem_crit_multiplier()
         if self.race.might_of_the_mountain:
             crit_damage_modifier *= 1.02 #2x base becomes 2.04x with MotM
@@ -653,18 +701,12 @@ class DamageCalculator(object):
         # This function wraps spell, bleed and physical debuffs from raid
         # along with all-damage buff and armor reduction. It should be called
         # from every damage dealing formula. Armor can be overridden if needed.
-        pvp_mod = 1.
-        if self.settings.is_pvp and affect_resil:
-            power = self.stats.get_pvp_power_multiplier_from_rating()
-            resil = self.stats.get_pvp_resil_multiplier_from_rating()
-            pvp_mod = power*(1.0 - resil)
-            armor = self.stats.pvp_target_armor
         if attack_kind not in ('physical', 'spell', 'bleed'):
             raise exceptions.InvalidInputException(_('Attacks must be categorized as physical, spell or bleed'))
         elif attack_kind == 'spell':
-            return self.buffs.spell_damage_multiplier() * pvp_mod
+            return self.buffs.spell_damage_multiplier()
         elif attack_kind == 'bleed':
-            return self.buffs.bleed_damage_multiplier() * pvp_mod
+            return self.buffs.bleed_damage_multiplier()
         elif attack_kind == 'physical':
             armor_override = self.target_armor(armor)
-            return self.buffs.physical_damage_multiplier() * self.armor_mitigation_multiplier(armor_override) * pvp_mod
+            return self.buffs.physical_damage_multiplier() * self.armor_mitigation_multiplier(armor_override)
