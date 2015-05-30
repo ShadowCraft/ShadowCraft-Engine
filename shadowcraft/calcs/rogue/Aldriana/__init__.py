@@ -890,6 +890,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 damage_breakdown[key] *= 1 + self.vendetta_multiplier
             if self.level == 100 and key in ('mutilate', 'dispatch', 'sr_mutilate', 'sr_mh_mutilate', 'sr_oh_mutilate', 'sr_dispatch'):
                 damage_breakdown[key] *= self.emp_envenom_percentage
+            if self.stats.gear_buffs.rogue_t18_2pc: 
+                if key == 'dispatch'
+                    damage_breakdown*=1.45
 
     def assassination_dps_breakdown_non_execute(self):
         #damage_breakdown, additional_info = self.compute_damage(self.assassination_attack_counts_non_execute)
@@ -922,8 +925,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             
             n_chance = 1 - crit_rates['dispatch']
             n_value, n_proc, n_count, n_breakdown = self.assassination_cp_distribution_for_finisher(current_cp+1, crit_rates, new_count, current_sizes, cp_limit=cp_limit, execute=execute)
+            if self.stats.gear_buffs.rogue_t18_4pc:
+                n_value, n_proc, n_count, n_breakdown = self.assassination_cp_distribution_for_finisher(current_cp+3, crit_rates, new_count, current_sizes, cp_limit=cp_limit, execute=execute)
             c_chance = crit_rates['dispatch']
             c_value, c_proc, c_count, c_breakdown = self.assassination_cp_distribution_for_finisher(current_cp+2, crit_rates, new_count, current_sizes, cp_limit=cp_limit, execute=execute)
+            if self.stats.gear_buffs.rogue_t18_4pc:
+                c_value, c_proc, c_count, c_breakdown = self.assassination_cp_distribution_for_finisher(current_cp+4, crit_rates, new_count, current_sizes, cp_limit=cp_limit, execute=execute)
             
             avg_cp = n_chance*n_value + c_chance*c_value
             avg_bs_afterwards = n_chance*n_proc + c_chance*c_proc
@@ -993,6 +1000,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         mutilate_cps = 3 - (1 - crit_rates['mutilate']) ** 2 # 1 - (1 - crit_rates['mutilate']) ** 2 is the Seal Fate CP
         dispatch_cps = 1 + crit_rates['dispatch']
+        if self.stats.gear_buffs.rogue_t18_4pc:
+            dispatch_cps += 2
+        
         if self.talents.anticipation:
             avg_finisher_size = 5
             avg_size_breakdown = [0,0,0,0,0,1.] #this is for determining the % likelyhood of sizes, not frequency of the sizes
@@ -1357,7 +1367,16 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             gcd_size -= .2
         cp_per_cpg = 1.
         dfa_cd = self.get_spell_cd('death_from_above') + self.settings.response_time
+        
+        #https://www.wolframalpha.com/input/?i=0.5*%28%28p-p%5E2%29*4%2B%28p%5E2%29*2%29+for+p%3D0.08
+        #8% proc on SnD internal tick
+        #0.5 proc chances per second, p^2 is chance of back to back procs => 15.36% uptime
+        if self.stats.gear_buffs.rogue_t18_2pc:
+            self.attack_speed_increase *= 1 + (0.1536 *0.2)
+            self.base_energy_regen *= 1 + (0.1536 * 2)
+            gcd_size -= (0.1536 * 0.2)
             
+        
         # Combine energy cost scalers to reduce function calls (ie, 40% reduced energy cost). Assume multiplicative.
         cost_modifier = self.stats.gear_buffs.rogue_t15_4pc_modifier()
         # Turn the cost of the ability into the net loss of energy by reducing it by the energy gained from MG
@@ -1647,7 +1666,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 #damage_breakdown[key] *= find_weakness_multiplier
                 damage_breakdown[key] *= 1 + additional_info['backstab_fw_rate'] * (find_weakness_damage_boost - 1)
             if key in ('rupture', 'sr_rupture', 'rupture_sc'):
-                damage_breakdown[key] *= 1.1
+                damage_breakdown[key] *= 1.3
             if key is not 'rupture_sc':
                 damage_breakdown[key] *= (1 + multistrike_multiplier)
             damage_breakdown[key] *= mos_multiplier

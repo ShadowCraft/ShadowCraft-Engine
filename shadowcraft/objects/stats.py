@@ -186,6 +186,8 @@ class GearBuffs(object):
         'rogue_t17_2pc',                # Mut and Dispatch crits generate 7 energy, RvS has 20% higher chance to generate a CP, generate 60e when casting ShD
         'rogue_t17_4pc',                # Envenom generates 1 CP, finishers have a 20% chance to generate 5CP and next Evisc costs 0, 5 CP at the end of ShD
         'rogue_t17_4pc_lfr',            # 1.1 RPPM, 30% energy generation for 6s
+        'rogue_t18_2pc',                # Dispatch deals 45% additional damage as Nature damage, SnD internal ticks have 8% change to proc ARfor 4 sec, Vanish awards 5cps and increases all damage done by 10% for 10 sec
+        'rogue_t18_4pc',                #Dispatch generates +2cps, AR increased damage by 25%, Evis and Rupture reduce the CD of vanish by 2 seconds per CP
     ]
 
     allowed_buffs = frozenset(other_gear_buffs)
@@ -268,6 +270,16 @@ class GearBuffs(object):
     
     def rogue_t17_4pc_bonus(self):
         if self.rogue_t17_4pc:
+            return True
+        return False
+
+    def rogue_t18_2pc_bonus(self):
+        if self.rogue_t18_2pc:
+            return True
+        return False
+       
+    def rogue_t18_4pc_bonus(self):
+        if self.rogue_T18_4pc:
             return True
         return False
     
