@@ -891,8 +891,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if self.level == 100 and key in ('mutilate', 'dispatch', 'sr_mutilate', 'sr_mh_mutilate', 'sr_oh_mutilate', 'sr_dispatch'):
                 damage_breakdown[key] *= self.emp_envenom_percentage
             if self.stats.gear_buffs.rogue_t18_2pc: 
-                if key == 'dispatch'
-                    damage_breakdown*=1.45
+                if key == 'dispatch':
+                    damage_breakdown*= (1.25 * 1+self.stats.get_mastery_from_rating(rating=current_stats['mastery']))
 
     def assassination_dps_breakdown_non_execute(self):
         #damage_breakdown, additional_info = self.compute_damage(self.assassination_attack_counts_non_execute)
@@ -1226,7 +1226,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             getattr(self.stats.procs, 'legendary_capacitive_meta').proc_rate_modifier = 1.136
         if getattr(self.stats.procs, 'fury_of_xuen'):
             getattr(self.stats.procs, 'fury_of_xuen').proc_rate_modifier = 1.15
-        
+            
         #combat specific constants
         self.max_bandits_guile_buff = 1.3
         self.combat_cd_delay = 0 #this is for DFA convergence, mostly
@@ -1244,6 +1244,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.race.expansive_mind:
             self.max_energy = round(self.max_energy * 1.05, 0)
         self.ar_duration = 15
+        # recurance relation of 0.16*x until convergence
+        # not 100% in confident in this approach
+        if self.stats.gear_buffs.rogue_t18_2pc:
+            self.ar_duration = 17.857
         self.revealing_strike_multiplier = 1.35
         self.extra_cp_chance = .25 # Assume all casts during RvS
         if self.stats.gear_buffs.rogue_t17_2pc:
@@ -1278,7 +1282,15 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         none_tuple = self.compute_damage_from_aps(stats, aps, crits, procs, additional_info)
         phases['none'] = (self.rb_actual_cds(aps, cds)['ar'] + self.settings.response_time + self.major_cd_delay,
                             self.update_with_bandits_guile(none_tuple[0], none_tuple[1]) )
-        
+
+        if self.stats.gear_buffs.rogue_t18_4pc:
+            for key in phases['ar'][1]:
+                    phases['ar'][1][key] *=1.15
+            for key in phases['none'][1]:
+                #15% damage boost with 16% uptime
+                phases['none'][1][key] *= 1.024
+
+
         total_duration = phases['ar'][0] + phases['none'][0]
         #average it together
         damage_breakdown = self.average_damage_breakdowns(phases, denom = total_duration)
@@ -1292,7 +1304,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             for key in damage_breakdown:
                 if key in self.melee_attacks:
                     damage_breakdown['blade_flurry'] += bf_mod * damage_breakdown[key] * min(self.settings.num_boss_adds, bf_max_targets)
-        
+
         #combat gets it's own MS calculation due to BF mechanics
         #calculate multistrike here, really cheap to calculate
         #turns out the 2 chance system yields a very basic linear pattern, the damage modifier is 30% of the multistrike %!
@@ -1368,13 +1380,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         cp_per_cpg = 1.
         dfa_cd = self.get_spell_cd('death_from_above') + self.settings.response_time
         
-        #https://www.wolframalpha.com/input/?i=0.5*%28%28p-p%5E2%29*4%2B%28p%5E2%29*2%29+for+p%3D0.08
-        #8% proc on SnD internal tick
-        #0.5 proc chances per second, p^2 is chance of back to back procs => 15.36% uptime
-        if self.stats.gear_buffs.rogue_t18_2pc:
-            self.attack_speed_increase *= 1 + (0.1536 *0.2)
-            self.base_energy_regen *= 1 + (0.1536 * 2)
-            gcd_size -= (0.1536 * 0.2)
+        # 8% proc on SnD internal tick
+        # assuming no waste uptime outside AR is simply (0.08*4)/2=0.16 uptime
+        if self.stats.gear_buffs.rogue_t18_2pc and not ar:
+            self.attack_speed_increase *= 1 + (0.16 *0.2)
+            self.base_energy_regen *= 1 + (0.16 * 2)
+            gcd_size -= (0.16 * 0.2)
             
         
         # Combine energy cost scalers to reduce function calls (ie, 40% reduced energy cost). Assume multiplicative.
