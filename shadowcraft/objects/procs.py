@@ -46,7 +46,7 @@ class Proc(object):
         #see above for stat value initialization
         if self.source in ('trinket',):
             for e in self.value:
-                self.value[e] = round(self.scaling * tools.get_random_prop_point(self.item_level))
+                self.value[e] = round(self.scaling* tools.get_random_prop_point(self.item_level))
 
     def procs_off_auto_attacks(self):
         if self.trigger in ('all_attacks', 'auto_attacks', 'all_spells_and_attacks', 'all_melee_attacks'):

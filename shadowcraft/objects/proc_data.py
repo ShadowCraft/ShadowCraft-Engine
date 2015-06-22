@@ -158,6 +158,67 @@ allowed_procs = {
         'proc_rate': 0.92,
         'trigger': 'all_attacks'
     },
+    #6.2 procs
+    'malicious_censer': {
+        'stat': 'stats',
+        'value': {'agi':1093},
+        'duration': 20,
+        'proc_name': 'Malicious Censer',
+        'upgradable': True,
+        'scaling': 1.79180327869,
+        'item_level': 700,
+        'type': 'rppm',
+        'source': 'trinket',
+        'icd': 0,
+        'proc_rate': 1.0,
+        'trigger': 'all_attacks'
+    },
+
+    'soul_capacitor': {
+        'stat': 'damage_modifier',
+        'value': 2677,
+        'duration': 10,
+        'proc_name': 'Soul Capacitor',
+        'upgradable': True,
+        'scaling': 4.59965635,
+        'item_level': 695,
+        'type': 'rppm',
+        'source': 'trinket',
+        'icd': 0,
+        'proc_rate': 1.0,
+        'trigger': 'all_attacks'
+    },
+
+    'mirror_of_the_blademaster': {
+        'stat': 'physical_damage',
+        'value': 1,
+        'duration': 0,
+        'proc_name': 'Mirror of the Blademaster',
+        'upgradable': True,
+        'scaling': 0,
+        'item_level': 0,
+        'type': 'icd',
+        'source': 'trinket',
+        'icd': 60,
+        'proc_rate': 1.0,
+        'trigger': 'all_attacks'
+    },
+
+    'bleeding_hollow_toxin_vessel': {
+        'stat': 'ability_modifer',
+        'value': 5149,
+        'duration': 0,
+        'proc_name': 'Bleeding Hollow Toxin Vessel',
+        'upgradable': True,
+        'scaling': 8.05790297,
+        'item_level': 705,
+        'type': 'perk',
+        'source': 'trinket',
+        'icd': 0,
+        'proc_rate': 0.0,
+        'trigger': 'all_attacks'
+    },
+
     #6.1 procs (alch only)
     'stone_of_wind': {
         'stat': 'stats',

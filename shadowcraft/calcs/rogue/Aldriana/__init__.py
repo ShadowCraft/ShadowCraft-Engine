@@ -841,6 +841,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.set_constants()
         self.stat_multipliers['mastery'] *= 1.05
 
+        if getattr(self.stats.procs, 'bleeding_hollow_toxin_vessel'):
+            spec_needs_converge = True
+        self.envenom_crit_modifier = 0.0
+
         self.vendetta_duration = 20 + 10 * self.glyphs.vendetta
         self.vendetta_uptime = self.vendetta_duration / (self.get_spell_cd('vendetta') + self.settings.response_time + self.major_cd_delay)
         self.vendetta_multiplier = .3 - .05 * self.glyphs.vendetta
@@ -882,10 +886,19 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         multistrike_multiplier = .3 * 2 * (self.stats.get_multistrike_chance_from_rating(rating=current_stats['multistrike']) + self.buffs.multistrike_bonus())
         multistrike_multiplier = min(.6, multistrike_multiplier)
         
+        soul_cap_mod = 1.0
+        if getattr(self.stats.procs, 'soul_capacitor'):
+            soul_cap= getattr(self.stats.procs, 'soul_capacitor')
+            self.set_rppm_uptime(soul_cap)
+            soul_cap_mod = 1+(soul_cap.uptime * soul_cap.value/10000)
+
+
+
         for key in damage_breakdown:
             damage_breakdown[key] *= 1 + multistrike_multiplier
             if ('sr_' not in key):
                 damage_breakdown[key] *= self.vendetta_mult
+                damage_breakdown[key] *= soul_cap_mod
             elif 'sr_' in key:
                 damage_breakdown[key] *= 1 + self.vendetta_multiplier
             if self.level == 100 and key in ('mutilate', 'dispatch', 'sr_mutilate', 'sr_mh_mutilate', 'sr_oh_mutilate', 'sr_dispatch'):
@@ -966,6 +979,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         additional_info = {}
         #can't rely on a cache, due to the Cold Blood perk
         crit_rates = self.get_crit_rates(current_stats)
+        for key in crit_rates:
+            if key in ('mutilate', 'dispatch'):
+                crit_rates[key]+=self.envenom_crit_modifier
         
         haste_multiplier = self.stats.get_haste_multiplier_from_rating(current_stats['haste']) * self.true_haste_mod
         ability_cost_modifier = self.stats.gear_buffs.rogue_t15_4pc_reduced_cost()
@@ -1150,6 +1166,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if self.talents.death_from_above:
                 finisher_per_second += sum(attacks_per_second['death_from_above_strike'])
             self.emp_envenom_percentage = 1 + .3 * (1 - attacks_per_second['rupture']/finisher_per_second)
+            crit_mod = 1
+            if getattr(self.stats.procs, 'bleeding_hollow_toxin_vessel'):
+                crit_mod = round(getattr(self.stats.procs, 'bleeding_hollow_toxin_vessel').value)/10000
+                envenom_crit_modifier = crit_mod * (1 - attacks_per_second['rupture']/finisher_per_second)
         
         if self.talents.shadow_reflection:
             sr_uptime = 8. / self.get_spell_cd('shadow_reflection')
@@ -1226,7 +1246,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             getattr(self.stats.procs, 'legendary_capacitive_meta').proc_rate_modifier = 1.136
         if getattr(self.stats.procs, 'fury_of_xuen'):
             getattr(self.stats.procs, 'fury_of_xuen').proc_rate_modifier = 1.15
-            
+
         #combat specific constants
         self.max_bandits_guile_buff = 1.3
         self.combat_cd_delay = 0 #this is for DFA convergence, mostly
@@ -1245,9 +1265,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.max_energy = round(self.max_energy * 1.05, 0)
         self.ar_duration = 15
         # recurance relation of 0.16*x until convergence
-        # not 100% in confident in this approach
+        # https://www.wolframalpha.com/input/?i=15%2Bsum%28x%3D1+to+inf%29+of+15*.16%5Ex
         if self.stats.gear_buffs.rogue_t18_2pc:
-            self.ar_duration = 17.857
+            self.ar_duration = 17.8571
         self.revealing_strike_multiplier = 1.35
         self.extra_cp_chance = .25 # Assume all casts during RvS
         if self.stats.gear_buffs.rogue_t17_2pc:
@@ -1305,14 +1325,29 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 if key in self.melee_attacks:
                     damage_breakdown['blade_flurry'] += bf_mod * damage_breakdown[key] * min(self.settings.num_boss_adds, bf_max_targets)
 
+        evis_multiplier = 1
+        if getattr(self.stats.procs, 'bleeding_hollow_toxin_vessel'):
+            evis_multiplier = 1+round(getattr(self.stats.procs, 'bleeding_hollow_toxin_vessel').value*1.31132259)/10000
+
+
+        soul_cap_mod = 1.0
+        if getattr(self.stats.procs, 'soul_capacitor'):
+            soul_cap= getattr(self.stats.procs, 'soul_capacitor')
+            self.set_rppm_uptime(soul_cap)
+            soul_cap_mod = 1+(soul_cap.uptime * soul_cap.value/10000)
+
         #combat gets it's own MS calculation due to BF mechanics
         #calculate multistrike here, really cheap to calculate
         #turns out the 2 chance system yields a very basic linear pattern, the damage modifier is 30% of the multistrike %!
         multistrike_multiplier = .3 * 2 * (self.stats.get_multistrike_chance_from_rating(rating=stats['multistrike']) + self.buffs.multistrike_bonus())
         multistrike_multiplier = min(.6, multistrike_multiplier)
         for ability in damage_breakdown:
+            if 'sr_' not in ability:
+                damage_breakdown[ability] *= soul_cap_mod
             damage_breakdown[ability] *= (1 + multistrike_multiplier)
-        
+            if ability == 'eviscerate':
+                damage_breakdown[ability] *= evis_multiplier
+
         return damage_breakdown
     
     def update_with_bandits_guile(self, damage_breakdown, additional_info):
@@ -1662,11 +1697,22 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         find_weakness_damage_boost = 1. / self.max_level_armor_multiplier()
         find_weakness_multiplier = 1 + (find_weakness_damage_boost - 1) * additional_info['fw_uptime']
         
+
+        trinket_multiplier = 1
+        if getattr(self.stats.procs, 'bleeding_hollow_toxin_vessel'):
+            trinket_multiplier = 1+round(getattr(self.stats.procs, 'bleeding_hollow_toxin_vessel').value*1.38590017)/10000
+
         #calculate multistrike here for Sub and Assassination, really cheap to calculate
         #turns out the 2 chance system yields a very basic linear pattern, the damage modifier is 30% of the multistrike %!
         multistrike_multiplier = .3 * 2 * (self.stats.get_multistrike_chance_from_rating(rating=stats['multistrike']) + self.buffs.multistrike_bonus())
         multistrike_multiplier = min(.6, multistrike_multiplier)
         
+        soul_cap_mod = 1.0
+        if getattr(self.stats.procs, 'soul_capacitor'):
+            soul_cap= getattr(self.stats.procs, 'soul_capacitor')
+            self.set_rppm_uptime(soul_cap)
+            soul_cap_mod = 1+(soul_cap.uptime * soul_cap.value/10000)
+
         for key in damage_breakdown:
             if key in ('eviscerate', 'hemorrhage', 'shuriken_toss', 'hemorrhage_dot', 'autoattack'): #'burning_wounds'
                 damage_breakdown[key] *= find_weakness_multiplier
@@ -1680,6 +1726,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 damage_breakdown[key] *= 1.3
             if key is not 'rupture_sc':
                 damage_breakdown[key] *= (1 + multistrike_multiplier)
+            if key in ('ambush', 'garrote'):
+                damage_breakdown[key] *=trinket_multiplier
+            if "sr_" not in key:
+                damage_breakdown[key] *= soul_cap_mod
             damage_breakdown[key] *= mos_multiplier
         
         #discard the loose rupture component to clean up the breakdown
