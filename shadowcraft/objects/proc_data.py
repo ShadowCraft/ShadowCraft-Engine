@@ -176,7 +176,7 @@ allowed_procs = {
 
     'soul_capacitor': {
         'stat': 'damage_modifier',
-        'value': 2677,
+        'value': {'damage_mod': 2677},
         'duration': 10,
         'proc_name': 'Soul Capacitor',
         'upgradable': True,
@@ -206,7 +206,7 @@ allowed_procs = {
 
     'bleeding_hollow_toxin_vessel': {
         'stat': 'ability_modifer',
-        'value': 5149,
+        'value': {'ability_mod':5149},
         'duration': 0,
         'proc_name': 'Bleeding Hollow Toxin Vessel',
         'upgradable': True,

@@ -333,6 +333,16 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             crit_rate = self.crit_rate(crit=current_stats['crit'])
             proc_value = (average_ap * .40 + 1) * 10 * (1 + min(4., self.settings.num_boss_adds))
 
+        if proc is getattr(self.stats.procs, 'mirror_of_the_blademaster'):
+            crit_rate = self.crit_rate(crit=current_stats['crit'])
+            # Each mirror produces 10 swings scaling with haste
+            # There are 4 mirrors, 2 spawn in front of the get and are parryable
+            # Each mirror swings a weapon with weapon damage based on 100% of AP
+            haste_mult = self.stats.get_haste_multiplier_from_rating(current_stats['haste'])
+            swings_per_mirror = 20.0/(2.0/haste_mult)
+            total_swings = 2*swings_per_mirror + 2*(1.0-self.base_parry_chance)*swings_per_mirror
+            proc_value = total_swings*(average_ap/3.5)
+
         average_hit = proc_value * multiplier
         average_damage = average_hit * (1 + crit_rate * (crit_multiplier - 1)) * proc_count
         #print proc.proc_name, average_hit, multiplier
@@ -890,9 +900,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if getattr(self.stats.procs, 'soul_capacitor'):
             soul_cap= getattr(self.stats.procs, 'soul_capacitor')
             self.set_rppm_uptime(soul_cap)
-            soul_cap_mod = 1+(soul_cap.uptime * soul_cap.value/10000)
-
-
+            soul_cap_mod = 1+(soul_cap.uptime * soul_cap.value['damage_mod']/10000)
 
         for key in damage_breakdown:
             damage_breakdown[key] *= 1 + multistrike_multiplier
@@ -905,7 +913,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 damage_breakdown[key] *= self.emp_envenom_percentage
             if self.stats.gear_buffs.rogue_t18_2pc: 
                 if key == 'dispatch':
-                    damage_breakdown*= (1.25 * 1+self.stats.get_mastery_from_rating(rating=current_stats['mastery']))
+                    damage_breakdown[key]*= 1+(0.25 * (1+(self.stats.get_mastery_from_rating(rating=current_stats['mastery'])*self.assassination_mastery_conversion)))
 
     def assassination_dps_breakdown_non_execute(self):
         #damage_breakdown, additional_info = self.compute_damage(self.assassination_attack_counts_non_execute)
@@ -982,7 +990,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         for key in crit_rates:
             if key in ('mutilate', 'dispatch'):
                 crit_rates[key]+=self.envenom_crit_modifier
-        
+                crit_rates[key] = min(crit_rates[key], 1.0)
+
         haste_multiplier = self.stats.get_haste_multiplier_from_rating(current_stats['haste']) * self.true_haste_mod
         ability_cost_modifier = self.stats.gear_buffs.rogue_t15_4pc_reduced_cost()
         
@@ -1166,10 +1175,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if self.talents.death_from_above:
                 finisher_per_second += sum(attacks_per_second['death_from_above_strike'])
             self.emp_envenom_percentage = 1 + .3 * (1 - attacks_per_second['rupture']/finisher_per_second)
-            crit_mod = 1
+            crit_mod = 0
             if getattr(self.stats.procs, 'bleeding_hollow_toxin_vessel'):
-                crit_mod = round(getattr(self.stats.procs, 'bleeding_hollow_toxin_vessel').value)/10000
-                envenom_crit_modifier = crit_mod * (1 - attacks_per_second['rupture']/finisher_per_second)
+                #may need a better model for envenom uptime at high cp gen
+                crit_mod = round(getattr(self.stats.procs, 'bleeding_hollow_toxin_vessel').value['ability_mod'])/10000
+                self.envenom_crit_modifier = crit_mod * (1 - attacks_per_second['rupture']/finisher_per_second)
         
         if self.talents.shadow_reflection:
             sr_uptime = 8. / self.get_spell_cd('shadow_reflection')
@@ -1327,14 +1337,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         evis_multiplier = 1
         if getattr(self.stats.procs, 'bleeding_hollow_toxin_vessel'):
-            evis_multiplier = 1+round(getattr(self.stats.procs, 'bleeding_hollow_toxin_vessel').value*1.31132259)/10000
+            evis_multiplier = 1+round(getattr(self.stats.procs, 'bleeding_hollow_toxin_vessel').value['ability_mod']*1.31132259)/10000
 
 
         soul_cap_mod = 1.0
         if getattr(self.stats.procs, 'soul_capacitor'):
             soul_cap= getattr(self.stats.procs, 'soul_capacitor')
             self.set_rppm_uptime(soul_cap)
-            soul_cap_mod = 1+(soul_cap.uptime * soul_cap.value/10000)
+            soul_cap_mod = 1+(soul_cap.uptime * soul_cap.value['damage_mod']/10000)
 
         #combat gets it's own MS calculation due to BF mechanics
         #calculate multistrike here, really cheap to calculate
@@ -1415,14 +1425,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         cp_per_cpg = 1.
         dfa_cd = self.get_spell_cd('death_from_above') + self.settings.response_time
         
-        # 8% proc on SnD internal tick
-        # assuming no waste uptime outside AR is simply (0.08*4)/2=0.16 uptime
         if self.stats.gear_buffs.rogue_t18_2pc and not ar:
             self.attack_speed_increase *= 1 + (0.16 *0.2)
-            self.base_energy_regen *= 1 + (0.16 * 2)
+            self.base_energy_regen *= 1.16
             gcd_size -= (0.16 * 0.2)
-            
-        
+                  
         # Combine energy cost scalers to reduce function calls (ie, 40% reduced energy cost). Assume multiplicative.
         cost_modifier = self.stats.gear_buffs.rogue_t15_4pc_modifier()
         # Turn the cost of the ability into the net loss of energy by reducing it by the energy gained from MG
@@ -1669,11 +1676,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         self.sc_trigger_rate = 0
         mos_value = .1
+
+        self.vanish_cd_modifier = 1.0
+
         # leveling perks
         if self.level == 100:
             mos_value += .05
             self.ability_cds['vanish'] = 90
-        
+
         #update spec specific proc rates
         if getattr(self.stats.procs, 'legendary_capacitive_meta'):
             getattr(self.stats.procs, 'legendary_capacitive_meta').proc_rate_modifier = 1.114
@@ -1683,7 +1693,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.stat_multipliers['agi'] *= 1.15
         #sinister calling requires convergence to calculate (for now?)
         self.spec_needs_converge = True
-        
+
         self.settings.cycle.raid_crits_per_second = self.get_adv_param('hat_triggers_per_second', self.settings.cycle.raid_crits_per_second, min_bound=0, max_bound=600)
         self.settings.cycle.clip_fw = self.get_adv_param('clip_fw', self.settings.cycle.clip_fw, ignore_bounds=True)
         
@@ -1700,7 +1710,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         trinket_multiplier = 1
         if getattr(self.stats.procs, 'bleeding_hollow_toxin_vessel'):
-            trinket_multiplier = 1+round(getattr(self.stats.procs, 'bleeding_hollow_toxin_vessel').value*1.38590017)/10000
+            trinket_multiplier = 1+round(getattr(self.stats.procs, 'bleeding_hollow_toxin_vessel').value['ability_mod']*1.38590017)/10000
 
         #calculate multistrike here for Sub and Assassination, really cheap to calculate
         #turns out the 2 chance system yields a very basic linear pattern, the damage modifier is 30% of the multistrike %!
@@ -1711,9 +1721,15 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if getattr(self.stats.procs, 'soul_capacitor'):
             soul_cap= getattr(self.stats.procs, 'soul_capacitor')
             self.set_rppm_uptime(soul_cap)
-            soul_cap_mod = 1+(soul_cap.uptime * soul_cap.value/10000)
+            soul_cap_mod = 1+(soul_cap.uptime * soul_cap.value['damage_mod']/10000)
+
+        vanish_damage_mod = 1.0
+        if self.stats.gear_buffs.rogue_t18_2pc:
+            vanish_damage_buff_uptime = 10/self.get_spell_cd('vanish')
+            vanish_damage_mod += vanish_damage_buff_uptime * 0.3
 
         for key in damage_breakdown:
+            damage_breakdown[key] *= vanish_damage_mod
             if key in ('eviscerate', 'hemorrhage', 'shuriken_toss', 'hemorrhage_dot', 'autoattack'): #'burning_wounds'
                 damage_breakdown[key] *= find_weakness_multiplier
             if key == 'ambush':
@@ -1744,7 +1760,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         additional_info = {}
         if crit_rates == None:
             crit_rates = self.get_crit_rates(current_stats)
-            
+        
+        self.ability_cds['vanish'] = 90 * self.vanish_cd_modifier
+
         base_energy_regen = 10.
         max_energy = 100.
         if self.stats.gear_buffs.rogue_pvp_4pc_extra_energy():
@@ -1801,6 +1819,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         hemo_cd = 24.
         snd_cd = 36.
         base_cp_per_second = hat_cp_per_second * (shd_cd-8.)/shd_cd + self.total_openers_per_second * 2
+        if self.stats.gear_buffs.rogue_t18_2pc:
+            base_cp_per_second += 5 / self.get_spell_cd('vanish')
         if self.stats.gear_buffs.rogue_t15_2pc:
             rupture_ticks_per_cast += 2
             rupture_cd += 4
@@ -1978,5 +1998,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second['sr_ambush'] = shd_ambushes / sr_cd
         
         self.get_poison_counts(attacks_per_second, current_stats)
-                                
+        
+        if self.stats.gear_buffs.rogue_t18_4pc:
+            finishers_per_second = sum(attacks_per_second['eviscerate']) + attacks_per_second['rupture']
+            avg_cdr = 5 #assume all 5cp finishers
+            self.vanish_cd_modifier = (1./avg_cdr) / (finishers_per_second + (1./avg_cdr))
+
         return attacks_per_second, crit_rates, additional_info
