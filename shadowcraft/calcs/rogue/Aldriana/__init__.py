@@ -945,13 +945,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             new_count['dispatch'] += 1
             
             n_chance = 1 - crit_rates['dispatch']
-            n_value, n_proc, n_count, n_breakdown = self.assassination_cp_distribution_for_finisher(current_cp+1, crit_rates, new_count, current_sizes, cp_limit=cp_limit, execute=execute)
+            c_chance = crit_rates['dispatch']
             if self.stats.gear_buffs.rogue_t18_4pc:
                 n_value, n_proc, n_count, n_breakdown = self.assassination_cp_distribution_for_finisher(current_cp+3, crit_rates, new_count, current_sizes, cp_limit=cp_limit, execute=execute)
-            c_chance = crit_rates['dispatch']
-            c_value, c_proc, c_count, c_breakdown = self.assassination_cp_distribution_for_finisher(current_cp+2, crit_rates, new_count, current_sizes, cp_limit=cp_limit, execute=execute)
-            if self.stats.gear_buffs.rogue_t18_4pc:
                 c_value, c_proc, c_count, c_breakdown = self.assassination_cp_distribution_for_finisher(current_cp+4, crit_rates, new_count, current_sizes, cp_limit=cp_limit, execute=execute)
+            else:
+                n_value, n_proc, n_count, n_breakdown = self.assassination_cp_distribution_for_finisher(current_cp+1, crit_rates, new_count, current_sizes, cp_limit=cp_limit, execute=execute)
+                c_value, c_proc, c_count, c_breakdown = self.assassination_cp_distribution_for_finisher(current_cp+2, crit_rates, new_count, current_sizes, cp_limit=cp_limit, execute=execute)
             
             avg_cp = n_chance*n_value + c_chance*c_value
             avg_bs_afterwards = n_chance*n_proc + c_chance*c_proc
@@ -1355,7 +1355,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if 'sr_' not in ability:
                 damage_breakdown[ability] *= soul_cap_mod
             damage_breakdown[ability] *= (1 + multistrike_multiplier)
-            if ability == 'eviscerate':
+            if ability in ('eviscerate', 'sr_eviscerate'):
                 damage_breakdown[ability] *= evis_multiplier
 
         return damage_breakdown
@@ -1742,7 +1742,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 damage_breakdown[key] *= 1.3
             if key is not 'rupture_sc':
                 damage_breakdown[key] *= (1 + multistrike_multiplier)
-            if key in ('ambush', 'garrote'):
+            if key in ('ambush', 'garrote', 'sr_ambush'):
                 damage_breakdown[key] *=trinket_multiplier
             if "sr_" not in key:
                 damage_breakdown[key] *= soul_cap_mod
@@ -2002,6 +2002,5 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.stats.gear_buffs.rogue_t18_4pc:
             finishers_per_second = sum(attacks_per_second['eviscerate']) + attacks_per_second['rupture']
             avg_cdr = 5 #assume all 5cp finishers
-            self.vanish_cd_modifier = (1./avg_cdr) / (finishers_per_second + (1./avg_cdr))
-
+            self.vanish_cd_modifier = 1./((finishers_per_second * avg_cdr) + 1)
         return attacks_per_second, crit_rates, additional_info

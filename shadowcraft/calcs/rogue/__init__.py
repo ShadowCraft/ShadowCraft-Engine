@@ -336,9 +336,9 @@ class RogueDamageCalculator(DamageCalculator):
     
     #abilities
     def ambush_damage(self, ap):
-        return 3.10 * [1., 1.4][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap)
+        return 3.15 * [1., 1.4][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap)
     def ambush_sr_damage(self, ap):
-        return 3.10 * 1.4 * 1.8 * 0.924 * ap / 3.5
+        return 3.15 * 1.4 * 1.8 * 0.924 * ap / 3.5
     
     def backstab_damage(self, ap):
         return 2.52 * self.get_weapon_damage('mh', ap)
