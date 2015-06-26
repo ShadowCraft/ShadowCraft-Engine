@@ -1788,7 +1788,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.glyphs.energy:
             max_energy += 20
         if self.stats.gear_buffs.rogue_t18_4pc_lfr:
-            self.max_energy += 20
+            max_energy += 20
         if self.race.expansive_mind:
             max_energy = round(max_energy * 1.05, 0)
         shd_duration = 8
