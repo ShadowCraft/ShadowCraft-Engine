@@ -907,6 +907,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         for key in damage_breakdown:
             damage_breakdown[key] *= 1 + multistrike_multiplier
+            #mirror of the blademaster doesn't get any player buffs
+            if key == 'Mirror of the Blademaster':
+                continue
             if ('sr_' not in key):
                 damage_breakdown[key] *= self.vendetta_mult
                 damage_breakdown[key] *= soul_cap_mod
@@ -1369,6 +1372,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     
     def update_with_bandits_guile(self, damage_breakdown, additional_info):
         for key in damage_breakdown:
+            if key == 'Mirror of the Blademaster':
+                continue
             if key in ('killing_spree', 'mh_killing_spree', 'oh_killing_spree'):
                 if self.settings.cycle.ksp_immediately:
                     damage_breakdown[key] *= self.bandits_guile_multiplier
@@ -1755,7 +1760,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 damage_breakdown[key] *=trinket_multiplier
             if "sr_" not in key:
                 damage_breakdown[key] *= soul_cap_mod
-            damage_breakdown[key] *= mos_multiplier
+            if "Mirror" not in key:
+                damage_breakdown[key] *= mos_multiplier
         
         #discard the loose rupture component to clean up the breakdown
         if 'rupture_sc' in damage_breakdown and self.settings.merge_damage:
