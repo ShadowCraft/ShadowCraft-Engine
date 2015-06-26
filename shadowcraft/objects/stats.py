@@ -188,6 +188,7 @@ class GearBuffs(object):
         'rogue_t17_4pc_lfr',            # 1.1 RPPM, 30% energy generation for 6s
         'rogue_t18_2pc',                # Dispatch deals 25% additional damage as Nature damage, SnD internal ticks have 8% change to proc ARfor 4 sec, Vanish awards 5cps and increases all damage done by 30% for 10 sec
         'rogue_t18_4pc',                # Dispatch generates +2cps, AR increased damage by 15%, Evis and Rupture reduce the CD of vanish by 1 seconds per CP
+        'rogue_t18_4pc_lfr'             # Energy increased by 20, 5% increase in energy regen
     ]
 
     allowed_buffs = frozenset(other_gear_buffs)

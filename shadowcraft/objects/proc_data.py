@@ -219,54 +219,13 @@ allowed_procs = {
         'trigger': 'all_attacks'
     },
 
-    #6.1 procs (alch only)
-    'stone_of_wind': {
-        'stat': 'stats',
-        'value': {'agi':931},
-        'duration': 15,
-        'proc_name': 'Stone of Wind',
-        'upgradable': True,
-        'scaling': 2.6670000553,
-        'item_level': 640,
-        'type': 'icd',
-        'source': 'trinket',
-        'icd': 55,
-        'proc_rate': 0.35,
-        'trigger': 'all_attacks'
-    },
-    'stone_of_the_earth': {
-        'stat': 'stats',
-        'value': {'agi':1069},
-        'duration': 15,
-        'proc_name': 'Stone of the Earth',
-        'upgradable': True,
-        'scaling': 2.6670000553,
-        'item_level': 655,
-        'type': 'icd',
-        'source': 'trinket',
-        'icd': 55,
-        'proc_rate': 0.35,
-        'trigger': 'all_attacks'
-    },
-    'stone_of_the_waters': {
-        'stat': 'stats',
-        'value': {'agi':1229},
-        'duration': 15,
-        'proc_name': 'Stone of the Waters',
-        'upgradable': True,
-        'scaling': 2.6670000553,
-        'item_level': 670,
-        'type': 'icd',
-        'source': 'trinket',
-        'icd': 55,
-        'proc_rate': 0.35,
-        'trigger': 'all_attacks'
-    },
-    'stone_of_fire': {
+    #all alchemy trinket upgrades are just scales
+    #with different names, collapsed into single proc
+    'alchemy_stone': {
         'stat': 'stats',
         'value': {'agi':1350},
         'duration': 15,
-        'proc_name': 'Stone of Fire',
+        'proc_name': 'Alchemy Trinket Proc',
         'upgradable': True,
         'scaling': 2.6670000553,
         'item_level': 680,

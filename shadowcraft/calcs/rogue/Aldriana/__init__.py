@@ -845,8 +845,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.max_energy += 15
         if self.glyphs.energy:
             self.max_energy += 20
+        if self.stats.gear_buffs.rogue_t18_4pc_lfr:
+            self.max_energy += 20
         if self.race.expansive_mind:
             self.max_energy = round(self.max_energy * 1.05, 0)
+
             
         self.set_constants()
         self.stat_multipliers['mastery'] *= 1.05
@@ -1000,6 +1003,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             #http://www.wolframalpha.com/input/?i=1.1307+*+%281+-+e+**+%28-1+*+1.1+*+6%2F+60%29%29
             #https://twitter.com/Celestalon/status/525350819856535552
             energy_regen *= 1 + (.11778034322021550695 * .3) #11% uptime on 30% boost)
+        if self.stats.gear_buffs.rogue_t18_4pc_lfr:
+            energy_regen *= 1.05
         energy_regen += self.bonus_energy_regen
         if cpg == 'dispatch':
             #this is for the effects of pooling going into execute phase
@@ -1271,6 +1276,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.max_energy += 15
         if self.glyphs.energy:
             self.max_energy += 20
+        if self.stats.gear_buffs.rogue_t18_4pc_lfr:
+            self.max_energy += 20
         if self.race.expansive_mind:
             self.max_energy = round(self.max_energy * 1.05, 0)
         self.ar_duration = 15
@@ -1485,6 +1492,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             #http://www.wolframalpha.com/input/?i=1.1307+*+%281+-+e+**+%28-1+*+1.1+*+6%2F+60%29%29
             #https://twitter.com/Celestalon/status/525350819856535552
             energy_regen *= 1 + (.11778034322021550695 * .3) #11% uptime on 30% boost)
+        if self.stats.gear_buffs.rogue_t18_4pc_lfr:
+            energy_regen *= 1.05
         energy_regen += self.bonus_energy_regen + combat_potency_regen + bonus_energy_from_openers
         #Rough idea to factor in a full energy bar
         if not ar:
@@ -1772,6 +1781,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             max_energy += 15
         if self.glyphs.energy:
             max_energy += 20
+        if self.stats.gear_buffs.rogue_t18_4pc_lfr:
+            self.max_energy += 20
         if self.race.expansive_mind:
             max_energy = round(max_energy * 1.05, 0)
         shd_duration = 8
@@ -1837,6 +1848,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             #http://www.wolframalpha.com/input/?i=1.1307+*+%281+-+e+**+%28-1+*+1.1+*+6%2F+60%29%29
             #https://twitter.com/Celestalon/status/525350819856535552
             energy_regen *= 1 + (.11778034322021550695 * .3) #11% uptime on 30% boost)
+        if self.stats.gear_buffs.rogue_t18_4pc_lfr:
+            energy_regen *= 1.05
         energy_regen += self.bonus_energy_regen + max_energy / self.settings.duration + er_energy
         energy_regen += self.get_bonus_energy_from_openers()
         if self.stats.gear_buffs.rogue_t16_2pc_bonus():
