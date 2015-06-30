@@ -345,7 +345,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         
         #.424*max(AP, SP)
         if proc is getattr(self.stats.procs, 'felmouth_frenzy'):
-            proc_value = average_ap * 0.424
+            proc_value = average_ap * 0.424 * 5
 
 
         average_hit = proc_value * multiplier
