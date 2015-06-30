@@ -342,6 +342,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             swings_per_mirror = 20.0/(2.0/haste_mult)
             total_swings = 2*swings_per_mirror + 2*(1.0-self.base_parry_chance)*swings_per_mirror
             proc_value = total_swings*(average_ap/3.5)
+        
+        #.424*max(AP, SP)
+        if proc is getattr(self.stats.procs, 'felmouth_frenzy'):
+            proc_value = average_ap * 0.424
+
 
         average_hit = proc_value * multiplier
         average_damage = average_hit * (1 + crit_rate * (crit_multiplier - 1)) * proc_count
@@ -607,7 +612,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         active_procs_no_icd = []
         damage_procs = []
         weapon_damage_procs = []
-        
+
+        if self.buffs.felmouth_food():
+            self.stats.procs.set_proc('felmouth_frenzy')
+
         shatt_hand = 0
         for hand in ('mh', 'oh'):
             if getattr(getattr(self.stats, hand), 'mark_of_the_shattered_hand'):
@@ -906,6 +914,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             soul_cap_mod = 1+(soul_cap.uptime * soul_cap.value['damage_mod']/10000)
 
         for key in damage_breakdown:
+            #Fel Lash doesn't MS
+            if key == 'Fel Lash':
+                continue
             damage_breakdown[key] *= 1 + multistrike_multiplier
             #mirror of the blademaster doesn't get any player buffs
             if key == 'Mirror of the Blademaster':
@@ -1347,7 +1358,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         evis_multiplier = 1
         if getattr(self.stats.procs, 'bleeding_hollow_toxin_vessel'):
-            evis_multiplier = 1+round(getattr(self.stats.procs, 'bleeding_hollow_toxin_vessel').value['ability_mod']*1.31132259)/10000
+            evis_multiplier = 1+round(getattr(self.stats.procs, 'bleeding_hollow_toxin_vessel').value['ability_mod']*1.6784929152)/10000
 
 
         soul_cap_mod = 1.0
@@ -1364,6 +1375,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         for ability in damage_breakdown:
             if 'sr_' not in ability:
                 damage_breakdown[ability] *= soul_cap_mod
+            #Fel Lash doesn't MS
+            if ability == 'Fel Lash':
+                continue
             damage_breakdown[ability] *= (1 + multistrike_multiplier)
             if ability in ('eviscerate', 'sr_eviscerate'):
                 damage_breakdown[ability] *= evis_multiplier
@@ -1372,7 +1386,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     
     def update_with_bandits_guile(self, damage_breakdown, additional_info):
         for key in damage_breakdown:
-            if key == 'Mirror of the Blademaster':
+            if key in ('Mirror of the Blademaster', 'Fel Lash'):
                 continue
             if key in ('killing_spree', 'mh_killing_spree', 'oh_killing_spree'):
                 if self.settings.cycle.ksp_immediately:
@@ -1724,7 +1738,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         trinket_multiplier = 1
         if getattr(self.stats.procs, 'bleeding_hollow_toxin_vessel'):
-            trinket_multiplier = 1+round(getattr(self.stats.procs, 'bleeding_hollow_toxin_vessel').value['ability_mod']*1.38590017)/10000
+            trinket_multiplier = 1+round(getattr(self.stats.procs, 'bleeding_hollow_toxin_vessel').value['ability_mod']*1.940260238)/10000
 
         #calculate multistrike here for Sub and Assassination, really cheap to calculate
         #turns out the 2 chance system yields a very basic linear pattern, the damage modifier is 30% of the multistrike %!
@@ -1754,7 +1768,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 damage_breakdown[key] *= 1 + additional_info['backstab_fw_rate'] * (find_weakness_damage_boost - 1)
             if key in ('rupture', 'sr_rupture', 'rupture_sc'):
                 damage_breakdown[key] *= 1.3
-            if key is not 'rupture_sc':
+            if key not in ('rupture_sc', 'Fel Lash'):
                 damage_breakdown[key] *= (1 + multistrike_multiplier)
             if key in ('ambush', 'garrote', 'sr_ambush'):
                 damage_breakdown[key] *=trinket_multiplier

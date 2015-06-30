@@ -159,6 +159,21 @@ allowed_procs = {
         'trigger': 'all_attacks'
     },
     #6.2 procs
+    'felmouth_frenzy': {
+        'stat':'spell_damage',
+        'value': 1,
+        'duration': 0,
+        'proc_name': 'Fel Lash',
+        'scaling': 0.0,
+        'type': 'rppm',
+        'source': 'unique',
+        'icd': 0,
+        'proc_rate': 2,
+        'haste_scales': True,
+        'can_crit': False,
+        'trigger': 'all_attacks'
+    },
+
     'malicious_censer': {
         'stat': 'stats',
         'value': {'agi':1093},

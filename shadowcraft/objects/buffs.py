@@ -42,6 +42,7 @@ class Buffs(object):
         'food_wod_multistrike',             #
         'food_wod_multistrike_75',          #
         'food_wod_multistrike_125',         #
+        'food_felmouth_frenzy',             # Felmouth frenzy, 2 haste scaling RPPM dealing 0.424 AP in damage
     ])
     
     buffs_debuffs = frozenset([
@@ -166,3 +167,8 @@ class Buffs(object):
     
     def buff_readiness(self, race=False):
         return 0
+
+    def felmouth_food(self):
+        if self.food_felmouth_frenzy :
+            return True
+        return False
