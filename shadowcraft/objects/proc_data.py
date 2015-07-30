@@ -159,11 +159,11 @@ allowed_procs = {
         'trigger': 'all_attacks'
     },
     #6.2 procs
-    'maluus': {
+    'maalus': {
         'stat': 'damage_modifier',
         'value': {'damage_mod': 2500},
         'duration': 15,
-        'proc_name': 'Maluus',
+        'proc_name': 'Maalus',
         'upgradable': True,
         'scaling': 2.95857988166,
         'item_level': 735,
