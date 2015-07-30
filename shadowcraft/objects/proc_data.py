@@ -159,13 +159,28 @@ allowed_procs = {
         'trigger': 'all_attacks'
     },
     #6.2 procs
+    'maluus': {
+        'stat': 'damage_modifier',
+        'value': {'damage_mod': 2500},
+        'duration': 15,
+        'proc_name': 'Maluus',
+        'upgradable': True,
+        'scaling': 2.95857988166,
+        'item_level': 735,
+        'type': 'rppm',
+        'source': 'trinket',
+        'icd': 120,
+        'proc_rate': 1.0,
+        'trigger': 'all_attacks'
+    },
+
     'felmouth_frenzy': {
         'stat':'spell_damage',
         'value': 1,
         'duration': 0,
         'proc_name': 'Fel Lash',
         'scaling': 0.0,
-        'type': 'rppm',
+        'type': 'icd',
         'source': 'unique',
         'icd': 0,
         'proc_rate': 2,

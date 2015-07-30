@@ -341,7 +341,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             haste_mult = self.stats.get_haste_multiplier_from_rating(current_stats['haste'])
             swings_per_mirror = 20.0/(2.0/haste_mult)
             total_swings = 2*swings_per_mirror + 2*(1.0-self.base_parry_chance)*swings_per_mirror
-            proc_value = total_swings*(average_ap/3.5)
+            proc_value = total_swings*(average_ap/3.5) * (1+ self.settings.num_boss_adds)
         
         #.424*max(AP, SP)
         if proc is getattr(self.stats.procs, 'felmouth_frenzy'):
@@ -913,7 +913,15 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.set_rppm_uptime(soul_cap)
             soul_cap_mod = 1+(soul_cap.uptime * soul_cap.value['damage_mod']/10000)
 
+        maluus_mod = 1.0
+        if getattr(self.stats.procs,'maluus'):
+            maluus = getattr(self.stats.procs, 'maluus')
+            maluus_val = maluus.value['damage_mod']/10000
+            maluus_mod = 1 + (15.0/120* maluus_val) #super hackish
+
+
         for key in damage_breakdown:
+            damage_breakdown[key] *= maluus_mod
             #Fel Lash doesn't MS
             if key == 'Fel Lash':
                 continue
@@ -931,6 +939,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if self.stats.gear_buffs.rogue_t18_2pc: 
                 if key == 'dispatch':
                     damage_breakdown[key]*= 1+(0.25 * (1+(self.stats.get_mastery_from_rating(rating=current_stats['mastery'])*self.assassination_mastery_conversion)))
+
+        #add maluus burst
+        if maluus_mod > 1.0:
+            damage_breakdown['maluus'] = sum(damage_breakdown.values())*(maluus_mod-1.0) * (self.settings.num_boss_adds+1)
 
     def assassination_dps_breakdown_non_execute(self):
         #damage_breakdown, additional_info = self.compute_damage(self.assassination_attack_counts_non_execute)
@@ -1345,6 +1357,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         total_duration = phases['ar'][0] + phases['none'][0]
         #average it together
         damage_breakdown = self.average_damage_breakdowns(phases, denom = total_duration)
+
+        evis_multiplier = 1
+        if getattr(self.stats.procs, 'bleeding_hollow_toxin_vessel'):
+            evis_multiplier = 1+round(getattr(self.stats.procs, 'bleeding_hollow_toxin_vessel').value['ability_mod']*1.6784929152)/10000
+
         
         bf_mod = .35
         bf_max_targets = 4
@@ -1354,18 +1371,22 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             damage_breakdown['blade_flurry'] = 0
             for key in damage_breakdown:
                 if key in self.melee_attacks:
-                    damage_breakdown['blade_flurry'] += bf_mod * damage_breakdown[key] * min(self.settings.num_boss_adds, bf_max_targets)
-
-        evis_multiplier = 1
-        if getattr(self.stats.procs, 'bleeding_hollow_toxin_vessel'):
-            evis_multiplier = 1+round(getattr(self.stats.procs, 'bleeding_hollow_toxin_vessel').value['ability_mod']*1.6784929152)/10000
-
+                    if key == "eviscerate":
+                        damage_breakdown['blade_flurry'] += bf_mod * damage_breakdown[key] * min(self.settings.num_boss_adds, bf_max_targets) * evis_multiplier
+                    else:
+                        damage_breakdown['blade_flurry'] += bf_mod * damage_breakdown[key] * min(self.settings.num_boss_adds, bf_max_targets)
 
         soul_cap_mod = 1.0
         if getattr(self.stats.procs, 'soul_capacitor'):
             soul_cap= getattr(self.stats.procs, 'soul_capacitor')
             self.set_rppm_uptime(soul_cap)
             soul_cap_mod = 1+(soul_cap.uptime * soul_cap.value['damage_mod']/10000)
+
+        maluus_mod = 1.0
+        if getattr(self.stats.procs,'maluus'):
+            maluus = getattr(self.stats.procs, 'maluus')
+            maluus_val = maluus.value['damage_mod']/10000
+            maluus_mod = 1 + (15.0/120* maluus_val) #super hackish
 
         #combat gets it's own MS calculation due to BF mechanics
         #calculate multistrike here, really cheap to calculate
@@ -1381,6 +1402,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             damage_breakdown[ability] *= (1 + multistrike_multiplier)
             if ability in ('eviscerate', 'sr_eviscerate'):
                 damage_breakdown[ability] *= evis_multiplier
+
+        #add maluus burst
+        if maluus_mod > 1.0:
+            damage_breakdown['maluus'] = sum(damage_breakdown.values())*(maluus_mod-1.0) * (self.settings.num_boss_adds+1)
 
         return damage_breakdown
     
@@ -1751,6 +1776,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.set_rppm_uptime(soul_cap)
             soul_cap_mod = 1+(soul_cap.uptime * soul_cap.value['damage_mod']/10000)
 
+        maluus_mod = 1.0
+        if getattr(self.stats.procs,'maluus'):
+            maluus = getattr(self.stats.procs, 'maluus')
+            maluus_val = maluus.value['damage_mod']/10000
+            maluus_mod = 1 + (15.0/120* maluus_val) #super hackish
+
         vanish_damage_mod = 1.0
         if self.stats.gear_buffs.rogue_t18_2pc:
             vanish_damage_buff_uptime = 10/self.get_spell_cd('vanish')
@@ -1781,6 +1812,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if 'rupture_sc' in damage_breakdown and self.settings.merge_damage:
             damage_breakdown['rupture'] += damage_breakdown['rupture_sc']
             del damage_breakdown['rupture_sc']
+
+        #add maluus burst
+        if maluus_mod > 1.0:
+            damage_breakdown['maluus'] = sum(damage_breakdown.values())*(maluus_mod-1.0) * (self.settings.num_boss_adds+1)
         
         return damage_breakdown
 
