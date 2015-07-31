@@ -221,7 +221,7 @@ allowed_procs = {
 
     'mirror_of_the_blademaster': {
         'stat': 'physical_damage',
-        'value': 1,
+        'value': {'damage': 1},
         'duration': 20,
         'proc_name': 'Mirror of the Blademaster',
         'upgradable': True,
