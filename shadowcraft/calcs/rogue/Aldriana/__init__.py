@@ -347,7 +347,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if proc is getattr(self.stats.procs, 'felmouth_frenzy'):
             proc_value = average_ap * 0.424 * 5
 
-
         average_hit = proc_value * multiplier
         average_damage = average_hit * (1 + crit_rate * (crit_multiplier - 1)) * proc_count
         #print proc.proc_name, average_hit, multiplier
@@ -911,12 +910,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if getattr(self.stats.procs, 'soul_capacitor'):
             soul_cap= getattr(self.stats.procs, 'soul_capacitor')
             self.set_rppm_uptime(soul_cap)
-            soul_cap_mod = 1+(soul_cap.uptime * soul_cap.value['damage_mod']/10000)
+            soul_cap_mod = 1+(soul_cap.uptime * soul_cap.value['damage_mod']/10000.)
 
         maalus_mod = 1.0
         if getattr(self.stats.procs,'maalus'):
             maalus = getattr(self.stats.procs, 'maalus')
-            maalus_val = maalus.value['damage_mod']/10000
+            maalus_val = maalus.value['damage_mod']/10000.
             maalus_mod = 1 + (15.0/120* maalus_val) #super hackish
 
 
@@ -1380,12 +1379,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if getattr(self.stats.procs, 'soul_capacitor'):
             soul_cap= getattr(self.stats.procs, 'soul_capacitor')
             self.set_rppm_uptime(soul_cap)
-            soul_cap_mod = 1+(soul_cap.uptime * soul_cap.value['damage_mod']/10000)
+            soul_cap_mod = 1+(soul_cap.uptime * soul_cap.value['damage_mod']/10000.)
 
         maalus_mod = 1.0
         if getattr(self.stats.procs,'maalus'):
             maalus = getattr(self.stats.procs, 'maalus')
-            maalus_val = maalus.value['damage_mod']/10000
+            maalus_val = maalus.value['damage_mod']/10000.
             maalus_mod = 1 + (15.0/120* maalus_val) #super hackish
 
         #combat gets it's own MS calculation due to BF mechanics
@@ -1394,6 +1393,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         multistrike_multiplier = .3 * 2 * (self.stats.get_multistrike_chance_from_rating(rating=stats['multistrike']) + self.buffs.multistrike_bonus())
         multistrike_multiplier = min(.6, multistrike_multiplier)
         for ability in damage_breakdown:
+            damage_breakdown[ability] *=maalus_mod
             if 'sr_' not in ability:
                 damage_breakdown[ability] *= soul_cap_mod
             #Fel Lash doesn't MS
@@ -1774,12 +1774,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if getattr(self.stats.procs, 'soul_capacitor'):
             soul_cap= getattr(self.stats.procs, 'soul_capacitor')
             self.set_rppm_uptime(soul_cap)
-            soul_cap_mod = 1+(soul_cap.uptime * soul_cap.value['damage_mod']/10000)
+            soul_cap_mod = 1+(soul_cap.uptime * soul_cap.value['damage_mod']/10000.)
 
         maalus_mod = 1.0
         if getattr(self.stats.procs,'maalus'):
             maalus = getattr(self.stats.procs, 'maalus')
-            maalus_val = maalus.value['damage_mod']/10000
+            maalus_val = maalus.value['damage_mod']/10000.
             maalus_mod = 1 + (15.0/120* maalus_val) #super hackish
 
         vanish_damage_mod = 1.0
@@ -1789,6 +1789,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         for key in damage_breakdown:
             damage_breakdown[key] *= vanish_damage_mod
+            damage_breakdown[key] *= maalus_mod
             if key in ('eviscerate', 'hemorrhage', 'shuriken_toss', 'hemorrhage_dot', 'autoattack'): #'burning_wounds'
                 damage_breakdown[key] *= find_weakness_multiplier
             if key == 'ambush':

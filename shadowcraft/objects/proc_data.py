@@ -168,7 +168,7 @@ allowed_procs = {
         'scaling': 2.95857988166,
         'item_level': 735,
         'type': 'icd',
-        'source': 'unique',
+        'source': 'trinket',
         'icd': 120,
         'proc_rate': 1.0,
         'trigger': 'all_attacks'
@@ -222,11 +222,11 @@ allowed_procs = {
     'mirror_of_the_blademaster': {
         'stat': 'physical_damage',
         'value': 1,
-        'duration': 0,
+        'duration': 20,
         'proc_name': 'Mirror of the Blademaster',
         'upgradable': True,
-        'scaling': 0,
-        'item_level': 0,
+        'scaling': 1.0,
+        'item_level': 695,
         'type': 'icd',
         'source': 'trinket',
         'icd': 60,
