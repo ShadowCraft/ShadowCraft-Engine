@@ -158,6 +158,37 @@ allowed_procs = {
         'proc_rate': 0.92,
         'trigger': 'all_attacks'
     },
+    #6.2.3 procs
+    'infallible_tracking_charm': {
+        'stat':'spell_damage',
+        'value': 42872,
+        'duration': 0,
+        'proc_name': "Cleansing Flame",
+        #'scaling': 61.1583452211,
+        'item_level': 715,
+        'type': 'rppm',
+        'source': 'trinket',
+        'proc_rate': 3.5,
+        'haste_scales': True,
+        'can_crit': False,
+        'trigger': 'all_attacks'
+   },
+
+    'infallible_tracking_charm_mod': {
+        'stat':'damage_modifier',
+        'value': {'damage_mod': 10},
+        'proc_name': "Cleansing Flame",
+        'scaling': 0.0,
+        'item_level': 715,
+        'type': 'rppm',
+        'source': 'trinket',
+        'duration': 5,
+        'proc_rate': 3.5,
+        'haste_scales': True,
+        'trigger': 'all_attacks'
+   },
+
+
     #6.2 procs
     'maalus': {
         'stat': 'damage_modifier',

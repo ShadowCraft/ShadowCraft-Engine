@@ -912,6 +912,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.set_rppm_uptime(soul_cap)
             soul_cap_mod = 1+(soul_cap.uptime * soul_cap.value['damage_mod']/10000.)
 
+        infallible_trinket_mod = 1.0
+        if self.settings.is_demon:
+            if getattr(self.stats.procs, 'infallible_tracking_charm_mod'):
+                ift = getattr(self.stats.procs, 'infallible_tracking_charm_mod')
+                self.set_rppm_uptime(ift)
+                infallible_trinket_mod = 1+(ift.uptime *0.10)
+
+
         maalus_mod = 1.0
         if getattr(self.stats.procs,'maalus'):
             maalus = getattr(self.stats.procs, 'maalus')
@@ -931,6 +939,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if ('sr_' not in key):
                 damage_breakdown[key] *= self.vendetta_mult
                 damage_breakdown[key] *= soul_cap_mod
+                damage_breakdown[key] *= infallible_trinket_mod
             elif 'sr_' in key:
                 damage_breakdown[key] *= 1 + self.vendetta_multiplier
             if self.level == 100 and key in ('mutilate', 'dispatch', 'sr_mutilate', 'sr_mh_mutilate', 'sr_oh_mutilate', 'sr_dispatch'):
@@ -1381,6 +1390,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.set_rppm_uptime(soul_cap)
             soul_cap_mod = 1+(soul_cap.uptime * soul_cap.value['damage_mod']/10000.)
 
+        infallible_trinket_mod = 1.0
+        if self.settings.is_demon:
+            if getattr(self.stats.procs, 'infallible_tracking_charm_mod'):
+                ift = getattr(self.stats.procs, 'infallible_tracking_charm_mod')
+                self.set_rppm_uptime(ift)
+                infallible_trinket_mod = 1+(ift.uptime *0.10)
+
         maalus_mod = 1.0
         if getattr(self.stats.procs,'maalus'):
             maalus = getattr(self.stats.procs, 'maalus')
@@ -1396,6 +1412,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             damage_breakdown[ability] *=maalus_mod
             if 'sr_' not in ability:
                 damage_breakdown[ability] *= soul_cap_mod
+                damage_breakdown[ability] *= infallible_trinket_mod
             #Fel Lash doesn't MS
             if ability == 'Fel Lash':
                 continue
@@ -1776,6 +1793,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.set_rppm_uptime(soul_cap)
             soul_cap_mod = 1+(soul_cap.uptime * soul_cap.value['damage_mod']/10000.)
 
+        infallible_trinket_mod = 1.0
+        if self.settings.is_demon:
+            if getattr(self.stats.procs, 'infallible_tracking_charm_mod'):
+                ift = getattr(self.stats.procs, 'infallible_tracking_charm_mod')
+                self.set_rppm_uptime(ift)
+                infallible_trinket_mod = 1+(ift.uptime *0.10)
+
         maalus_mod = 1.0
         if getattr(self.stats.procs,'maalus'):
             maalus = getattr(self.stats.procs, 'maalus')
@@ -1806,6 +1830,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 damage_breakdown[key] *=trinket_multiplier
             if "sr_" not in key:
                 damage_breakdown[key] *= soul_cap_mod
+                damage_breakdown[key] *= infallible_trinket_mod
             if "Mirror" not in key:
                 damage_breakdown[key] *= mos_multiplier
         
