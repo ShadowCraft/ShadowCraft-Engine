@@ -459,25 +459,28 @@ class DamageCalculator(object):
 
     # this function is in comparison to get_upgrades_ep a lot faster but not 100% accurate
     # the error is around 1% which is accurate enough for the ranking in Shadowcraft-UI
-    def get_upgrades_ep_fast(self, _list, normalize_ep_stat=None):
+    def get_upgrades_ep_fast(self, _list, normalize_ep_stat=None, exclude_list=None):
         if not normalize_ep_stat:
             normalize_ep_stat = self.normalize_ep_stat
         # This method computes ep for every other buff/proc not covered by
         # get_ep or get_weapon_ep. Weapon enchants, being tied to the
         # weapons they are on, are computed by get_weapon_ep.
         
-        active_procs_cache = []
-        procs_list = []
+        active_procs_cache = [] #procs removed by ranker, all procs if no exclude_list provided
+        procs_list = [] #holds all procs to consider
         ep_values = {}
         for i in _list:
+
             if i in self.stats.procs.allowed_procs:
                 procs_list.append( (i, _list[i]) )
-                if getattr(self.stats.procs, i):
+                #if an excludelist is provided only add values on exclude_list to active_proc_cache
+                #if no exclude_list add all procs to active_proc_cache 
+                if (exclude_list and i in exclude_list) or (not exclude_list and getattr(self.stats.procs, i)):
                     active_procs_cache.append((i, getattr(self.stats.procs, i).item_level))
                     delattr(self.stats.procs, i)
             else:
                 ep_values[i] = _('not allowed')
-
+       
         baseline_dps = self.get_dps()
         normalize_dps = self.ep_helper(normalize_ep_stat)
 
@@ -503,19 +506,13 @@ class DamageCalculator(object):
                         proc.item_level = group[0]
                         proc.update_proc_value() # after setting item_level re-set the proc value
                         item_level = proc.item_level
-                        if proc.proc_name == 'Rune of Re-Origination':
-                            scale_factor = 1/(1.15**((528-item_level)/15.0)) * proc.base_ppm
-                        else:
-                            scale_factor = self.tools.get_random_prop_point(item_level)
+                        scale_factor = self.tools.get_random_prop_point(item_level)
                     new_dps = self.get_dps()
                     if new_dps != base_dps:
                         for l in group:
                             ep = abs(new_dps - base_dps) / (base_normalize_dps - base_dps)
                             if l > proc.item_level:
-                                if proc.proc_name == 'Rune of Re-Origination':
-                                    upgraded_scale_factor = 1/(1.15**((528-(l))/15.0)) * proc.base_ppm
-                                else:
-                                    upgraded_scale_factor = self.tools.get_random_prop_point(l)
+                                upgraded_scale_factor = self.tools.get_random_prop_point(l)
                                 ep *= float(upgraded_scale_factor) / float(scale_factor)
                             ep_values[proc_name][l] = ep
                 if old_proc:
