@@ -168,8 +168,8 @@ allowed_procs = {
         'item_level': 715,
         'type': 'rppm',
         'source': 'trinket',
-        'proc_rate': 3.5,
-        'haste_scales': True,
+        'proc_rate': 3,
+        'haste_scales': False,
         'can_crit': False,
         'trigger': 'all_attacks'
    },
@@ -183,8 +183,8 @@ allowed_procs = {
         'type': 'rppm',
         'source': 'trinket',
         'duration': 5,
-        'proc_rate': 3.5,
-        'haste_scales': True,
+        'proc_rate': 3,
+        'haste_scales': False,
         'trigger': 'all_attacks'
    },
 
