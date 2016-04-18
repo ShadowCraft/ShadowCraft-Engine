@@ -605,21 +605,6 @@ allowed_procs = {
         'proc_rate': 1.0,
         'trigger': 'all_attacks'
     },
-    #5.4 procs
-    'assurance_of_consequence': { #DBC - 197491
-        'stat': 'stats',
-        'value': {'agi':268},
-        'duration': 20,
-        'proc_name': 'Assurance of Consequence',
-        'upgradable': True,
-        'scaling': 4.000,
-        'item_level': 572,
-        'type': 'icd',
-        'source': 'trinket',
-        'icd': 115,
-        'proc_rate': 0.15,
-        'trigger': 'all_attacks'
-    },
 }
 
 allowed_melee_enchants = {

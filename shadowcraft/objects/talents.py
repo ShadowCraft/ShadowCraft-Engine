@@ -7,9 +7,10 @@ class InvalidTalentException(exceptions.InvalidInputException):
 
 class Talents(object):
 
-    def __init__(self, talent_string, game_class='rogue', level='100'):
+    def __init__(self, talent_string, class_spec, game_class, level='110'):
         self.game_class = game_class
-        self.class_talents = talents_data.talents[game_class]
+        self.class_spec = class_spec
+        self.class_talents = talents_data.talents[(game_class,class_spec)]
         self.level = level
         self.max_rows = 7
         self.allowed_talents = [talent for tier in self.class_talents for talent in tier]

@@ -15,7 +15,6 @@ class Settings(object):
         self.duration = duration
         self.use_opener = use_opener # Allowed values are 'always' (vanish/shadowmeld on cooldown), 'opener' (once per fight) and 'never'
         self.opener_name = opener_name
-        self.is_pvp = is_pvp
         self.feint_interval = feint_interval
         self.merge_damage = merge_damage
         self.is_day = is_day
