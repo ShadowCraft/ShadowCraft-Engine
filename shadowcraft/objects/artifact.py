@@ -36,3 +36,6 @@ class Artifact(object):
         self.traits = {}
         for trait in xrange(18):
             setattr(self, self.allowed_traits[trait], int(trait_string[trait]))
+
+    def get_trait_list(self):
+        return list(self.allowed_traits)

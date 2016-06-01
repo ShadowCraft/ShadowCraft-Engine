@@ -8,6 +8,7 @@ from shadowcraft.core import exceptions
 from shadowcraft.calcs import armor_mitigation
 from shadowcraft.objects import class_data
 from shadowcraft.objects import talents
+from shadowcraft.objects import artifact
 from shadowcraft.objects import procs
 from shadowcraft.objects.procs import InvalidProcException
 
@@ -22,16 +23,16 @@ class DamageCalculator(object):
 
     TARGET_BASE_ARMOR_VALUES = {88:11977., 93:24835., 103:100000.}
     AOE_TARGET_CAP = 20
-    
+
     # Override this in your class specfic subclass to list appropriate stats
     # possible values are agi, str, spi, int, haste, crit, mastery
     default_ep_stats = []
     # normalize_ep_stat is the stat with value 1 EP, override in your subclass
     normalize_ep_stat = None
 
-    def __init__(self, stats, talents, glyphs, buffs, race, settings=None, level=100, target_level=None, char_class='rogue'):
-        self.WOW_BUILD_TARGET = '6.2.0' # should reflect the game patch being targetted
-        self.SHADOWCRAFT_BUILD = '1.02' # <1 for beta builds, 1.00 is GM, >1 for any bug fixes, reset for each warcraft patch
+    def __init__(self, stats, talents, glyphs, buffs, race, settings=None, level=110, target_level=None, char_class='rogue'):
+        self.WOW_BUILD_TARGET = '7.0.0' # should reflect the game patch being targetted
+        self.SHADOWCRAFT_BUILD = '0.01' # <1 for beta builds, 1.00 is GM, >1 for any bug fixes, reset for each warcraft patch
         self.tools = class_data.Util()
         self.stats = stats
         self.talents = talents
@@ -47,16 +48,16 @@ class DamageCalculator(object):
             self.stats.procs.set_proc('touch_of_the_grave')
         if self.race.race_name == 'goblin':
             self.stats.procs.set_proc('rocket_barrage')
-        
+
         self.level_difference = max(self.target_level - level, 0)
         self.base_one_hand_miss_rate = 0
         self.base_parry_chance = .01 * self.level_difference
         self.base_dodge_chance = 0
-        
+
         self.dw_miss_penalty = .17
         self._set_constants_for_class()
         self.level = level
-        
+
         self.recalculate_hit_constants()
         self.base_block_chance = .03 + .015 * self.level_difference
 
@@ -92,10 +93,10 @@ class DamageCalculator(object):
         if self.talents.game_class != self.glyphs.game_class:
             raise exceptions.InvalidInputException(_('You must specify the same class for your talents and glyphs'))
         self.game_class = self.talents.game_class
-    
+
     def recalculate_hit_constants(self):
         self.base_dw_miss_rate = self.base_one_hand_miss_rate + self.dw_miss_penalty
-        
+
     def get_adv_param(self, type, default_val, min_bound=-10000, max_bound=10000, ignore_bounds=False):
         if type in self.settings.adv_params and not ignore_bounds:
             return max(   min(float(self.settings.adv_params[type]), max_bound), min_bound   )
@@ -104,12 +105,12 @@ class DamageCalculator(object):
         else:
             return default_val
         raise exceptions.InvalidInputException(_('Improperly defined parameter type: '+type))
-    
+
     def add_exported_data(self, damage_breakdown):
         #used explicitly to highjack data outputs to export additional data.
         if self.get_version_number:
             damage_breakdown['version_' + self.WOW_BUILD_TARGET + '_' + self.SHADOWCRAFT_BUILD] = [.0, 0]
-    
+
     def set_rppm_uptime(self, proc):
         #http://iam.yellingontheinternet.com/2013/04/12/theorycraft-201-advanced-rppm/
         haste = 1.
@@ -129,7 +130,7 @@ class DamageCalculator(object):
         else:
             mean_proc_time = 60. / (haste * proc.get_rppm_proc_rate()) + proc.icd - min(proc.icd, 10)
             proc.uptime = 1.1307 * proc.duration / mean_proc_time
-    
+
     def set_uptime(self, proc, attacks_per_second, crit_rates):
         if proc.is_real_ppm():
             self.set_rppm_uptime(proc)
@@ -151,7 +152,7 @@ class DamageCalculator(object):
                     else:
                         P = 1 - Q
                         proc.uptime = P * (1 - P ** proc.max_stacks) / Q
-    
+
     def average_damage_breakdowns(self, aps_dict, denom=180):
         final_breakdown = {}
         #key: phase name
@@ -165,7 +166,7 @@ class DamageCalculator(object):
                 else:
                     final_breakdown[entry] = aps_dict[key][1][entry] * (aps_dict[key][0]/denom)
         return final_breakdown
-    
+
     def ep_helper(self, stat):
         setattr(self.stats, stat, getattr(self.stats, stat) + 1.)
         dps = self.get_dps()
@@ -177,10 +178,10 @@ class DamageCalculator(object):
             normalize_ep_stat = self.get_adv_param('normalize_stat', self.settings.default_ep_stat, ignore_bounds=True)
         if not ep_stats:
             ep_stats = self.default_ep_stats
-        
+
         if baseline_dps == None:
             baseline_dps = self.get_dps()
-        
+
         if normalize_ep_stat == 'dps':
             normalize_dps_difference = 1.
         else:
@@ -188,7 +189,7 @@ class DamageCalculator(object):
             normalize_dps_difference = normalize_dps - baseline_dps
         if normalize_dps_difference == 0:
             normalize_dps_difference = 1
-        
+
         ep_values = {}
         for stat in ep_stats:
             ep_values[stat] = 1.0
@@ -395,14 +396,14 @@ class DamageCalculator(object):
                 delattr(self.stats.procs, i)
 
         return ep_values
-    
+
     def get_upgrades_ep(self, _list, normalize_ep_stat=None):
         if not normalize_ep_stat:
             normalize_ep_stat = self.normalize_ep_stat
         # This method computes ep for every other buff/proc not covered by
         # get_ep or get_weapon_ep. Weapon enchants, being tied to the
         # weapons they are on, are computed by get_weapon_ep.
-        
+
         active_procs_cache = []
         procs_list = []
         ep_values = {}
@@ -465,7 +466,7 @@ class DamageCalculator(object):
         # This method computes ep for every other buff/proc not covered by
         # get_ep or get_weapon_ep. Weapon enchants, being tied to the
         # weapons they are on, are computed by get_weapon_ep.
-        
+
         active_procs_cache = [] #procs removed by ranker, all procs if no exclude_list provided
         procs_list = [] #holds all procs to consider
         ep_values = {}
@@ -474,13 +475,13 @@ class DamageCalculator(object):
             if i in self.stats.procs.allowed_procs:
                 procs_list.append( (i, _list[i]) )
                 #if an excludelist is provided only add values on exclude_list to active_proc_cache
-                #if no exclude_list add all procs to active_proc_cache 
+                #if no exclude_list add all procs to active_proc_cache
                 if (exclude_list and i in exclude_list) or (not exclude_list and getattr(self.stats.procs, i)):
                     active_procs_cache.append((i, getattr(self.stats.procs, i).item_level))
                     delattr(self.stats.procs, i)
             else:
                 ep_values[i] = _('not allowed')
-       
+
         baseline_dps = self.get_dps()
         normalize_dps = self.ep_helper(normalize_ep_stat)
 
@@ -571,8 +572,30 @@ class DamageCalculator(object):
             except:
                 talents_ranking[talent] = _('not implemented')
             setattr(self.talents, talent, not getattr(self.talents, talent))
-        
+
         return talents_ranking
+
+    def get_artifact_ranking(self, list=None):
+        trait_ranking = {}
+        baseline_dps = self.get_dps()
+        trait_list = []
+
+        if not list:
+            trait_list = self.artifact.get_trait_list()
+        else:
+            trait_list = list
+
+        for trait in trait_list:
+            base_trait_rank = getattr(self.artifact, trait)
+            setattr(self.artifact, trait, base_trait_rank+1)
+            try:
+                new_dps = self.get_dps()
+                if new_dps != baseline_dps:
+                    trait_ranking[trait] = abs(new_dps-baseline_dps)
+            except:
+                trait_ranking[trait] = _('not_implemented')
+            setattr(self.artifact, trait, base_trait_rank)
+
 
     def get_engine_info(self):
         data = {
@@ -593,10 +616,10 @@ class DamageCalculator(object):
 
     def armor_mitigation_multiplier(self, armor):
         return armor_mitigation.multiplier(armor, cached_parameter=self.armor_mitigation_parameter)
-    
+
     def max_level_armor_multiplier(self):
         return 3610.0 / (3610.0 + 1938.0)
-    
+
     def get_trinket_cd_reducer(self):
         trinket_cd_reducer_value = .0
         proc = getattr(self.stats.procs, 'assurance_of_consequence')
