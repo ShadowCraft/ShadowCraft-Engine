@@ -1,7 +1,7 @@
 traits = {
     ('rogue', 'assassination'): (
-        'kingsbane',
-        'assassins_blades',
+        #'kingsbane',
+        #'assassins_blades',
         'toxic_blades',
         'poison_knives',
         'urge_to_kill',
@@ -20,8 +20,8 @@ traits = {
         'slayers_precision',
     ),
     ('rogue', 'outlaw'): (
-        'curse_of_the_dreadblades',
-        'cursed_edges',
+        #'curse_of_the_dreadblades',
+        #'cursed_edges',
         'fates_thirst',
         'blade_dancer',
         'fatebringer',
@@ -40,8 +40,8 @@ traits = {
         'cursed_steel',
         ),
     ('rogue', 'subtlety'): (
-        'goremaws_bite',
-        'shadow_fangs',
+        #'goremaws_bite',
+        #'shadow_fangs',
         'gutripper',
         'fortunes_bite',
         'catlike_reflexes',

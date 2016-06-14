@@ -21,27 +21,25 @@ class DamageCalculator(object):
     # calcs.<class>.<Class>DamageCalculator instead - for an example, see
     # calcs.rogue.RogueDamageCalculator
 
-    TARGET_BASE_ARMOR_VALUES = {88:11977., 93:24835., 103:100000.}
-    AOE_TARGET_CAP = 20
-
     # Override this in your class specfic subclass to list appropriate stats
     # possible values are agi, str, spi, int, haste, crit, mastery
     default_ep_stats = []
     # normalize_ep_stat is the stat with value 1 EP, override in your subclass
     normalize_ep_stat = None
 
-    def __init__(self, stats, talents, glyphs, buffs, race, settings=None, level=110, target_level=None, char_class='rogue'):
+    def __init__(self, stats, talents, traits, buffs, race, class_spec, settings=None, level=110, target_level=None, char_class='rogue'):
         self.WOW_BUILD_TARGET = '7.0.0' # should reflect the game patch being targetted
         self.SHADOWCRAFT_BUILD = '0.01' # <1 for beta builds, 1.00 is GM, >1 for any bug fixes, reset for each warcraft patch
         self.tools = class_data.Util()
         self.stats = stats
         self.talents = talents
-        self.glyphs = glyphs
+        self.traits = traits
         self.buffs = buffs
         self.race = race
         self.char_class = char_class
+        self.class_spec = class_spec
         self.settings = settings
-        self.target_level = [target_level, level + 3][target_level is None] #assumes 3 levels higher if not explicit
+        self.target_level = target_level if target_level else level+3 #assumes 3 levels higher if not explicit
 
         #racials
         if self.race.race_name == 'undead':
@@ -78,20 +76,18 @@ class DamageCalculator(object):
         self.race.level = self.level
         self.stats.gear_buffs.level = self.level
         # calculate and cache the level-dependent armor mitigation parameter
-        self.armor_mitigation_parameter = armor_mitigation.parameter(self.level)
+        self.attacker_k_value = self.tools.get_k_value(self.level)
         # target level dependent constants
-        try:
-            self.target_base_armor = self.TARGET_BASE_ARMOR_VALUES[self.target_level]
-        except KeyError as e:
-            raise exceptions.InvalidInputException(_('There\'s no armor value for a target level {level}').format(level=str(e)))
-        self.crit_reduction = .01 * self.level_difference
+        self.target_base_armor = self.tools.get_base_armor(self.target_level)
+
+        #Crit suppression removed in Legion
+        #Source: http://blue.mmo-champion.com/topic/409203-theorycrafting-questions/#post274
+        self.crit_reduction = 0
 
     def _set_constants_for_class(self):
         # These factors are class-specific. Generaly those go in the class module,
         # unless it's basic stuff like combat ratings or base stats that we can
         # datamine for all classes/specs at once.
-        if self.talents.game_class != self.glyphs.game_class:
-            raise exceptions.InvalidInputException(_('You must specify the same class for your talents and glyphs'))
         self.game_class = self.talents.game_class
 
     def recalculate_hit_constants(self):
@@ -531,28 +527,6 @@ class DamageCalculator(object):
 
         return ep_values
 
-    def get_glyphs_ranking(self, list=None):
-        glyphs = []
-        glyphs_ranking = {}
-        baseline_dps = self.get_dps()
-
-        if list == None:
-            glyphs = self.glyphs.allowed_glyphs
-        else:
-            glyphs = list
-
-        for i in glyphs:
-            setattr(self.glyphs, i, not getattr(self.glyphs, i))
-            try:
-                new_dps = self.get_dps()
-                if new_dps != baseline_dps:
-                    glyphs_ranking[i] = abs(new_dps - baseline_dps)
-            except:
-                glyphs_ranking[i] = _('not implemented')
-            setattr(self.glyphs, i, not getattr(self.glyphs, i))
-
-        return glyphs_ranking
-
     def get_talents_ranking(self, list=None):
         talents_ranking = {}
         baseline_dps = self.get_dps()
@@ -596,7 +570,6 @@ class DamageCalculator(object):
                 trait_ranking[trait] = _('not_implemented')
             setattr(self.artifact, trait, base_trait_rank)
 
-
     def get_engine_info(self):
         data = {
             'wow_build_target': self.WOW_BUILD_TARGET,
@@ -614,21 +587,10 @@ class DamageCalculator(object):
     #    gear_boosts = self.stats.gear_buffs.get_all_activated_boosts()
     #    return racial_boosts + gear_boosts
 
-    def armor_mitigation_multiplier(self, armor):
-        return armor_mitigation.multiplier(armor, cached_parameter=self.armor_mitigation_parameter)
-
-    def max_level_armor_multiplier(self):
-        return 3610.0 / (3610.0 + 1938.0)
-
-    def get_trinket_cd_reducer(self):
-        trinket_cd_reducer_value = .0
-        proc = getattr(self.stats.procs, 'assurance_of_consequence')
-        if proc and proc.scaling:
-            trinket_cd_reducer_value = 0.2532840073 / 100 * self.tools.get_random_prop_point(proc.item_level)
-            if self.level == 100:
-                trinket_cd_reducer_value *= 23./110.
-            return 1 / (1 + trinket_cd_reducer_value)
-        return 1
+    def armor_mitigation_multiplier(self, armor=None):
+        if not armor:
+            armor = self.target_base_armor
+        return self.attacker_k_value / (self.attacker_k_value + armor)
 
     def armor_mitigate(self, damage, armor):
         # Pass in raw physical damage and armor value, get armor-mitigated
@@ -728,5 +690,4 @@ class DamageCalculator(object):
         elif attack_kind == 'bleed':
             return self.buffs.bleed_damage_multiplier()
         elif attack_kind == 'physical':
-            armor_override = self.target_armor(armor)
-            return self.buffs.physical_damage_multiplier() * self.armor_mitigation_multiplier(armor_override)
+            return self.buffs.physical_damage_multiplier() * self.armor_mitigation_multiplier(armor)

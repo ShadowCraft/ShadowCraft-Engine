@@ -58,7 +58,7 @@ talents = {
         ('the_fires_of_justice', 'crusaders_flurry', 'zeal'),
         ('fist_of_justice', 'repentance', 'blinding_light'),
         ('virtues_blade', 'blade_of_wrath', 'divine_hammer'),
-        ('judgements_of_the_bold', 'might_of_the_virtue', 'mass_judgement')
+        ('judgements_of_the_bold', 'might_of_the_virtue', 'mass_judgement'),
         ('blaze_of_light', 'divine_speed', 'eye_for_an_eye'),
         ('final_verdict', 'seal_of_light', 'holy_wrath')
     ),

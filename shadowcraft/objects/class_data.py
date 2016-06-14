@@ -8,7 +8,7 @@ class Util(object):
         5:"priest", 6:"death_knight", 7:"shaman", 8:"mage", 9:"warlock",
         10:"monk", 11:"druid"
     }
-    
+
     #constant scaling (for level based calculations and the like)
     CONSTANT_SCALING = [
        3.000000000000000,    3.000000000000000,    4.000000000000000,    4.000000000000000,    5.000000000000000,
@@ -32,6 +32,42 @@ class Util(object):
      101.000000000000000,  118.000000000000000,  139.000000000000000,  162.000000000000000,  190.000000000000000,
      225.000000000000000,  234.000000000000000,  242.000000000000000,  252.000000000000000,  261.000000000000000,
     ]
+
+    #Base armor values for enemy level
+    #Source: http://blue.mmo-champion.com/topic/409203-theorycrafting-questions/#post109
+    BASE_ARMOR = {100: 1536.,
+    101: 2313.,
+    102: 2388.,
+    103: 2467.,
+    104: 2550.,
+    105: 2638.,
+    106: 2729.,
+    107: 2826.,
+    108: 2927.,
+    109: 3035.,
+    110: 3144.,
+    111: 3254.,
+    112: 3364.,
+    113: 3474.,
+    }
+
+    #K value for armor mitigation computation
+    #Source: http://blue.mmo-champion.com/topic/409203-theorycrafting-questions/#post46
+    ATTACKER_K_VALUE = {100: 3610.,
+    101: 3973.,
+    102: 4373.,
+    103: 4812.,
+    104: 5296.,
+    105: 5829.,
+    106: 6415.,
+    107: 6642.,
+    108: 6880.,
+    109: 7132.,
+    110: 7390.,
+    111: 7648.,
+    112: 7906.,
+    113: 8164.,
+    }
 
     #SimC keeps their enchant scale data here: https://code.google.com/p/simulationcraft/source/browse/engine/dbc/sc_scale_data.inc#342
     #these, however, are the trinket scale data
@@ -1038,7 +1074,7 @@ class Util(object):
       [999,9886],
       [1000,9978],
     ]
-    
+
     def get_class_number(self, game_class):
         for i in self.GAME_CLASS_NUMBER.keys():
             if self.GAME_CLASS_NUMBER[i] == game_class:
@@ -1055,7 +1091,16 @@ class Util(object):
         if item_level < 1:
             raise exceptions.InvalidInputException(_('item_level={item_level} need to be >= 1').format(item_level=item_level))
         return self.RANDOM_PROP_POINTS[item_level][1]
-    
+
     def get_constant_scaling_point(self, level):
         return self.CONSTANT_SCALING[level-1]
-    
+
+    def get_base_armor(self, level):
+        if level < 100:
+            raise exceptions.InvalidInputException(_('There\'s no armor value for a target level {level}').format(level=str(e)))
+        return self.BASE_ARMOR[level]
+
+    def get_k_value(self, level):
+        if level < 100:
+            raise exceptions.InvalidInputException(_('There\'s no k value for a level {level} player').format(level=str(e)))
+        return self.ATTACKER_K_VALUE[level]

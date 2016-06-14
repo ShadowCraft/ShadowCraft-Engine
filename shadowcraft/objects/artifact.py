@@ -31,10 +31,10 @@ class Artifact(object):
         self.traits[attr] = value
 
     def initialize_traits(self, trait_string):
-        if len(trait_string) != 18:
+        if len(trait_string) != len(self.allowed_traits):
             raise InvalidTraitException(_('Trait strings must be 18 characters long'))
         self.traits = {}
-        for trait in xrange(18):
+        for trait in xrange(len(self.allowed_traits)):
             setattr(self, self.allowed_traits[trait], int(trait_string[trait]))
 
     def get_trait_list(self):
