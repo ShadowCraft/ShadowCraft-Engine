@@ -10,6 +10,7 @@ class Race(object):
         85: ( 288,  306,  212,  169, 127),
         90: ( 339,  361,  250,  200, 150),
         100:(1206, 1284,  890,  711, 533),
+        110:(8481, 9030, 6259, 5000,   0),
     }
 
     #(ap,sp)
@@ -18,16 +19,14 @@ class Race(object):
         85: {'ap': 30, 'sp': 30},
         90: {'ap': 50, 'sp': 50},
         100:{'ap': 120, 'sp': 120},
+        110:{'ap':2243, 'sp': 2243},
     }
     touch_of_the_grave_bonuses = {
         80: {'spell_damage': 200},
         90: {'spell_damage': 400},
         100:{'spell_damage': 1000},
-    }
-    versatility_bonuses = {
-        0:     1,
-        90:   26,
-        100: 100,
+        #TODO: CHECK
+        110:{'spell_damage': 1000},
     }
 
     #Arguments are ap, spellpower:fire, and int
