@@ -25,17 +25,17 @@ class Artifact(object):
             return self.traits[attr]
         return False
 
-    def __setattr__(self, attr, value):
-        if attr not in self.traits:
-            raise InvalidTraitException(_('Invalid trait name {trait}').format(trait=attr))
-        self.traits[attr] = value
+    def set_trait(self, trait, value):
+        if trait not in self.allowed_traits:
+            raise InvalidTraitException(_('Invalid trait name {trait}').format(trait=trait))
+        self.traits[trait] = value
 
     def initialize_traits(self, trait_string):
         if len(trait_string) != len(self.allowed_traits):
-            raise InvalidTraitException(_('Trait strings must be 18 characters long'))
+            raise InvalidTraitException(_('Trait strings must be 16 characters long'))
         self.traits = {}
         for trait in xrange(len(self.allowed_traits)):
-            setattr(self, self.allowed_traits[trait], int(trait_string[trait]))
+            self.set_trait(self.allowed_traits[trait], int(trait_string[trait]))
 
     def get_trait_list(self):
         return list(self.allowed_traits)
