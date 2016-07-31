@@ -1,7 +1,7 @@
 # Simple test program to debug + play with subtlety models.
 from os import path
 import sys
-#sys.path.append(path.abspath(path.join(path.dirname(__file__), '..')))
+sys.path.append(path.abspath(path.join(path.dirname(__file__), '..')))
 
 from shadowcraft.calcs.rogue.Aldriana import AldrianasRogueDamageCalculator
 from shadowcraft.calcs.rogue.Aldriana import settings
@@ -11,7 +11,7 @@ from shadowcraft.objects import race
 from shadowcraft.objects import stats
 from shadowcraft.objects import procs
 from shadowcraft.objects import talents
-from shadowcraft.objects import glyphs
+from shadowcraft.objects import artifact
 
 from shadowcraft.core import i18n
 
@@ -20,24 +20,16 @@ test_language = 'local'
 i18n.set_language(test_language)
 
 # Set up level/class/race
-test_level = 100
-test_race = race.Race('night_elf')
+test_level = 110
+test_race = race.Race('troll')
 test_class = 'rogue'
+test_spec = 'subtlety'
 
 # Set up buffs.
 test_buffs = buffs.Buffs(
         'short_term_haste_buff',
-        'stat_multiplier_buff',
-        'crit_chance_buff',
-        'mastery_buff',
-        'haste_buff',
-        'multistrike_buff',
-        'versatility_buff',
-        'attack_power_buff',
-        'physical_vulnerability_debuff',
-        'spell_damage_debuff',
         'flask_wod_agi',
-        'food_mop_agi'
+        'food_wod_versatility'
     )
 
 # Set up weapons. mark_of_the_frostwolf mark_of_the_shattered_hand
@@ -45,8 +37,9 @@ test_mh = stats.Weapon(812.0, 1.8, 'dagger', 'mark_of_the_shattered_hand')
 test_oh = stats.Weapon(812.0, 1.8, 'dagger', 'mark_of_the_frostwolf')
 
 # Set up procs. - trinkets, other things (legendary procs)
-test_procs = procs.ProcsList(('scales_of_doom', 691), ('beating_heart_of_the_mountain', 701),
-                             'draenic_agi_pot', 'draenic_agi_prepot', 'archmages_greater_incandescence')
+#test_procs = procs.ProcsList(('scales_of_doom', 691), ('beating_heart_of_the_mountain', 701), ('infallible_tracking_charm', 715),
+#                             'draenic_agi_pot', 'draenic_agi_prepot', 'archmages_greater_incandescence')
+test_procs = procs.ProcsList()
 
 # Set up gear buffs.
 test_gear_buffs = stats.GearBuffs('gear_specialization') #tier buffs located here
@@ -58,31 +51,28 @@ test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          crit=1039,
                          haste=0,
                          mastery=1315,
-                         readiness=0,
-                         versatility=122,
-                         multistrike=1834,)
+                         versatility=122,)
 
 # Initialize talents..
-test_talents = talents.Talents('2000002', test_class, test_level)
+test_talents = talents.Talents('0000000', test_spec, test_class, level=test_level)
 
-# Set up glyphs.
-glyph_list = []
-test_glyphs = glyphs.Glyphs(test_class, *glyph_list)
+#initialize artifact traits..
+test_traits = artifact.Artifact(test_spec, test_class, '0000000000000000')
 
 # Set up settings.
 test_cycle = settings.SubtletyCycle(5, use_hemorrhage='never', clip_fw=False)
 test_settings = settings.Settings(test_cycle, response_time=.5, duration=360, dmg_poison='dp', utl_poison='lp', is_pvp=False,
-                                 adv_params="")
+                                 adv_params="", is_demon=True)
 
 # Build a DPS object.
-calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_glyphs, test_buffs, test_race, test_settings, test_level)
+calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_traits, test_buffs, test_race, test_spec, test_settings, test_level)
 
 # Compute DPS Breakdown.
 dps_breakdown = calculator.get_dps_breakdown()
 total_dps = sum(entry[1] for entry in dps_breakdown.items())
 
 # Compute EP values.
-ep_values = calculator.get_ep(baseline_dps=total_dps)
+#ep_values = calculator.get_ep(baseline_dps=total_dps)
 #ep_values = calculator.get_ep()
 #tier_ep_values = calculator.get_other_ep(['rogue_t17_2pc', 'rogue_t17_4pc', 'rogue_t17_4pc_lfr'])
 

@@ -39,22 +39,22 @@ class Buffs(object):
         'food_wod_versatility_125',         #
         'food_felmouth_frenzy',             # Felmouth frenzy, 2 haste scaling RPPM dealing 0.424 AP in damage
         ###LEGION###
-        'flask_legion_agi',                 #Flask of the Seventh Demon
-        'food_legion_masstery_450',         #
-        'food_legion_crit_450',             #
-        'food_legion_haste_450',            #
-        'food_legion_haste_450',            #
-        'food_legion_masstery_600',         #
-        'food_legion_crit_600',             #
-        'food_legion_haste_600',            #
-        'food_legion_haste_600',            #
-        'food_legion_masstery_700',         #
-        'food_legion_crit_700',             #
-        'food_legion_haste_700',            #
-        'food_legion_haste_700',            #
-        'food_legion_damage_1',             #
-        'food_legion_damage_2',             #
-        'food_legion_damage_3',             #
+        'flask_legion_agi',                 # Flask of the Seventh Demon
+        'food_legion_mastery_225',          # Pickeled Stormray
+        'food_legion_crit_225',             # Salt & Pepper Shank
+        'food_legion_haste_225',            # Deep-Fried Mossgill
+        'food_legion_versatility_225',      # Faronaar Fizz
+        'food_legion_mastery_300',          # Barracude Mrglgagh
+        'food_legion_crit_300',             # Leybeque Ribs
+        'food_legion_haste_300',            # Suramar Surf and Turf
+        'food_legion_versatility_300',      # Koi-Scented Stormray
+        'food_legion_mastery_375',          # Nightborne Delicacy Platter
+        'food_legion_crit_375',             # The Hungry Magister
+        'food_legion_haste_375',            # Azshari Salad
+        'food_legion_versatility_375',      # Seed-Battered Fish Plate
+        'food_legion_damage_1',             # Spiced Rib Roast
+        'food_legion_damage_2',             # Drogbar-Style Salmon
+        'food_legion_damage_3',             # Fishbrul Special
     ])
     
     buffs_debuffs = frozenset([
@@ -88,15 +88,11 @@ class Buffs(object):
 
     def __setattr__(self, name, value):
         object.__setattr__(self, name, value)
-        if name == 'level':
-            self._set_constants_for_level()
 
     def buff_agi(self, race=False):
         bonus_agi = 0
-        bonus_agi += 114 * self.agi_flask_mop
         bonus_agi += 200 * self.flask_wod_agi_200
         bonus_agi += 250 * self.flask_wod_agi
-        bonus_agi += 34 * self.food_mop_agi * [1, 2][race]
         bonus_agi += 1300 * self.flask_legion_agi
         return bonus_agi
     
@@ -105,9 +101,9 @@ class Buffs(object):
         bonus_haste += 125 * self.food_wod_haste_125 * [1, 2][race]
         bonus_haste += 100 * self.food_wod_haste * [1, 2][race]
         bonus_haste += 75 * self.food_wod_haste_75 * [1, 2][race]
-        bonus_haste += 450 * self.food_wod_haste_450 * [1, 2][race]
-        bonus_haste += 600 * self.food_wod_haste_600 * [1, 2][race]
-        bonus_haste += 700 * self.food_wod_haste_700 * [1, 2][race]
+        bonus_haste += 225 * self.food_legion_haste_225 * [1, 2][race]
+        bonus_haste += 300 * self.food_legion_haste_300 * [1, 2][race]
+        bonus_haste += 375 * self.food_legion_haste_375 * [1, 2][race]
         return bonus_haste
     
     def buff_crit(self, race=False):
@@ -115,20 +111,19 @@ class Buffs(object):
         bonus_crit += 125 * self.food_wod_crit_125 * [1, 2][race]
         bonus_crit += 100 * self.food_wod_crit * [1, 2][race]
         bonus_crit += 75 * self.food_wod_crit_75 * [1, 2][race]
-        bonus_crit += 450 * self.food_wod_crit_450 * [1, 2][race]
-        bonus_crit += 600 * self.food_wod_crit_600 * [1, 2][race]
-        bonus_crit += 700 * self.food_wod_crit_700 * [1, 2][race]
+        bonus_crit += 225 * self.food_legion_crit_225 * [1, 2][race]
+        bonus_crit += 300 * self.food_legion_crit_300 * [1, 2][race]
+        bonus_crit += 375 * self.food_legion_crit_375 * [1, 2][race]
         return bonus_crit
     
     def buff_mast(self, race=False):
         bonus_mastery = 0
-        bonus_mastery += [0, self.mast_buff_bonus][self.mastery_buff]
         bonus_mastery += 125 * self.food_wod_mastery_125 * [1, 2][race]
         bonus_mastery += 100 * self.food_wod_mastery * [1, 2][race]
         bonus_mastery += 75 * self.food_wod_mastery_75 * [1, 2][race]
-        bonus_mastery += 450 * self.food_wod_mastery_450 * [1, 2][race]
-        bonus_mastery += 600 * self.food_wod_mastery_600 * [1, 2][race]
-        bonus_mastery += 700 * self.food_wod_mastery_700 * [1, 2][race]
+        bonus_mastery += 225 * self.food_legion_mastery_225 * [1, 2][race]
+        bonus_mastery += 300 * self.food_legion_mastery_300 * [1, 2][race]
+        bonus_mastery += 375 * self.food_legion_mastery_375 * [1, 2][race]
         return bonus_mastery
     
     def buff_versatility(self, race=False):
@@ -136,9 +131,9 @@ class Buffs(object):
         bonus_versatility += 125 * self.food_wod_versatility_125 * [1, 2][race]
         bonus_versatility += 100 * self.food_wod_versatility * [1, 2][race]
         bonus_versatility += 75 * self.food_wod_versatility_75 * [1, 2][race]
-        bonus_versatility += 450 * self.food_wod_versatility_450 * [1, 2][race]
-        bonus_versatility += 600 * self.food_wod_versatility_600 * [1, 2][race]
-        bonus_versatility += 700 * self.food_wod_versatility_700 * [1, 2][race]
+        bonus_versatility += 225 * self.food_legion_versatility_225 * [1, 2][race]
+        bonus_versatility += 300 * self.food_legion_versatility_300 * [1, 2][race]
+        bonus_versatility += 375 * self.food_legion_versatility_375 * [1, 2][race]
         return bonus_versatility
 
     def felmouth_food(self):
