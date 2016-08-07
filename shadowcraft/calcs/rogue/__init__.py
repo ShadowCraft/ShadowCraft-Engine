@@ -15,69 +15,72 @@ class RogueDamageCalculator(DamageCalculator):
     # backstab damage as a function of AP - that (almost) any rogue damage
     # calculator will need to know, so things like that go here.
 
-    default_ep_stats = ['agi', 'haste', 'crit', 'mastery', 'ap', 'multistrike', 'versatility'] #'readiness'
-    melee_attacks = ['mh_autoattack_hits', 'oh_autoattack_hits', 'autoattack',
-                     'eviscerate', 'envenom', 'ambush', 'garrote',
-                     'sinister_strike', 'revealing_strike', 'main_gauche', 'mh_killing_spree', 'oh_killing_spree',
-                     'backstab', 'hemorrhage',
-                     'mutilate', 'mh_mutilate', 'oh_mutilate', 'dispatch', "death_from_above_strike"]
-    other_attacks = ['deadly_instant_poison', 'swift_poison']
-    aoe_attacks = ['fan_of_knives', 'crimson_tempest', "death_from_above_pulse"]
-    dot_ticks = ['rupture_ticks', 'garrote_ticks', 'deadly_poison', 'hemorrhage_dot']
-    ranged_attacks = ['shuriken_toss', 'throw']
-    non_dot_attacks = melee_attacks + ranged_attacks + aoe_attacks
-    all_attacks = melee_attacks + ranged_attacks + dot_ticks + aoe_attacks + other_attacks
+    default_ep_stats = ['agi', 'haste', 'crit', 'mastery', 'ap', 'versatility']
 
     assassination_mastery_conversion = .035
     combat_mastery_conversion = .022
     subtlety_mastery_conversion = .0276
-    assassination_readiness_conversion = 1.0
-    combat_readiness_conversion = 1.0
-    subtlety_readiness_conversion = 1.0
 
     raid_modifiers_cache = {'physical':None,
                            'bleed':None,
                            'spell':None}
 
     ability_info = {
-            'ambush':              (60., 'strike'),
-            'backstab':            (35., 'strike'),
-            'dispatch':            (30., 'strike'),
+            #general
+            'crimson_vial':        (30.,  'buff'),
+            'death_from_above':    (25., 'strike'),
+            'feint':               (20., 'buff'),
+            'kick':                (15., 'strike'),
+            #assassination
             'envenom':             (35., 'strike'),
-            'eviscerate':          (35., 'strike'),
+            'fan_of_knives':       (35., 'strike'),
             'garrote':             (45., 'strike'),
             'hemorrhage':          (30., 'strike'),
+            'kingsbane':           (35., 'strike'),
             'mutilate':            (55., 'strike'),
-            'recuperate':          (30., 'buff'),
-            'revealing_strike':    (40., 'strike'),
+            'poisoned_knife':      (40., 'strike'),
             'rupture':             (25., 'strike'),
-            'sinister_strike':     (50., 'strike'),
+            #outlaw
+            'ambush':              (60., 'strike'),
+            'between_the_eyes':    (35., 'strike'),
+            'blunderbuss':         (40., 'strike'),
+            'ghostly_stike':       (30., 'strike'),
+            'pistol_shot':         (40., 'strike'),
+            'roll_the_bones':      (25., 'buff'),
+            'run_through':         (35., 'strike'),
+            'saber_slash':         (50., 'strike'),
             'slice_and_dice':      (25., 'buff'),
-            'tricks_of_the_trade': (0, 'buff'),
+            #subtlety
+            'backstab':            (35., 'strike'),
+            'eviscerate':          (35., 'strike'),
+            'gloomblade':          (35., 'strike'),
+            'nightblade':          (25., 'strike'),
+            'shuriken_storm':      (35., 'strike'),
             'shuriken_toss':       (40., 'strike'),
-            'shiv':                (20., 'strike'),
-            'feint':               (20., 'buff'),
-            'death_from_above':    (50., 'strike'),
+            'symbols_of_death':    (20., 'buff'),
     }
     ability_cds = {
-            'tricks_of_the_trade': 30,
-            'kick':                15,
-            'shiv':                8,
-            'vanish':              120,
-            'vendetta':            120,
-            'adrenaline_rush':     180,
-            'killing_spree':       120,
-            'shadow_dance':        60,
-            'shadowmeld':          120,
-            'marked_for_death':    60,
-            'preparation':         300,
-            'death_from_above':    20,
-            'shadow_reflection':   120,
+            #general
+            'crimson_vial':             30,
+            'death_from_above':         20,
+            'kick':                     15,
+            'marked_for_death':         60,
+            'sprint':                   60,
+            'tricks_of_the_trade':      30,
+            'vanish':                   120,
+            #assassination
+            'exsanguinate':              45,
+            'kingsbane':                 45,
+            'vendetta':                 120,
+            #outlaw            
+            'adrenaline_rush':          180,
+            'cannonball_barrage':        60,
+            'curse_of_the_dreadblades':  90,
+            'killing_spree':            120,
+            #subtlety
+            'goremaws_bite':             60,
+            'shadow_dance':              60,
         }
-    cd_reduction_table = {'assassination': ['vanish', 'vendetta'],
-                          'combat': ['adrenaline_rush', 'killing_spree'],
-                          'subtlety': ['shadow_dance']
-                         }
 
     def __setattr__(self, name, value):
         object.__setattr__(self, name, value)
@@ -272,52 +275,11 @@ class RogueDamageCalculator(DamageCalculator):
                 average_dps += dps_tuple
             damage_breakdown['death_from_above_pulse'] = average_dps
 
-        #shadow reflection code block
-        if self.talents.shadow_reflection:
-            for ability in attacks_per_second:
-                if 'sr_' in ability:
-                    modifier = 1.
-                    if ability[3:] in ('envenom'):
-                        modifier *= spell_modifier * potent_poisons_mod
-                    elif ability == 'sr_rupture_ticks':
-                        modifier *= bleed_modifier
-                    else:
-                        if ability == 'sr_eviscerate':
-                            modifier *= executioner_mod
-                        modifier *= physical_modifier
-                    crit_name = ability
-                    if ability not in crit_rates:
-                        crit_name = ability[3:]
-                        if 'mh_' in crit_name or 'oh_' in crit_name:
-                            crit_name = crit_name[3:]
-                    if type(attacks_per_second[ability]) in (tuple, list):
-                        average_dps = 0
-                        for i in xrange(1, 6):
-                            dps_tuple = self.get_formula(ability)(average_ap, i) * modifier
-                            dps_tuple = self.get_dps_contribution(dps_tuple, crit_rates[crit_name], attacks_per_second[ability][i], crit_damage_modifier)
-                            average_dps += dps_tuple
-                        damage_breakdown[ability] = average_dps
-                    else:
-                        average_dps = self.get_formula(ability)(average_ap) * modifier
-                        average_dps = self.get_dps_contribution(average_dps, crit_rates[crit_name], attacks_per_second[ability], crit_damage_modifier)
-                        damage_breakdown[ability] = average_dps
-
         for proc in damage_procs:
             if proc.proc_name not in damage_breakdown:
                 # Toss multiple damage procs with the same name (Avalanche):
                 # attacks_per_second is already being updated with that key.
                 damage_breakdown[proc.proc_name] = self.get_proc_damage_contribution(proc, attacks_per_second[proc.proc_name], current_stats, average_ap, damage_breakdown)
-
-        if self.talents.nightstalker:
-            nightstalker_mod = .50
-            if self.settings.opener_name in ('eviscerate', 'envenom'):
-                ability = attacks_per_second[self.settings.opener_name][5]
-            elif self.settings.opener_name in attacks_per_second:
-                ability = attacks_per_second[self.settings.opener_name]
-            nightstalker_percent = self.total_openers_per_second / (ability)
-            modifier = 1 + nightstalker_mod * nightstalker_percent
-            damage_breakdown[self.settings.opener_name] *= modifier
-
 
         return damage_breakdown, additional_info
 
@@ -328,177 +290,132 @@ class RogueDamageCalculator(DamageCalculator):
     def oh_damage(self, ap):
         return self.oh_penalty() * self.get_weapon_damage('oh', ap, is_normalized=False)
 
-    def mh_shuriken(self, ap):
-        return mh_damage(ap)
-
-    def oh_shuriken(self, ap):
-        return oh_damage(ap)
-
-    #abilities
-    def ambush_damage(self, ap):
-        return 3.15 * [1., 1.4][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap)
-    def ambush_sr_damage(self, ap):
-        return 3.15 * 1.4 * 1.8 * 0.924 * ap / 3.5
-
-    def backstab_damage(self, ap):
-        return 2.52 * self.get_weapon_damage('mh', ap)
-    def backstab_sr_damage(self, ap):
-        return 2.52 * 1.8 * 0.924 * ap / 3.5
-
+    #general abilities
     def death_from_above_pulse_damage(self, ap, cp):
-        return 0.266 * cp * ap
-    def death_from_above_pulse_sr_damage(self, ap, cp):
-        return 0.266 * cp * 0.924 * ap
+        return 0.3666 * cp * ap
 
-    def dispatch_damage(self, ap):
-        return 3.30 * self.get_weapon_damage('mh', ap)
-    def dispatch_sr_damage(self, ap):
-        return 3.30 * 1.8 * 0.924 * ap / 3.5
-
-    def envenom_damage(self, ap, cp):
-        return .417 * cp * ap
-    def envenom_sr_damage(self, ap, cp):
-        return .417 * cp * 0.924 * ap
-
-    def eviscerate_damage(self, ap, cp):
-        return .491 * cp * ap  #check this datamining contradicts patch notes
-    def eviscerate_sr_damage(self, ap, cp):
-        return .491 * cp * 0.924 * ap
-
-    def garrote_tick_damage(self, ap):
-        return .2241 * ap
-    def garrote_tick_sr_damage(self, ap):
-        return .2241 * 0.924 * ap
-
-    #20% damage more hotfix
-    def hemorrhage_damage(self, ap):
-        return 1.3 * 1.2 * .40 * [1., 1.4][self.stats.mh.type == 'dagger'] * self.get_weapon_damage('mh', ap)
-    def hemorrhage_sr_damage(self, ap):
-        return 1.3 * 1.2 * .4 * 1.4 * 1.8 * 0.924 * ap / 3.5
-
-    def hemorrhage_tick_damage(self, ap):
-        return 1.3 * 1.2 * .035 * ap
-    def hemorrhage_tick_sr_damage(self, ap):
-        return 1.3 * 1.2 * .035 * 0.924 * ap
-
-    def mh_killing_spree_damage(self, ap):
-        return 1.0 * self.get_weapon_damage('mh', ap)
-    def mh_killing_spree_sr_damage(self, ap):
-        return 1.0 * 1.8 * 0.924 * ap / 3.5
-
-    def oh_killing_spree_damage(self, ap):
-        return 1.0 * self.oh_penalty() * self.get_weapon_damage('oh', ap)
-    def oh_killing_spree_sr_damage(self, ap):
-        return 1.0 * 1.8 * 0.924 * ap / 3.5 * 0.5
-
-    def main_gauche_damage(self, ap):
-        return 1.4 * self.oh_penalty() * self.get_weapon_damage('oh', ap)
-    def main_gauche_sr_damage(self, ap):
-        return 1.4 * 1.8 * 0.924 * ap / 3.5
-
-    def mh_mutilate_damage(self, ap):
-        return 2.73 * self.get_weapon_damage('mh', ap)
-    def mh_mutilate_sr_damage(self, ap):
-        return 2.73 * 1.8 * 0.924 * ap / 3.5
-
-    def oh_mutilate_damage(self, ap):
-        return 2.73 * self.oh_penalty() * self.get_weapon_damage('oh', ap)
-    def oh_mutilate_sr_damage(self, ap):
-        return 2.73 * 1.8 * 0.924 * ap / 3.5 * 0.5
-
-    def revealing_strike_damage(self, ap):
-        return 1.2 * self.get_weapon_damage('mh', ap)
-    def revealing_strike_sr_damage(self, ap):
-        return 1.2 * 1.8 * 0.924 * ap / 3.5
-
-    def rupture_tick_damage(self, ap, cp):
-        return .0685 * cp * ap
-    def rupture_tick_sr_damage(self, ap, cp):
-        return .0685 * 0.924 * ap
-
-    def sinister_strike_damage(self, ap):
-        return 1.76 * self.get_weapon_damage('mh', ap)
-    def sinister_strike_sr_damage(self, ap):
-        return 1.76 * 1.8 * 0.924 * ap / 3.5
-
-    def venomous_wounds_damage(self, ap):
-        return 1.2 * .320 * ap
-    def venomous_wounds_sr_damage(self, ap):
-        return 1.2 * .320 * 0.924 * ap
-
-    #poisons
+    #assassination
     def deadly_poison_tick_damage(self, ap):
-        return .25014 * ap
+        return .275 * ap + (1 + (0.05 * self.traits.master_alchemist))
 
     def deadly_instant_poison_damage(self, ap):
-        return .1287000030 * ap
+        return .142 * ap + (1 + (0.05 * self.traits.master_alchemist))
 
-    def swift_poison_damage(self, ap):
-        return .264 * ap
+    #Maybe add better handling for "rule of three" for artifact traits
+    def envenom_damage(self, ap, cp):
+        return .5 * cp * ap * (1 + (0.0333 * self.traits.toxic_blades))
 
-    def wound_poison_damage(self, ap):
-        return .6 * .2179999948 * ap #40% reduction hotfix
-
-    #unused
     def fan_of_knives_damage(self, ap):
-        return .231 * ap
+        return .8316 * ap
 
-    def crimson_tempest_damage(self, ap, cp):
-        return .0903 * cp * ap
+    def garrote_tick_damage(self, ap):
+        return .9 * ap
 
-    def crimson_tempest_tick_damage(self, ap, cp):
-        return self.crimson_tempest_damage(ap, cp) * (2.4 / 6)
+    def hemorrhage_damage(self, ap):
+        return 1 * self.get_weapon_damage('mh', ap)
 
-    def shiv_damage(self, ap):
-        return .10 * self.oh_penalty() * self.get_weapon_damage('oh', ap, is_normalized=False)
+    def mh_kingsbane_damage(self, ap):
+        return 3 * self.get_weapon_damage('mh', ap)
 
-    def throw_damage(self, ap):
-        return .05 * ap
+    def oh_kingsbane_damage(self, ap):
+        return 3 * self.oh_penalty * self.get_weapon_damage('oh', ap) 
+
+    def kingsbane_tick_damage(self, ap):
+        return 0.45 * ap
+
+    def mh_mutilate_damage(self, ap):
+        return 3.6 * self.get_weapon_damage('mh', ap) * (1 + (0.15 * self.traits.assassins_blades))
+
+    def oh_mutilate_damage(self, ap):
+        return 3.6 * self.oh_penalty() * self.get_weapon_damage('oh', ap) * (1 + (0.15 * self.traits.assassins_blades))
+
+    def poisoned_knife_damage(self, ap):
+        return 0.6 * ap
+
+    def rupture_tick_damage(self, ap):
+        return .3 * ap * (1 + (0.0333 * self.traits.toxic_blades))
+
+    #outlaw
+    def ambush_damage(self, ap):
+        return 4.5 * self.get_weapon_damage('mh', ap)
+    
+    def between_the_eyes_damage(self, ap, cp):
+        return .75 * cp * ap * (1 + (0.08 / self.traits.black_powder))
+
+    #7*55% AP
+    def blunderbuss_damage(self, ap):
+        return 3.85 * ap
+    
+    #Ignoring that this behaves as a dot for simplicity
+    def cannonball_barrage_damage(self, ap):
+        return 7.2 * ap
+
+    def ghostly_strike_damage(self, ap):
+        return 1.76 * self.get_weapon_damage('mh', ap)
+
+    def mh_greed_damage(self, ap):
+        return 3.5 * self.get_weapon_damage('mh', ap)
+
+    def oh_greed_damage(self, ap):
+        return 3.5 * self.oh_penalty * self.get_weapon_damage('oh', ap)
+
+    #For KsP treat each hit individually
+    def mh_killing_spree_damage(self, ap):
+        return 2.108 * self.get_weapon_damage('mh', ap)
+
+    def oh_killing_spree_damage(self, ap):
+        return 2.018* self.oh_penalty() * self.get_weapon_damage('oh', ap)
+
+    def main_gauche_damage(self, ap):
+        return 2.1 * self.oh_penalty() * self.get_weapon_damage('oh', ap) * (1 + (0.1 * self.traits.fortunes_strike))
+
+    def pistol_shot_damage(self, ap):
+        return 1.5 * ap
+
+    def run_through_damage(self, ap, cp):
+        return 1.2 * ap * cp * (1 * (0.08 * self.traits.fates_thirst))
+
+    def saber_slash_damage(self, ap):
+        return 2.6 * self.get_weapon_damage('mh', ap) * (1 + (0.15 * self.traits.cursed_edges))
+ 
+    #subtlety
+    #Ignore positional modifier for now  
+    def backstab_damage(self, ap):
+        return 3.7 * self.get_weapon_damage('mh', ap) * (1 + (0.0333 * self.traits.the_quiet_knife))
+
+    def eviscerate_damage(self, ap, cp):
+        return 1.28 * cp * ap
+
+    def gloomblade_damage(self, ap):
+        return 4.25 * self.get_weapon_damage('mh', ap) * (1 + (0.0333 * self.traits.the_quiet_knife))
+
+    def mh_goremaws_bite_damage(self, ap):
+        return 5 * self.get_weapon_damage('mh', ap)
+
+    def oh_goremaws_bite_damage(self, ap):
+        return 5 * self.oh_penalty() * self.get_weapon_damage('oh', ap)
+
+    def nightblade_tick_damage(self, ap):
+        return 1.2 * ap * (1 + (0.05 * self.traits.demon_kiss))
+
+    def shadowstrike_damage(self, ap):
+        return 8.5 * self.get_weapon_damage('mh', ap) * (1 + (0.05 * self.traits.precision_strike))
+
+    def mh_shadow_blades_damage(self, ap):
+        return self.get_weapon_damage('mh', ap, is_normalized=False)
+
+    def oh_shadow_blades_damage(self, ap):
+        return self.oh_penalty() * self.get_weapon_damage('oh', ap, is_normalized=False)
+
+    def shuriken_storm_damage(self, ap):
+        return 0.5544 * ap
 
     def shuriken_toss_damage(self, ap):
         return 1.2 * ap
 
-    def get_formula(self, name):
-        formulas = {
-            'backstab':              self.backstab_damage,
-            'hemorrhage':            self.hemorrhage_damage,
-            'sinister_strike':       self.sinister_strike_damage,
-            'revealing_strike':      self.revealing_strike_damage,
-            'main_gauche':           self.main_gauche_damage,
-            'ambush':                self.ambush_damage,
-            'eviscerate':            self.eviscerate_damage,
-            'dispatch':              self.dispatch_damage,
-            'mh_mutilate':           self.mh_mutilate_damage,
-            'oh_mutilate':           self.oh_mutilate_damage,
-            'venomous_wounds':       self.venomous_wounds_damage,
-            'deadly_poison':         self.deadly_poison_tick_damage,
-            'wound_poison':          self.wound_poison_damage,
-            'deadly_instant_poison': self.deadly_instant_poison_damage,
-            'swift_poison':          self.swift_poison_damage,
-            'shuriken_toss':         self.shuriken_toss_damage,
-            'death_from_above_pulse':self.death_from_above_pulse_damage,
-            #shadow reflection abilities
-            'sr_backstab':           self.backstab_sr_damage,
-            'sr_hemorrhage':         self.hemorrhage_sr_damage,
-            'sr_sinister_strike':    self.sinister_strike_sr_damage,
-            'sr_revealing_strike':   self.revealing_strike_sr_damage,
-            'sr_main_gauche':        self.main_gauche_sr_damage,
-            'sr_ambush':             self.ambush_sr_damage,
-            'sr_eviscerate':         self.eviscerate_sr_damage,
-            'sr_envenom':            self.envenom_sr_damage,
-            'sr_dispatch':           self.dispatch_sr_damage,
-            'sr_mh_mutilate':        self.mh_mutilate_sr_damage,
-            'sr_oh_mutilate':        self.oh_mutilate_sr_damage,
-            'sr_mh_killing_spree':   self.mh_killing_spree_sr_damage,
-            'sr_oh_killing_spree':   self.oh_killing_spree_sr_damage,
-            'sr_venomous_wounds':    self.venomous_wounds_sr_damage,
-            'sr_rupture_ticks':      self.rupture_tick_sr_damage,
-        }
-        return formulas[name]
-
-    def get_spell_stats(self, ability, cost_mod=1.0):
+    def get_spell_cost(self, ability, cost_mod=1.0):
         cost = self.ability_info[ability][0] * cost_mod
-        return (cost, self.ability_info[ability][1])
+        return cost
 
     def get_spell_cd(self, ability):
         #need to update list of affected abilities
