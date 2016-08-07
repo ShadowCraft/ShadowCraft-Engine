@@ -17,13 +17,39 @@ class RogueDamageCalculator(DamageCalculator):
 
     default_ep_stats = ['agi', 'haste', 'crit', 'mastery', 'ap', 'versatility']
 
+    assassination_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
+                                    'deadly_poison', 'deadly_instant_poison', 'envenom', 
+                                    'fan_of_knives', 'garrote_ticks', 'hemorrhage',
+                                    'kingsbane', 'kingsbane_ticks', 'mutilate',
+                                    'poisoned_knife', 'rupture_ticks']
+    outlaw_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
+                             'ambush', 'between_the_eyes', 'blunderbuss', 'cannonball_barrage',
+                             'ghostly_strike', 'greed', 'killing_spree', 'main_gauche',
+                             'pistol_shot', 'run_through', 'saber_slash']
+    subtlety_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
+                               'backstab', 'eviscerate', 'gloomblade', 'goremaws_bite',
+                               'shadow_blade', 'shuriken_storm', 'shuriken_toss']
+    #All damage sources mitigated by armor
+    physical_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
+                                'fan_of_knives', 'hemorrhage', 'mutilate', 'poisoned_knife',
+                                'ambush, between_the_eyes', 'blunderbuss', 'cannonball_barrage',
+                                'ghostly_strike', 'greed', 'killing_spree', 'main_gauche',
+                                'pistol_shot', 'run_through', 'saber_slash', 'backstab',
+                                'eviscerate', 'shuriken_storm', 'shuriken_toss']
+    #All damage sources the scale with mastery (assn or sub)
+    mastery_scaling_damage_sources = ['deadly_poison', 'deadly_instant_poison', 'evenom',
+                                      'eviscerate', 'nightblade']
+    #All damage sources that deal damage with both hands
+    dual_wield_damage_sources = ['kingsbane', 'mutilate', 'greed', 'killing_spree',
+                                 'goremaws_bite, shadow_blades']
+    #All damage sources that scale with cps
+    cp_scaling_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
+                                 'envenom', 'rupture_ticks', 'between_the_eyes',
+                                 'run_through', 'eviscerate']
+
     assassination_mastery_conversion = .035
     combat_mastery_conversion = .022
     subtlety_mastery_conversion = .0276
-
-    raid_modifiers_cache = {'physical':None,
-                           'bleed':None,
-                           'spell':None}
 
     ability_info = {
             #general
@@ -82,6 +108,8 @@ class RogueDamageCalculator(DamageCalculator):
             'shadow_dance':              60,
         }
 
+
+
     def __setattr__(self, name, value):
         object.__setattr__(self, name, value)
         if name == 'level':
@@ -105,60 +133,61 @@ class RogueDamageCalculator(DamageCalculator):
     def oh_penalty(self):
         return .5
 
-    def get_modifiers(self, current_stats, damage_type='physical', armor=None, executioner_modifier=1., potent_poisons_modifier=1.):
-        # self.damage_modifier_cache stores common modifiers like Assassin's Resolve that won't change between calculations
-        # this cuts down on repetitive if statements
+    def get_base_modifier(self, current_stats):
         base_modifier = self.damage_modifier_cache
-
-        # Raid modifiers
-        if not self.raid_modifiers_cache[damage_type]:
-            self.raid_modifiers_cache[damage_type] = self.raid_settings_modifiers(attack_kind=damage_type, armor=armor)
-        base_modifier *= self.raid_modifiers_cache[damage_type]
-
-        # potent poisons and executioner should be calculated outside, and passed in, no need to recalculate the % each time
-        base_modifier *= executioner_modifier
-        base_modifier *= potent_poisons_modifier
-
-        #versatility is a generic damage modifier
         base_modifier *= (self.stats.get_versatility_multiplier_from_rating(rating=current_stats['versatility']) + self.buffs.versatility_bonus())
-
         return base_modifier
 
     def get_dps_contribution(self, base_damage, crit_rate, frequency, crit_modifier):
         average_hit = base_damage * (1 - crit_rate) + base_damage * crit_rate * crit_modifier
         return average_hit * frequency
 
+
+    #Computes a merged dps contribution for an ability
+    def get_ability_dps(self, ap, ability, attacks_per_second, crit_rate, modifier, crit_modifier, both_hands=False, cps=0):
+        if both_hands:
+            ability_list = [hand + ability for hand in ['mh_', 'oh_']]
+        else:
+            ability_list = [ability]
+
+        dps = 0
+        if not cps:
+            for a in ability_list:
+                base_damage = self.get_formula(a)(ap) * modifier
+                dps += self.get_dps_contribution(base_damage, crit_rate, attacks_per_second, crit_modifier)
+        else:
+            for i in xrange(1, cps+1):
+                for a in ability_list:
+                    base_damage = self.get_formula(a)(ap, i) * modifier
+                    dps += self.get_dps_contribution(base_damage, crit_rate[i], attacks_per_second[i]. crit_modifier)
+        return dps
+
     def get_damage_breakdown(self, current_stats, attacks_per_second, crit_rates, damage_procs, additional_info):
         average_ap = current_stats['ap'] + current_stats['agi'] * self.stat_multipliers['ap']
+        max_cps = 5 + int(self.talents.deeper_strategem)
 
         self.setup_unique_procs(current_stats, average_ap)
 
         damage_breakdown = {}
 
-        # we calculate mastery here to reduce redundant calls
-        # can't rely on spec init thread because stats change afterwards
-        executioner_mod = 1.
-        potent_poisons_mod = 1.
-        if self.settings.is_subtlety_rogue():
-            executioner_mod = 1 + self.subtlety_mastery_conversion * self.stats.get_mastery_from_rating(current_stats['mastery'])
-        if self.settings.is_assassination_rogue():
-            potent_poisons_mod = 1 + self.assassination_mastery_conversion * self.stats.get_mastery_from_rating(current_stats['mastery'])
-
-        # these return the tuple (damage_modifier, crit_multiplier)
         crit_damage_modifier = self.crit_damage_modifiers()
-        physical_modifier = self.get_modifiers(current_stats, damage_type='physical')
-        spell_modifier = self.get_modifiers(current_stats, damage_type='spell')
-        bleed_modifier = self.get_modifiers(current_stats, damage_type='bleed')
+        base_modifier = self.get_base_modifier(current_stats)
+        armor_modifier = self.armor_mitigation_multiplier()
+
+        # this removes keys with empty values, prevents errors from: attacks_per_second['sinister_strike'] = None
+        for key in attacks_per_second.keys():
+            if not attacks_per_second[key]:
+                del attacks_per_second[key]
 
         if 'mh_autoattacks' in attacks_per_second:
             # Assumes mh and oh attacks are both active at the same time. As they should always be.
             # Friends don't let friends raid without gear.
-            mh_base_damage = self.mh_damage(average_ap) * physical_modifier
+            mh_base_damage = self.mh_damage(average_ap) * armor_modifier * base_modifier
             mh_hit_rate = self.dw_mh_hit_chance - crit_rates['mh_autoattacks']
             average_mh_hit = mh_hit_rate * mh_base_damage + crit_rates['mh_autoattacks'] * mh_base_damage * crit_damage_modifier
             mh_dps_tuple = average_mh_hit * attacks_per_second['mh_autoattacks']
 
-            oh_base_damage = self.oh_damage(average_ap) * physical_modifier
+            oh_base_damage = self.oh_damage(average_ap) * armor_modifier * base_modifier
             oh_hit_rate = self.dw_oh_hit_chance - crit_rates['oh_autoattacks']
             average_oh_hit = oh_hit_rate * oh_base_damage + crit_rates['oh_autoattacks'] * oh_base_damage * crit_damage_modifier
             oh_dps_tuple = average_oh_hit * attacks_per_second['oh_autoattacks']
@@ -168,118 +197,89 @@ class RogueDamageCalculator(DamageCalculator):
                 damage_breakdown['mh_autoattack'] = mh_dps_tuple
                 damage_breakdown['oh_autoattack'] = oh_dps_tuple
 
-        # this removes keys with empty values, prevents errors from: attacks_per_second['sinister_strike'] = None
-        for key in attacks_per_second.keys():
-            if not attacks_per_second[key]:
-                del attacks_per_second[key]
-
-        if 'mutilate' in attacks_per_second:
-            mh_dmg = self.mh_mutilate_damage(average_ap) * physical_modifier
-            oh_dmg = self.oh_mutilate_damage(average_ap) * physical_modifier
-            mh_mutilate_dps = self.get_dps_contribution(mh_dmg, crit_rates['mutilate'], attacks_per_second['mutilate'], crit_damage_modifier)
-            oh_mutilate_dps = self.get_dps_contribution(oh_dmg, crit_rates['mutilate'], attacks_per_second['mutilate'], crit_damage_modifier)
-            if self.settings.merge_damage:
-                damage_breakdown['mutilate'] = mh_mutilate_dps + oh_mutilate_dps
-            else:
-                damage_breakdown['mh_mutilate'] = mh_mutilate_dps
-                damage_breakdown['oh_mutilate'] = oh_mutilate_dps
-
-        for strike in ('hemorrhage', 'backstab', 'sinister_strike', 'revealing_strike', 'main_gauche', 'ambush', 'dispatch', 'shuriken_toss'):
-            if strike in attacks_per_second:
-                dps = self.get_formula(strike)(average_ap) * physical_modifier
-                dps = self.get_dps_contribution(dps, crit_rates[strike], attacks_per_second[strike], crit_damage_modifier)
-                if strike in ('sinister_strike', 'backstab'):
-                    dps *= self.stats.gear_buffs.rogue_t14_2pc_damage_bonus(strike)
-                damage_breakdown[strike] = dps
-
-        for poison in ('venomous_wounds', 'deadly_poison', 'wound_poison', 'deadly_instant_poison', 'swift_poison'):
-            if poison in attacks_per_second:
-                damage = self.get_formula(poison)(average_ap) * spell_modifier * potent_poisons_mod
-                damage = self.get_dps_contribution(damage, crit_rates[poison], attacks_per_second[poison], crit_damage_modifier)
-                if poison == 'venomous_wounds':
-                    damage *= self.stats.gear_buffs.rogue_t14_2pc_damage_bonus('venomous_wounds')
-                damage_breakdown[poison] = damage
-
-        if 'mh_killing_spree' in attacks_per_second:
-            mh_dmg = self.mh_killing_spree_damage(average_ap) * physical_modifier
-            oh_dmg = self.oh_killing_spree_damage(average_ap) * physical_modifier
-            mh_killing_spree_dps = self.get_dps_contribution(mh_dmg, crit_rates['killing_spree'], attacks_per_second['mh_killing_spree'], crit_damage_modifier)
-            oh_killing_spree_dps = self.get_dps_contribution(oh_dmg, crit_rates['killing_spree'], attacks_per_second['oh_killing_spree'], crit_damage_modifier)
-            if self.settings.merge_damage:
-                damage_breakdown['killing_spree'] = mh_killing_spree_dps + oh_killing_spree_dps
-            else:
-                damage_breakdown['mh_killing_spree'] = mh_killing_spree_dps
-                damage_breakdown['oh_killing_spree'] = oh_killing_spree_dps
-
-        if 'garrote_ticks' in attacks_per_second:
-            dps_tuple = self.garrote_tick_damage(average_ap) * bleed_modifier
-            damage_breakdown['garrote'] = self.get_dps_contribution(dps_tuple, crit_rates['garrote'], attacks_per_second['garrote_ticks'], crit_damage_modifier)
-
-        if 'hemorrhage_ticks' in attacks_per_second:
-            hemo_hit = self.hemorrhage_tick_damage(average_ap) * bleed_modifier
-            dps_from_hit_hemo = self.get_dps_contribution(hemo_hit, crit_rates['hemorrhage'], attacks_per_second['hemorrhage_ticks'], crit_damage_modifier)
-            damage_breakdown['hemorrhage_dot'] = dps_from_hit_hemo
-
-        if 'rupture_ticks' in attacks_per_second:
-            average_dps = 0
-            for i in xrange(1, 6):
-                dps_tuple = self.rupture_tick_damage(average_ap, i) * bleed_modifier * executioner_mod
-                dps_tuple = self.get_dps_contribution(dps_tuple, crit_rates['rupture_ticks'], attacks_per_second['rupture_ticks'][i], crit_damage_modifier)
-                average_dps += dps_tuple
-            damage_breakdown['rupture'] = average_dps
-        if 'rupture_ticks_sc' in attacks_per_second:
-            average_dps = 0
-            for i in xrange(1, 6):
-                dps_tuple = self.rupture_tick_damage(average_ap, i) * bleed_modifier * executioner_mod
-                dps_tuple = self.get_dps_contribution(dps_tuple, 0, attacks_per_second['rupture_ticks_sc'][i], crit_damage_modifier)
-                average_dps += dps_tuple
-            damage_breakdown['rupture_sc'] = average_dps
-
-        if 'envenom' in attacks_per_second:
-            average_dps = 0
-            for i in xrange(1, 6):
-                dps_tuple = self.envenom_damage(average_ap, i) * potent_poisons_mod * spell_modifier
-                dps_tuple = self.get_dps_contribution(dps_tuple, crit_rates['envenom'], attacks_per_second['envenom'][i], crit_damage_modifier)
-                average_dps += dps_tuple
-            damage_breakdown['envenom'] = average_dps
-
-        if 'eviscerate' in attacks_per_second:
-            average_dps = 0
-            for i in xrange(1, 6):
-                dps_tuple = self.eviscerate_damage(average_ap, i) * physical_modifier * executioner_mod
-                dps_tuple = self.get_dps_contribution(dps_tuple, crit_rates['eviscerate'], attacks_per_second['eviscerate'][i], crit_damage_modifier)
-                average_dps += dps_tuple
-            damage_breakdown['eviscerate'] = average_dps
-
-        if 'death_from_above_strike' in attacks_per_second:
-            if self.settings.get_spec() == 'assassination':
-                average_dps = 0
-                for i in xrange(1, 6):
-                    dps_tuple = self.envenom_damage(average_ap, i) * potent_poisons_mod * spell_modifier * 1.5
-                    dps_tuple = self.get_dps_contribution(dps_tuple, crit_rates['death_from_above_strike'], attacks_per_second['death_from_above_strike'][i], crit_damage_modifier)
-                    average_dps += dps_tuple
-                damage_breakdown['death_from_above_strike'] = average_dps
-            else:
-                average_dps = 0
-                for i in xrange(1, 6):
-                    dps_tuple = self.eviscerate_damage(average_ap, i) * physical_modifier * executioner_mod * 1.5
-                    dps_tuple = self.get_dps_contribution(dps_tuple, crit_rates['death_from_above_strike'], attacks_per_second['death_from_above_strike'][i], crit_damage_modifier)
-                    average_dps += dps_tuple
-                damage_breakdown['death_from_above_strike'] = average_dps
-
-        if 'death_from_above_pulse' in attacks_per_second:
-            average_dps = 0
-            for i in xrange(1, 6):
-                dps_tuple = self.death_from_above_pulse_damage(average_ap, i) * physical_modifier * executioner_mod
-                dps_tuple = self.get_dps_contribution(dps_tuple, crit_rates['death_from_above_pulse'], attacks_per_second['death_from_above_pulse'][i], crit_damage_modifier)
-                average_dps += dps_tuple
-            damage_breakdown['death_from_above_pulse'] = average_dps
 
         for proc in damage_procs:
             if proc.proc_name not in damage_breakdown:
                 # Toss multiple damage procs with the same name (Avalanche):
                 # attacks_per_second is already being updated with that key.
                 damage_breakdown[proc.proc_name] = self.get_proc_damage_contribution(proc, attacks_per_second[proc.proc_name], current_stats, average_ap, damage_breakdown)
+
+        #compute damage breakdown for each spec
+        if self.spec == "assassination":
+            potent_poisons_mod = (1 + self.assassination_mastery_conversion * self.stats.get_mastery_from_rating(current_stats['mastery'])) * base_modifier
+            
+            for ability in self.assassination_damage_sources:
+                aps = attacks_per_second[ability]
+                crits = crit_rates[ability]
+                crit_mod = crit_damage_modifier
+                modifier = base_modifier
+                both_hands = ability in self.dual_wield_damage_sources
+                cps = max_cps if ability in self.cp_scaling_damage_sources else 0
+
+                if ability in self.physical_damage_sources:
+                    modifier *= armor_modifier
+                if ability in self.mastery_scaling_damage_sources:
+                    modifier *= potent_poisons_mod
+
+                #over ride for weird "weird" abilities
+                #death from above strike is actually an envenom with 1.5 modifier
+                if ability == "death_from_above_strike":
+                    modifier *= 1.5 * potent_poisons_mod
+                    ability = "envenom"
+                damage_breakdown[ability] = self.get_ability_dps(average_ap, ability, aps, crits, modifier, crit_mod, both_hands, cps)
+
+        if self.spec == "outlaw":
+            for ability in self.outlaw_damage_sources:
+                aps = attacks_per_second[ability]
+                crits = crit_rates[ability]
+                crit_mod = crit_damage_modifier
+                modifier = base_modifier
+                both_hands = ability in self.dual_wself.ield_damage_sources
+                cps = max_cps if ability in self.cp_scaling_damage_sources else 0
+
+                if ability in self.physical_damage_sources:
+                    modifier *= armor_modifier
+
+                #over ride for weird "weird" abilities
+                #death from above strike is actually an envis with 1.5 modifier
+                if ability == "death_from_above_strike":
+                    modifier *= 1.5
+                    ability = "eviscerate"
+                #between the eyes has additional crit damage
+                #Damage modifier 3 explained here: http://beta.askmrrobot.com/wow/simulator/docs/critdamage
+                if ability == "between_the_eyes":
+                    crit_mod = self.crit_damage_modifiers(3)
+                damage_breakdown[ability] = self.get_ability_dps(average_ap, ability, aps, crits, modifier, crit_mod, both_hands, cps)
+
+        if self.spec == "subtlety":
+            executioner_mod = executioner_mod = 1 + self.subtlety_mastery_conversion * self.stats.get_mastery_from_rating(current_stats['mastery'])
+            shadow_fangs_mod = (1 + (0.04 * self.traits.shadow_fangs))
+
+            for ability in self.subtlety_damage_sources:
+                aps = attacks_per_second[ability]
+                crits = crit_rates[ability]
+                crit_mod = crit_damage_modifier
+                modifier = base_modifier
+                both_hands = ability in self.dual_wield_damage_sources
+                cps = max_cps if ability in self.cp_scaling_damage_sources else 0
+
+                if ability in self.physical_damage_sources:
+                    modifier *= armor_modifier
+                #assume for now that all non-physical damage sources are shadow damage
+                else:
+                    modifier *= shadow_fangs_mod
+                if ability in self.mastery_scaling_damage_sources:
+                    modifier *= executioner_mod
+
+                #over ride for weird "weird" abilities
+                #death from above strike is actually an envenom with 1.5 modifier
+                if ability == "death_from_above_strike":
+                    modifier *= 1.5 * executioner_mod
+                    ability = "eviscerate"
+                if ability == "death_from_above_pulse":
+                    modifier *= executioner_mod
+
+                damage_breakdown[ability] = self.get_ability_dps(average_ap, ability, aps, crits, modifier, crit_mod, both_hands, cps)
 
         return damage_breakdown, additional_info
 
@@ -332,8 +332,8 @@ class RogueDamageCalculator(DamageCalculator):
     def poisoned_knife_damage(self, ap):
         return 0.6 * ap
 
-    def rupture_tick_damage(self, ap):
-        return .3 * ap * (1 + (0.0333 * self.traits.toxic_blades))
+    def rupture_tick_damage(self, ap, cp):
+        return .3 * cp * ap * (1 + (0.0333 * self.traits.gushing_wounds))
 
     #outlaw
     def ambush_damage(self, ap):
@@ -413,17 +413,60 @@ class RogueDamageCalculator(DamageCalculator):
     def shuriken_toss_damage(self, ap):
         return 1.2 * ap
 
+    def get_formula(self, name):
+        formulas = {
+            #general
+            'mh_autoattack':         self.mh_damage,
+            'oh_autoattack':         self.oh_damage,
+            'death_from_above_pulse':self.death_from_above_pulse_damage,
+            #assassination
+            'deadly_poison':         self.deadly_poison_tick_damage,
+            'deadly_instant_poison': self.deadly_instant_poison_damage,
+            'envenom':               self.envenom_damage,
+            'fan_of_knives_damage':  self.fan_of_knives_damage,
+            'garrote_ticks':         self.garrote_tick_damage,
+            'hemorrhage':            self.hemorrhage_damage,
+            'mh_kingsbane':          self.mh_kingsbane_damage,
+            'oh_kingsbane':          self.oh_kingsbane_damage,
+            'kingsbane_ticks':       self.kingsbane_tick_damage,
+            'mh_mutilate':           self.mh_mutilate_damage,
+            'oh_mutilate':           self.oh_mutilate_damage,
+            'poisoned_knife':        self.poisoned_knife_damage,
+            'rupture_ticks':         self.rupture_tick_damage,
+            #outlaw
+            'ambush':                self.ambush_damage,
+            'between_the_eyes':      self.between_the_eyes_damage,
+            'blunderbuss':           self.blunderbuss_damage,
+            'cannonball_barrage':    self.cannonball_barrage_damage,
+            'ghostly_strike':        self.ghostly_strike_damage,
+            'mh_greed':              self.mh_greed_damage,
+            'oh_greed':              self.oh_greed_damage,
+            'mh_killing_spree':      self.mh_killing_spree_damage,
+            'oh_killing_spree':      self.oh_killing_spree_damage,
+            'main_gauche':           self.main_gauche_damage,
+            'pistol_shot':           self.pistol_shot_damage,
+            'run_through':           self.run_through_damage,
+            'saber_slash':           self.saber_slash_damage,
+            #subtlety
+            'backstab':              self.backstab_damage,
+            'eviscerate':            self.eviscerate_damage,
+            'gloomblade':            self.gloomblade_damage,
+            'mh_goremaws_bite':      self.mh_goremaws_bite_damage,
+            'oh_goremaws_bite':      self.oh_goremaws_bite_damage,
+            'nightblade_ticks':      self.nightblade_tick_damage,
+            'mh_shadow_blades':      self.mh_shadow_blades_damage,
+            'oh_shadow_blades':      self.oh_shadow_blades_damage,
+            'shuriken_storm':        self.shuriken_storm_damage,
+            'shuriken_toss':         self.shuriken_toss_damage,
+        }
+        return formulas[name]
+
     def get_spell_cost(self, ability, cost_mod=1.0):
         cost = self.ability_info[ability][0] * cost_mod
         return cost
 
     def get_spell_cd(self, ability):
-        #need to update list of affected abilities
-        if ability in self.cd_reduction_table[self.settings.get_spec()]:
-            #self.stats.get_readiness_multiplier_from_rating(readiness_conversion=self.readiness_spec_conversion)
-            return self.ability_cds[ability] * self.get_trinket_cd_reducer()
-        else:
-            return self.ability_cds[ability]
+        return self.ability_cds[ability]
 
     def crit_rate(self, crit=None):
         # all rogues get 10% bonus crit, .05 of base crit for everyone

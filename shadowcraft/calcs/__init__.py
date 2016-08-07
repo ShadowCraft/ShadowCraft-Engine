@@ -678,16 +678,3 @@ class DamageCalculator(object):
         if armor is None:
             armor = self.target_base_armor
         return armor #* self.buffs.armor_reduction_multiplier()
-
-    def raid_settings_modifiers(self, attack_kind, armor=None, affect_resil=True):
-        # This function wraps spell, bleed and physical debuffs from raid
-        # along with all-damage buff and armor reduction. It should be called
-        # from every damage dealing formula. Armor can be overridden if needed.
-        if attack_kind not in ('physical', 'spell', 'bleed'):
-            raise exceptions.InvalidInputException(_('Attacks must be categorized as physical, spell or bleed'))
-        elif attack_kind == 'spell':
-            return self.buffs.spell_damage_multiplier()
-        elif attack_kind == 'bleed':
-            return self.buffs.bleed_damage_multiplier()
-        elif attack_kind == 'physical':
-            return self.buffs.physical_damage_multiplier() * self.armor_mitigation_multiplier(armor)
