@@ -18,7 +18,7 @@ class RogueDamageCalculator(DamageCalculator):
     default_ep_stats = ['agi', 'haste', 'crit', 'mastery', 'ap', 'versatility']
 
     assassination_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
-                                    'deadly_poison', 'deadly_instant_poison', 'envenom', 
+                                    'deadly_poison', 'deadly_instant_poison', 'envenom',
                                     'fan_of_knives', 'garrote_ticks', 'hemorrhage',
                                     'kingsbane', 'kingsbane_ticks', 'mutilate',
                                     'poisoned_knife', 'rupture_ticks']
@@ -27,7 +27,7 @@ class RogueDamageCalculator(DamageCalculator):
                              'ghostly_strike', 'greed', 'killing_spree', 'main_gauche',
                              'pistol_shot', 'run_through', 'saber_slash']
     subtlety_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
-                               'backstab', 'eviscerate', 'gloomblade', 'goremaws_bite',
+                               'backstab', 'eviscerate', 'gloomblade', 'goremaws_bite', 'shadowstrike',
                                'shadow_blade', 'shuriken_storm', 'shuriken_toss']
     #All damage sources mitigated by armor
     physical_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
@@ -35,7 +35,7 @@ class RogueDamageCalculator(DamageCalculator):
                                 'ambush, between_the_eyes', 'blunderbuss', 'cannonball_barrage',
                                 'ghostly_strike', 'greed', 'killing_spree', 'main_gauche',
                                 'pistol_shot', 'run_through', 'saber_slash', 'backstab',
-                                'eviscerate', 'shuriken_storm', 'shuriken_toss']
+                                'eviscerate', 'shadowstrike', 'shuriken_storm', 'shuriken_toss']
     #All damage sources the scale with mastery (assn or sub)
     mastery_scaling_damage_sources = ['deadly_poison', 'deadly_instant_poison', 'evenom',
                                       'eviscerate', 'nightblade']
@@ -98,7 +98,7 @@ class RogueDamageCalculator(DamageCalculator):
             'exsanguinate':              45,
             'kingsbane':                 45,
             'vendetta':                 120,
-            #outlaw            
+            #outlaw
             'adrenaline_rush':          180,
             'cannonball_barrage':        60,
             'curse_of_the_dreadblades':  90,
@@ -106,9 +106,8 @@ class RogueDamageCalculator(DamageCalculator):
             #subtlety
             'goremaws_bite':             60,
             'shadow_dance':              60,
+            'shadow_blades':            120,
         }
-
-
 
     def __setattr__(self, name, value):
         object.__setattr__(self, name, value)
@@ -205,9 +204,9 @@ class RogueDamageCalculator(DamageCalculator):
                 damage_breakdown[proc.proc_name] = self.get_proc_damage_contribution(proc, attacks_per_second[proc.proc_name], current_stats, average_ap, damage_breakdown)
 
         #compute damage breakdown for each spec
-        if self.spec == "assassination":
+        if self.spec == 'assassination':
             potent_poisons_mod = (1 + self.assassination_mastery_conversion * self.stats.get_mastery_from_rating(current_stats['mastery'])) * base_modifier
-            
+
             for ability in self.assassination_damage_sources:
                 aps = attacks_per_second[ability]
                 crits = crit_rates[ability]
@@ -221,37 +220,38 @@ class RogueDamageCalculator(DamageCalculator):
                 if ability in self.mastery_scaling_damage_sources:
                     modifier *= potent_poisons_mod
 
-                #over ride for weird "weird" abilities
+                #override for "weird" abilities
                 #death from above strike is actually an envenom with 1.5 modifier
-                if ability == "death_from_above_strike":
-                    modifier *= 1.5 * potent_poisons_mod
-                    ability = "envenom"
+                #manually add in base modifier because DfA strike is in physical sources
+                if ability == 'death_from_above_strike':
+                    modifier = base_modifier * 1.5 * potent_poisons_mod
+                    ability = 'envenom'
                 damage_breakdown[ability] = self.get_ability_dps(average_ap, ability, aps, crits, modifier, crit_mod, both_hands, cps)
 
-        if self.spec == "outlaw":
+        if self.spec == 'outlaw':
             for ability in self.outlaw_damage_sources:
                 aps = attacks_per_second[ability]
                 crits = crit_rates[ability]
                 crit_mod = crit_damage_modifier
                 modifier = base_modifier
-                both_hands = ability in self.dual_wself.ield_damage_sources
+                both_hands = ability in self.dual_wield_damage_sources
                 cps = max_cps if ability in self.cp_scaling_damage_sources else 0
 
                 if ability in self.physical_damage_sources:
                     modifier *= armor_modifier
 
-                #over ride for weird "weird" abilities
-                #death from above strike is actually an envis with 1.5 modifier
-                if ability == "death_from_above_strike":
+                #override for "weird" abilities
+                #death from above strike is actually an evis with 1.5 modifier
+                if ability == 'death_from_above_strike':
                     modifier *= 1.5
-                    ability = "eviscerate"
+                    ability = 'eviscerate'
                 #between the eyes has additional crit damage
                 #Damage modifier 3 explained here: http://beta.askmrrobot.com/wow/simulator/docs/critdamage
-                if ability == "between_the_eyes":
+                if ability == 'between_the_eyes':
                     crit_mod = self.crit_damage_modifiers(3)
                 damage_breakdown[ability] = self.get_ability_dps(average_ap, ability, aps, crits, modifier, crit_mod, both_hands, cps)
 
-        if self.spec == "subtlety":
+        if self.spec == 'subtlety':
             executioner_mod = executioner_mod = 1 + self.subtlety_mastery_conversion * self.stats.get_mastery_from_rating(current_stats['mastery'])
             shadow_fangs_mod = (1 + (0.04 * self.traits.shadow_fangs))
 
@@ -271,12 +271,12 @@ class RogueDamageCalculator(DamageCalculator):
                 if ability in self.mastery_scaling_damage_sources:
                     modifier *= executioner_mod
 
-                #over ride for weird "weird" abilities
-                #death from above strike is actually an envenom with 1.5 modifier
-                if ability == "death_from_above_strike":
+                #override for "weird" abilities
+                #death from above strike is actually an evis with 1.5 modifier and dfa pulse needs mastery
+                if ability == 'death_from_above_strike':
                     modifier *= 1.5 * executioner_mod
-                    ability = "eviscerate"
-                if ability == "death_from_above_pulse":
+                    ability = 'eviscerate'
+                if ability == 'death_from_above_pulse':
                     modifier *= executioner_mod
 
                 damage_breakdown[ability] = self.get_ability_dps(average_ap, ability, aps, crits, modifier, crit_mod, both_hands, cps)
@@ -296,12 +296,12 @@ class RogueDamageCalculator(DamageCalculator):
 
     #assassination
     def deadly_poison_tick_damage(self, ap):
-        return .275 * ap + (1 + (0.05 * self.traits.master_alchemist))
+        return .275 * ap * (1 + (0.05 * self.traits.master_alchemist)) * (1 + (0.4 * self.talents.master_poisoner))
 
     def deadly_instant_poison_damage(self, ap):
-        return .142 * ap + (1 + (0.05 * self.traits.master_alchemist))
+        return .142 * ap * (1 + (0.05 * self.traits.master_alchemist)) * (1 + (0.4 * self.talents.master_poisoner))
 
-    #Maybe add better handling for "rule of three" for artifact traits
+    #Maybe add better handling for 'rule of three' for artifact traits
     def envenom_damage(self, ap, cp):
         return .5 * cp * ap * (1 + (0.0333 * self.traits.toxic_blades))
 
@@ -315,14 +315,11 @@ class RogueDamageCalculator(DamageCalculator):
         return 1 * self.get_weapon_damage('mh', ap)
 
     def mh_kingsbane_damage(self, ap):
-        return 3 * self.get_weapon_damage('mh', ap)
-
+       return 3 * self.get_weapon_damage('mh', ap) * (1 + (0.4 * self.talents.master_poisoner))
     def oh_kingsbane_damage(self, ap):
-        return 3 * self.oh_penalty * self.get_weapon_damage('oh', ap) 
-
+        return 3 * self.oh_penalty * self.get_weapon_damage('oh', ap) * (1 + (0.4 * self.talents.master_poisoner))
     def kingsbane_tick_damage(self, ap):
-        return 0.45 * ap
-
+        return 0.45 * ap * (1 + (0.4 * self.talents.master_poisoner))
     def mh_mutilate_damage(self, ap):
         return 3.6 * self.get_weapon_damage('mh', ap) * (1 + (0.15 * self.traits.assassins_blades))
 
@@ -338,14 +335,14 @@ class RogueDamageCalculator(DamageCalculator):
     #outlaw
     def ambush_damage(self, ap):
         return 4.5 * self.get_weapon_damage('mh', ap)
-    
+
     def between_the_eyes_damage(self, ap, cp):
         return .75 * cp * ap * (1 + (0.08 / self.traits.black_powder))
 
     #7*55% AP
     def blunderbuss_damage(self, ap):
         return 3.85 * ap
-    
+
     #Ignoring that this behaves as a dot for simplicity
     def cannonball_barrage_damage(self, ap):
         return 7.2 * ap
@@ -377,9 +374,9 @@ class RogueDamageCalculator(DamageCalculator):
 
     def saber_slash_damage(self, ap):
         return 2.6 * self.get_weapon_damage('mh', ap) * (1 + (0.15 * self.traits.cursed_edges))
- 
+
     #subtlety
-    #Ignore positional modifier for now  
+    #Ignore positional modifier for now
     def backstab_damage(self, ap):
         return 3.7 * self.get_weapon_damage('mh', ap) * (1 + (0.0333 * self.traits.the_quiet_knife))
 
@@ -454,6 +451,7 @@ class RogueDamageCalculator(DamageCalculator):
             'mh_goremaws_bite':      self.mh_goremaws_bite_damage,
             'oh_goremaws_bite':      self.oh_goremaws_bite_damage,
             'nightblade_ticks':      self.nightblade_tick_damage,
+            'shadowstrike':          self.shadowstrike_damage,
             'mh_shadow_blades':      self.mh_shadow_blades_damage,
             'oh_shadow_blades':      self.oh_shadow_blades_damage,
             'shuriken_storm':        self.shuriken_storm_damage,

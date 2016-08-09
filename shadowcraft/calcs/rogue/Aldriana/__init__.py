@@ -26,23 +26,23 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     def get_dps(self):
         super(AldrianasRogueDamageCalculator, self).get_dps()
-        if self.settings.is_assassination_rogue():
+        if self.spec == 'assassination':
             self.init_assassination()
             return self.assassination_dps_estimate()
-        elif self.settings.is_combat_rogue():
+        elif self.spec == 'outlaw':
             return self.combat_dps_estimate()
-        elif self.settings.is_subtlety_rogue():
+        elif self.spec == 'subtlety':
             return self.subtlety_dps_estimate()
         else:
             raise InputNotModeledException(_('You must specify a spec.'))
 
     def get_dps_breakdown(self):
-        if self.settings.is_assassination_rogue():
+        if self.spec == 'assassination':
             self.init_assassination()
             return self.assassination_dps_breakdown()
-        elif self.settings.is_combat_rogue():
+        elif self.spec == 'outlaw':
             return self.combat_dps_breakdown()
-        elif self.settings.is_subtlety_rogue():
+        elif self.spec == 'subtlety':
             return self.subtlety_dps_breakdown()
         else:
             raise InputNotModeledException(_('You must specify a spec.'))
@@ -114,60 +114,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     def get_heroism_haste_multiplier(self):
         # Just average-casing for now.  Should fix that at some point.
         return 1 + .3 * self.heroism_uptime_per_fight()
-
-    def get_cp_distribution_for_cycle(self, cp_distribution_per_move, target_cp_quantity):
-        avg_cp_per_cpg = sum([key * cp_distribution_per_move[key] for key in cp_distribution_per_move])
-
-        time_spent_at_cp = [0, 0, 0, 0, 0, 0]
-        cur_min_cp = 0
-        cur_dist = {(0, 0): 1}
-        while cur_min_cp < target_cp_quantity:
-            cur_min_cp += 1
-
-            new_dist = {}
-            for (cps, moves), prob in cur_dist.items():
-                if cps >= cur_min_cp:
-                    if (cps, moves) in new_dist:
-                        new_dist[(cps, moves)] += prob
-                    else:
-                        new_dist[(cps, moves)] = prob
-                else:
-                    for (move_cp, move_prob) in cp_distribution_per_move.items():
-                        total_cps = cps + move_cp
-                        if total_cps > 5:
-                            total_cps = 5
-                        dist_entry = (total_cps, moves + 1)
-                        time_spent_at_cp[total_cps] += move_prob * prob
-                        if dist_entry in new_dist:
-                            new_dist[dist_entry] += move_prob * prob
-                        else:
-                            new_dist[dist_entry] = move_prob * prob
-            cur_dist = new_dist
-
-        for (cps, moves), prob in cur_dist.items():
-            time_spent_at_cp[cps] += prob
-
-        total_weight = sum(time_spent_at_cp)
-        for i in xrange(6):
-            time_spent_at_cp[i] /= total_weight
-
-        return cur_dist, time_spent_at_cp, avg_cp_per_cpg
-
-    def get_cp_per_cpg(self, base_cp_per_cpg=1, *probs):
-        # Computes the combined probabilites of getting an additional cp from
-        # each of the items in probs.
-        cp_per_cpg = {base_cp_per_cpg: 1}
-        for prob in probs:
-            if prob == 0:
-                continue
-            new_cp_per_cpg = {}
-            for cp in cp_per_cpg:
-                new_cp_per_cpg.setdefault(cp, 0)
-                new_cp_per_cpg.setdefault(cp + 1, 0)
-                new_cp_per_cpg[cp] += cp_per_cpg[cp] * (1 - prob)
-                new_cp_per_cpg[cp + 1] += cp_per_cpg[cp] * prob
-            cp_per_cpg = new_cp_per_cpg
-        return cp_per_cpg
 
     def get_crit_rates(self, stats):
         base_melee_crit_rate = self.crit_rate(crit=stats['crit'])
@@ -1718,8 +1664,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if float(self.settings.cycle.use_hemorrhage) > self.settings.duration:
                 raise InputNotModeledException(_('Interval between Hemorrhages cannot be higher than the fight duration'))
 
-        #set readiness coefficient
-        self.readiness_spec_conversion = self.subtlety_readiness_conversion
+
         self.spec_convergence_stats = ['haste', 'multistrike']
 
         #overrides setting, using Ambush + Vanish on CD is critical
@@ -1732,15 +1677,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         mos_value = .1
 
         self.vanish_cd_modifier = 1.0
-
-        # leveling perks
-        if self.level == 100:
-            mos_value += .05
-            self.ability_cds['vanish'] = 90
-
-        #update spec specific proc rates
-        if getattr(self.stats.procs, 'legendary_capacitive_meta'):
-            getattr(self.stats.procs, 'legendary_capacitive_meta').proc_rate_modifier = 1.114
 
         self.set_constants()
         self.stat_multipliers['agi'] *= 1.15

@@ -3,50 +3,19 @@ from shadowcraft.core import exceptions
 class Settings(object):
     # Settings object for AldrianasRogueDamageCalculator.
 
-    def __init__(self, cycle, time_in_execute_range=.35, response_time=.5, latency=.03, dmg_poison='dp', utl_poison=None,
-                 duration=300, use_opener='always', opener_name='default', is_pvp=False, shiv_interval=0, adv_params=None,
+    def __init__(self, cycle, response_time=.5, latency=.03, duration=300, adv_params=None,
                  merge_damage=True, num_boss_adds=0, feint_interval=0, default_ep_stat='ap', is_day=False, is_demon=False):
         self.cycle = cycle
-        self.time_in_execute_range = time_in_execute_range
         self.response_time = response_time
         self.latency = latency
-        self.dmg_poison = dmg_poison
-        self.utl_poison = utl_poison
         self.duration = duration
-        self.use_opener = use_opener # Allowed values are 'always' (vanish/shadowmeld on cooldown), 'opener' (once per fight) and 'never'
-        self.opener_name = opener_name
         self.feint_interval = feint_interval
-        self.merge_damage = merge_damage
         self.is_day = is_day
         self.is_demon = is_demon
         self.num_boss_adds = max(num_boss_adds, 0)
-        self.shiv_interval = float(shiv_interval)
         self.adv_params = self.interpret_adv_params(adv_params)
         self.default_ep_stat = default_ep_stat
-        if self.shiv_interval < 10 and not self.shiv_interval == 0:
-            self.shiv_interval = 10
-        allowed_openers_per_spec = {
-            'assassination': ('mutilate', 'dispatch', 'envenom'),
-            'combat': ('sinister_strike', 'revealing_strike', 'eviscerate'),
-            'subtlety': ()
-        }
-        allowed_openers = allowed_openers_per_spec[self.cycle._cycle_type] + ('ambush', 'garrote', 'default', 'cpg')
-        if opener_name not in allowed_openers:
-            raise exceptions.InvalidInputException(_('Opener {opener} is not allowed in {cycle} cycles.').format(opener=opener_name, cycle=self.cycle._cycle_type))
-        if opener_name == 'default':
-            default_openers = {
-                'assassination': 'mutilate',
-                'combat': 'ambush',
-                'subtlety': 'ambush'}
-            self.opener_name = default_openers[self.cycle._cycle_type]
-        if dmg_poison not in (None, 'dp', 'wp'):
-            raise exceptions.InvalidInputException(_('You can only choose Deadly(dp) or Wound(wp) as a damage poison'))
-        if utl_poison not in (None, 'cp', 'mnp', 'lp', 'pp'):
-            raise exceptions.InvalidInputException(_('You can only choose Crippling(cp), Mind-Numbing(mnp), Leeching(lp) or Paralytic(pp) as a non-lethal poison'))
 
-    def get_spec(self):
-        return self.cycle._cycle_type
-    
     def interpret_adv_params(self, s=""):
         data = {}
         max_effects = 8
@@ -63,7 +32,7 @@ class Settings(object):
                     except:
                         raise exceptions.InvalidInputException(_('Advanced Parameter ' + e + ' found corrupt. Properly structure params and try again.'))
         return data
-    
+
     def is_assassination_rogue(self):
         return self.cycle._cycle_type == 'assassination'
 
@@ -108,10 +77,23 @@ class CombatCycle(Cycle):
 class SubtletyCycle(Cycle):
     _cycle_type = 'subtlety'
 
-    def __init__(self, raid_crits_per_second, use_hemorrhage='uptime', clip_fw=False):
-        self.clip_fw = clip_fw #reduces fw uptime, but increases ambush damage
-        self.raid_crits_per_second = raid_crits_per_second #used to calculate HAT procs per second.
-        self.use_hemorrhage = use_hemorrhage # Allowed values are 'always' (main CP generator),
-                                                                 #'never' (default to backstab),
-                                                                 #'uptime' (cast when hemo is down),
-        
+    def __init__(self, cp_builder='backstab', dance_cp_builder='shadowstrike', positional_uptime=1.0, symbols_policy='just',
+                 eviscerate_cps=5, finality_eviscerate_cps=5, nightblade_cps=5, finality_nightblade_cps=5,
+                 dance_finisher_priority=[]):
+        self.cp_builder = cp_builder #Allowed values: fok, backstab, gloomblade
+        self.dance_cp_builder = dance_cp_builder #Allowed values: fok, shadowstrike
+        self.positional_uptime = positional_uptime #Range 0.0 to 1.0, time behind target
+        self.symbols_policy = symbols_policy #Allowed values:
+                                             #'always' - use SoD every dance (macro)
+                                             #'just'   - Only use SoD when needed to refresh
+        #Finisher thresholds for each finisher, Allowed Values: 0, 1, 2, 3, 4, 5, 6
+        self.eviscerate_cps = eviscerate_cps
+        self.finality_eviscerate_cps = finality_eviscerate_cps
+        self.nightblade_cps = nightblade_cps
+        self.finality_nightblade_cps = finality_nightblade_cps
+
+        #List of following keys: 'eviscerate', 'nightblade', 'finality:eviscerate', 'finality:nightblade'
+        #Priority of finisher usage during dance
+        #Keys not included will not be used during dance
+        self.dance_finisher_priority = dance_finisher_priority
+

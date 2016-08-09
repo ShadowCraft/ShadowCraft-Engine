@@ -32,7 +32,7 @@ class Artifact(object):
 
     def initialize_traits(self, trait_string):
         if len(trait_string) != len(self.allowed_traits):
-            raise InvalidTraitException(_('Trait strings must be 16 characters long'))
+            raise InvalidTraitException(_('Trait strings must be {traits} characters long').format(traits=len(allowed_traits)))
         self.traits = {}
         for trait in xrange(len(self.allowed_traits)):
             self.set_trait(self.allowed_traits[trait], int(trait_string[trait]))
