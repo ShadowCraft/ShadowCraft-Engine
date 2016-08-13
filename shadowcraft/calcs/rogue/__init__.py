@@ -27,7 +27,8 @@ class RogueDamageCalculator(DamageCalculator):
                              'ghostly_strike', 'greed', 'killing_spree', 'main_gauche',
                              'pistol_shot', 'run_through', 'saber_slash']
     subtlety_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
-                               'backstab', 'eviscerate', 'gloomblade', 'goremaws_bite', 'shadowstrike',
+                               'backstab', 'eviscerate', 'finality:eviscerate', 'gloomblade', 
+                               'goremaws_bite', 'nightblade', 'finality:nightblade', 'shadowstrike',
                                'shadow_blade', 'shuriken_storm', 'shuriken_toss']
     #All damage sources mitigated by armor
     physical_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
@@ -41,11 +42,12 @@ class RogueDamageCalculator(DamageCalculator):
                                       'eviscerate', 'nightblade']
     #All damage sources that deal damage with both hands
     dual_wield_damage_sources = ['kingsbane', 'mutilate', 'greed', 'killing_spree',
-                                 'goremaws_bite, shadow_blades']
+                                 'goremaws_bite', 'shadow_blades']
     #All damage sources that scale with cps
-    cp_scaling_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
+    finisher_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
                                  'envenom', 'rupture_ticks', 'between_the_eyes',
-                                 'run_through', 'eviscerate']
+                                 'run_through', 'eviscerate', 'finality:eviscerate',
+                                'nightblade', 'finality:nightblade']
 
     assassination_mastery_conversion = .035
     combat_mastery_conversion = .022
@@ -79,34 +81,37 @@ class RogueDamageCalculator(DamageCalculator):
             #subtlety
             'backstab':            (35., 'strike'),
             'eviscerate':          (35., 'strike'),
+            'finality:eviscerate': (35., 'strike'),
             'gloomblade':          (35., 'strike'),
             'nightblade':          (25., 'strike'),
+            'finality:nightblade': (25., 'strike'),
+            'shadowstrike':        (40., 'strike'),
             'shuriken_storm':      (35., 'strike'),
             'shuriken_toss':       (40., 'strike'),
             'symbols_of_death':    (20., 'buff'),
     }
     ability_cds = {
             #general
-            'crimson_vial':             30,
-            'death_from_above':         20,
-            'kick':                     15,
-            'marked_for_death':         60,
-            'sprint':                   60,
-            'tricks_of_the_trade':      30,
-            'vanish':                   120,
+            'crimson_vial':             30.,
+            'death_from_above':         20.,
+            'kick':                     15.,
+            'marked_for_death':         60.,
+            'sprint':                   60.,
+            'tricks_of_the_trade':      30.,
+            'vanish':                   120.,
             #assassination
-            'exsanguinate':              45,
-            'kingsbane':                 45,
-            'vendetta':                 120,
+            'exsanguinate':              45.,
+            'kingsbane':                 45.,
+            'vendetta':                 120.,
             #outlaw
-            'adrenaline_rush':          180,
-            'cannonball_barrage':        60,
-            'curse_of_the_dreadblades':  90,
-            'killing_spree':            120,
+            'adrenaline_rush':          180.,
+            'cannonball_barrage':        60.,
+            'curse_of_the_dreadblades':  90.,
+            'killing_spree':            120.,
             #subtlety
-            'goremaws_bite':             60,
-            'shadow_dance':              60,
-            'shadow_blades':            120,
+            'goremaws_bite':             60.,
+            'shadow_dance':              60.,
+            'shadow_blades':            120.,
         }
 
     def __setattr__(self, name, value):
@@ -134,7 +139,7 @@ class RogueDamageCalculator(DamageCalculator):
 
     def get_base_modifier(self, current_stats):
         base_modifier = self.damage_modifier_cache
-        base_modifier *= (self.stats.get_versatility_multiplier_from_rating(rating=current_stats['versatility']) + self.buffs.versatility_bonus())
+        base_modifier *= self.stats.get_versatility_multiplier_from_rating(rating=current_stats['versatility'])
         return base_modifier
 
     def get_dps_contribution(self, base_damage, crit_rate, frequency, crit_modifier):
@@ -158,7 +163,7 @@ class RogueDamageCalculator(DamageCalculator):
             for i in xrange(1, cps+1):
                 for a in ability_list:
                     base_damage = self.get_formula(a)(ap, i) * modifier
-                    dps += self.get_dps_contribution(base_damage, crit_rate[i], attacks_per_second[i]. crit_modifier)
+                    dps += self.get_dps_contribution(base_damage, crit_rate, attacks_per_second[i], crit_modifier)
         return dps
 
     def get_damage_breakdown(self, current_stats, attacks_per_second, crit_rates, damage_procs, additional_info):
@@ -190,12 +195,7 @@ class RogueDamageCalculator(DamageCalculator):
             oh_hit_rate = self.dw_oh_hit_chance - crit_rates['oh_autoattacks']
             average_oh_hit = oh_hit_rate * oh_base_damage + crit_rates['oh_autoattacks'] * oh_base_damage * crit_damage_modifier
             oh_dps_tuple = average_oh_hit * attacks_per_second['oh_autoattacks']
-            if self.settings.merge_damage:
-                damage_breakdown['autoattack'] = mh_dps_tuple + oh_dps_tuple
-            else:
-                damage_breakdown['mh_autoattack'] = mh_dps_tuple
-                damage_breakdown['oh_autoattack'] = oh_dps_tuple
-
+            damage_breakdown['autoattack'] = mh_dps_tuple + oh_dps_tuple
 
         for proc in damage_procs:
             if proc.proc_name not in damage_breakdown:
@@ -208,12 +208,14 @@ class RogueDamageCalculator(DamageCalculator):
             potent_poisons_mod = (1 + self.assassination_mastery_conversion * self.stats.get_mastery_from_rating(current_stats['mastery'])) * base_modifier
 
             for ability in self.assassination_damage_sources:
+                if ability not in attacks_per_second:
+                    continue
                 aps = attacks_per_second[ability]
                 crits = crit_rates[ability]
                 crit_mod = crit_damage_modifier
                 modifier = base_modifier
                 both_hands = ability in self.dual_wield_damage_sources
-                cps = max_cps if ability in self.cp_scaling_damage_sources else 0
+                cps = max_cps if ability in self.finisher_damage_sources else 0
 
                 if ability in self.physical_damage_sources:
                     modifier *= armor_modifier
@@ -230,12 +232,14 @@ class RogueDamageCalculator(DamageCalculator):
 
         if self.spec == 'outlaw':
             for ability in self.outlaw_damage_sources:
+                if ability not in attacks_per_second:
+                    continue
                 aps = attacks_per_second[ability]
                 crits = crit_rates[ability]
                 crit_mod = crit_damage_modifier
                 modifier = base_modifier
                 both_hands = ability in self.dual_wield_damage_sources
-                cps = max_cps if ability in self.cp_scaling_damage_sources else 0
+                cps = max_cps if ability in self.finisher_damage_sources else 0
 
                 if ability in self.physical_damage_sources:
                     modifier *= armor_modifier
@@ -256,12 +260,14 @@ class RogueDamageCalculator(DamageCalculator):
             shadow_fangs_mod = (1 + (0.04 * self.traits.shadow_fangs))
 
             for ability in self.subtlety_damage_sources:
+                if ability not in attacks_per_second:
+                    continue
                 aps = attacks_per_second[ability]
                 crits = crit_rates[ability]
                 crit_mod = crit_damage_modifier
                 modifier = base_modifier
                 both_hands = ability in self.dual_wield_damage_sources
-                cps = max_cps if ability in self.cp_scaling_damage_sources else 0
+                cps = max_cps if ability in self.finisher_damage_sources else 0
 
                 if ability in self.physical_damage_sources:
                     modifier *= armor_modifier
@@ -382,6 +388,8 @@ class RogueDamageCalculator(DamageCalculator):
 
     def eviscerate_damage(self, ap, cp):
         return 1.28 * cp * ap
+    def finality_eviscerate_damage(self, ap, cp):
+        return 1.5 * cp * ap
 
     def gloomblade_damage(self, ap):
         return 4.25 * self.get_weapon_damage('mh', ap) * (1 + (0.0333 * self.traits.the_quiet_knife))
@@ -392,8 +400,11 @@ class RogueDamageCalculator(DamageCalculator):
     def oh_goremaws_bite_damage(self, ap):
         return 5 * self.oh_penalty() * self.get_weapon_damage('oh', ap)
 
-    def nightblade_tick_damage(self, ap):
+    #Nightblade doesn't actually scale with cps but passing cps for simplicity
+    def nightblade_tick_damage(self, ap, cp):
         return 1.2 * ap * (1 + (0.05 * self.traits.demon_kiss))
+    def finality_nightblade_tick_damage(self, ap, cp):
+        return 1.4 * ap * (1 + (0.05 * self.traits.demon_kiss))
 
     def shadowstrike_damage(self, ap):
         return 8.5 * self.get_weapon_damage('mh', ap) * (1 + (0.05 * self.traits.precision_strike))
@@ -413,54 +424,58 @@ class RogueDamageCalculator(DamageCalculator):
     def get_formula(self, name):
         formulas = {
             #general
-            'mh_autoattack':         self.mh_damage,
-            'oh_autoattack':         self.oh_damage,
-            'death_from_above_pulse':self.death_from_above_pulse_damage,
+            'mh_autoattack':             self.mh_damage,
+            'oh_autoattack':             self.oh_damage,
+            'death_from_above_pulse':    self.death_from_above_pulse_damage,
             #assassination
-            'deadly_poison':         self.deadly_poison_tick_damage,
-            'deadly_instant_poison': self.deadly_instant_poison_damage,
-            'envenom':               self.envenom_damage,
-            'fan_of_knives_damage':  self.fan_of_knives_damage,
-            'garrote_ticks':         self.garrote_tick_damage,
-            'hemorrhage':            self.hemorrhage_damage,
-            'mh_kingsbane':          self.mh_kingsbane_damage,
-            'oh_kingsbane':          self.oh_kingsbane_damage,
-            'kingsbane_ticks':       self.kingsbane_tick_damage,
-            'mh_mutilate':           self.mh_mutilate_damage,
-            'oh_mutilate':           self.oh_mutilate_damage,
-            'poisoned_knife':        self.poisoned_knife_damage,
-            'rupture_ticks':         self.rupture_tick_damage,
+            'deadly_poison':             self.deadly_poison_tick_damage,
+            'deadly_instant_poison':     self.deadly_instant_poison_damage,
+            'envenom':                   self.envenom_damage,
+            'fan_of_knives_damage':      self.fan_of_knives_damage,
+            'garrote_ticks':             self.garrote_tick_damage,
+            'hemorrhage':                self.hemorrhage_damage,
+            'mh_kingsbane':              self.mh_kingsbane_damage,
+            'oh_kingsbane':              self.oh_kingsbane_damage,
+            'kingsbane_ticks':           self.kingsbane_tick_damage,
+            'mh_mutilate':               self.mh_mutilate_damage,
+            'oh_mutilate':               self.oh_mutilate_damage,
+            'poisoned_knife':            self.poisoned_knife_damage,
+            'rupture_ticks':             self.rupture_tick_damage,
             #outlaw
-            'ambush':                self.ambush_damage,
-            'between_the_eyes':      self.between_the_eyes_damage,
-            'blunderbuss':           self.blunderbuss_damage,
-            'cannonball_barrage':    self.cannonball_barrage_damage,
-            'ghostly_strike':        self.ghostly_strike_damage,
-            'mh_greed':              self.mh_greed_damage,
-            'oh_greed':              self.oh_greed_damage,
-            'mh_killing_spree':      self.mh_killing_spree_damage,
-            'oh_killing_spree':      self.oh_killing_spree_damage,
-            'main_gauche':           self.main_gauche_damage,
-            'pistol_shot':           self.pistol_shot_damage,
-            'run_through':           self.run_through_damage,
-            'saber_slash':           self.saber_slash_damage,
+            'ambush':                    self.ambush_damage,
+            'between_the_eyes':          self.between_the_eyes_damage,
+            'blunderbuss':               self.blunderbuss_damage,
+            'cannonball_barrage':        self.cannonball_barrage_damage,
+            'ghostly_strike':            self.ghostly_strike_damage,
+            'mh_greed':                  self.mh_greed_damage,
+            'oh_greed':                  self.oh_greed_damage,
+            'mh_killing_spree':          self.mh_killing_spree_damage,
+            'oh_killing_spree':          self.oh_killing_spree_damage,
+            'main_gauche':               self.main_gauche_damage,
+            'pistol_shot':               self.pistol_shot_damage,
+            'run_through':               self.run_through_damage,
+            'saber_slash':               self.saber_slash_damage,
             #subtlety
-            'backstab':              self.backstab_damage,
-            'eviscerate':            self.eviscerate_damage,
-            'gloomblade':            self.gloomblade_damage,
-            'mh_goremaws_bite':      self.mh_goremaws_bite_damage,
-            'oh_goremaws_bite':      self.oh_goremaws_bite_damage,
-            'nightblade_ticks':      self.nightblade_tick_damage,
-            'shadowstrike':          self.shadowstrike_damage,
-            'mh_shadow_blades':      self.mh_shadow_blades_damage,
-            'oh_shadow_blades':      self.oh_shadow_blades_damage,
-            'shuriken_storm':        self.shuriken_storm_damage,
-            'shuriken_toss':         self.shuriken_toss_damage,
+            'backstab':                  self.backstab_damage,
+            'eviscerate':                self.eviscerate_damage,
+            'finality:eviscerate':       self.finality_eviscerate_damage,
+            'gloomblade':                self.gloomblade_damage,
+            'mh_goremaws_bite':          self.mh_goremaws_bite_damage,
+            'oh_goremaws_bite':          self.oh_goremaws_bite_damage,
+            'nightblade_ticks':          self.nightblade_tick_damage,
+            'finality_nightblade_ticks': self.finality_nightblade_tick_damage,
+            'shadowstrike':              self.shadowstrike_damage,
+            'mh_shadow_blades':          self.mh_shadow_blades_damage,
+            'oh_shadow_blades':          self.oh_shadow_blades_damage,
+            'shuriken_storm':            self.shuriken_storm_damage,
+            'shuriken_toss':             self.shuriken_toss_damage,
         }
         return formulas[name]
 
     def get_spell_cost(self, ability, cost_mod=1.0):
         cost = self.ability_info[ability][0] * cost_mod
+        if ability == 'shadowstrike':
+            cost -= 0.25 * (5 * self.traits.energetic_stabbing)
         return cost
 
     def get_spell_cd(self, ability):
@@ -471,4 +486,4 @@ class RogueDamageCalculator(DamageCalculator):
         # should be coded better?
         base_crit = .15
         base_crit += self.stats.get_crit_from_rating(crit)
-        return base_crit + self.buffs.buff_all_crit() + self.race.get_racial_crit(is_day=self.settings.is_day) - self.crit_reduction
+        return base_crit + self.race.get_racial_crit(is_day=self.settings.is_day) - self.crit_reduction

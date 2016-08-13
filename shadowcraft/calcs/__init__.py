@@ -27,7 +27,7 @@ class DamageCalculator(object):
     # normalize_ep_stat is the stat with value 1 EP, override in your subclass
     normalize_ep_stat = None
 
-    def __init__(self, stats, talents, traits, buffs, race, class_spec, settings=None, level=110, target_level=None, char_class='rogue'):
+    def __init__(self, stats, talents, traits, buffs, race, spec, settings=None, level=110, target_level=None, char_class='rogue'):
         self.WOW_BUILD_TARGET = '7.0.0' # should reflect the game patch being targetted
         self.SHADOWCRAFT_BUILD = '0.01' # <1 for beta builds, 1.00 is GM, >1 for any bug fixes, reset for each warcraft patch
         self.tools = class_data.Util()
@@ -37,7 +37,7 @@ class DamageCalculator(object):
         self.buffs = buffs
         self.race = race
         self.char_class = char_class
-        self.class_spec = class_spec
+        self.spec = spec
         self.settings = settings
         self.target_level = target_level if target_level else level+3 #assumes 3 levels higher if not explicit
 
@@ -549,26 +549,27 @@ class DamageCalculator(object):
 
         return talents_ranking
 
-    def get_artifact_ranking(self, list=None):
+    def get_trait_ranking(self, list=None):
         trait_ranking = {}
         baseline_dps = self.get_dps()
         trait_list = []
 
         if not list:
-            trait_list = self.artifact.get_trait_list()
+            trait_list = self.traits.get_trait_list()
         else:
             trait_list = list
 
         for trait in trait_list:
-            base_trait_rank = getattr(self.artifact, trait)
-            setattr(self.artifact, trait, base_trait_rank+1)
+            base_trait_rank = getattr(self.traits, trait)
+            setattr(self.traits, trait, base_trait_rank+1)
             try:
                 new_dps = self.get_dps()
                 if new_dps != baseline_dps:
                     trait_ranking[trait] = abs(new_dps-baseline_dps)
             except:
                 trait_ranking[trait] = _('not_implemented')
-            setattr(self.artifact, trait, base_trait_rank)
+            setattr(self.traits, trait, base_trait_rank)
+        return trait_ranking
 
     def get_engine_info(self):
         data = {

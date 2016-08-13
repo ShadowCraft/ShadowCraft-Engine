@@ -21,7 +21,7 @@ i18n.set_language(test_language)
 
 # Set up level/class/race
 test_level = 110
-test_race = race.Race('troll')
+test_race = race.Race('pandaren')
 test_class = 'rogue'
 test_spec = 'subtlety'
 
@@ -34,7 +34,7 @@ test_buffs = buffs.Buffs(
 
 # Set up weapons. mark_of_the_frostwolf mark_of_the_shattered_hand
 test_mh = stats.Weapon(812.0, 1.8, 'dagger', 'mark_of_the_shattered_hand')
-test_oh = stats.Weapon(812.0, 1.8, 'dagger', 'mark_of_the_frostwolf')
+test_oh = stats.Weapon(812.0, 1.8, 'dagger', 'mark_of_the_shattered_hand')
 
 # Set up procs. - trinkets, other things (legendary procs)
 #test_procs = procs.ProcsList(('scales_of_doom', 691), ('beating_heart_of_the_mountain', 701), ('infallible_tracking_charm', 715),
@@ -46,23 +46,23 @@ test_gear_buffs = stats.GearBuffs('gear_specialization') #tier buffs located her
 
 # Set up a calcs object..
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
-                         agi=3650,
-                         stam=2426,
-                         crit=1039,
-                         haste=0,
-                         mastery=1315,
-                         versatility=122,)
+                         agi=7655,
+                         stam=19566,
+                         crit=2665,
+                         haste=1594,
+                         mastery=3350,
+                         versatility=6522,)
 
 # Initialize talents..
-test_talents = talents.Talents('0000000', test_spec, test_class, level=test_level)
+test_talents = talents.Talents('0200000', test_spec, test_class, level=test_level)
 
 #initialize artifact traits..
-test_traits = artifact.Artifact(test_spec, test_class, '0000000000000000')
+test_traits = artifact.Artifact(test_spec, test_class, '100000000000100000')
 
 # Set up settings.
-test_cycle = settings.SubtletyCycle(5, use_hemorrhage='never', clip_fw=False)
-test_settings = settings.Settings(test_cycle, response_time=.5, duration=360, dmg_poison='dp', utl_poison='lp', is_pvp=False,
-                                 adv_params="", is_demon=True)
+test_cycle = settings.SubtletyCycle(dance_cp_builder='shadowstrike', dance_finisher_priority=['finality:nightblade','nightblade', 'finality:eviscerate', 'eviscerate'])
+test_settings = settings.Settings(test_cycle, response_time=.5, duration=360,
+                                 adv_params="", is_demon=True, num_boss_adds=0)
 
 # Build a DPS object.
 calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_traits, test_buffs, test_race, test_spec, test_settings, test_level)
@@ -76,7 +76,8 @@ total_dps = sum(entry[1] for entry in dps_breakdown.items())
 #ep_values = calculator.get_ep()
 #tier_ep_values = calculator.get_other_ep(['rogue_t17_2pc', 'rogue_t17_4pc', 'rogue_t17_4pc_lfr'])
 
-talent_ranks = calculator.get_talents_ranking()
+#talent_ranks = calculator.get_talents_ranking()
+trait_ranks = calculator.get_trait_ranking()
 
 def max_length(dict_list):
     max_len = 0
@@ -101,11 +102,12 @@ def pretty_print(dict_list):
         print '-' * (max_len + 15)
 
 dicts_for_pretty_print = [
-    ep_values,
+    #ep_values,
     #tier_ep_values,
-    talent_ranks,
+    #talent_ranks,
     #trinkets_ep_value,
-    dps_breakdown
+    dps_breakdown,
+    trait_ranks
 ]
 pretty_print(dicts_for_pretty_print)
 print ' ' * (max_length(dicts_for_pretty_print) + 1), total_dps, _("total damage per second.")

@@ -4,7 +4,8 @@ class Settings(object):
     # Settings object for AldrianasRogueDamageCalculator.
 
     def __init__(self, cycle, response_time=.5, latency=.03, duration=300, adv_params=None,
-                 merge_damage=True, num_boss_adds=0, feint_interval=0, default_ep_stat='ap', is_day=False, is_demon=False):
+                 merge_damage=True, num_boss_adds=0, feint_interval=0, default_ep_stat='ap', is_day=False, is_demon=False,
+                 marked_for_death_resets=0):
         self.cycle = cycle
         self.response_time = response_time
         self.latency = latency
@@ -15,6 +16,7 @@ class Settings(object):
         self.num_boss_adds = max(num_boss_adds, 0)
         self.adv_params = self.interpret_adv_params(adv_params)
         self.default_ep_stat = default_ep_stat
+        self.marked_for_death_resets=marked_for_death_resets
 
     def interpret_adv_params(self, s=""):
         data = {}
@@ -81,7 +83,7 @@ class SubtletyCycle(Cycle):
                  eviscerate_cps=5, finality_eviscerate_cps=5, nightblade_cps=5, finality_nightblade_cps=5,
                  dance_finisher_priority=[]):
         self.cp_builder = cp_builder #Allowed values: fok, backstab, gloomblade
-        self.dance_cp_builder = dance_cp_builder #Allowed values: fok, shadowstrike
+        self.dance_cp_builder = dance_cp_builder #Allowed values: shuriken_storm, shadowstrike
         self.positional_uptime = positional_uptime #Range 0.0 to 1.0, time behind target
         self.symbols_policy = symbols_policy #Allowed values:
                                              #'always' - use SoD every dance (macro)
