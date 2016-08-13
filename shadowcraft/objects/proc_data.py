@@ -341,7 +341,7 @@ allowed_procs = {
     },
     'scales_of_doom': {
         'stat': 'stats',
-        'value': {'multistrike':1743},
+        'value': {'mastery':1743},
         'duration': 10,
         'proc_name': 'Scales of Doom',
         'upgradable': True,
@@ -355,7 +355,7 @@ allowed_procs = {
     },
     'blackheart_enforcers_medallion': {
         'stat': 'stats',
-        'value': {'multistrike':1665},
+        'value': {'haste':1665},
         'duration': 10,
         'proc_name': 'Blackheart Enforcers Medallion',
         'upgradable': True,
@@ -383,7 +383,7 @@ allowed_procs = {
     },
     'beating_heart_of_the_mountain': {
         'stat': 'stats',
-        'value': {'multistrike':1467},
+        'value': {'crit':1467},
         'duration': 20,
         'proc_name': 'Beating Heart of the Mountain',
         'upgradable': True,
@@ -439,7 +439,7 @@ allowed_procs = {
     },
     'gorashans_lodestone_spike': {
         'stat': 'stats',
-        'value': {'multistrike':1060},
+        'value': {'crit':1060},
         'duration': 15,
         'proc_name': 'Gorashans Lodestone Spike',
         'upgradable': True,
@@ -611,7 +611,7 @@ allowed_melee_enchants = {
     #6.0
     'mark_of_the_frostwolf': {
         'stat': 'stats',
-        'value': {'multistrike':500},
+        'value': {'crit':500},
         'duration': 6,
         'max_stacks': 2,
         'proc_name': 'Mark of the Frostwolf',

@@ -33,8 +33,8 @@ test_buffs = buffs.Buffs(
     )
 
 # Set up weapons. mark_of_the_frostwolf mark_of_the_shattered_hand
-test_mh = stats.Weapon(812.0, 1.8, 'dagger', 'mark_of_the_shattered_hand')
-test_oh = stats.Weapon(812.0, 1.8, 'dagger', 'mark_of_the_shattered_hand')
+test_mh = stats.Weapon(812.0, 1.8, 'dagger', None)
+test_oh = stats.Weapon(812.0, 1.8, 'dagger', None)
 
 # Set up procs. - trinkets, other things (legendary procs)
 #test_procs = procs.ProcsList(('scales_of_doom', 691), ('beating_heart_of_the_mountain', 701), ('infallible_tracking_charm', 715),
@@ -77,7 +77,7 @@ total_dps = sum(entry[1] for entry in dps_breakdown.items())
 #tier_ep_values = calculator.get_other_ep(['rogue_t17_2pc', 'rogue_t17_4pc', 'rogue_t17_4pc_lfr'])
 
 #talent_ranks = calculator.get_talents_ranking()
-trait_ranks = calculator.get_trait_ranking()
+#trait_ranks = calculator.get_trait_ranking()
 
 def max_length(dict_list):
     max_len = 0
@@ -107,7 +107,7 @@ dicts_for_pretty_print = [
     #talent_ranks,
     #trinkets_ep_value,
     dps_breakdown,
-    trait_ranks
+    #trait_ranks
 ]
 pretty_print(dicts_for_pretty_print)
-print ' ' * (max_length(dicts_for_pretty_print) + 1), total_dps, _("total damage per second.")
+print ' ' * (max_length(dicts_for_pretty_print) + 1), total_dps, ("total damage per second.")
