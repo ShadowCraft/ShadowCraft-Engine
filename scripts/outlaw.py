@@ -110,7 +110,7 @@ dicts_for_pretty_print = [
     #talent_ranks,
     #trinkets_ep_value,
     dps_breakdown,
-    trait_ranks
+    #trait_ranks
 ]
 pretty_print(dicts_for_pretty_print)
 print ' ' * (max_length(dicts_for_pretty_print) + 1), total_dps, _("total damage per second.")

@@ -44,8 +44,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             return 0
             #return self.assassination_dps_breakdown()
         elif self.spec == 'outlaw':
-            return 0
-            #return self.combat_dps_breakdown()
+            return self.combat_dps_breakdown()
         elif self.spec == 'subtlety':
             return self.subtlety_dps_breakdown()
         else:
@@ -1219,14 +1218,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             raise InputNotModeledException(_('You must specify a combat cycle to match your combat spec.'))
 
         #set readiness coefficient
-        self.readiness_spec_conversion = self.combat_readiness_conversion
-        self.spec_convergence_stats = ['haste', 'mastery', 'readiness']
-
-        #spec specific glyph behaviour
-        if self.glyphs.disappearance:
-            self.ability_cds['vanish'] = 60
-        else:
-            self.ability_cds['vanish'] = 120
+        self.spec_convergence_stats = ['haste', 'mastery']
 
         #update spec specific proc rates
         if getattr(self.stats.procs, 'legendary_capacitive_meta'):
@@ -1244,10 +1236,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.max_energy = 100.
         if self.stats.gear_buffs.rogue_pvp_4pc_extra_energy():
             self.max_energy += 30
-        if self.talents.lemon_zest:
-            self.max_energy += 15
-        if self.glyphs.energy:
-            self.max_energy += 20
         if self.stats.gear_buffs.rogue_t18_4pc_lfr:
             self.max_energy += 20
         if self.race.expansive_mind:
@@ -1262,8 +1250,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.stats.gear_buffs.rogue_t17_2pc:
             self.extra_cp_chance += 0.2
         self.rvs_duration = 24
-        if self.settings.dmg_poison == 'dp' and self.level == 100:
-            self.settings.dmg_poison = 'sp'
 
         self.set_constants()
         self.stat_multipliers['haste'] *= 1.05
@@ -1344,8 +1330,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #combat gets it's own MS calculation due to BF mechanics
         #calculate multistrike here, really cheap to calculate
         #turns out the 2 chance system yields a very basic linear pattern, the damage modifier is 30% of the multistrike %!
-        multistrike_multiplier = .3 * 2 * (self.stats.get_multistrike_chance_from_rating(rating=stats['multistrike']) + self.buffs.multistrike_bonus())
-        multistrike_multiplier = min(.6, multistrike_multiplier)
+        #multistrike_multiplier = .3 * 2 * (self.stats.get_multistrike_chance_from_rating(rating=stats['multistrike']) + self.buffs.multistrike_bonus())
+        #multistrike_multiplier = min(.6, multistrike_multiplier)
         for ability in damage_breakdown:
             damage_breakdown[ability] *=maalus_mod
             if 'sr_' not in ability:
@@ -1354,7 +1340,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             #Fel Lash doesn't MS
             if ability == 'Fel Lash':
                 continue
-            damage_breakdown[ability] *= (1 + multistrike_multiplier)
+            #damage_breakdown[ability] *= (1 + multistrike_multiplier)
             if ability in ('eviscerate', 'sr_eviscerate'):
                 damage_breakdown[ability] *= evis_multiplier
 
@@ -1423,8 +1409,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if ar:
             self.attack_speed_increase *= 1.2
             self.base_energy_regen *= 2.0
-        if self.talents.lemon_zest:
-            self.base_energy_regen *= 1 + .05 * (1 + min(self.settings.num_boss_adds, 2))
         gcd_size = 1.0 + self.settings.latency
         if ar:
             gcd_size -= .2
@@ -1441,14 +1425,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         # Turn the cost of the ability into the net loss of energy by reducing it by the energy gained from MG
         cost_reducer = main_gauche_proc_rate * combat_potency_from_mg
 
-        eviscerate_energy_cost =  self.get_spell_stats('eviscerate', cost_mod=cost_modifier)[0]
+        eviscerate_energy_cost =  self.get_spell_cost('run_through', cost_mod=cost_modifier)
         eviscerate_energy_cost -= cost_reducer
         eviscerate_energy_cost -= FINISHER_SIZE * self.relentless_strikes_energy_return_per_cp
-        revealing_strike_energy_cost =  self.get_spell_stats('revealing_strike', cost_mod=cost_modifier)[0]
+        revealing_strike_energy_cost =  self.get_spell_cost('pistol_shot', cost_mod=cost_modifier)
         revealing_strike_energy_cost -= cost_reducer
-        sinister_strike_energy_cost =  self.get_spell_stats('sinister_strike', cost_mod=cost_modifier)[0]
+        sinister_strike_energy_cost =  self.get_spell_cost('saber_slash', cost_mod=cost_modifier)
         sinister_strike_energy_cost -= cost_reducer
-        death_from_above_energy_cost = self.get_spell_stats('death_from_above', cost_mod=cost_modifier)[0]
+        death_from_above_energy_cost = self.get_spell_cost('death_from_above', cost_mod=cost_modifier)
         death_from_above_energy_cost -= cost_reducer * (2 + self.settings.num_boss_adds)
         #need to reduce the cost of DFA by the strike's MG proc ...
         #but also the MG procs from the AOE which hits the main target plus each additional add (strike + aoe)
@@ -1458,6 +1442,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         ## Base CPs and Attacks
         #Autoattacks
         white_swing_downtime = 0
+        #TODO: Add swing resets back for vanishes
+        self.swing_reset_spacing = None
         if self.swing_reset_spacing is not None and not ar:
             white_swing_downtime += self.settings.response_time / self.swing_reset_spacing #from vanish
         swing_timer_mh = self.stats.mh.speed / self.attack_speed_increase
@@ -1479,10 +1465,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         combat_potency_regen = attacks_per_second['oh_autoattack_hits'] * combat_potency_regen_per_oh
 
         #Base energy
-        bonus_energy_from_openers = self.get_bonus_energy_from_openers('sinister_strike', 'revealing_strike')
-        if self.settings.opener_name in ('ambush', 'garrote'):
-            attacks_per_second[self.settings.opener_name] = self.total_openers_per_second
-            attacks_per_second['main_gauche'] += self.total_openers_per_second * main_gauche_proc_rate
+
+        #TODO handle openers
+        #bonus_energy_from_openers = self.get_bonus_energy_from_openers('sinister_strike', 'revealing_strike')
+        bonus_energy_from_openers = 0
+        #if self.settings.opener_name in ('ambush', 'garrote'):
+        #    attacks_per_second[self.settings.opener_name] = self.total_openers_per_second
+        #    attacks_per_second['main_gauche'] += self.total_openers_per_second * main_gauche_proc_rate
+
         if self.talents.death_from_above and not ar:
             attacks_per_second['main_gauche'] += (1 + self.settings.num_boss_adds) * main_gauche_proc_rate / dfa_cd
         combat_potency_regen += combat_potency_from_mg * attacks_per_second['main_gauche']
@@ -1610,20 +1600,20 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second['oh_killing_spree'] = (1 + 2*ks_duration) / (final_ks_cd + self.settings.response_time)
             attacks_per_second['main_gauche'] += attacks_per_second['mh_killing_spree'] * main_gauche_proc_rate
 
-        if self.talents.shadow_reflection:
-            sr_uptime = 8. / self.get_spell_cd('shadow_reflection')
-            lst = ('sinister_strike', 'eviscerate', 'revealing_strike')
-            if not ar:
-                lst += ('mh_killing_spree', 'oh_killing_spree')
-            for ability in lst:
-                if type(attacks_per_second[ability]) in (tuple, list):
-                    attacks_per_second['sr_'+ability] = [0,0,0,0,0,0]
-                    for i in xrange(1, 6):
-                        attacks_per_second['sr_'+ability][i] = sr_uptime * attacks_per_second[ability][i]
-                else:
-                    attacks_per_second['sr_'+ability] = sr_uptime * attacks_per_second[ability]
+        #if self.talents.shadow_reflection:
+        #    sr_uptime = 8. / self.get_spell_cd('shadow_reflection')
+        #    lst = ('sinister_strike', 'eviscerate', 'revealing_strike')
+        #    if not ar:
+        #        lst += ('mh_killing_spree', 'oh_killing_spree')
+        #    for ability in lst:
+        #        if type(attacks_per_second[ability]) in (tuple, list):
+        #            attacks_per_second['sr_'+ability] = [0,0,0,0,0,0]
+        #            for i in xrange(1, 6):
+        #                attacks_per_second['sr_'+ability][i] = sr_uptime * attacks_per_second[ability][i]
+        #        else:
+        #            attacks_per_second['sr_'+ability] = sr_uptime * attacks_per_second[ability]
 
-        self.get_poison_counts(attacks_per_second, current_stats)
+        #self.get_poison_counts(attacks_per_second, current_stats)
 
         #print attacks_per_second
         return attacks_per_second, crit_rates, additional_info
