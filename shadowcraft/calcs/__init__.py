@@ -5,7 +5,6 @@ import math
 __builtin__._ = gettext.gettext
 
 from shadowcraft.core import exceptions
-from shadowcraft.calcs import armor_mitigation
 from shadowcraft.objects import class_data
 from shadowcraft.objects import talents
 from shadowcraft.objects import artifact
