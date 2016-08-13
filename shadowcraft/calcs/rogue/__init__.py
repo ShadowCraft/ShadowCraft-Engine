@@ -50,7 +50,7 @@ class RogueDamageCalculator(DamageCalculator):
                                 'nightblade', 'finality:nightblade']
 
     assassination_mastery_conversion = .035
-    combat_mastery_conversion = .022
+    outlaw_mastery_conversion = .022
     subtlety_mastery_conversion = .0276
 
     ability_info = {
