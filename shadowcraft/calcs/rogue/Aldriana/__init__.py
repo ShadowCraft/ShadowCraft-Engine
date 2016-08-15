@@ -1670,7 +1670,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     #Artifact:
         # 'flickering_shadows',
         # 'second_shuriken',
-        # 'akarris_soul',
         # 'shadow_nova',
         # 'legionblade'
 
@@ -1942,42 +1941,66 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #Counter of evis and cp_builders implied to exist but not currently added
         implied_builders = 0
         implied_evis = 0
-        net_evis_cost = 40 - self.get_spell_cost('eviscerate')
+        self.net_evis_cost = 40 - self.get_spell_cost('eviscerate')
         # half of evis will be finality, half not
-        avg_evis_cps = (self.finisher_thresholds['finality:eviscerate'] + self.finisher_thresholds['eviscerate'])/2
+        self.avg_evis_cps = (self.finisher_thresholds['finality:eviscerate'] + self.finisher_thresholds['eviscerate'])/2
 
         #update the budgets to make sure we're still fine
-        #if we don't have enough dances build some cps and use some finishers
-        if self.dance_budget<0:
-            cps_required = abs(self.dance_budget) * 20
-            implied_evis += cps_required/avg_evis_cps
-            self.energy_budget += net_evis_cost
-            #just subtract the cps because we'll fix those next
-            self.cp_budget -= cps_required
-
-        #if we don't have enough cps lets build some
-        if self.cp_budget <0:
-            #can add since we know cp_budget is negative
-            self.energy_budget += self.cp_budget * energy_per_cp
-            implied_builders += abs(self.cp_budget) / cp_per_builder
-            self.cp_budget = 0
-        #hopefully energy is still positive here, if not we're in trouble
-        energy_per_dance = net_evis_cost * (20./avg_evis_cps) - 20 * energy_per_cp
-        #print energy_per_dance
+        builders, evis, sane = self.sanitize_budgets(attacks_per_second)
+        implied_builders += builders
+        implied_evis += evis
 
         #Iterate over dance finisher priority to schedule dances
+        out_of_resouces = False
+        use_sod = False
+        if self.settings.cycle.symbols_policy == 'always':
+            use_sod = True
         for finisher in self.settings.cycle.dance_finisher_priority:
-            if finisher == 'finality:nightblade':
-                #Can we dance enough times to fit all of these in?
-                needed_dances = len(finality_nb_timeline)
-                #print needed_dances
-                #available_dances = 
+            if not out_of_resouces:
+                break
+            #generate our dance rotation
+            net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(use_sod=use_sod, finisher=finisher)
+            dances_per_second = 1./self.settings.duration
+            if finisher in ('finality:nightblade', 'nightblade'):
+                #remove finisher costs to prevent double counting
+                net_energy -= 40 * (0.2 * self.finisher_thresholds[finisher]) - self.get_spell_cost(finisher)
+                net_cps += self.finisher_thresholds[finisher]
+                del attack_counts[finisher]
+                if finisher == 'finality:nightblade':
+                    needed_dances = len(finality_nb_timeline)
+                elif finisher == 'nightblade':
+                    needed_dances = len(nightblade_timeline)
+
+                #loop over dances until we can't anymore
+                for dance in xrange(needed_dances):
+                    self.energy_budget += net_energy
+                    self.cp_budget += net_cps
+                    self.dance_budget -= 1
+                    builders, evis, sane = self.sanitize_budgets(attacks_per_second)
+                    implied_builders += builders
+                    implied_evis += evis
+                    #add attack_counts into APS
+                    for ability in attack_counts:
+                        if ability in self.finisher_damage_sources:
+                            for cp in xrange(7):
+                                attacks_per_second[ability][cp] += dances_per_second *  attack_counts[ability][cp]
+                        else:
+                            attacks_per_second[ability] += dances_per_second * attack_counts[ability]
+
+                    if not sane:
+                        out_of_resouces = True
+                        break
+                dance_count = dance
+
+            #elif finisher == 'finality:eviscerate':
+
+
 
 
             #print self.dance_budget
             #print self.cp_budget
             #print self.energy_budget
-        
+
         #convert nightblade casts into nightblade ticks
         for ability in ('finality:nightblade', 'nightblade'):
             if ability in attacks_per_second:
@@ -1986,198 +2009,18 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 for cp in xrange(7):
                     attacks_per_second[tick_name][cp] = (3 + cp) * attacks_per_second[ability][cp]
                 del attacks_per_second[ability]
+
+        #convert some white swings into shadowblades
+        #since weapon speeds are now fixed just handle a single shadowblades
+        attacks_per_second['shadow_blades'] = self.shadow_blades_uptime * attacks_per_second['mh_autoattacks']
+        attacks_per_second['mh_autoattacks'] -= attacks_per_second['shadow_blades']
+        attacks_per_second['oh_autoattacks'] -= attacks_per_second['shadow_blades']
+
+        if self.traits.akarris_soul:
+            attacks_per_second['soul_rip'] = attacks_per_second['shadowstrike']
+
         return attacks_per_second, crit_rates, additional_info
-        '''
-        cost_modifier = self.stats.gear_buffs.rogue_t15_4pc_reduced_cost()
-        shd_ambush_cost_modifier = 1.
-        backstab_cost_mod = cost_modifier
-        base_eviscerate_cost = self.get_spell_stats('eviscerate', cost_mod=cost_modifier)[0]
-        base_rupture_cost = self.get_spell_stats('rupture', cost_mod=cost_modifier)[0]
-        base_hemo_cost = self.get_spell_stats('hemorrhage', cost_mod=cost_modifier)[0]
-        base_backstab_energy_cost = self.get_spell_stats('backstab', cost_mod=backstab_cost_mod)[0]
-        sd_ambush_cost = self.get_spell_stats('ambush', cost_mod=shd_ambush_cost_modifier)[0] - 20
-        normal_ambush_cost = self.get_spell_stats('ambush')[0]
-        if self.talents.death_from_above:
-            self.dfa_cost = self.get_spell_stats('death_from_above', cost_mod=cost_modifier)[0]
 
-        #haste and attack speed
-
-        mastery_snd_speed = 1 + .4 * (1 + self.subtlety_mastery_conversion * self.stats.get_mastery_from_rating(current_stats['mastery']))
-        attack_speed_multiplier = self.base_speed_multiplier * haste_multiplier * mastery_snd_speed / 1.4
-
-        cpg_name = 'backstab'
-        if self.settings.cycle.use_hemorrhage == 'always':
-            cpg_name = 'hemorrhage'
-
-        #constant and base values
-        hat_triggers_per_second = self.settings.cycle.raid_crits_per_second
-        hat_cp_per_second = 1. / (2 + 1. / hat_triggers_per_second)
-        er_energy = 8. / 2 #8 energy every 2 seconds, assumed full SnD uptime
-        fw_duration = 10. #17.5s
-        if self.settings.cycle.clip_fw:
-            fw_duration -= .5
-        attacks_per_second['eviscerate'] = [0,0,0,0,0,0]
-        attacks_per_second['rupture_ticks'] = [0,0,0,0,0,0]
-        attacks_per_second['ambush'] = self.total_openers_per_second
-        attacks_per_second['backstab'] = 0
-        attacks_per_second['hemorrhage'] = 0
-        cp_per_ambush = 2
-        vanish_bonus_stealth = 0 + 3 * self.talents.subterfuge * [1, 2][self.glyphs.vanish]
-        rupture_ticks_per_cast = 12.
-        rupture_cd = 24.
-        hemo_cd = 24.
-        snd_cd = 36.
-        base_cp_per_second = hat_cp_per_second * (shd_cd-8.)/shd_cd + self.total_openers_per_second * 2
-        if self.stats.gear_buffs.rogue_t18_2pc:
-            base_cp_per_second += 5 / self.get_spell_cd('vanish')
-        if self.stats.gear_buffs.rogue_t15_2pc:
-            rupture_ticks_per_cast += 2
-            rupture_cd += 4
-            snd_cd += 6
-
-        #deal with extra subterfuge ambushes
-        if self.talents.subterfuge:
-            attacks_per_second['ambush'] += (1. / self.get_spell_cd('vanish')) * [1., 2.][self.glyphs.vanish]
-            energy_regen -= (normal_ambush_cost / self.get_spell_cd('vanish')) * [1., 2.][self.glyphs.vanish]
-            base_cp_per_second += (2. / self.get_spell_cd('vanish')) * [1., 2.][self.glyphs.vanish]
-
-        ##calculations dependent on energy regen
-        cpg_costs_for_cycle = base_backstab_energy_cost * 5
-        if self.settings.cycle.use_hemorrhage == 'always':
-            cpg_costs_for_cycle = base_hemo_cost * 5
-        typical_cycle_size = cpg_costs_for_cycle + (base_eviscerate_cost - 25)
-
-
-
-        ##start consuming energy
-        #base energy reductions
-        marked_for_death_cd = self.get_spell_cd('marked_for_death') + (.5 * typical_cycle_size / energy_regen) + self.settings.response_time
-        if self.talents.marked_for_death:
-            energy_regen -= (base_eviscerate_cost - 25) / marked_for_death_cd
-            attacks_per_second['eviscerate'][5] += 1. / marked_for_death_cd
-        shadowmeld_ambushes = 0.
-        if self.race.shadowmeld:
-            shadowmeld_ambushes = 1. / (self.get_spell_cd('shadowmeld') + self.settings.response_time)
-            shadowmeld_ambushes *= ((self.settings.duration - fw_duration * 3 - 8) / self.settings.duration)
-            attacks_per_second['ambush'] += shadowmeld_ambushes
-            energy_regen -= normal_ambush_cost * shadowmeld_ambushes
-            base_cp_per_second += shadowmeld_ambushes * 2
-
-        #base CPs, CPGs, and finishers
-        if self.settings.cycle.use_hemorrhage != 'always' and self.settings.cycle.use_hemorrhage != 'never':
-            if self.settings.cycle.use_hemorrhage == 'uptime':
-                hemo_per_second = 1. / hemo_cd
-            else:
-                hemo_per_second = 1. / float(self.settings.cycle.use_hemorrhage)
-            energy_regen -= hemo_per_second * base_hemo_cost
-            base_cp_per_second += hemo_per_second
-            attacks_per_second['hemorrhage'] += hemo_per_second
-        #premed
-        base_cp_per_second += 2. / self.settings.duration #start of the fight
-        base_cp_per_second += 2. / shd_cd * (self.settings.duration-25.)/self.settings.duration
-        base_cp_per_second += 2. / self.get_spell_cd('vanish') * (self.settings.duration-50.)/self.settings.duration
-        #rupture
-        attacks_per_second['rupture'] = 1. / rupture_cd
-        attacks_per_second['rupture_ticks'][5] = rupture_ticks_per_cast / rupture_cd
-        #attacks_per_second['rupture_ticks_sc'] = [0,0,0,0,0, (1 - sc_scaler) * rupture_ticks_per_cast / rupture_cd]
-        base_cp_per_second -= 5. / rupture_cd
-        energy_regen -= (base_rupture_cost - 25) / rupture_cd
-        #no need to add slice and dice to attacks per second
-        base_cp_per_second -= 5. / snd_cd
-
-        energy_for_dfa = 0
-        if self.talents.death_from_above:
-            #dfa_gap probably should be handled more accurately especially in the non-anticipation case
-            dfa_interval = 1./(dfa_cd)
-            energy_for_dfa = typical_cycle_size + self.dfa_cost - base_eviscerate_cost
-
-            attacks_per_second['death_from_above'] = dfa_interval
-            attacks_per_second['death_from_above_strike'] = [0, 0, 0, 0, 0, dfa_interval]
-            attacks_per_second['death_from_above_pulse'] = [0, 0, 0, 0, 0, dfa_interval * (self.settings.num_boss_adds+1)]
-            attacks_per_second[cpg_name] += dfa_interval * 5
-            energy_regen -= energy_for_dfa / dfa_cd
-
-        base_cp_per_second += self.vanish_rate * 2
-        #if we've consumed more CP's than we have for base functionality, lets generate some more CPs
-        if base_cp_per_second < 0:
-            cpg_per_second = math.fabs(base_cp_per_second)
-            base_cp_per_second += cpg_per_second
-            attacks_per_second[cpg_name] += cpg_per_second
-            if cpg_name == 'backstab':
-                energy_regen -= base_backstab_energy_cost * cpg_per_second
-            elif cpg_name == 'hemorrhage':
-                energy_regen -= base_hemo_cost * cpg_per_second
-        extra_evisc = base_cp_per_second / 5
-        energy_regen -= (base_eviscerate_cost - 25) * extra_evisc
-        attacks_per_second['eviscerate'][5] += extra_evisc
-        if energy_regen < 0:
-            raise InputNotModeledException(_('Catastrophic failure: cycle not sustainable.'))
-
-        #calculate shd ambush cycles
-        shd_energy = (max_energy - self.get_adv_param('max_pool_reduct', 10, min_bound=0, max_bound=50)) + energy_regen * shd_duration #lasts 8s, assume we pool to ~10 energy below max
-        shd_cycle_cost = 2 * sd_ambush_cost + (base_eviscerate_cost - 25)
-        shd_eviscerates = min(shd_energy / shd_cycle_cost, 8./3) #8/3 is the max GCDs
-        shd_ambushes = shd_eviscerates * 2
-        attacks_per_second['ambush'] += (shd_ambushes / shd_cd) * ((self.settings.duration - fw_duration) / self.settings.duration)
-        attacks_per_second['eviscerate'][5] += (shd_eviscerates / shd_cd) * ((self.settings.duration - fw_duration) / self.settings.duration)
-        energy_regen -= (shd_cycle_cost * shd_eviscerates) / shd_cd * ((self.settings.duration - fw_duration) / self.settings.duration)
-
-        #calculate percentage of ambushes with FW
-        ambush_no_fw = shadowmeld_ambushes + 1. / shd_cd - 1. / self.settings.duration
-        if not self.settings.cycle.clip_fw:
-            ambush_no_fw += self.total_openers_per_second + 1. / self.settings.duration
-        additional_info['ambush_no_fw_rate'] = ambush_no_fw / attacks_per_second['ambush']
-        #calculate percentage of backstabs with FW
-        additional_info['backstab_fw_rate'] = (fw_duration - 1) / self.settings.duration #start of fight
-        additional_info['backstab_fw_rate'] += (fw_duration - 1) / shd_cd * (1. - fw_duration / self.settings.duration)
-        additional_info['backstab_fw_rate'] += (fw_duration + vanish_bonus_stealth - 1) / self.get_spell_cd('vanish') * ((self.settings.duration - fw_duration * 2 - 8) / self.settings.duration)
-        if self.race.shadowmeld:
-            additional_info['backstab_fw_rate'] += (fw_duration - 1) / self.get_spell_cd('shadowmeld') * ((self.settings.duration - fw_duration * 3 - 8) / self.settings.duration)
-        #accounts for the fact that backstab isn't evenly distributed
-        additional_info['backstab_fw_rate'] = additional_info['backstab_fw_rate'] / ((shd_cd - 8.) / shd_cd)
-        #calculate FW uptime overall
-        additional_info['fw_uptime'] = fw_duration / self.settings.duration #start of fight
-        additional_info['fw_uptime'] += (fw_duration + 7.5) / shd_cd * ((self.settings.duration - fw_duration) / self.settings.duration)
-        additional_info['fw_uptime'] += (fw_duration + vanish_bonus_stealth) / self.get_spell_cd('vanish') * ((self.settings.duration - fw_duration * 2 - 8) / self.settings.duration)
-        if self.race.shadowmeld:
-            additional_info['fw_uptime'] += fw_duration / self.get_spell_cd('shadowmeld') * ((self.settings.duration - fw_duration * 3 - 8) / self.settings.duration)
-        #allocate the remaining energy
-        filler_cycles_per_second = energy_regen / typical_cycle_size
-        attacks_per_second[cpg_name] += filler_cycles_per_second * 5
-        attacks_per_second['eviscerate'][5] += filler_cycles_per_second
-        if self.stats.gear_buffs.rogue_t17_4pc:
-            attacks_per_second['eviscerate'][5] += 1. / shd_cd
-
-        #Hemo ticks
-        if 'hemorrhage' in attacks_per_second and self.settings.cycle.use_hemorrhage != 'never':
-            if self.settings.cycle.use_hemorrhage == 'always':
-                hemo_gap = 1 / attacks_per_second['hemorrhage']
-            else:
-                hemo_gap = hemo_cd
-            ticks_per_second = min(1. / (3 * sc_scaler), 8. / hemo_gap)
-            attacks_per_second['hemorrhage_ticks'] = ticks_per_second
-
-        sc_ms_chance = min(2 * (self.stats.get_multistrike_chance_from_rating(rating=current_stats['multistrike']) + self.buffs.multistrike_bonus()), 2)
-        #this is a cache for convergence
-        self.sc_trigger_rate = attacks_per_second['ambush'] * sc_ms_chance
-        if 'backstab' in attacks_per_second:
-            self.sc_trigger_rate += attacks_per_second['backstab'] * sc_ms_chance
-        self.sc_trigger_rate = min(self.sc_trigger_rate, 2)
-
-        if self.talents.shadow_reflection:
-            sr_cd = self.get_spell_cd('shadow_reflection')
-            attacks_per_second['sr_eviscerate'] = [0,0,0,0,0, shd_eviscerates / sr_cd]
-            attacks_per_second['sr_rupture_ticks'] = [0,0,0,0,0, 12. / sr_cd]
-            attacks_per_second['sr_ambush'] = shd_ambushes / sr_cd
-
-        self.get_poison_counts(attacks_per_second, current_stats)
-
-        if self.stats.gear_buffs.rogue_t18_4pc:
-            finishers_per_second = sum(attacks_per_second['eviscerate']) + attacks_per_second['rupture']
-            avg_cdr = 5 #assume all 5cp finishers
-            self.vanish_cd_modifier = 1./((finishers_per_second * avg_cdr) + 1)
-        return attacks_per_second, crit_rates, additional_info
-        '''
     #Computes the net energy and combo points from a shadow dance rotation
     #Returns net_energy, net_cps, spent_cps, dict of attack counts
     def get_dance_resources(self, use_sod=False, finisher=None):
@@ -2192,16 +2035,16 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         cost_mod = 1.0
         if self.talents.shadow_focus:
-            cost_mod = 0.5
+            cost_mod = 0.7
 
         if use_sod:
             net_energy -= self.get_spell_cost('symbols_of_death', cost_mod=cost_mod)
             attack_counts['symbols_of_death'] = 1
 
+        dance_gcds = 3
         if self.talents.subterfuge:
-            dance_gcds = 6
-        else:
-            dance_gcds = 3
+            dance_gcds += 2
+
 
         max_dance_energy = dance_gcds * self.energy_regen + self.max_energy
 
@@ -2245,3 +2088,32 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         return match_list, no_match_a, [x for x in timeline_b if x not in match_list]
 
+    #Attempts to sanitize the budget
+    #returns added implied evis, implied builder and if santization possible
+    def sanitize_budgets(self, attacks_per_second):
+        implied_builders = 0
+        implied_evis = 0
+        sane = True
+        #if we don't have enough dances build some cps and use some finishers
+        if self.dance_budget<0:
+            cps_required = abs(self.dance_budget) * 20
+            implied_evis += cps_required/self.avg_evis_cps
+            self.energy_budget += self.net_evis_cost
+            #just subtract the cps because we'll fix those next
+            self.cp_budget -= cps_required
+
+        #if we don't have enough cps lets build some
+        if self.cp_budget <0:
+            #can add since we know cp_budget is negative
+            self.energy_budget += self.cp_budget * self.energy_per_cp
+            implied_builders += abs(self.cp_budget) / self.cp_per_builder
+            self.cp_budget = 0
+
+        #if we don't have enough energy back off implied builders and evis
+        if self.energy_budget < 0:
+            deficit = abs(self.energy_budget)
+            builder_backoff = deficit / (self.cp_budget * self.energy_per_cp)
+            implied_builders -= builder_backoff
+            implied_evis -= builder_backoff/self.avg_evis_cps
+            sane = False
+        return implied_builders, implied_evis, sane
