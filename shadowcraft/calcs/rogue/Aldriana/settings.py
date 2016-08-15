@@ -80,22 +80,24 @@ class SubtletyCycle(Cycle):
     _cycle_type = 'subtlety'
 
     def __init__(self, cp_builder='backstab', dance_cp_builder='shadowstrike', positional_uptime=1.0, symbols_policy='just',
-                 eviscerate_cps=5, finality_eviscerate_cps=5, nightblade_cps=5, finality_nightblade_cps=5,
-                 dance_finisher_priority=[]):
+                 eviscerate_cps=5, finality_eviscerate_cps=5, nightblade_cps=5, finality_nightblade_cps=5, dfa_cps = 5,
+                 dance_finishers_allowed=[], vanish_ability='shadowstrike'):
         self.cp_builder = cp_builder #Allowed values: fok, backstab, gloomblade
         self.dance_cp_builder = dance_cp_builder #Allowed values: shuriken_storm, shadowstrike
         self.positional_uptime = positional_uptime #Range 0.0 to 1.0, time behind target
         self.symbols_policy = symbols_policy #Allowed values:
                                              #'always' - use SoD every dance (macro)
                                              #'just'   - Only use SoD when needed to refresh
+        self.vanish_ability = vanish_ability #Allowed values: 'shadowstrike', 'shuriken_storm', 'symbols_of_death'
         #Finisher thresholds for each finisher, Allowed Values: 0, 1, 2, 3, 4, 5, 6
         self.eviscerate_cps = eviscerate_cps
         self.finality_eviscerate_cps = finality_eviscerate_cps
         self.nightblade_cps = nightblade_cps
         self.finality_nightblade_cps = finality_nightblade_cps
+        self.death_from_above_cps = dfa_cps
 
         #List of following keys: 'eviscerate', 'nightblade', 'finality:eviscerate', 'finality:nightblade'
         #Priority of finisher usage during dance
         #Keys not included will not be used during dance
-        self.dance_finisher_priority = dance_finisher_priority
+        self.dance_finishers_allowed= dance_finishers_allowed
 
