@@ -1227,7 +1227,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #outlaw specific constants
         self.outlaw_cd_delay = 0 #this is for DFA convergence, mostly
 
-
+        # calculate max energy (this should probably be a function in the rogue module and overridden in spec modules)
         self.max_energy = 100.
         if self.stats.gear_buffs.rogue_pvp_4pc_extra_energy():
             self.max_energy += 30
@@ -1241,7 +1241,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         # recurance relation of 0.16*x until convergence
         # https://www.wolframalpha.com/input/?i=15%2Bsum%28x%3D1+to+inf%29+of+15*.16%5Ex
         if self.stats.gear_buffs.rogue_t18_2pc:
-            self.ar_duration = 17.8571
+            self.ar_duration = 17.8571 # it not clear what this means
         if self.stats.gear_buffs.rogue_t17_2pc:
             self.extra_cp_chance += 0.2
 

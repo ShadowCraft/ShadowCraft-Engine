@@ -567,7 +567,7 @@ class SettingsPage(wx.Panel):
         if  cur_cycle == "Assassination":
             cycle = settings.AssassinationCycle()
         elif cur_cycle == "Combat":
-            cycle = settings.OulawCycle()
+            cycle = settings.OutlawCycle()
         elif cur_cycle == "Subtlety":
             cycle = settings.SubtletyCycle()
         return cycle

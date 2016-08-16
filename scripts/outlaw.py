@@ -59,7 +59,7 @@ test_talents = talents.Talents('0000000', test_spec, test_class, level=test_leve
 test_traits = artifact.Artifact(test_spec, test_class, '100000000000100000')
 
 # Set up settings.
-test_cycle = settings.OulawCycle(blade_flurry=False, dfa_during_ar=True)
+test_cycle = settings.OutlawCycle(blade_flurry=False, dfa_during_ar=True)
 test_settings = settings.Settings(test_cycle, response_time=.5, duration=360,
                                  adv_params="", is_demon=True, num_boss_adds=0)
 

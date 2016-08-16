@@ -28,7 +28,7 @@ def from_json(json_string, character_class='rogue'):
         elif settings_type == 'combat':
             # CombatCycle(self, use_rupture=True, use_revealing_strike='sometimes', ksp_immediately=False)
             c = s.get('cycle', {})
-            cycle = settings.OulawCycle(c.get('use_rupture', True), c.get('use_revealing_strike', 'sometimes'), c.get('ksp_immediately', False))
+            cycle = settings.OutlawCycle(c.get('use_rupture', True), c.get('use_revealing_strike', 'sometimes'), c.get('ksp_immediately', False))
         elif settings_type == 'subtlety':
             # SubletySycle(raid_crits_per_second, clip_recuperate=False)
             c = s['cycle']

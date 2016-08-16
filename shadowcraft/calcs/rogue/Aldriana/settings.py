@@ -67,7 +67,7 @@ class AssassinationCycle(Cycle):
         assert min_envenom_size_execute in self.allowed_values
         self.min_envenom_size_execute = min_envenom_size_execute
 
-class OulawCycle(Cycle):
+class OutlawCycle(Cycle):
     _cycle_type = 'outlaw'
 
     def __init__(self, ksp_immediately=True, blade_flurry=False, dfa_during_ar=False):
