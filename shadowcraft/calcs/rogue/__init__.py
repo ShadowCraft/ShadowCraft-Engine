@@ -7,11 +7,11 @@ from shadowcraft.calcs import DamageCalculator
 from shadowcraft.core import exceptions
 
 class RogueDamageCalculator(DamageCalculator):
-    # Functions of general use to rogue damage calculation go here. If a
+    # Functions of general use to rogue damage calculation go here.  If a
     # calculation will reasonably used for multiple classes, it should go in
-    # calcs.DamageCalculator instead. If its a specific intermediate
+    # calcs.DamageCalculator instead.  If its a specific intermediate
     # value useful to only your calculations, when you extend this you should
-    # put the calculations in your object. But there are things - like
+    # put the calculations in your object.  But there are things - like
     # backstab damage as a function of AP - that (almost) any rogue damage
     # calculator will need to know, so things like that go here.
 
@@ -48,6 +48,10 @@ class RogueDamageCalculator(DamageCalculator):
                                  'envenom', 'rupture_ticks', 'between_the_eyes',
                                  'run_through', 'eviscerate', 'finality:eviscerate',
                                 'nightblade', 'finality:nightblade']
+    #All damage source that are replicated by Blade Flurry
+    blade_flurry_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
+                             'ambush', 'between_the_eyes', 'blunderbuss', 'ghostly_strike', 'greed', 'killing_spree',
+                             'main_gauche','pistol_shot', 'run_through', 'saber_slash']
 
     assassination_mastery_conversion = .035
     outlaw_mastery_conversion = .022
@@ -120,8 +124,10 @@ class RogueDamageCalculator(DamageCalculator):
             self._set_constants_for_level()
 
     def _set_constants_for_level(self):
-        # this calls _set_constants_for_level() in calcs/__init__.py because this supercedes it, this is how inheretence in python works
-        # any modules that expand on rogue/__init__.py and use this should do the same
+        # this calls _set_constants_for_level() in calcs/__init__.py because
+        # this supercedes it, this is how inheretence in python works
+        # any modules that expand on rogue/__init__.py and use this should do
+        # the same
         super(RogueDamageCalculator, self)._set_constants_for_level()
         self.normalize_ep_stat = self.get_adv_param('norm_ep_stat', self.settings.default_ep_stat, ignore_bounds=True)
         self.damage_modifier_cache = 1
@@ -160,7 +166,7 @@ class RogueDamageCalculator(DamageCalculator):
                 base_damage = self.get_formula(a)(ap) * modifier
                 dps += self.get_dps_contribution(base_damage, crit_rate, attacks_per_second, crit_modifier)
         else:
-            for i in xrange(1, cps+1):
+            for i in xrange(1, cps + 1):
                 for a in ability_list:
                     base_damage = self.get_formula(a)(ap, i) * modifier
                     dps += self.get_dps_contribution(base_damage, crit_rate, attacks_per_second[i], crit_modifier)
@@ -178,13 +184,15 @@ class RogueDamageCalculator(DamageCalculator):
         base_modifier = self.get_base_modifier(current_stats)
         armor_modifier = self.armor_mitigation_multiplier()
 
-        # this removes keys with empty values, prevents errors from: attacks_per_second['sinister_strike'] = None
+        # this removes keys with empty values, prevents errors from:
+        # attacks_per_second['sinister_strike'] = None
         for key in attacks_per_second.keys():
             if not attacks_per_second[key]:
                 del attacks_per_second[key]
 
         if 'mh_autoattacks' in attacks_per_second:
-            # Assumes mh and oh attacks are both active at the same time. As they should always be.
+            # Assumes mh and oh attacks are both active at the same time.  As
+            # they should always be.
             # Friends don't let friends raid without gear.
             mh_base_damage = self.mh_damage(average_ap) * armor_modifier * base_modifier
             mh_hit_rate = self.dw_mh_hit_chance - crit_rates['mh_autoattacks']
@@ -223,8 +231,10 @@ class RogueDamageCalculator(DamageCalculator):
                     modifier *= potent_poisons_mod
 
                 #override for "weird" abilities
-                #death from above strike is actually an envenom with 1.5 modifier
-                #manually add in base modifier because DfA strike is in physical sources
+                #death from above strike is actually an envenom with 1.5
+                #modifier
+                #manually add in base modifier because DfA strike is in
+                #physical sources
                 if ability == 'death_from_above_strike':
                     modifier = base_modifier * 1.5 * potent_poisons_mod
                     ability = 'envenom'
@@ -248,9 +258,10 @@ class RogueDamageCalculator(DamageCalculator):
                 #death from above strike is actually an evis with 1.5 modifier
                 if ability == 'death_from_above_strike':
                     modifier *= 1.5
-                    ability = 'eviscerate'
+                    ability = 'run_through'
                 #between the eyes has additional crit damage
-                #Damage modifier 3 explained here: http://beta.askmrrobot.com/wow/simulator/docs/critdamage
+                #Damage modifier 3 explained here:
+                #http://beta.askmrrobot.com/wow/simulator/docs/critdamage
                 if ability == 'between_the_eyes':
                     crit_mod = self.crit_damage_modifiers(3)
                 damage_breakdown[ability] = self.get_ability_dps(average_ap, ability, aps, crits, modifier, crit_mod, both_hands, cps)
@@ -271,14 +282,16 @@ class RogueDamageCalculator(DamageCalculator):
 
                 if ability in self.physical_damage_sources:
                     modifier *= armor_modifier
-                #assume for now that all non-physical damage sources are shadow damage
+                #assume for now that all non-physical damage sources are shadow
+                #damage
                 else:
                     modifier *= shadow_fangs_mod
                 if ability in self.mastery_scaling_damage_sources:
                     modifier *= executioner_mod
 
                 #override for "weird" abilities
-                #death from above strike is actually an evis with 1.5 modifier and dfa pulse needs mastery
+                #death from above strike is actually an evis with 1.5 modifier
+                #and dfa pulse needs mastery
                 if ability == 'death_from_above_strike':
                     modifier *= 1.5 * executioner_mod
                     ability = 'eviscerate'
@@ -367,7 +380,7 @@ class RogueDamageCalculator(DamageCalculator):
         return 2.108 * self.get_weapon_damage('mh', ap)
 
     def oh_killing_spree_damage(self, ap):
-        return 2.018* self.oh_penalty() * self.get_weapon_damage('oh', ap)
+        return 2.018 * self.oh_penalty() * self.get_weapon_damage('oh', ap)
 
     def main_gauche_damage(self, ap):
         return 2.1 * self.oh_penalty() * self.get_weapon_damage('oh', ap) * (1 + (0.1 * self.traits.fortunes_strike))
@@ -376,7 +389,7 @@ class RogueDamageCalculator(DamageCalculator):
         return 1.5 * ap
 
     def run_through_damage(self, ap, cp):
-        return 1.2 * ap * cp * (1 * (0.08 * self.traits.fates_thirst))
+        return 1.5 * ap * cp * (1 + (0.08 * self.traits.fates_thirst))
 
     def saber_slash_damage(self, ap):
         return 2.6 * self.get_weapon_damage('mh', ap) * (1 + (0.15 * self.traits.cursed_edges))

@@ -324,13 +324,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 if 'mh_autoattack_hits' in attacks_per_second:
                     triggers_per_second += attacks_per_second['mh_autoattack_hits']
         if proc.procs_off_strikes():
-            for ability in ('mutilate', 'dispatch', 'backstab', 'revealing_strike', 'sinister_strike', 'ambush', 'hemorrhage', 'mh_killing_spree', 'shuriken_toss'):
+            for ability in ('mutilate', 'dispatch', 'backstab', 'pistol_shot', 'saber_slash', 'ambush', 'hemorrhage', 'mh_killing_spree', 'shuriken_toss'):
                 if ability in attacks_per_second:
                     if proc.procs_off_crit_only():
                         triggers_per_second += attacks_per_second[ability] * crit_rates[ability]
                     else:
                         triggers_per_second += attacks_per_second[ability]
-            for ability in ('envenom', 'eviscerate'):
+            for ability in ('envenom', 'eviscerate', 'run_through'):
                 if ability in attacks_per_second:
                     if proc.procs_off_crit_only():
                         triggers_per_second += sum(attacks_per_second[ability]) * crit_rates[ability]
@@ -1284,23 +1284,20 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #average it together
         damage_breakdown = self.average_damage_breakdowns(phases, denom = total_duration)
 
-        evis_multiplier = 1
+        run_through_multiplier = 1
         if getattr(self.stats.procs, 'bleeding_hollow_toxin_vessel'):
-            evis_multiplier = 1+round(getattr(self.stats.procs, 'bleeding_hollow_toxin_vessel').value['ability_mod']*1.6784929152)/10000
+            run_through_multiplier = 1+round(getattr(self.stats.procs, 'bleeding_hollow_toxin_vessel').value['ability_mod']*1.6784929152)/10000
 
 
         bf_mod = .35
-        bf_max_targets = 4
-        if self.level == 100:
-            bf_max_targets = 999 #this is the "no more target cap" limit, screw extra if statements
         if self.settings.cycle.blade_flurry:
             damage_breakdown['blade_flurry'] = 0
             for key in damage_breakdown:
-                if key in self.melee_attacks:
+                if key in self.blade_flurry_damage_sources:
                     if key == "run_through":
-                        damage_breakdown['blade_flurry'] += bf_mod * damage_breakdown[key] * min(self.settings.num_boss_adds, bf_max_targets) * evis_multiplier
+                        damage_breakdown['blade_flurry'] += bf_mod * damage_breakdown[key] * self.settings.num_boss_adds * run_through_multiplier
                     else:
-                        damage_breakdown['blade_flurry'] += bf_mod * damage_breakdown[key] * min(self.settings.num_boss_adds, bf_max_targets)
+                        damage_breakdown['blade_flurry'] += bf_mod * damage_breakdown[key] * self.settings.num_boss_adds
 
         soul_cap_mod = 1.0
         if getattr(self.stats.procs, 'soul_capacitor'):
@@ -1326,6 +1323,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #turns out the 2 chance system yields a very basic linear pattern, the damage modifier is 30% of the multistrike %!
         #multistrike_multiplier = .3 * 2 * (self.stats.get_multistrike_chance_from_rating(rating=stats['multistrike']) + self.buffs.multistrike_bonus())
         #multistrike_multiplier = min(.6, multistrike_multiplier)
+
         for ability in damage_breakdown:
             damage_breakdown[ability] *=maalus_mod
             if 'sr_' not in ability:
@@ -1335,8 +1333,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if ability == 'Fel Lash':
                 continue
             #damage_breakdown[ability] *= (1 + multistrike_multiplier)
-            if ability in ('eviscerate', 'sr_eviscerate'):
-                damage_breakdown[ability] *= evis_multiplier
+            if ability == 'run_through':
+                damage_breakdown[ability] *= run_through_multiplier
 
         #add maalus burst
         if maalus_mod > 1.0:
@@ -1535,36 +1533,41 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         attacks_per_second['pistol_shot'] = 1. / pistol_shot_interval
         extra_finishers_per_second = attacks_per_second['pistol_shot'] / 5.
+
         #Scaling CPGs
         free_gcd = 1./gcd_size
         free_gcd -= 1./snd_duration + (attacks_per_second['saber_slash_base'] + attacks_per_second['pistol_shot'] + extra_finishers_per_second)
         if self.talents.marked_for_death:
             free_gcd -= (1. / marked_for_death_cd)
+
         #2 seconds is an approximation of GCD loss while in air
         if self.talents.death_from_above and not ar:
             free_gcd -= dfa_interval * (2. / gcd_size) #wowhead claims a 2s GCD
-        energy_available_for_evis = energy_regen - energy_spent_on_snd - energy_for_dfa
-        total_evis_per_second = energy_available_for_evis / total_eviscerate_cost
-        evisc_actions_per_second = (total_evis_per_second * ss_per_finisher + total_evis_per_second)
+        energy_available_for_run_through = energy_regen - energy_spent_on_snd - energy_for_dfa
+        total_run_through_per_second = energy_available_for_run_through / total_eviscerate_cost
+        run_through_actions_per_second = (total_run_through_per_second * ss_per_finisher + total_run_through_per_second)
         if self.stats.gear_buffs.rogue_t17_4pc:
             #http://www.wolframalpha.com/input/?i=sum+of+.2%5Ex+from+x%3D1+to+inf
             #This increases the frequency of Eviscerates by 25% for every Evisc cast
-            evisc_actions_per_second += total_evis_per_second * .25
-        attacks_per_second['saber_slash'] = total_evis_per_second * ss_per_finisher
+            run_through_actions_per_second += total_run_through_per_second * .25
+        attacks_per_second['saber_slash'] = total_run_through_per_second * ss_per_finisher
+
         # If GCD capped
-        if evisc_actions_per_second > free_gcd:
-            gcd_cap_mod = evisc_actions_per_second / free_gcd
+        if run_through_actions_per_second > free_gcd:
+            gcd_cap_mod = run_through_actions_per_second / free_gcd
             attacks_per_second['saber_slash'] = attacks_per_second['saber_slash'] / gcd_cap_mod
-            total_evis_per_second = total_evis_per_second / gcd_cap_mod
+            total_run_through_per_second = total_run_through_per_second / gcd_cap_mod
+
         # Reintroduce flat gcds
         attacks_per_second['saber_slash'] += attacks_per_second['saber_slash_base']
         attacks_per_second['main_gauche'] += (attacks_per_second['saber_slash'] + attacks_per_second['pistol_shot'] +
-                                              total_evis_per_second) * main_gauche_proc_rate
+                                              total_run_through_per_second) * main_gauche_proc_rate
         if self.talents.death_from_above and not ar:
             attacks_per_second['main_gauche'] += attacks_per_second['death_from_above_strike'][5] * main_gauche_proc_rate
 
         #attacks_per_second['eviscerate'] = [finisher_chance * total_evis_per_second for finisher_chance in finisher_size_breakdown]
-        attacks_per_second['run_through'] = [0,0,0,0,0,total_evis_per_second]
+        attacks_per_second['run_through'] = [0,0,0,0,0,total_run_through_per_second]
+
         for opener, cps in [('ambush', 2), ('garrote', 1)]:
             if opener in attacks_per_second:
                 extra_finishers_per_second += attacks_per_second[opener] * cps / 5
@@ -1580,6 +1583,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         time_at_level = 4 / attacks_per_second['saber_slash']
         cycle_duration = 3 * time_at_level + 15
+
+
         #if self.level == 100:
         #    self.bandits_guile_multiplier = 1 + (0*time_at_level + .1*time_at_level + .2*time_at_level + .5 * 15) / cycle_duration
         #else:
@@ -1587,6 +1592,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #    self.bandits_guile_multiplier = 1 + .1 * avg_stacks
 
         #hack bg multiplier until it can be removed later
+
+
         self.bandits_guile_multiplier = 1.0
 
         if not ar:
