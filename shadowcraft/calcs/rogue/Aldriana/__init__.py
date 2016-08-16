@@ -1832,6 +1832,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         dance_nb_uptime = 0.0
         #Timeline match of ruptures, fill in rest with either finality:eviscerate
         for finisher in ['finality:nightblade', 'nightblade', 'finality:eviscerate', 'eviscerate', None]:
+            attacks_per_second[finisher] = [0, 0, 0, 0, 0, 0, 0]
             dance_count = 0
             if finisher in self.settings.cycle.dance_finishers_allowed:
                 attacks_per_second[finisher] = [0, 0, 0, 0, 0, 0, 0]
@@ -1865,6 +1866,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 #merge attack counts into attacks_per_second
                 self.rotation_merge(attacks_per_second, attack_counts, dance_count)
 
+        del attacks_per_second[None]
         #Add in ruptures not previously covered
         nightblade_count = len(nightblade_timeline)
         attacks_per_second['nightblade'][self.finisher_thresholds['nightblade']] += float(nightblade_count)/self.settings.duration
@@ -1945,6 +1947,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         extra_evis = 0
         extra_builders = 0
+
         #Not enough dances, generate some more
         if self.dance_budget<0:
             cps_required = abs(self.dance_budget) * 20
@@ -1957,12 +1960,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         elif self.dance_budget > 0:
             #quick convergence loop
             loop_counter = 0
-            while dance_count > 0.0001:
-                if loop_counter > 100:
+            while self.dance_budget > 0.0001:
+                if loop_counter > 20:
                    raise ConvergenceErrorException(_('Dance fixup failed to converge.'))
+                dance_count = abs(self.dance_budget)
                 self.energy_budget += dance_count * net_energy
                 self.cp_budget += dance_count * net_cps
-                self.dance_budget += ((3. * spent_cps* dance_count)/60) - dance_count
+                self.dance_budget += ((3. * spent_cps* dance_count)/60.) - dance_count
                 #merge attack counts into attacks_per_second
                 self.rotation_merge(attacks_per_second, attack_counts, dance_count)
                 loop_counter += 1
@@ -1973,7 +1977,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.energy_budget += self.cp_budget * energy_per_cp
             extra_builders += abs(self.cp_budget) / cp_per_builder
             self.cp_budget = 0
-        #TODO: Handle extra cps here
 
         if self.settings.cycle.cp_builder == 'shuriken_storm':
             attacks_per_second['shuriken_storm-no-dance'] = extra_builders / self.settings.duration
@@ -2053,6 +2056,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.talents.nightstalker:
             self.dance_finality_nb_uptime = dance_finality_nb_uptime
             self.dance_nb_uptime = dance_nb_uptime
+
+        for ability in attacks_per_second.keys():
+            if not attacks_per_second[ability]:
+                del attacks_per_second[ability]
+            elif isinstance(attacks_per_second[ability], list) and not any(attacks_per_second[ability]):
+                del attacks_per_second[ability]
+
+        print attacks_per_second
 
         return attacks_per_second, crit_rates, additional_info
 

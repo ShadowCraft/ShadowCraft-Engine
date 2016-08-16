@@ -33,8 +33,8 @@ test_buffs = buffs.Buffs(
     )
 
 # Set up weapons. mark_of_the_frostwolf mark_of_the_shattered_hand
-test_mh = stats.Weapon(812.0, 1.8, 'dagger', None)
-test_oh = stats.Weapon(812.0, 1.8, 'dagger', None)
+test_mh = stats.Weapon(4821.0, 1.8, 'dagger', None)
+test_oh = stats.Weapon(4821.0, 1.8, 'dagger', None)
 
 # Set up procs. - trinkets, other things (legendary procs)
 #test_procs = procs.ProcsList(('scales_of_doom', 691), ('beating_heart_of_the_mountain', 701), ('infallible_tracking_charm', 715),
@@ -46,12 +46,12 @@ test_gear_buffs = stats.GearBuffs('gear_specialization') #tier buffs located her
 
 # Set up a calcs object..
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
-                         agi=7655,
+                         agi=20909,
                          stam=19566,
-                         crit=2665,
-                         haste=1594,
-                         mastery=3350,
-                         versatility=6522,)
+                         crit=5248,
+                         haste=5150,
+                         mastery=5115,
+                         versatility=844,)
 
 # Initialize talents..
 test_talents = talents.Talents('0000000', test_spec, test_class, level=test_level)
@@ -60,8 +60,10 @@ test_talents = talents.Talents('0000000', test_spec, test_class, level=test_leve
 test_traits = artifact.Artifact(test_spec, test_class, '000000000000000000')
 
 # Set up settings.
-test_cycle = settings.SubtletyCycle(dance_cp_builder='shadowstrike', dance_finishers_allowed=['finality:nightblade','nightblade', 'finality:eviscerate', 'eviscerate'])
-test_settings = settings.Settings(test_cycle, response_time=.5, duration=360,
+test_cycle = settings.SubtletyCycle(dance_cp_builder='shadowstrike',
+    #dance_finishers_allowed=['finality:nightblade','nightblade', 'finality:eviscerate', 'eviscerate'],
+    )
+test_settings = settings.Settings(test_cycle, response_time=.5, duration=450,
                                  adv_params="", is_demon=True, num_boss_adds=0)
 
 # Build a DPS object.
