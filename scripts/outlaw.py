@@ -15,9 +15,7 @@ from shadowcraft.objects import artifact
 
 from shadowcraft.core import i18n
 
-import time
-
-# Set up language. Use 'en_US', 'es_ES', 'fr' for specific languages.
+# Set up language.  Use 'en_US', 'es_ES', 'fr' for specific languages.
 test_language = 'local'
 i18n.set_language(test_language)
 
@@ -28,18 +26,18 @@ test_class = 'rogue'
 test_spec = 'outlaw'
 
 # Set up buffs.
-test_buffs = buffs.Buffs(
-        'short_term_haste_buff',
-        'flask_wod_agi',
-        'food_wod_versatility'
-    )
+test_buffs = buffs.Buffs('short_term_haste_buff',
+    'flask_wod_agi',
+    'food_wod_versatility')
 
-# Set up weapons. mark_of_the_frostwolf mark_of_the_shattered_hand
-test_mh = stats.Weapon(812.0, 1.8, 'dagger', 'mark_of_the_shattered_hand')
-test_oh = stats.Weapon(812.0, 1.8, 'dagger', 'mark_of_the_shattered_hand')
+# Set up weapons.  mark_of_the_frostwolf mark_of_the_shattered_hand
+test_mh = stats.Weapon(812.0, 2.6, 'sword', 'mark_of_the_shattered_hand')
+test_oh = stats.Weapon(812.0, 2.6, 'sword', 'mark_of_the_shattered_hand')
 
 # Set up procs.
-#test_procs = procs.ProcsList(('assurance_of_consequence', 588), ('draenic_philosophers_stone', 620), 'virmens_bite', 'virmens_bite_prepot', 'archmages_incandescence') #trinkets, other things (legendary procs)
+#test_procs = procs.ProcsList(('assurance_of_consequence', 588),
+#('draenic_philosophers_stone', 620), 'virmens_bite', 'virmens_bite_prepot',
+#'archmages_incandescence') #trinkets, other things (legendary procs)
 test_procs = procs.ProcsList()
 
 # Set up gear buffs.
@@ -61,7 +59,7 @@ test_talents = talents.Talents('0000000', test_spec, test_class, level=test_leve
 test_traits = artifact.Artifact(test_spec, test_class, '100000000000100000')
 
 # Set up settings.
-test_cycle = settings.CombatCycle(blade_flurry=False, dfa_during_ar=True)
+test_cycle = settings.OulawCycle(blade_flurry=False, dfa_during_ar=True)
 test_settings = settings.Settings(test_cycle, response_time=.5, duration=360,
                                  adv_params="", is_demon=True, num_boss_adds=0)
 
@@ -73,14 +71,13 @@ dps_breakdown = calculator.get_dps_breakdown()
 total_dps = sum(entry[1] for entry in dps_breakdown.items())
 
 # Compute EP values.
-#ep_values = calculator.get_ep(baseline_dps=total_dps)
+ep_values = calculator.get_ep(baseline_dps=total_dps)
 #tier_ep_values = calculator.get_other_ep(['rogue_t16_2pc', 'rogue_t16_4pc'])
-#mh_enchants_and_dps_ep_values, oh_enchants_and_dps_ep_values = calculator.get_weapon_ep(dps=True, enchants=True)
+#mh_enchants_and_dps_ep_values, oh_enchants_and_dps_ep_values =
+#calculator.get_weapon_ep(dps=True, enchants=True)
 
-# Compute weapon type modifier.
 #talent_ranks = calculator.get_talents_ranking()
 #trait_ranks = calculator.get_trait_ranking()
-
 def max_length(dict_list):
     max_len = 0
     for i in dict_list:
@@ -90,22 +87,22 @@ def max_length(dict_list):
 
     return max_len
 
-def pretty_print(dict_list, total_sum = 1., show_percent=False):
+def pretty_print(dict_list, total_sum=1., show_percent=False):
     max_len = max_length(dict_list)
 
     for i in dict_list:
         dict_values = i.items()
         dict_values.sort(key=lambda entry: entry[1], reverse=True)
         for value in dict_values:
-            #print value[0] + ':' + ' ' * (max_len - len(value[0])), str(value[1])
-            if show_percent and ("{0:.2f}".format(float(value[1])/total_dps)) != '0.00':
-                print value[0] + ':' + ' ' * (max_len - len(value[0])), str(value[1]) + ' ('+str( "{0:.2f}".format(100*float(value[1])/total_sum) )+'%)'
+            #print value[0] + ':' + ' ' * (max_len - len(value[0])),
+            #str(value[1])
+            if show_percent and ("{0:.2f}".format(float(value[1]) / total_dps)) != '0.00':
+                print value[0] + ':' + ' ' * (max_len - len(value[0])), str(value[1]) + ' (' + str("{0:.2f}".format(100 * float(value[1]) / total_sum)) + '%)'
             else:
                 print value[0] + ':' + ' ' * (max_len - len(value[0])), str(value[1])
         print '-' * (max_len + 15)
 
-dicts_for_pretty_print = [
-     #ep_values,
+dicts_for_pretty_print = [ep_values,
     #tier_ep_values,
     #talent_ranks,
     #trinkets_ep_value,

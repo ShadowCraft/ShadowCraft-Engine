@@ -1214,7 +1214,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     def outlaw_dps_breakdown(self):
         if not self.spec == 'outlaw':
-            raise InputNotModeledException(_('You must specify a combat cycle to match your outlaw spec.'))
+            raise InputNotModeledException(_('You must specify a outlaw cycle to match your outlaw spec.'))
 
         self.spec_convergence_stats = ['haste', 'mastery']
 
@@ -1226,6 +1226,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         #outlaw specific constants
         self.outlaw_cd_delay = 0 #this is for DFA convergence, mostly
+
+
         self.max_energy = 100.
         if self.stats.gear_buffs.rogue_pvp_4pc_extra_energy():
             self.max_energy += 30
@@ -1233,6 +1235,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.max_energy += 20
         if self.race.expansive_mind:
             self.max_energy = round(self.max_energy * 1.05, 0)
+
+
         self.ar_duration = 15
         # recurance relation of 0.16*x until convergence
         # https://www.wolframalpha.com/input/?i=15%2Bsum%28x%3D1+to+inf%29+of+15*.16%5Ex
