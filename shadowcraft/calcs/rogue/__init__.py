@@ -27,9 +27,11 @@ class RogueDamageCalculator(DamageCalculator):
                              'ghostly_strike', 'greed', 'killing_spree', 'main_gauche',
                              'pistol_shot', 'run_through', 'saber_slash']
     subtlety_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
-                               'backstab', 'eviscerate', 'finality:eviscerate', 'gloomblade', 
+                               'backstab', 'eviscerate', 'finality:eviscerate', 'gloomblade',
                                'goremaws_bite', 'nightblade', 'finality:nightblade', 'shadowstrike',
-                               'shadow_blade', 'shuriken_storm', 'shuriken_toss']
+                               'shadow_blades', 'shuriken_storm', 'shuriken_toss',
+                               'nightblade_ticks', 'finality:nightblade_ticks',
+                                'soul_rip', 'shadow_nova']
     #All damage sources mitigated by armor
     physical_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
                                 'fan_of_knives', 'hemorrhage', 'mutilate', 'poisoned_knife',
@@ -39,7 +41,8 @@ class RogueDamageCalculator(DamageCalculator):
                                 'eviscerate', 'shadowstrike', 'shuriken_storm', 'shuriken_toss']
     #All damage sources the scale with mastery (assn or sub)
     mastery_scaling_damage_sources = ['deadly_poison', 'deadly_instant_poison', 'evenom',
-                                      'eviscerate', 'nightblade']
+                                      'eviscerate', 'finality:eviscerate', 'nightblade_ticks',
+                                      'finality:nightblade_ticks']
     #All damage sources that deal damage with both hands
     dual_wield_damage_sources = ['kingsbane', 'mutilate', 'greed', 'killing_spree',
                                  'goremaws_bite', 'shadow_blades']
@@ -47,7 +50,8 @@ class RogueDamageCalculator(DamageCalculator):
     finisher_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
                                  'envenom', 'rupture_ticks', 'between_the_eyes',
                                  'run_through', 'eviscerate', 'finality:eviscerate',
-                                'nightblade', 'finality:nightblade']
+                                'nightblade', 'finality:nightblade',
+                                'nightblade_ticks', 'finality:nightblade_ticks']
 
     assassination_mastery_conversion = .035
     combat_mastery_conversion = .022
@@ -111,7 +115,7 @@ class RogueDamageCalculator(DamageCalculator):
             #subtlety
             'goremaws_bite':             60.,
             'shadow_dance':              60.,
-            'shadow_blades':            120.,
+            'shadow_blades':            180.,
         }
 
     def __setattr__(self, name, value):
@@ -421,6 +425,12 @@ class RogueDamageCalculator(DamageCalculator):
     def shuriken_toss_damage(self, ap):
         return 1.2 * ap
 
+    def soul_rip_damage(self, ap):
+        return 1.5 * ap
+
+    def shadow_nova_damage(self, ap):
+        return 1.5 * ap
+
     def get_formula(self, name):
         formulas = {
             #general
@@ -463,12 +473,14 @@ class RogueDamageCalculator(DamageCalculator):
             'mh_goremaws_bite':          self.mh_goremaws_bite_damage,
             'oh_goremaws_bite':          self.oh_goremaws_bite_damage,
             'nightblade_ticks':          self.nightblade_tick_damage,
-            'finality_nightblade_ticks': self.finality_nightblade_tick_damage,
+            'finality:nightblade_ticks': self.finality_nightblade_tick_damage,
             'shadowstrike':              self.shadowstrike_damage,
             'mh_shadow_blades':          self.mh_shadow_blades_damage,
             'oh_shadow_blades':          self.oh_shadow_blades_damage,
             'shuriken_storm':            self.shuriken_storm_damage,
             'shuriken_toss':             self.shuriken_toss_damage,
+            'soul_rip':                  self.soul_rip_damage,
+            'shadow_nova':               self.shadow_nova_damage,
         }
         return formulas[name]
 

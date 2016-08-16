@@ -54,13 +54,13 @@ test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          versatility=6522,)
 
 # Initialize talents..
-test_talents = talents.Talents('0200000', test_spec, test_class, level=test_level)
+test_talents = talents.Talents('0000000', test_spec, test_class, level=test_level)
 
 #initialize artifact traits..
-test_traits = artifact.Artifact(test_spec, test_class, '100000000000100000')
+test_traits = artifact.Artifact(test_spec, test_class, '000000000000000000')
 
 # Set up settings.
-test_cycle = settings.SubtletyCycle(dance_cp_builder='shadowstrike', dance_finisher_priority=['finality:nightblade','nightblade', 'finality:eviscerate', 'eviscerate'])
+test_cycle = settings.SubtletyCycle(dance_cp_builder='shadowstrike', dance_finishers_allowed=['finality:nightblade','nightblade', 'finality:eviscerate', 'eviscerate'])
 test_settings = settings.Settings(test_cycle, response_time=.5, duration=360,
                                  adv_params="", is_demon=True, num_boss_adds=0)
 

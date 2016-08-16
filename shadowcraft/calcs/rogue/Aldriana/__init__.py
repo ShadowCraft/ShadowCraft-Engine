@@ -17,6 +17,10 @@ class InputNotModeledException(exceptions.InvalidInputException):
     # I'll return these when inputs don't make sense to the model.
     pass
 
+class ConvergenceErrorException(exceptions.InvalidInputException):
+    # Return this if a convergence loop goes too long
+    pass
+
 
 class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     ###########################################################################
@@ -1661,9 +1665,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     #Talents:
         #T1-MoS
         #T1-Weaponmaster
-        #T1-Gloomblade
         #T2:NS
-        #T3:DS
         #T3:Ancitipcation
         #T6:Alacrity
 
@@ -1680,9 +1682,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #Legendaries
 
     #Rotation details:
-        #Openers
         #Combo Point loss
-        #Non-dance stealths
+        #SoD auto crit
 
     def subtlety_dps_estimate(self):
         return sum(self.subtlety_dps_breakdown().values())
@@ -1694,7 +1695,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #check to make sure cycle is sane:
         if self.settings.cycle.cp_builder == 'gloomblade' and not self.talents.gloomblade:
             raise InputNotModeledException(_('Gloomblade must be talented to be priamry cp builder'))
-        #Raise finality error here?
+
 
         self.max_spend_cps = 5
         if self.talents.deeper_strategem:
@@ -1710,7 +1711,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                                     }
 
         self.set_constants()
-        #sinister calling requires convergence to calculate (for now?)
         #self.spec_needs_converge = True
 
         stats, aps, crits, procs, additional_info = self.determine_stats(self.subtlety_attack_counts)
@@ -1767,6 +1767,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if crit_rates == None:
             crit_rates = self.get_crit_rates(current_stats)
 
+        use_sod = False
+        if self.settings.cycle.symbols_policy == 'always':
+            use_sod = True
+
         #Set up initial energy budget
         base_energy_regen = 10.
         haste_multiplier = self.stats.get_haste_multiplier_from_rating(current_stats['haste']) * self.true_haste_mod
@@ -1779,40 +1783,30 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.max_energy += 50
         self.energy_budget = self.settings.duration * self.energy_regen + self.max_energy
 
+        #set initial dance budget
+        self.dance_budget = 3 + self.settings.duration/60.
+
         shadow_blades_duration = 15. + (3.3333 * self.traits.soul_shadows)
         self.shadow_blades_uptime = shadow_blades_duration/self.get_spell_cd('shadow_blades')
 
         #swing timer
         white_swing_downtime = 0
-
-        #TODO: Add swing resets back for vanishes
-        self.swing_reset_spacing = None
+        self.swing_reset_spacing = self.get_spell_cd('vanish')
         if self.swing_reset_spacing is not None:
             white_swing_downtime += .5 / self.swing_reset_spacing
         attacks_per_second['mh_autoattacks'] = haste_multiplier / self.stats.mh.speed * (1 - white_swing_downtime)
         attacks_per_second['oh_autoattacks'] = haste_multiplier / self.stats.oh.speed * (1 - white_swing_downtime)
 
-        attacks_per_second['mh_autoattack_hits'] = attacks_per_second['mh_autoattacks'] * self.dw_mh_hit_chance
-        attacks_per_second['oh_autoattack_hits'] = attacks_per_second['oh_autoattacks'] * self.dw_oh_hit_chance
-
         #Set up initial combo point budget
         mfd_cps = self.talents.marked_for_death * (self.settings.duration/60. * 5 + self.settings.marked_for_death_resets * 5)
         self.cp_budget = mfd_cps
+
         #Enveloping Shadows generates 1 bonus cp per 6 seconds regardless of cps
+        #2 net energy per 6 seconds from relentless strikes
         if self.talents.enveloping_shadows:
             self.cp_budget += self.settings.duration/6.
-
-
-        #set initial dance budget
-        self.dance_budget = 3 + self.settings.duration/60.
-
-        #print self.dance_budget
-        #print self.cp_budget
-        #print self.energy_budget
-        #print "-----"
-
-        #finality evis tracking, should be 0 at end of rotation
-        finality_evis_count = 0
+            self.energy_budget += (2./6) * self.settings.duration
+            self.dance_budget += (0.5 * self.settings.duration)/60
 
         #setup timelines
         sod_duration = 35
@@ -1822,42 +1816,46 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #Add attacks that could occur during first pass to aps
         attacks_per_second[self.settings.cycle.dance_cp_builder] = 0
         attacks_per_second['symbols_of_death'] = 0
+        attacks_per_second['shadow_dance'] = 0
+        attacks_per_second['vanish'] = 0
 
         #Leaving space for opener handling for the first cast
-        sod_timeline = range(sod_duration, self.settings.duration, sod_duration)
+        sod_timeline = range(0, self.settings.duration, sod_duration)
         if self.traits.finality:
-            finality_nb_timeline = range(nightblade_duration, self.settings.duration, finality_nightblade_duration + nightblade_duration)
-            nightblade_timeline = range(finality_nightblade_duration + nightblade_duration, self.settings.duration, finality_nightblade_duration + nightblade_duration)
+            finality_nb_timeline = range(0, self.settings.duration, finality_nightblade_duration + nightblade_duration)
+            nightblade_timeline = range(nightblade_duration, self.settings.duration, finality_nightblade_duration + nightblade_duration)
         else:
             finality_nb_timeline = []
             nightblade_timeline = range(nightblade_duration, self.settings.duration, nightblade_duration)
 
-        #First timeline pass, since we're doing timeline matching use fixed priority
+        dance_finality_nb_uptime = 0.0
+        dance_nb_uptime = 0.0
+        #Timeline match of ruptures, fill in rest with either finality:eviscerate
         for finisher in ['finality:nightblade', 'nightblade', 'finality:eviscerate', 'eviscerate', None]:
-            attacks_per_second[finisher] = [0, 0, 0, 0, 0, 0, 0]
             dance_count = 0
-            if finisher in self.settings.cycle.dance_finisher_priority:
-                if finisher == 'finality:nightblade':
+            if finisher in self.settings.cycle.dance_finishers_allowed:
+                attacks_per_second[finisher] = [0, 0, 0, 0, 0, 0, 0]
+                if finisher == 'finality:nightblade' and self.traits.finality:
                     #Allow SoDs to be used on pandemic for match purposes
                     joint, sod_timeline, finality_nb_timeline = self.timeline_overlap(sod_timeline, finality_nb_timeline, -0.3 * sod_duration)
                     #if there is overlap compute a dance rotation for this combo
                     dance_count = len(joint)
+                    dance_finality_nb_uptime = dance_count/len(finality_nb_timeline)
                 elif finisher == 'nightblade':
                     joint, sod_timeline, nightblade_timeline = self.timeline_overlap(sod_timeline, nightblade_timeline, -0.3 * sod_duration)
                     dance_count = len(joint)
-                #Assume finality evis will be available for half of these
-                if finisher ==  'finality:eviscerate' and self.traits.finality:
-                    dance_count = len(sod_timeline)/2
-                    sod_timeline = sod_timeline[dance_count:]
-                    finality_evis_count += dance_count
-                if finisher == 'eviscerate':
+                    dance_nb_uptime = dance_count/len(nightblade_timeline)
+                elif (finisher == 'finality:eviscerate') and self.traits.finality:
                     dance_count = len(sod_timeline)
-                    sod_timeline = sod_timeline[dance_count:]
-                    finality_evis_count -= dance_count
-            #Whatever is left over is computed without finishers
-            if finisher is None:
+                    sod_timeline = []
+                elif finisher == 'eviscerate':
+                    dance_count = len(sod_timeline)
+                    sod_timeline = []
+
+            #Not using finishers during dance
+            if finisher is None and not self.settings.cycle.dance_finishers_allowed:
                 dance_count = len(sod_timeline)
-                sod_timeline = sod_timeline[dance_count:]
+                sod_timeline = []
 
             if dance_count:
                 net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(use_sod=True, finisher=finisher)
@@ -1865,29 +1863,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 self.cp_budget += dance_count * net_cps
                 self.dance_budget += ((3. * spent_cps* dance_count)/60) - dance_count
                 #merge attack counts into attacks_per_second
-                dances_per_second = float(dance_count)/self.settings.duration
-                for ability in attack_counts:
-                    if ability in self.finisher_damage_sources:
-                        for cp in xrange(7):
-                            attacks_per_second[ability][cp] += dances_per_second *  attack_counts[ability][cp]
-                    else:
-                        attacks_per_second[ability] += dances_per_second * attack_counts[ability]
-
-        #Add in white swings
-        white_swing_downtime = 0
-
-        #TODO: Add swing resets back for vanishes
-        self.swing_reset_spacing = None
-        if self.swing_reset_spacing is not None:
-            white_swing_downtime += .5 / self.swing_reset_spacing
-        attacks_per_second['mh_autoattacks'] = haste_multiplier / self.stats.mh.speed * (1 - white_swing_downtime)
-        attacks_per_second['oh_autoattacks'] = haste_multiplier / self.stats.oh.speed * (1 - white_swing_downtime)
-
-        attacks_per_second['mh_autoattack_hits'] = attacks_per_second['mh_autoattacks'] * self.dw_mh_hit_chance
-        attacks_per_second['oh_autoattack_hits'] = attacks_per_second['oh_autoattacks'] * self.dw_oh_hit_chance
+                self.rotation_merge(attacks_per_second, attack_counts, dance_count)
 
         #Add in ruptures not previously covered
-        #Costs will need to be removed from dance values to avoid double counting
         nightblade_count = len(nightblade_timeline)
         attacks_per_second['nightblade'][self.finisher_thresholds['nightblade']] += float(nightblade_count)/self.settings.duration
         self.cp_budget -= self.finisher_thresholds['nightblade'] * nightblade_count
@@ -1927,80 +1905,119 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.energy_budget += (40 * (0.2 * self.max_spend_cps) - self.get_spell_cost('death_from_above')) * dfa_count
             self.dance_budget += (3. * self.max_spend_cps * dfa_count)/60.
 
-
         #Need to handle shadow techniques now to account for swing timer loss
+        attacks_per_second['mh_autoattack_hits'] = attacks_per_second['mh_autoattacks'] * self.dw_mh_hit_chance
+        attacks_per_second['oh_autoattack_hits'] = attacks_per_second['oh_autoattacks'] * self.dw_oh_hit_chance
+
         shadow_techniques_cps_per_proc = 1 + (0.05 * self.traits.fortunes_bite)
         shadow_techniques_procs = self.settings.duration * (attacks_per_second['mh_autoattack_hits'] + attacks_per_second['oh_autoattack_hits']) / 4
         shadow_techniques_cps = shadow_techniques_procs * shadow_techniques_cps_per_proc
         self.cp_budget += shadow_techniques_cps
 
+        #vanish handling
+        vanish_count = self.settings.duration/self.get_spell_cd('vanish')
+        #Treat subterfuge as a mini-dance
+        if self.talents.subterfuge:
+            if 'finality:eviscerate' in self.settings.cycle.dance_finishers_allowed and self.traits.finality:
+                net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(use_sod=use_sod, finisher='finality:eviscerate', vanish=True)
+            else:
+                net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(use_sod=use_sod, finisher='eviscerate', vanish=True)
+        else:
+           net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(use_sod=use_sod, finisher='eviscerate', vanish=True)
+        self.energy_budget += vanish_count * net_energy
+        self.cp_budget += vanish_count * net_cps
+        self.dance_budget += ((3. * spent_cps* vanish_count)/60)
+        self.rotation_merge(attacks_per_second, attack_counts, vanish_count)
+
+        #Generate one final dance template
+        if 'finality:eviscerate' in self.settings.cycle.dance_finishers_allowed and self.traits.finality:
+            net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(use_sod=use_sod, finisher='finality:eviscerate')
+        elif 'eviscerate' in self.settings.cycle.dance_finishers_allowed:
+            net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(use_sod=use_sod, finisher='eviscerate')
+        else:
+            net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(use_sod=use_sod, finisher=None)
+
+        #Now lets make sure all our budgets are positive
         cp_per_builder = 1 + self.shadow_blades_uptime
         if self.settings.cycle.cp_builder == 'shuriken_storm':
             cp_per_builder += self.settings.num_boss_adds
         energy_per_cp = self.get_spell_cost(self.settings.cycle.cp_builder) /(cp_per_builder)
-        #Counter of evis and cp_builders implied to exist but not currently added
-        implied_builders = 0
-        implied_evis = 0
-        self.net_evis_cost = 40 - self.get_spell_cost('eviscerate')
-        # half of evis will be finality, half not
-        self.avg_evis_cps = (self.finisher_thresholds['finality:eviscerate'] + self.finisher_thresholds['eviscerate'])/2
 
-        #update the budgets to make sure we're still fine
-        builders, evis, sane = self.sanitize_budgets(attacks_per_second)
-        implied_builders += builders
-        implied_evis += evis
+        extra_evis = 0
+        extra_builders = 0
+        #Not enough dances, generate some more
+        if self.dance_budget<0:
+            cps_required = abs(self.dance_budget) * 20
+            extra_evis += cps_required/self.avg_evis_cps
+            self.energy_budget += self.net_evis_cost
+            #just subtract the cps because we'll fix those next
+            self.cp_budget -= cps_required
+            self.dance_budget = 0
+        #If we have too many dances just spend them now
+        elif self.dance_budget > 0:
+            #quick convergence loop
+            loop_counter = 0
+            while dance_count > 0.0001:
+                if loop_counter > 100:
+                   raise ConvergenceErrorException(_('Dance fixup failed to converge.'))
+                self.energy_budget += dance_count * net_energy
+                self.cp_budget += dance_count * net_cps
+                self.dance_budget += ((3. * spent_cps* dance_count)/60) - dance_count
+                #merge attack counts into attacks_per_second
+                self.rotation_merge(attacks_per_second, attack_counts, dance_count)
+                loop_counter += 1
 
-        #Iterate over dance finisher priority to schedule dances
-        out_of_resouces = False
-        use_sod = False
-        if self.settings.cycle.symbols_policy == 'always':
-            use_sod = True
-        for finisher in self.settings.cycle.dance_finisher_priority:
-            if not out_of_resouces:
-                break
-            #generate our dance rotation
-            net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(use_sod=use_sod, finisher=finisher)
-            dances_per_second = 1./self.settings.duration
-            if finisher in ('finality:nightblade', 'nightblade'):
-                #remove finisher costs to prevent double counting
-                net_energy -= 40 * (0.2 * self.finisher_thresholds[finisher]) - self.get_spell_cost(finisher)
-                net_cps += self.finisher_thresholds[finisher]
-                del attack_counts[finisher]
-                if finisher == 'finality:nightblade':
-                    needed_dances = len(finality_nb_timeline)
-                elif finisher == 'nightblade':
-                    needed_dances = len(nightblade_timeline)
+        #if we don't have enough cps lets build some
+        if self.cp_budget <0:
+            #can add since we know cp_budget is negative
+            self.energy_budget += self.cp_budget * energy_per_cp
+            extra_builders += abs(self.cp_budget) / cp_per_builder
+            self.cp_budget = 0
+        #TODO: Handle extra cps here
 
-                #loop over dances until we can't anymore
-                for dance in xrange(needed_dances):
-                    self.energy_budget += net_energy
-                    self.cp_budget += net_cps
-                    self.dance_budget -= 1
-                    builders, evis, sane = self.sanitize_budgets(attacks_per_second)
-                    implied_builders += builders
-                    implied_evis += evis
-                    #add attack_counts into APS
-                    for ability in attack_counts:
-                        if ability in self.finisher_damage_sources:
-                            for cp in xrange(7):
-                                attacks_per_second[ability][cp] += dances_per_second *  attack_counts[ability][cp]
-                        else:
-                            attacks_per_second[ability] += dances_per_second * attack_counts[ability]
+        if self.settings.cycle.cp_builder == 'shuriken_storm':
+            attacks_per_second['shuriken_storm-no-dance'] = extra_builders / self.settings.duration
+        else:
+            attacks_per_second[self.settings.cycle.cp_builder] = extra_builders / self.settings.duration
+        attacks_per_second['eviscerate'][self.finisher_thresholds['eviscerate']] += extra_evis
 
-                    if not sane:
-                        out_of_resouces = True
-                        break
-                dance_count = dance
+        #Hopefully energy budget here isn't negative, if it is we're in trouble
+        #Now we convert all the energy we have left into mini-cycles
+        #Each mini-cycle contains enough 1 dance and generators+finishers for one dance
+        cps_per_dance = 20
+        if self.traits.finality:
+            finishers_per_minicycle = cps_per_dance/(0.5 * self.finisher_thresholds['finality:eviscerate'] + 0.5 * self.finisher_thresholds['eviscerate'])
+        else:
+            finishers_per_minicycle = cps_per_dance/self.finisher_thresholds['eviscerate']
 
-            #elif finisher == 'finality:eviscerate':
+        attack_counts_mini_cycle = attack_counts
+        attack_counts_mini_cycle['eviscerate'] = [0, 0, 0, 0, 0, 0, 0]
+        loop_counter = 0
+        while self.energy_budget > 0:
+            if loop_counter > 20:
+                   raise ConvergenceErrorException(_('Mini-cycles failed to converge.'))
+            loop_counter += 1
+            cps_to_generate = max(cps_per_dance - self.cp_budget, 0)
+            builders_per_minicycle = cps_to_generate / cp_per_builder
+            mini_cycle_energy = 5 * finishers_per_minicycle - (cps_to_generate * energy_per_cp)
+            #add in dance energy
+            mini_cycle_energy += net_energy
+            if cps_to_generate:
+                mini_cycle_count = float(self.energy_budget) / abs(mini_cycle_energy)
+            else:
+                mini_cycle_count = 1
+            #build the minicycle attack_counts
+            if self.settings.cycle.cp_builder == 'shuriken_storm':
+                attack_counts_mini_cycle['shuriken_storm-no-dance'] = builders_per_minicycle
+            else:
+                attack_counts_mini_cycle[self.settings.cycle.cp_builder] = builders_per_minicycle
+            attack_counts_mini_cycle['eviscerate'][self.finisher_thresholds['eviscerate']] += finishers_per_minicycle
+            self.rotation_merge(attacks_per_second, attack_counts_mini_cycle, mini_cycle_count)
+            self.energy_budget += mini_cycle_energy * mini_cycle_count
+            self.cp_budget += net_cps - 20
+            #Update energy budget with alacrity and haste procs
 
-
-
-
-            #print self.dance_budget
-            #print self.cp_budget
-            #print self.energy_budget
-
+        #Now fixup attacks_per_second
         #convert nightblade casts into nightblade ticks
         for ability in ('finality:nightblade', 'nightblade'):
             if ability in attacks_per_second:
@@ -2018,12 +2035,30 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         if self.traits.akarris_soul:
             attacks_per_second['soul_rip'] = attacks_per_second['shadowstrike']
+        if self.traits.shadow_nova:
+            attacks_per_second['shadow_nova'] = attacks_per_second['symbols_of_death'] + attacks_per_second['vanish']
+
+        if self.settings.cycle.dance_cp_builder == 'shuriken_storm':
+            self.stealth_shuriken_uptime = attacks_per_second['shuriken_storm'] / (attacks_per_second['shuriken_storm'] + attacks_per_second['shuriken_storm-no-dance'])
+            attacks_per_second['shuriken_storm'] = attacks_per_second['shuriken_storm'] + attacks_per_second['shuriken_storm-no-dance']
+            del attacks_per_second['shuriken_storm-no-dance']
+
+        #Full additive assumption for now
+        if self.talents.master_of_subtlety:
+            stealth_time = 9 * attacks_per_second['shadow_dance'] + 6 * attacks_per_second['vanish']
+            if self.talents.subterfuge:
+                 stealth_time = 11 * attacks_per_second['shadow_dance'] + 9 * attacks_per_second['vanish']
+            self.mos_time =  float(stealth_time)/self.settings.duration
+
+        if self.talents.nightstalker:
+            self.dance_finality_nb_uptime = dance_finality_nb_uptime
+            self.dance_nb_uptime = dance_nb_uptime
 
         return attacks_per_second, crit_rates, additional_info
 
     #Computes the net energy and combo points from a shadow dance rotation
     #Returns net_energy, net_cps, spent_cps, dict of attack counts
-    def get_dance_resources(self, use_sod=False, finisher=None):
+    def get_dance_resources(self, use_sod=False, finisher=None, vanish=False):
         net_energy = 0
         net_cps = 0
         spent_cps = 0
@@ -2043,8 +2078,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         dance_gcds = 3
         if self.talents.subterfuge:
-            dance_gcds += 2
-
+            if vanish:
+                dance_gcds += 1
+            else:
+                dance_gcds += 2
+        elif vanish:
+            dance_gcds = 1
 
         max_dance_energy = dance_gcds * self.energy_regen + self.max_energy
 
@@ -2058,7 +2097,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #fill remaining gcds with shadowstrikes
         cp_builder = self.settings.cycle.dance_cp_builder
         cp_builder_cost = self.get_spell_cost(cp_builder, cost_mod=cost_mod)
-        attack_counts[cp_builder] = min(dance_gcds, math.floor((net_energy+max_dance_energy)/cp_builder_cost))
+        builder_count = min(dance_gcds, math.floor((net_energy+max_dance_energy)/cp_builder_cost))
+        if vanish is True:
+            attack_counts[cp_builder] = min(builder_count, self.settings.cycle.max_vanish_builders)
+            attack_counts['vanish'] = 1
+        else:
+            attack_counts[cp_builder] = min(builder_count, self.settings.cycle.max_dance_builders)
+            attack_counts['shadow_dance'] = 1
+
         net_energy -= attack_counts[cp_builder] * cp_builder_cost
         if cp_builder == 'shadowstrike':
             net_cps += attack_counts['shadowstrike'] * (1 + self.talents.premeditation) + self.shadow_blades_uptime
@@ -2088,32 +2134,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         return match_list, no_match_a, [x for x in timeline_b if x not in match_list]
 
-    #Attempts to sanitize the budget
-    #returns added implied evis, implied builder and if santization possible
-    def sanitize_budgets(self, attacks_per_second):
-        implied_builders = 0
-        implied_evis = 0
-        sane = True
-        #if we don't have enough dances build some cps and use some finishers
-        if self.dance_budget<0:
-            cps_required = abs(self.dance_budget) * 20
-            implied_evis += cps_required/self.avg_evis_cps
-            self.energy_budget += self.net_evis_cost
-            #just subtract the cps because we'll fix those next
-            self.cp_budget -= cps_required
-
-        #if we don't have enough cps lets build some
-        if self.cp_budget <0:
-            #can add since we know cp_budget is negative
-            self.energy_budget += self.cp_budget * self.energy_per_cp
-            implied_builders += abs(self.cp_budget) / self.cp_per_builder
-            self.cp_budget = 0
-
-        #if we don't have enough energy back off implied builders and evis
-        if self.energy_budget < 0:
-            deficit = abs(self.energy_budget)
-            builder_backoff = deficit / (self.cp_budget * self.energy_per_cp)
-            implied_builders -= builder_backoff
-            implied_evis -= builder_backoff/self.avg_evis_cps
-            sane = False
-        return implied_builders, implied_evis, sane
+    #Takes in the full attacks per second dict and a raw attack counts dict
+    #adds attack countes into the rotation at global scope
+    def rotation_merge (self, attacks_per_second, attack_counts, count):
+        rotations_per_second = float(count)/self.settings.duration
+        for ability in attack_counts:
+            if ability in self.finisher_damage_sources:
+                for cp in xrange(7):
+                    attacks_per_second[ability][cp] += rotations_per_second *  attack_counts[ability][cp]
+            else:
+                attacks_per_second[ability] += rotations_per_second * attack_counts[ability]
