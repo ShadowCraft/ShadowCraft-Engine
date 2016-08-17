@@ -12,3 +12,5 @@ item_db.db
 
 /.project
 /.pydevproject
+*.sublime-workspace
+*.sublime-project

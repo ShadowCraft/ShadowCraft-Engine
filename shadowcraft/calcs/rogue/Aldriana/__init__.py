@@ -525,10 +525,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         stacks_per_second = 0.0
         for finisher in self.finisher_damage_sources:
             #Don't double count DfA
-            if finisher != 'death_from_above_pulse':
+            if finisher in attacks_per_second and finisher != 'death_from_above_pulse':
                 for cp in xrange(7):
                     stacks_per_second += 0.2 * cp * attacks_per_second[finisher][cp]
-        stack_time = stacks_per_second/20
+        stack_time = 20/stacks_per_second
         if stack_time > self.settings.duration:
             max_stacks = self.settings.duration * stacks_per_second
             return max_stacks/2
@@ -1663,16 +1663,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     #Legion TODO:
 
     #Talents:
-        #T1-MoS
-        #T1-Weaponmaster
-        #T2:NS
         #T3:Ancitipcation
-        #T6:Alacrity
 
     #Artifact:
         # 'flickering_shadows',
         # 'second_shuriken',
-        # 'shadow_nova',
         # 'legionblade'
 
     #Items:
@@ -1683,7 +1678,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     #Rotation details:
         #Combo Point loss
-        #SoD auto crit
+        #Finality evis stealth modifier handlings
+        #Shuriken storm dances details
+        #weaponmaster bonus cp gen
 
     def subtlety_dps_estimate(self):
         return sum(self.subtlety_dps_breakdown().values())
@@ -1711,7 +1708,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                                     }
 
         self.set_constants()
-        #self.spec_needs_converge = True
+
+        #symbols of death
+        self.damage_modifier_cache = 1.2
 
         stats, aps, crits, procs, additional_info = self.determine_stats(self.subtlety_attack_counts)
         damage_breakdown, additional_info  = self.compute_damage_from_aps(stats, aps, crits, procs, additional_info)
@@ -1739,19 +1738,41 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             maalus_val = maalus.value['damage_mod']/10000.
             maalus_mod = 1 + (15.0/120* maalus_val) #super hackish
 
-        vanish_damage_mod = 1.0
-        if self.stats.gear_buffs.rogue_t18_2pc:
-            vanish_damage_buff_uptime = 10/self.get_spell_cd('vanish')
-            vanish_damage_mod += vanish_damage_buff_uptime * 0.3
+        #nightstalker
+        if self.talents.nightstalker:
+            ns_full_multiplier = 0.12
+            for key  in damage_breakdown:
+                if key == 'shadowstrike':
+                    damage_breakdown[key] *= ns_full_multiplier
+                elif key == 'shuriken_storm':
+                    damage_breakdown[key] *= 1 + (0.12 * self.stealth_shuriken_uptime)
+                elif key == 'finality_nightblade_ticks':
+                    damage_breakdown[key] *= 1 + (0.12 * self.dance_finality_nb_uptime)
+                elif key == 'nightblade_ticks':
+                    damage_breakdown[key] *= 1 + (0.12 * self.dance_nb_uptime)
+
+        #master of subtlety
+        if self.talents.master_of_subtlety:
+            mos_full_multiplier = 1.1
+            mos_uptime_multipler = 1. + (0.1 * self.mos_time)
+
+            for key in damage_breakdown:
+                if key == 'shadowstrike':
+                    damage_breakdown[key] *= mos_full_multiplier
+                elif key == 'shuriken_storm':
+                    damage_breakdown[key] *= 1 + (0.1 * self.stealth_shuriken_uptime)
+                else:
+                    damage_breakdown[key] *= mos_uptime_multipler
 
         for key in damage_breakdown:
-            damage_breakdown[key] *= vanish_damage_mod
             damage_breakdown[key] *= maalus_mod
-            if key in ('ambush', 'garrote', 'sr_ambush'):
+            if key == 'shadowstrike':
                 damage_breakdown[key] *=trinket_multiplier
             if "sr_" not in key:
                 damage_breakdown[key] *= soul_cap_mod
                 damage_breakdown[key] *= infallible_trinket_mod
+            if key == 'shuriken_storm':
+                damage_breakdown[key] *= (1 + self.stealth_shuriken_uptime * 3)
             #if "Mirror" not in key:
             #    damage_breakdown[key] *= mos_multiplier
 
@@ -1961,7 +1982,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             #quick convergence loop
             loop_counter = 0
             while self.dance_budget > 0.0001:
-                if loop_counter > 20:
+                if loop_counter > 100:
                    raise ConvergenceErrorException(_('Dance fixup failed to converge.'))
                 dance_count = abs(self.dance_budget)
                 self.energy_budget += dance_count * net_energy
@@ -1996,6 +2017,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attack_counts_mini_cycle = attack_counts
         attack_counts_mini_cycle['eviscerate'] = [0, 0, 0, 0, 0, 0, 0]
         loop_counter = 0
+
+        alacrity_stacks = 0
         while self.energy_budget > 0:
             if loop_counter > 20:
                    raise ConvergenceErrorException(_('Mini-cycles failed to converge.'))
@@ -2009,16 +2032,24 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 mini_cycle_count = float(self.energy_budget) / abs(mini_cycle_energy)
             else:
                 mini_cycle_count = 1
+            mini_cycle_count = 1
             #build the minicycle attack_counts
             if self.settings.cycle.cp_builder == 'shuriken_storm':
                 attack_counts_mini_cycle['shuriken_storm-no-dance'] = builders_per_minicycle
             else:
                 attack_counts_mini_cycle[self.settings.cycle.cp_builder] = builders_per_minicycle
-            attack_counts_mini_cycle['eviscerate'][self.finisher_thresholds['eviscerate']] += finishers_per_minicycle
+            attack_counts_mini_cycle['eviscerate'][self.finisher_thresholds['eviscerate']] = finishers_per_minicycle
             self.rotation_merge(attacks_per_second, attack_counts_mini_cycle, mini_cycle_count)
             self.energy_budget += mini_cycle_energy * mini_cycle_count
-            self.cp_budget += net_cps - 20
+            self.cp_budget += net_cps - 20 + cps_to_generate
             #Update energy budget with alacrity and haste procs
+            if self.talents.alacrity:
+                old_alacrity_regen = self.energy_regen * (1 + (alacrity_stacks *0.01))
+                new_alacrity_stacks = self.get_average_alacrity(attacks_per_second)
+                new_alacrity_regen = self.energy_regen * (1 + (new_alacrity_stacks *0.01))
+                self.energy_budget += (new_alacrity_regen - old_alacrity_regen) * self.settings.duration
+                alacrity_stacks = new_alacrity_stacks
+
 
         #Now fixup attacks_per_second
         #convert nightblade casts into nightblade ticks
@@ -2048,9 +2079,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         #Full additive assumption for now
         if self.talents.master_of_subtlety:
-            stealth_time = 9 * attacks_per_second['shadow_dance'] + 6 * attacks_per_second['vanish']
+            stealth_time = 9. * attacks_per_second['shadow_dance'] + 6 * attacks_per_second['vanish']
             if self.talents.subterfuge:
-                 stealth_time = 11 * attacks_per_second['shadow_dance'] + 9 * attacks_per_second['vanish']
+                 stealth_time = 11. * attacks_per_second['shadow_dance'] + 9 * attacks_per_second['vanish']
             self.mos_time =  float(stealth_time)/self.settings.duration
 
         if self.talents.nightstalker:
@@ -2064,6 +2095,19 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 del attacks_per_second[ability]
 
         print attacks_per_second
+
+        #add SoD auto crits
+        sod_shadowstrikes = attacks_per_second['symbols_of_death']/attacks_per_second['shadowstrike']
+        crit_rates['shadowstrike'] = crit_rates['shadowstrike'] * (1. - sod_shadowstrikes) + sod_shadowstrikes
+        #print crit_rates
+
+        if self.talents.weaponmaster:
+            for ability in attacks_per_second:
+                if isinstance(attacks_per_second[ability], list):
+                    for cp in xrange(7):
+                        attacks_per_second[ability][cp] *= 1.06
+                else:
+                    attacks_per_second[ability] *=1.06
 
         return attacks_per_second, crit_rates, additional_info
 

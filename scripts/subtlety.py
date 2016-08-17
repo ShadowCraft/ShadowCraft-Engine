@@ -32,7 +32,7 @@ test_buffs = buffs.Buffs(
         'food_wod_versatility'
     )
 
-# Set up weapons. mark_of_the_frostwolf mark_of_the_shattered_hand
+# Set up weapons.
 test_mh = stats.Weapon(4821.0, 1.8, 'dagger', None)
 test_oh = stats.Weapon(4821.0, 1.8, 'dagger', None)
 
@@ -48,20 +48,22 @@ test_gear_buffs = stats.GearBuffs('gear_specialization') #tier buffs located her
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          agi=20909,
                          stam=19566,
-                         crit=5248,
+                         crit=4402,
                          haste=5150,
-                         mastery=5115,
-                         versatility=844,)
+                         #haste=0,
+                         mastery=5999,
+                         versatility=1515,)
 
 # Initialize talents..
-test_talents = talents.Talents('0000000', test_spec, test_class, level=test_level)
+test_talents = talents.Talents('2000020', test_spec, test_class, level=test_level)
 
 #initialize artifact traits..
-test_traits = artifact.Artifact(test_spec, test_class, '000000000000000000')
+test_traits = artifact.Artifact(test_spec, test_class, '110000000000000000')
 
 # Set up settings.
 test_cycle = settings.SubtletyCycle(dance_cp_builder='shadowstrike',
     #dance_finishers_allowed=['finality:nightblade','nightblade', 'finality:eviscerate', 'eviscerate'],
+    #dance_finishers_allowed =['nightblade']
     )
 test_settings = settings.Settings(test_cycle, response_time=.5, duration=450,
                                  adv_params="", is_demon=True, num_boss_adds=0)
