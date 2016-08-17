@@ -55,8 +55,10 @@ class Buffs(object):
         'food_legion_damage_1',             # Spiced Rib Roast
         'food_legion_damage_2',             # Drogbar-Style Salmon
         'food_legion_damage_3',             # Fishbrul Special
+        'food_legion_feast_150',
+        'food_legion_feast_200',
     ])
-    
+
     buffs_debuffs = frozenset([
         'short_term_haste_buff',            # Heroism/Blood Lust, Time Warp
         #'stat_multiplier_buff',             # Mark of the Wild, Blessing of Kings, Legacy of the Emperor
@@ -94,8 +96,10 @@ class Buffs(object):
         bonus_agi += 200 * self.flask_wod_agi_200
         bonus_agi += 250 * self.flask_wod_agi
         bonus_agi += 1300 * self.flask_legion_agi
+        bonus_agi += 150 * self.food_legion_feast_150 * [1, 2][race]
+        bonus_agi += 200 * self.food_legion_feast_200 * [1, 2][race]
         return bonus_agi
-    
+
     def buff_haste(self, race=False):
         bonus_haste = 0
         bonus_haste += 125 * self.food_wod_haste_125 * [1, 2][race]
@@ -105,7 +109,7 @@ class Buffs(object):
         bonus_haste += 300 * self.food_legion_haste_300 * [1, 2][race]
         bonus_haste += 375 * self.food_legion_haste_375 * [1, 2][race]
         return bonus_haste
-    
+
     def buff_crit(self, race=False):
         bonus_crit = 0
         bonus_crit += 125 * self.food_wod_crit_125 * [1, 2][race]
@@ -115,7 +119,7 @@ class Buffs(object):
         bonus_crit += 300 * self.food_legion_crit_300 * [1, 2][race]
         bonus_crit += 375 * self.food_legion_crit_375 * [1, 2][race]
         return bonus_crit
-    
+
     def buff_mast(self, race=False):
         bonus_mastery = 0
         bonus_mastery += 125 * self.food_wod_mastery_125 * [1, 2][race]
@@ -125,7 +129,7 @@ class Buffs(object):
         bonus_mastery += 300 * self.food_legion_mastery_300 * [1, 2][race]
         bonus_mastery += 375 * self.food_legion_mastery_375 * [1, 2][race]
         return bonus_mastery
-    
+
     def buff_versatility(self, race=False):
         bonus_versatility = 0
         bonus_versatility += 125 * self.food_wod_versatility_125 * [1, 2][race]
