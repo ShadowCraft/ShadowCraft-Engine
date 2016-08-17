@@ -2019,7 +2019,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         loop_counter = 0
 
         alacrity_stacks = 0
-        while self.energy_budget > 0:
+        while self.energy_budget > 0.1:
             if loop_counter > 20:
                    raise ConvergenceErrorException(_('Mini-cycles failed to converge.'))
             loop_counter += 1
@@ -2029,10 +2029,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             #add in dance energy
             mini_cycle_energy += net_energy
             if cps_to_generate:
-                mini_cycle_count = float(self.energy_budget) / abs(mini_cycle_energy)
+                mini_cycle_count = 0.9*float(self.energy_budget) / abs(mini_cycle_energy)
             else:
                 mini_cycle_count = 1
-            mini_cycle_count = 1
+            #mini_cycle_count = 1
             #build the minicycle attack_counts
             if self.settings.cycle.cp_builder == 'shuriken_storm':
                 attack_counts_mini_cycle['shuriken_storm-no-dance'] = builders_per_minicycle
@@ -2072,7 +2072,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.traits.shadow_nova:
             attacks_per_second['shadow_nova'] = attacks_per_second['symbols_of_death'] + attacks_per_second['vanish']
 
-        if self.settings.cycle.dance_cp_builder == 'shuriken_storm':
+        self.stealth_shuriken_uptime = 0.
+        if self.settings.cycle.dance_cp_builder == 'shuriken_storm' and self.settings.cycle.cp_builder == 'shuriken_storm':
             self.stealth_shuriken_uptime = attacks_per_second['shuriken_storm'] / (attacks_per_second['shuriken_storm'] + attacks_per_second['shuriken_storm-no-dance'])
             attacks_per_second['shuriken_storm'] = attacks_per_second['shuriken_storm'] + attacks_per_second['shuriken_storm-no-dance']
             del attacks_per_second['shuriken_storm-no-dance']
@@ -2097,8 +2098,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #print attacks_per_second
 
         #add SoD auto crits
-        sod_shadowstrikes = attacks_per_second['symbols_of_death']/attacks_per_second['shadowstrike']
-        crit_rates['shadowstrike'] = crit_rates['shadowstrike'] * (1. - sod_shadowstrikes) + sod_shadowstrikes
+        if 'shadowstrike' in attacks_per_second:
+            sod_shadowstrikes = attacks_per_second['symbols_of_death']/attacks_per_second['shadowstrike']
+            crit_rates['shadowstrike'] = crit_rates['shadowstrike'] * (1. - sod_shadowstrikes) + sod_shadowstrikes
         #print crit_rates
 
         if self.talents.weaponmaster:
