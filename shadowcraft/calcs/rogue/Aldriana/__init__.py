@@ -186,14 +186,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             'str': 1.,
             'agi': self.stats.gear_buffs.gear_specialization_multiplier(),
             'ap': 1,
-            'crit': 1.,
-            'haste': 1.,
-            'mastery': 1.,
-            'versatility': 1.,
+            'crit': 1. + (0.02 * self.race.human_spirit),
+            'haste': 1. + (0.02 * self.race.human_spirit),
+            'mastery': 1. + (0.02 * self.race.human_spirit),
+            'versatility': 1. + (0.02 * self.race.human_spirit),
         }
-
-        if self.race.human_spirit:
-            self.base_stats['versatility'] += self.race.versatility_bonuses[self.level]
 
         for boost in self.race.get_racial_stat_boosts():
             if boost['stat'] in self.base_stats:
@@ -1693,7 +1690,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.settings.cycle.cp_builder == 'gloomblade' and not self.talents.gloomblade:
             raise InputNotModeledException(_('Gloomblade must be talented to be priamry cp builder'))
 
-
         self.max_spend_cps = 5
         if self.talents.deeper_strategem:
             self.max_spend_cps += 1
@@ -2020,6 +2016,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         alacrity_stacks = 0
         while self.energy_budget > 0.1:
+            #print self.energy_budget
             if loop_counter > 20:
                    raise ConvergenceErrorException(_('Mini-cycles failed to converge.'))
             loop_counter += 1
