@@ -2094,7 +2094,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             elif isinstance(attacks_per_second[ability], list) and not any(attacks_per_second[ability]):
                 del attacks_per_second[ability]
 
-        print attacks_per_second
+        #print attacks_per_second
 
         #add SoD auto crits
         sod_shadowstrikes = attacks_per_second['symbols_of_death']/attacks_per_second['shadowstrike']
