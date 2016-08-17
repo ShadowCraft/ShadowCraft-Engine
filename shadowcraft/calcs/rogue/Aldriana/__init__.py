@@ -73,20 +73,21 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     # setups that we are really modeling.
     ###########################################################################
 
-    def get_talents_ranking(self, list=None):
-        if list is None:
-            list = [
-                'nightstalker',
-                'subterfuge',
-                'shadow_focus',
-                #'shuriken_toss',
-                'marked_for_death',
-                'anticipation',
-                'lemon_zest',
-                'death_from_above',
-                'shadow_reflection',
-            ]
-        return super(AldrianasRogueDamageCalculator, self).get_talents_ranking(list)
+    #i don't know why this is overridden, but I disabled it to fix talent ranking
+    #def get_talents_ranking(self, list=None):
+    #    if list is None:
+    #        list = [
+    #            'nightstalker',
+    #            'subterfuge',
+    #            'shadow_focus',
+    #            #'shuriken_toss',
+    #            'marked_for_death',
+    #            'anticipation',
+    #            'lemon_zest',
+    #            'death_from_above',
+    #            'shadow_reflection',
+    #        ]
+    #    return super(AldrianasRogueDamageCalculator, self).get_talents_ranking(list)
 
     def get_oh_weapon_modifier(self, setups=None):
         if setups is None:
@@ -1227,21 +1228,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #outlaw specific constants
         self.outlaw_cd_delay = 0 #this is for DFA convergence, mostly
 
-        # calculate max energy (this should probably be a function in the rogue module and overridden in spec modules)
-        self.max_energy = 100.
-        if self.stats.gear_buffs.rogue_pvp_4pc_extra_energy():
-            self.max_energy += 30
-        if self.stats.gear_buffs.rogue_t18_4pc_lfr:
-            self.max_energy += 20
-        if self.race.expansive_mind:
-            self.max_energy = round(self.max_energy * 1.05, 0)
-
-
         self.ar_duration = 15
         # recurance relation of 0.16*x until convergence
         # https://www.wolframalpha.com/input/?i=15%2Bsum%28x%3D1+to+inf%29+of+15*.16%5Ex
         if self.stats.gear_buffs.rogue_t18_2pc:
-            self.ar_duration = 17.8571 # it not clear what this means
+            self.ar_duration = 17.8571 # it not clear what this means, magic number?
         if self.stats.gear_buffs.rogue_t17_2pc:
             self.extra_cp_chance += 0.2
 
@@ -1382,8 +1373,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     def outlaw_attack_counts(self, current_stats, ar=False, crit_rates=None):
         attacks_per_second = {}
         additional_info = {}
+
         # base_energy_regen needs to be reset here due to determine_stats method
-        self.base_energy_regen = 12.
+        self.base_energy_regen = 12. # should extract this to a function
+        if self.talents.vigor:
+            self.base_energy_regen *= 0.1
         if self.settings.cycle.blade_flurry:
             self.base_energy_regen *= .8
 
@@ -1396,8 +1390,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         main_gauche_proc_rate = self.outlaw_mastery_conversion * self.stats.get_mastery_from_rating(current_stats['mastery'])
 
-        combat_potency_regen_per_oh = 15 * .2 * self.stats.oh.speed / 1.4  # the new "normalized" formula
-        combat_potency_from_mg = 15 * .2
+        combat_potency_regen_per_oh = 15 * .3 * self.stats.oh.speed / 1.4  # the new "normalized" formula
+        combat_potency_from_mg = 15 * .3
         FINISHER_SIZE = 5
         ruthlessness_value = 1 # 1CP gained at 20% chance per CP spent (5CP spent means 1 is always added)
 
@@ -1420,15 +1414,17 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         # Turn the cost of the ability into the net loss of energy by reducing it by the energy gained from MG
         cost_reducer = main_gauche_proc_rate * combat_potency_from_mg
 
+        #these should probably extracted to functions.
         run_through_energy_cost =  self.get_spell_cost('run_through', cost_mod=cost_modifier)
         run_through_energy_cost -= cost_reducer
-        run_through_energy_cost -= FINISHER_SIZE * self.relentless_strikes_energy_return_per_cp
+        #run_through_energy_cost -= FINISHER_SIZE * self.relentless_strikes_energy_return_per_cp
         pistol_shot_energy_cost =  self.get_spell_cost('pistol_shot', cost_mod=cost_modifier)
         pistol_shot_energy_cost -= cost_reducer
         saber_slash_energy_cost =  self.get_spell_cost('saber_slash', cost_mod=cost_modifier)
         saber_slash_energy_cost -= cost_reducer
         death_from_above_energy_cost = self.get_spell_cost('death_from_above', cost_mod=cost_modifier)
         death_from_above_energy_cost -= cost_reducer * (2 + self.settings.num_boss_adds)
+
         #need to reduce the cost of DFA by the strike's MG proc ...
         #but also the MG procs from the AOE which hits the main target plus each additional add (strike + aoe)
         if self.stats.gear_buffs.rogue_t16_2pc_bonus():
@@ -1481,7 +1477,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         energy_regen += self.bonus_energy_regen + combat_potency_regen + bonus_energy_from_openers
         #Rough idea to factor in a full energy bar
         if not ar:
-            energy_regen += self.max_energy / self.settings.duration
+            energy_regen += self.get_max_energy() / self.settings.duration
 
         #Base actions
 
@@ -1497,7 +1493,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         ss_per_snd = ss_per_finisher
         snd_size = FINISHER_SIZE
         snd_base_cost = 25
-        snd_cost = ss_per_snd * saber_slash_energy_cost + snd_base_cost - snd_size * self.relentless_strikes_energy_return_per_cp
+        #snd_cost = ss_per_snd * saber_slash_energy_cost + snd_base_cost - snd_size * self.relentless_strikes_energy_return_per_cp
+        snd_cost = ss_per_snd * saber_slash_energy_cost + snd_base_cost
         snd_duration = 6 + 6 * (snd_size + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp())
         energy_spent_on_snd = snd_cost / snd_duration
 
@@ -1519,7 +1516,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             #dfa_gap probably should be handled more accurately especially in the non-anticipation case
             dfa_interval = 1./(dfa_cd)
             energy_for_dfa = energy_cost_for_cpgs + death_from_above_energy_cost
-            energy_for_dfa -= cp_per_finisher * self.relentless_strikes_energy_return_per_cp
+            #energy_for_dfa -= cp_per_finisher * self.relentless_strikes_energy_return_per_cp
             energy_for_dfa *= dfa_interval
 
             attacks_per_second['death_from_above'] = dfa_interval
@@ -1648,6 +1645,18 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     def outlaw_attack_counts_none(self, current_stats, crit_rates=None):
         return self.outlaw_attack_counts(current_stats, crit_rates=crit_rates)
+
+    def get_max_energy(self):
+        self.max_energy = 100
+        if self.talents.vigor:
+            self.max_energy += 50
+        if self.stats.gear_buffs.rogue_pvp_4pc_extra_energy():
+            self.max_energy += 30
+        if self.stats.gear_buffs.rogue_t18_4pc_lfr:
+            self.max_energy += 20
+        if self.race.expansive_mind:
+            self.max_energy = round(self.max_energy * 1.05, 0)
+        return self.max_energy
 
     ###########################################################################
     # Subtlety DPS functions

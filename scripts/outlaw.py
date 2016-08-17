@@ -76,8 +76,9 @@ ep_values = calculator.get_ep(baseline_dps=total_dps)
 #mh_enchants_and_dps_ep_values, oh_enchants_and_dps_ep_values =
 #calculator.get_weapon_ep(dps=True, enchants=True)
 
-#talent_ranks = calculator.get_talents_ranking()
-#trait_ranks = calculator.get_trait_ranking()
+talent_ranks = calculator.get_talents_ranking()
+trait_ranks = calculator.get_trait_ranking()
+
 def max_length(dict_list):
     max_len = 0
     for i in dict_list:
@@ -104,10 +105,10 @@ def pretty_print(dict_list, total_sum=1., show_percent=False):
 
 dicts_for_pretty_print = [ep_values,
     #tier_ep_values,
-    #talent_ranks,
+    talent_ranks,
     #trinkets_ep_value,
     dps_breakdown,
-    #trait_ranks
+    trait_ranks
 ]
 pretty_print(dicts_for_pretty_print)
 print ' ' * (max_length(dicts_for_pretty_print) + 1), total_dps, _("total damage per second.")
