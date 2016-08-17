@@ -611,7 +611,7 @@ allowed_melee_enchants = {
     #6.0
     'mark_of_the_frostwolf': {
         'stat': 'stats',
-        'value': {'multistrike':500},
+        'value': {'crit':500},
         'duration': 6,
         'max_stacks': 2,
         'proc_name': 'Mark of the Frostwolf',
