@@ -558,9 +558,14 @@ class DamageCalculator(object):
         else:
             trait_list = list
 
+        single_rank = self.traits.get_single_rank_trait_list()
+
         for trait in trait_list:
             base_trait_rank = getattr(self.traits, trait)
-            setattr(self.traits, trait, base_trait_rank+1)
+            if trait in single_rank and base_trait_rank:
+                setattr(self.traits, trait, 0)
+            else:
+                setattr(self.traits, trait, base_trait_rank+1)
             try:
                 new_dps = self.get_dps()
                 if new_dps != baseline_dps:

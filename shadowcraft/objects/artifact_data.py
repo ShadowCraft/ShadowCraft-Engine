@@ -60,3 +60,38 @@ traits = {
         'legionblade'
         ),
 }
+
+#Single Rank Traits for each spec
+#Used for binary trait ranking
+single_rank = {
+    ('rogue', 'assassination'): (
+        'kingsbane',
+        'assassins_blades',
+        'urge_to_kill',
+        'surge_of_toxins',
+        'shadow_swiftness',
+        'bag_of_tricks',
+        'from_the_shadows',
+        'blood_of_the_assassinated',
+    ),
+    ('rogue', 'outlaw'): (
+        'curse_of_the_dreadblades',
+        'cursed_edges',
+        'hidden_blade',
+        'deception',
+        'greed',
+        'blurred_time',
+        'blademaster',
+        'blunderbuss',
+        ),
+    ('rogue', 'subtlety'): (
+        'goremaws_bite',
+        'shadow_fangs',
+        'embrace_of_darkness',
+        'flickering_shadows',
+        'second_shuriken',
+        'finality',
+        'akarris_soul',
+        'shadow_nova',
+        ),
+}

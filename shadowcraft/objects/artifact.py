@@ -7,6 +7,7 @@ class InvalidTraitException(exceptions.InvalidInputException):
 class Artifact(object):
     def __init__(self, class_spec, game_class, trait_string='', trait_dict= {}):
         self.allowed_traits = artifact_data.traits[(game_class, class_spec)]
+        self.single_rank_traits = artifact_data.single_rank[(game_class, class_spec)]
 
         if trait_string:
             self.initialize_traits(trait_string)
@@ -39,3 +40,6 @@ class Artifact(object):
 
     def get_trait_list(self):
         return list(self.allowed_traits)
+
+    def get_single_rank_trait_list(self):
+        return list(self.single_rank_traits)

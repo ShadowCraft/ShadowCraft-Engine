@@ -406,9 +406,9 @@ class RogueDamageCalculator(DamageCalculator):
 
     #Nightblade doesn't actually scale with cps but passing cps for simplicity
     def nightblade_tick_damage(self, ap, cp):
-        return 1.2 * ap * (1 + (0.05 * self.traits.demon_kiss))
+        return 1.2 * ap * (1 + (0.05 * self.traits.demons_kiss))
     def finality_nightblade_tick_damage(self, ap, cp):
-        return 1.4 * ap * (1 + (0.05 * self.traits.demon_kiss))
+        return 1.4 * ap * (1 + (0.05 * self.traits.demons_kiss))
 
     def shadowstrike_damage(self, ap):
         return 8.5 * self.get_weapon_damage('mh', ap) * (1 + (0.05 * self.traits.precision_strike))
