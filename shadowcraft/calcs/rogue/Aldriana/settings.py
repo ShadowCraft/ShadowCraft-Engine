@@ -60,12 +60,9 @@ class AssassinationCycle(Cycle):
 
     allowed_values = (1, 2, 3, 4, 5)
 
-    def __init__(self, min_envenom_size_non_execute=4, min_envenom_size_execute=5):
-        assert min_envenom_size_non_execute in self.allowed_values
-        self.min_envenom_size_non_execute = min_envenom_size_non_execute
-
-        assert min_envenom_size_execute in self.allowed_values
-        self.min_envenom_size_execute = min_envenom_size_execute
+    def __init__(self, min_envenom_size=4):
+        assert min_envenom_size in self.allowed_values
+        self.min_envenom_size = min_envenom_size
 
 class OutlawCycle(Cycle):
     _cycle_type = 'outlaw'

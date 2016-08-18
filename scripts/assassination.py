@@ -54,13 +54,13 @@ test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          versatility=6522,)
 
 # Initialize talents..
-test_talents = talents.Talents('0200000', test_spec, test_class, level=test_level)
+test_talents = talents.Talents('0000000', test_spec, test_class, level=test_level)
 
 #initialize artifact traits..
 test_traits = artifact.Artifact(test_spec, test_class, '100000000000100000')
 
 # Set up settings.
-test_cycle = settings.AssassinationCycle(min_envenom_size_non_execute=4, min_envenom_size_execute=5)
+test_cycle = settings.AssassinationCycle()
 test_settings = settings.Settings(test_cycle, response_time=.5, duration=360)
 
 # Build a DPS object.
@@ -71,12 +71,12 @@ dps_breakdown = calculator.get_dps_breakdown()
 total_dps = sum(entry[1] for entry in dps_breakdown.items())
 
 # Compute EP values.
-#ep_values = calculator.get_ep(baseline_dps=total_dps)
+ep_values = calculator.get_ep(baseline_dps=total_dps)
 #tier_ep_values = calculator.get_other_ep(['rogue_t14_4pc', 'rogue_t14_2pc', 'rogue_t15_4pc', 'rogue_t15_2pc', 'rogue_t16_2pc', 'rogue_t16_4pc'])
 
 
-#talent_ranks = calculator.get_talents_ranking()
-#trait_ranks = calculator.get_trait_ranking()
+talent_ranks = calculator.get_talents_ranking()
+trait_ranks = calculator.get_trait_ranking()
 
 def max_length(dict_list):
     max_len = 0
@@ -102,14 +102,14 @@ def pretty_print(dict_list, total_sum = 1., show_percent=False):
         print '-' * (max_len + 15)
 
 dicts_for_pretty_print = [
-    #ep_values,
+    ep_values,
     #tier_ep_values,
-    #talent_ranks,
+    talent_ranks,
     #trinkets_ep_value,
     dps_breakdown,
-    #trait_ranks
+    trait_ranks
 ]
 pretty_print(dicts_for_pretty_print)
 
-pretty_print([dps_breakdown], total_sum=total_dps, show_percent=True)
+#pretty_print([dps_breakdown], total_sum=total_dps, show_percent=True)
 print ' ' * (max_length([dps_breakdown]) + 1), total_dps, _("total damage per second.")
