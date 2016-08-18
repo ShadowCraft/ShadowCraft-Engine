@@ -67,13 +67,12 @@ class AssassinationCycle(Cycle):
         assert min_envenom_size_execute in self.allowed_values
         self.min_envenom_size_execute = min_envenom_size_execute
 
-class CombatCycle(Cycle):
-    _cycle_type = 'combat'
+class OutlawCycle(Cycle):
+    _cycle_type = 'outlaw'
 
-    def __init__(self, ksp_immediately=True, revealing_strike_pooling=True, blade_flurry=False, dfa_during_ar=False):
+    def __init__(self, ksp_immediately=True, blade_flurry=False, dfa_during_ar=False):
         self.blade_flurry = bool(blade_flurry)
         self.ksp_immediately = bool(ksp_immediately) # Determines whether to KSp the instant it comes off cool or wait until Bandit's Guile stacks up.
-        self.revealing_strike_pooling = bool(revealing_strike_pooling)
         self.dfa_during_ar = bool(dfa_during_ar)
 
 class SubtletyCycle(Cycle):
