@@ -14,3 +14,7 @@ item_db.db
 /.pydevproject
 *.sublime-workspace
 *.sublime-project
+/ShadowCraft-Engine.pyproj
+/ShadowCraft-Engine.pyproj.user
+/ShadowCraft-Engine.sln
+/.vs/ShadowCraft-Engine/v14/.suo

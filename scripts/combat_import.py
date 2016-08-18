@@ -94,7 +94,7 @@ test_glyphs = glyphs.Glyphs(test_class, *glyph_list)
 # Set up settings.
 if character_data.get_mh_type() == 'dagger':
     print "\nALERT: Dagger found. Playing combat with a dagger should be a last resort, and is not recommended. \n\n"
-test_cycle = settings.CombatCycle(use_rupture=True, ksp_immediately=True, revealing_strike_pooling=True, blade_flurry=charInfo['blade_flurry'])
+test_cycle = settings.OutlawCycle(use_rupture=True, ksp_immediately=True, revealing_strike_pooling=True, blade_flurry=charInfo['blade_flurry'])
 test_settings = settings.Settings(test_cycle, response_time=.5, duration=360, dmg_poison='dp', utl_poison='lp', is_pvp=charInfo['pvp'],
                                   stormlash=charInfo['stormlash'], shiv_interval=charInfo['shiv'])
 
