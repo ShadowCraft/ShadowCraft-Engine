@@ -5,7 +5,7 @@ class Settings(object):
 
     def __init__(self, cycle, response_time=.5, latency=.03, duration=300, adv_params=None,
                  merge_damage=True, num_boss_adds=0, feint_interval=0, default_ep_stat='ap', is_day=False, is_demon=False,
-                 marked_for_death_resets=0):
+                 marked_for_death_resets=0, finisher_threshold=5):
         self.cycle = cycle
         self.response_time = response_time
         self.latency = latency
@@ -16,7 +16,11 @@ class Settings(object):
         self.num_boss_adds = max(num_boss_adds, 0)
         self.adv_params = self.interpret_adv_params(adv_params)
         self.default_ep_stat = default_ep_stat
+        #per minute
         self.marked_for_death_resets=marked_for_death_resets
+
+        #TODO: can be overridden by spec specific finisher thresholds
+        self.finisher_threshold = finisher_threshold
 
     def interpret_adv_params(self, s=""):
         data = {}
@@ -58,43 +62,45 @@ class Cycle(object):
 class AssassinationCycle(Cycle):
     _cycle_type = 'assassination'
 
-    allowed_values = (1, 2, 3, 4, 5)
-
-    def __init__(self, min_envenom_size_non_execute=4, min_envenom_size_execute=5):
-        assert min_envenom_size_non_execute in self.allowed_values
-        self.min_envenom_size_non_execute = min_envenom_size_non_execute
-
-        assert min_envenom_size_execute in self.allowed_values
-        self.min_envenom_size_execute = min_envenom_size_execute
+    def __init__(self, kingsbane_with_vendetta ='just', exsang_with_vendetta='just', cp_builder='mutilate'):
+        self.cp_builder = cp_builder #Allowed values: 'mutilate', 'fan_of_knives'
+        #Cooldown scheduling and usage settings
+        #Allowed values: 'just': Use cooldown if it aligns with vendetta but don't delay usages
+        #                'only': Only use cooldown with vendetta
+        self.kingsbane_with_vendetta = kingsbane_with_vendetta
+        self.exsang_with_vendetta = exsang_with_vendetta
 
 class OutlawCycle(Cycle):
     _cycle_type = 'outlaw'
 
-    def __init__(self, ksp_immediately=True, blade_flurry=False, dfa_during_ar=False):
+    def __init__(self, blade_flurry=False, between_the_eyes_policy='shark',
+                 jolly_roger_reroll=0, grand_melee_reroll=0, shark_reroll=0,
+                 true_bearing_reroll=0, buried_treasure_reroll=0, broadsides_reroll=0):
         self.blade_flurry = bool(blade_flurry)
-        self.ksp_immediately = bool(ksp_immediately) # Determines whether to KSp the instant it comes off cool or wait until Bandit's Guile stacks up.
-        self.dfa_during_ar = bool(dfa_during_ar)
+        self.between_the_eyes_policy = between_the_eyes_policy #Allowed values: 'shark', 'always', 'never'
+        # RtB reroll thresholds, 0, 1, 2, 3
+        # 0 means never reroll combos with this buff
+        # 1 means reroll singles of buff
+        # 2 means reroll doubles containing this buff
+        # 3 means reroll triples containing this buff
+        self.jolly_roger_reroll = jolly_roger_reroll
+        self.grand_melee_reroll = grand_melee_reroll
+        self.shark_reroll = shark_reroll
+        self.true_bearing_reroll = true_bearing_reroll
+        self.buried_treasure_reroll = buried_treasure_reroll
+        self.broadsides_reroll = broadsides_reroll
+
 
 class SubtletyCycle(Cycle):
     _cycle_type = 'subtlety'
 
-    def __init__(self, cp_builder='backstab', dance_cp_builder='shadowstrike', positional_uptime=1.0, symbols_policy='just',
+    def __init__(self, cp_builder='backstab', positional_uptime=1.0, symbols_policy='just',
                  eviscerate_cps=5, finality_eviscerate_cps=5, nightblade_cps=5, finality_nightblade_cps=5, dfa_cps = 5,
-                 dance_finishers_allowed=[], symbols_during_vanish=True, max_vanish_builders=3, max_dance_builders=4):
-        self.cp_builder = cp_builder #Allowed values: fok, backstab, gloomblade
-        self.dance_cp_builder = dance_cp_builder #Allowed values: shuriken_storm, shadowstrike
+                 dance_finishers_allowed=True):
+        self.cp_builder = cp_builder #Allowed values: 'shuriken_storm', 'backstab' (implies gloomblade if selected and ssk during dance)
         self.positional_uptime = positional_uptime #Range 0.0 to 1.0, time behind target
         self.symbols_policy = symbols_policy #Allowed values:
                                              #'always' - use SoD every dance (macro)
                                              #'just'   - Only use SoD when needed to refresh
-        self.eviscerate_cps = eviscerate_cps
-        self.finality_eviscerate_cps = finality_eviscerate_cps
-        self.nightblade_cps = nightblade_cps
-        self.finality_nightblade_cps = finality_nightblade_cps
-        self.death_from_above_cps = dfa_cps
-        self.max_dance_builders = max_dance_builders #0-4 with subter, 0-3 without
-        self.max_vanish_builders = max_vanish_builders #0-3 with subter, 0,1 without
-
-        #List of following keys: 'eviscerate', 'nightblade', 'finality:eviscerate', 'finality:nightblade, death_from_above'
-        #Keys not included will not be used during dance
+        #Allow finishers to be scheduled during dance
         self.dance_finishers_allowed= dance_finishers_allowed
