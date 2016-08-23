@@ -772,13 +772,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         self.base_energy_regen = 10
         self.max_energy = 120.
-        if self.stats.gear_buffs.rogue_pvp_4pc_extra_energy():
-            self.max_energy += 30
+
         if self.talents.lemon_zest:
             self.base_energy_regen *= 1 + .05 * (1 + min(self.settings.num_boss_adds, 2))
             self.max_energy += 15
-        if self.stats.gear_buffs.rogue_t18_4pc_lfr:
-            self.max_energy += 20
         if self.race.expansive_mind:
             self.max_energy = round(self.max_energy * 1.05, 0)
 
@@ -790,20 +787,16 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             spec_needs_converge = True
         self.envenom_crit_modifier = 0.0
 
-        self.vendetta_duration = 20 #+ 10 * self.glyphs.vendetta
+        self.vendetta_duration = 20
         self.vendetta_uptime = self.vendetta_duration / (self.get_spell_cd('vendetta') + self.settings.response_time + self.major_cd_delay)
-        self.vendetta_multiplier = .3 #- .05 * self.glyphs.vendetta
+        self.vendetta_multiplier = .3
         self.vendetta_mult = 1 + self.vendetta_multiplier * self.vendetta_uptime
 
     def assassination_dps_estimate(self):
         return sum(self.assassination_dps_breakdown().values())
 
     def update_assassination_breakdown_with_modifiers(self, damage_breakdown, current_stats):
-        #calculate multistrike here for Sub and Assassination, really cheap to calculate
-        #turns out the 2 chance system yields a very basic linear pattern, the damage modifier is 30% of the multistrike %!
-        #multistrike_multiplier = .3 * 2 * (self.stats.get_multistrike_chance_from_rating(rating=current_stats['multistrike']) + self.buffs.multistrike_bonus())
-        #multistrike_multiplier = min(.6, multistrike_multiplier)
-
+        #not sure if this is still needed since the trinkets, multistike and sr stuff are gone -aeriwen
         soul_cap_mod = 1.0
         if getattr(self.stats.procs, 'soul_capacitor'):
             soul_cap= getattr(self.stats.procs, 'soul_capacitor')
@@ -834,13 +827,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             #mirror of the blademaster doesn't get any player buffs
             if key == 'Mirror of the Blademaster':
                 continue
-            if ('sr_' not in key):
-                damage_breakdown[key] *= self.vendetta_mult
-                damage_breakdown[key] *= soul_cap_mod
-                damage_breakdown[key] *= infallible_trinket_mod
-            elif 'sr_' in key:
-                damage_breakdown[key] *= 1 + self.vendetta_multiplier
-            if self.level == 100 and key in ('mutilate', 'dispatch', 'sr_mutilate', 'sr_mh_mutilate', 'sr_oh_mutilate', 'sr_dispatch'):
+            
+            damage_breakdown[key] *= self.vendetta_mult
+            damage_breakdown[key] *= soul_cap_mod
+            damage_breakdown[key] *= infallible_trinket_mod
+            if self.level == 100 and key in ('mutilate', 'hemorrhage'): #hacked with hemo in place of dispatch for now -aeriwen
                 damage_breakdown[key] *= self.emp_envenom_percentage
 
         #add maalus burst
@@ -848,7 +839,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             damage_breakdown['maalus'] = sum(damage_breakdown.values())*(maalus_mod-1.0) * (self.settings.num_boss_adds+1)
 
     def assassination_dps_breakdown(self):
-        current_stats, attacks_per_second, crit_rates, damage_procs, additional_info = self.determine_stats(self.assassination_attack_counts_non_execute)
+        current_stats, attacks_per_second, crit_rates, damage_procs, additional_info = self.determine_stats(self.assassination_attack_counts)
         damage_breakdown, additional_info = self.get_damage_breakdown(current_stats, attacks_per_second, crit_rates, damage_procs, additional_info)
 
         self.update_assassination_breakdown_with_modifiers(damage_breakdown, current_stats)
@@ -905,8 +896,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 avg_breakdown[i] = n_chance*n_breakdown[i] + n_bs_chance*n_bs_breakdown[i] + c_chance*c_breakdown[i] + c_bs_chance*c_bs_breakdown[i]
             return avg_cp, avg_bs_afterwards, avg_count, avg_breakdown
 
-    def assassination_attack_counts(self, current_stats, cpg, finisher_size, crit_rates=None):
-
+    def assassination_attack_counts(self, current_stats, crit_rates=None):
+        #several previous settings are now hadcoded, appropriate settings will need to be exposed for release -aeriwen
+        cpg = 'mutilate'
         attacks_per_second = {}
         additional_info = {}
 
@@ -1070,7 +1062,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 crit_mod = round(getattr(self.stats.procs, 'bleeding_hollow_toxin_vessel').value['ability_mod'])/10000
                 self.envenom_crit_modifier = crit_mod * (1 - attacks_per_second['rupture']/finisher_per_second)
 
-        self.swing_reset_spacing = None #hack resets for now -aeriwen
+        self.swing_reset_spacing = None #hack resets for now, since it is broken -aeriwen
         white_swing_downtime = 0
         if self.swing_reset_spacing is not None:
             white_swing_downtime += .5 / self.swing_reset_spacing
@@ -1099,10 +1091,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         return attacks_per_second, crit_rates, additional_info
 
-    def assassination_attack_counts_non_execute(self, current_stats, crit_rates=None): #probably should be inlined -aeriwen
-        return self.assassination_attack_counts(current_stats, 'mutilate', self.settings.cycle.min_envenom_size, crit_rates=crit_rates)
-
-    def get_asassination_energy_regen(self, current_stats):
+    def get_asassination_energy_regen(self, current_stats): #this should probably be handled in a super class -aeriwen
         energy_regen = self.base_energy_regen * self.stats.get_haste_multiplier_from_rating(current_stats['haste']) * self.true_haste_mod + self.bonus_energy_regen
         if self.talents.marked_for_death: #not sure if this is the right model for dfa -aeriwen
             energy_regen -= 10. / self.get_spell_cd('marked_for_death') # 35-25 
@@ -1548,7 +1537,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     def outlaw_attack_counts_none(self, current_stats, crit_rates=None):
         return self.outlaw_attack_counts(current_stats, crit_rates=crit_rates)
 
-    def get_max_energy(self):
+    def get_max_energy(self): #this may be best handled as a method in a super class
         self.max_energy = 100
         if self.talents.vigor:
             self.max_energy += 50
