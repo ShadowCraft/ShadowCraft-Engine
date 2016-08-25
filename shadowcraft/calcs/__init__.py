@@ -528,33 +528,39 @@ class DamageCalculator(object):
 
     def get_talents_ranking(self, list=None):
         talents_ranking = {}
-        tier_ranking = {}
-        tier_levels = [15, 30, 45, 60, 75, 90, 100] #names for our tiers
-        baseline_dps = self.get_dps()
-        talent_list = []
+        tier_levels = [15, 30, 45, 60, 75, 90, 100] #list of levels for our tiers, because it is not in the talent data
+        baseline_dps = self.get_dps() #cache
+        allowed_talent_list = self.talents.get_allowed_talents_for_level() if list == None else list #cache
 
-        if list is None:
-            talent_list = self.talents.get_allowed_talents_for_level()
-        else:
-            talent_list = list
+        for tier, level in zip(self.talents.class_talents, tier_levels):
 
-        n = 0 #hacky index to name our talent tiers
-        for tier in self.talents.class_talents:
+            tier_ranking = {} #reinitialized to clear dict for each new tier
+            
             for talent in tier:
-                if talent in talent_list:
-                    setattr(self.talents, talent, not getattr(self.talents, talent))
+                
+                if talent in allowed_talent_list:
+                    
+                    setattr(self.talents, talent, not getattr(self.talents, talent)) # this is a rather arcane way to handle state :/
+                    
                     try:
+                        
                         new_dps = self.get_dps()
+                        
                         if new_dps != baseline_dps:
+                        
                             tier_ranking[talent] = abs(new_dps - baseline_dps)
+                        
                         else:
-                            tier_ranking[talent] = 'not implemented' # two unique null results for debug purposes
+                        
+                            tier_ranking[talent] = 'not implemented' #unique error: no dps delta for this talent
+                    
                     except:
-                        tier_ranking[talent] = 'implementation error' # two unique null results for debug purposes
+                    
+                        tier_ranking[talent] = 'implementation error' #unique error: error attempting to calc dps with this talent
+                    
                     setattr(self.talents, talent, not getattr(self.talents, talent))
-            talents_ranking[tier_levels[n]] = tier_ranking
-            n += 1 #increment the tier name
-            tier_ranking = {}
+
+            talents_ranking[level] = tier_ranking #place each tier into the talent tree
 
         return talents_ranking
 
