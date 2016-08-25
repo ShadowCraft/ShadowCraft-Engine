@@ -1,6 +1,7 @@
 # Simple test program to debug + play with assassination models.
 from os import path
 import sys
+from pprint import pprint
 sys.path.append(path.abspath(path.join(path.dirname(__file__), '..')))
 
 from shadowcraft.calcs.rogue.Aldriana import AldrianasRogueDamageCalculator
@@ -75,7 +76,7 @@ total_dps = sum(entry[1] for entry in dps_breakdown.items())
 #tier_ep_values = calculator.get_other_ep(['rogue_t14_4pc', 'rogue_t14_2pc', 'rogue_t15_4pc', 'rogue_t15_2pc', 'rogue_t16_2pc', 'rogue_t16_4pc'])
 
 
-#talent_ranks = calculator.get_talents_ranking()
+talent_ranks = calculator.get_talents_ranking()
 #trait_ranks = calculator.get_trait_ranking()
 
 def max_length(dict_list):
@@ -113,3 +114,5 @@ pretty_print(dicts_for_pretty_print)
 
 pretty_print([dps_breakdown], total_sum=total_dps, show_percent=True)
 print ' ' * (max_length([dps_breakdown]) + 1), total_dps, _("total damage per second.")
+
+pprint(talent_ranks)

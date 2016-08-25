@@ -528,6 +528,8 @@ class DamageCalculator(object):
 
     def get_talents_ranking(self, list=None):
         talents_ranking = {}
+        tier_ranking = {}
+        tier_levels = [15, 30, 45, 60, 75, 90, 100] #names for our tiers
         baseline_dps = self.get_dps()
         talent_list = []
 
@@ -536,15 +538,23 @@ class DamageCalculator(object):
         else:
             talent_list = list
 
-        for talent in talent_list:
-            setattr(self.talents, talent, not getattr(self.talents, talent))
-            try:
-                new_dps = self.get_dps()
-                if new_dps != baseline_dps:
-                    talents_ranking[talent] = abs(new_dps - baseline_dps)
-            except:
-                talents_ranking[talent] = _('not implemented')
-            setattr(self.talents, talent, not getattr(self.talents, talent))
+        n = 0 #hacky index to name our talent tiers
+        for tier in self.talents.class_talents:
+            for talent in tier:
+                if talent in talent_list:
+                    setattr(self.talents, talent, not getattr(self.talents, talent))
+                    try:
+                        new_dps = self.get_dps()
+                        if new_dps != baseline_dps:
+                            tier_ranking[talent] = abs(new_dps - baseline_dps)
+                        else:
+                            tier_ranking[talent] = 'not implemented' # two unique null results for debug purposes
+                    except:
+                        tier_ranking[talent] = 'implementation error' # two unique null results for debug purposes
+                    setattr(self.talents, talent, not getattr(self.talents, talent))
+            talents_ranking[tier_levels[n]] = tier_ranking
+            n += 1 #increment the tier name
+            tier_ranking = {}
 
         return talents_ranking
 
