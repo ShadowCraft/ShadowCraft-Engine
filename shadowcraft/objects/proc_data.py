@@ -158,6 +158,36 @@ allowed_procs = {
         'proc_rate': 0.92,
         'trigger': 'all_attacks'
     },
+     #7.0 procs
+    'arcanogolem_digit': {
+        'stat':'spell_damage',
+        'value': 37356,
+        'duration': 0,
+        'proc_name': 'Arcane Swipe',
+        'scaling': 12,
+        'item_level': 875,
+        'type': 'rppm',
+        'source': 'trinket',
+        'proc_rate': 1,
+        'icd': 1,
+        'haste_scales': True,
+        'can_crit': True,
+        'trigger': 'all_attacks'
+   },
+
+    'stormsinger_fulmination_charge': {
+        'stat':'stats',
+        'value': {'mastery': 505}, #has buff ramping and decay mechanic, may not be accurately valued
+        'duration': 10,
+        'proc_name': 'Focused Lightning',
+        'scaling': 0.35815,
+        'item_level': 790,
+        'type': 'rppm',
+        'source': 'trinket',
+        'proc_rate': .7,
+        'icd': 20,
+        'trigger': 'all_attacks'
+   },
     #6.2.3 procs
     'infallible_tracking_charm': {
         'stat':'spell_damage',
