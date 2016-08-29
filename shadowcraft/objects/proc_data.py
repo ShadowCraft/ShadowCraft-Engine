@@ -176,6 +176,19 @@ allowed_procs = {
         'trigger': 'all_attacks'
    },
 
+    'bloodthirsty_instinct': { #Equip: Your melee attacks have a chance to increase your Haste by 3399 for 10 sec. This effect occurs more often against targets at low health.
+        'stat':'stats',
+        'value': {'haste': 3399},
+        'duration': 10,
+        'proc_name': 'Bloodthirsty Instinct',
+        'scaling': 1.378349,
+        'item_level': 850,
+        'source': 'trinket',
+        'type': 'rppm',
+        'proc_rate': 3,
+        'trigger': 'all_attacks',
+   },
+
     'chaos_talisman': { #Equip: Your melee autoattacks grant you Chaotic Energy, increasing your Strength or Agility by 55, stacking up to 20 times. If you do not autoattack an enemy for 4 sec, this effect will decrease by 1 stack every sec.
         'stat':'stats',
         'value': {'agi': 42},
@@ -202,6 +215,46 @@ allowed_procs = {
         'type': 'rppm',
         'proc_rate': 1,
         'haste_scales': True,
+        'trigger': 'all_attacks',
+   },
+
+    'convergence_of_fates': { #Equip: Your attacks have a chance to reduce the remaining cooldown on one of your powerful abilities by 5 sec.
+        'stat':'stats',
+        'value': 5, #needs special modeling 
+        'duration': 0,
+        'proc_name': 'Prescience', # reduce cd of shadow blades, vendetta, adrenaline rush
+        'scaling': 0, #no values appear to scale ¯\_(ツ)_/¯
+        'item_level': 875,
+        'source': 'trinket',
+        'type': 'rppm',
+        'proc_rate': 3,
+        'trigger': 'all_attacks',
+   },
+
+    'draught_of_souls': { #Use: Enter a fel-crazed rage, dealing 124520 damage to a random nearby enemy every second for 8 sec. You cannot use abilities during your rage, and your movement speed is slowed by 30%. (2 Min Cooldown)
+        'stat':'stats',
+        'value': 996160, #124520 * 8
+        'duration': 0,
+        'proc_name': 'Fel-Crazed Rage',
+        'scaling': 40, 
+        'item_level': 875,
+        'source': 'trinket',
+        'type': 'icd',
+        'icd': 120,
+        'proc_rate': 1,
+        'trigger': 'all_attacks',
+   },
+
+    'entwined_elemental_foci': { #Equip: Your attacks have a chance to grant Fiery, Frost, or Arcane enchants for 8 sec.
+        'stat':'stats',
+        'value': {'haste': 0}, #needs special modeling 
+        'duration': 8,
+        'proc_name': 'Triumvirate',
+        'scaling': 1.5,
+        'item_level': 875,
+        'source': 'trinket',
+        'type': 'rppm',
+        'proc_rate': 1,
         'trigger': 'all_attacks',
    },
 
@@ -278,6 +331,32 @@ allowed_procs = {
         'trigger': 'all_attacks',
    },
 
+    'natures_call': { #Equip: Your melee attacks have a chance to grant you a blessing of one of the Allies of Nature for 8 sec.
+        'stat':'stats',
+        'value': {'haste': 0}, #needs special modeling 
+        'duration': 8,
+        'proc_name': 'Allies of Nature',
+        'scaling': 1.98186,
+        'item_level': 850,
+        'source': 'trinket',
+        'type': 'rppm',
+        'proc_rate': 2,
+        'trigger': 'all_attacks',
+   },
+
+    'nightblooming_frond': { #Equip: Your attacks have a chance to grant Recursive Strikes for 15 sec, causing your auto attacks to deal an additional 1557 damage and increase the intensity of Recursive Strikes.
+        'stat':'stats',
+        'value': 1557, #needs special modeling 
+        'duration': 15,
+        'proc_name': 'Recursive Strikes',
+        'scaling': 0.5001606,
+        'item_level': 875,
+        'source': 'trinket',
+        'type': 'rppm',
+        'proc_rate': 1,
+        'trigger': 'all_attacks',
+   },
+
     'nightmare_egg_shell': { #Equip: Your melee attacks have a chance to grant you 184 Haste every 1 sec for 20 sec.
         'stat':'stats',
         'value': {'haste': 184},
@@ -289,6 +368,19 @@ allowed_procs = {
         'type': 'rppm',
         'proc_rate': .7,
         'trigger': 'all_attacks',
+   },
+
+    'ravaged_seed_pod': { #Use: Contaminate the ground beneath your feet for 10 sec, dealing 18798 Shadow damage to enemies in the area each second. While you remain in this area, you gain 1540 Leech. (1 Min Cooldown)
+        'stat':'spell_damage',
+        'value': 18798, #multiple targets not modeled
+        'duration': 10,
+        'proc_name': 'Infested Ground',
+        'scaling': 7.622871,
+        'item_level': 850,
+        'type': 'icd',
+        'icd': 60,
+        'source': 'trinket',
+        'proc_rate': 1,
    },
 
     'spiked_counterweight': { #Your melee attacks have a chance to deal 90047 Physical damage and increase all damage the target takes from you by 15% for 15 sec, up to 271840 extra damage dealt.
@@ -313,6 +405,18 @@ allowed_procs = {
         'type': 'rppm',
         'source': 'trinket',
         'proc_rate': .92,
+   },
+
+    'spontaneous_appendages': { #Equip: Your melee attacks have a chance to generate extra appendages for 12 sec that attack nearby enemies for 15132 Physical damage every 0.75 sec.
+        'stat':'physical_damage',
+        'value': 0, #needs special handling
+        'duration': 12,
+        'proc_name': 'Horrific Appendages',
+        'scaling': 6.136254,
+        'item_level': 850,
+        'type': 'rppm',
+        'source': 'trinket',
+        'proc_rate': .7,
    },
 
     'tempered_egg_of_serpentrix': { #Equip: Your attacks have a chance to summon a Spawn of Serpentrix to assist you.
