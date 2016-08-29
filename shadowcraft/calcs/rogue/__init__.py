@@ -527,7 +527,7 @@ class RogueDamageCalculator(DamageCalculator):
         cd = self.ability_cds[ability]
         if ability == 'adrenaline_rush':
             cd -= 10 * self.traits.fortunes_boon
-        return self.ability_cds[ability]
+        return cd
 
     def crit_rate(self, crit=None):
         # all rogues get 10% bonus crit, .05 of base crit for everyone

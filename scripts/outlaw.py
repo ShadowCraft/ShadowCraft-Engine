@@ -60,9 +60,9 @@ test_traits = artifact.Artifact(test_spec, test_class, '000000000000000000')
 
 # Set up settings.
 test_cycle = settings.OutlawCycle(blade_flurry=False,
-                                  #jolly_roger_reroll=1,
+                                  #jolly_roger_reroll=0,
                                   #grand_melee_reroll=1,
-                                  shark_reroll=1,
+                                  #shark_reroll=1,
                                   #true_bearing_reroll=1,
                                   #buried_treasure_reroll=1,
                                   #broadsides_reroll=1
@@ -84,7 +84,7 @@ total_dps = sum(entry[1] for entry in dps_breakdown.items())
 #calculator.get_weapon_ep(dps=True, enchants=True)
 
 #talent_ranks = calculator.get_talents_ranking()
-#trait_ranks = calculator.get_trait_ranking()
+trait_ranks = calculator.get_trait_ranking()
 
 def max_length(dict_list):
     max_len = 0
@@ -115,7 +115,7 @@ dicts_for_pretty_print = [#ep_values,
     #talent_ranks,
     #trinkets_ep_value,
     dps_breakdown,
-    #trait_ranks
+    trait_ranks
 ]
 pretty_print(dicts_for_pretty_print)
 print ' ' * (max_length(dicts_for_pretty_print) + 1), total_dps, ("total damage per second.")
