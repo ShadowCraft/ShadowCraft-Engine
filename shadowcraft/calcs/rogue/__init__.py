@@ -51,11 +51,27 @@ class RogueDamageCalculator(DamageCalculator):
                                  'envenom', 'rupture_ticks', 'between_the_eyes',
                                  'run_through', 'eviscerate', 'finality:eviscerate',
                                 'nightblade', 'finality:nightblade',
-                                'nightblade_ticks', 'finality:nightblade_ticks']
+                                'nightblade_ticks', 'finality:nightblade_ticks',
+                                'roll_the_bones', 'slice_and_dice']
     #All damage source that are replicated by Blade Flurry
     blade_flurry_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
                              'ambush', 'between_the_eyes', 'blunderbuss', 'ghostly_strike', 'greed', 'killing_spree',
                              'main_gauche','pistol_shot', 'run_through', 'saber_slash']
+
+    #probability of getting X buffs with rtb
+    rtb_probabilities = {
+    1: 0.5923,
+    2: 0.3537,
+    3: 0.0386,
+    6: 0.0154,
+    }
+    #number of unique rtb buffs of each amount
+    rtb_buff_count = {
+    1: 6,
+    2: 15,
+    3: 20,
+    6: 1,
+    }
 
     assassination_mastery_conversion = .035
     outlaw_mastery_conversion = .022
@@ -377,7 +393,7 @@ class RogueDamageCalculator(DamageCalculator):
         return 3.5 * self.get_weapon_damage('mh', ap)
 
     def oh_greed_damage(self, ap):
-        return 3.5 * self.oh_penalty * self.get_weapon_damage('oh', ap)
+        return 3.5 * self.oh_penalty() * self.get_weapon_damage('oh', ap)
 
     #For KsP treat each hit individually
     def mh_killing_spree_damage(self, ap):

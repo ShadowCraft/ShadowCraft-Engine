@@ -31,8 +31,8 @@ test_buffs = buffs.Buffs('short_term_haste_buff',
     'food_wod_versatility')
 
 # Set up weapons.  mark_of_the_frostwolf mark_of_the_shattered_hand
-test_mh = stats.Weapon(812.0, 2.6, 'sword', 'mark_of_the_shattered_hand')
-test_oh = stats.Weapon(812.0, 2.6, 'sword', 'mark_of_the_shattered_hand')
+test_mh = stats.Weapon(4821.0, 2.6, 'sword', None)
+test_oh = stats.Weapon(4821.0, 2.6, 'sword', None)
 
 # Set up procs.
 #test_procs = procs.ProcsList(('assurance_of_consequence', 588),
@@ -45,21 +45,27 @@ test_gear_buffs = stats.GearBuffs('gear_specialization') #tier buffs located her
 
 # Set up a calcs object..
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
-                         agi=7655,
+                         agi=20909,
                          stam=19566,
-                         crit=2665,
-                         haste=1594,
-                         mastery=3350,
-                         versatility=6522,)
+                         crit=4402,
+                         haste=5150,
+                         mastery=5999,
+                         versatility=1515,)
 
 # Initialize talents..
-test_talents = talents.Talents('0000000', test_spec, test_class, level=test_level)
+test_talents = talents.Talents('0000001', test_spec, test_class, level=test_level)
 
 #initialize artifact traits..
-test_traits = artifact.Artifact(test_spec, test_class, '100000000000100000')
+test_traits = artifact.Artifact(test_spec, test_class, '000000000001000000')
 
 # Set up settings.
-test_cycle = settings.OutlawCycle(blade_flurry=False, dfa_during_ar=True)
+test_cycle = settings.OutlawCycle(blade_flurry=False,
+                                  jolly_roger_reroll=1,
+                                  grand_melee_reroll=1,
+                                  shark_reroll=1,
+                                  true_bearing_reroll=1,
+                                  buried_treasure_reroll=1,
+                                  broadsides_reroll=1)
 test_settings = settings.Settings(test_cycle, response_time=.5, duration=360,
                                  adv_params="", is_demon=True, num_boss_adds=0)
 
@@ -71,12 +77,12 @@ dps_breakdown = calculator.get_dps_breakdown()
 total_dps = sum(entry[1] for entry in dps_breakdown.items())
 
 # Compute EP values.
-ep_values = calculator.get_ep(baseline_dps=total_dps)
+#ep_values = calculator.get_ep(baseline_dps=total_dps)
 #tier_ep_values = calculator.get_other_ep(['rogue_t16_2pc', 'rogue_t16_4pc'])
 #mh_enchants_and_dps_ep_values, oh_enchants_and_dps_ep_values =
 #calculator.get_weapon_ep(dps=True, enchants=True)
 
-talent_ranks = calculator.get_talents_ranking()
+#talent_ranks = calculator.get_talents_ranking()
 trait_ranks = calculator.get_trait_ranking()
 
 def max_length(dict_list):
@@ -103,12 +109,12 @@ def pretty_print(dict_list, total_sum=1., show_percent=False):
                 print value[0] + ':' + ' ' * (max_len - len(value[0])), str(value[1])
         print '-' * (max_len + 15)
 
-dicts_for_pretty_print = [ep_values,
+dicts_for_pretty_print = [#ep_values,
     #tier_ep_values,
-    talent_ranks,
+    #talent_ranks,
     #trinkets_ep_value,
     dps_breakdown,
     trait_ranks
 ]
 pretty_print(dicts_for_pretty_print)
-print ' ' * (max_length(dicts_for_pretty_print) + 1), total_dps, _("total damage per second.")
+print ' ' * (max_length(dicts_for_pretty_print) + 1), total_dps, ("total damage per second.")

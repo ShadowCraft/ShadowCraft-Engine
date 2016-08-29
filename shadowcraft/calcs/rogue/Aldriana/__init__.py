@@ -1210,11 +1210,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     #Legion TODO:
 
     #Talents:
-        #T1:Ghostly Strike
         #T3:Anticipation
-        #T5:Cannonball Barrage
-        #T5:Alacrity
-        #T5:Killing Spree
         #T6:Marked for Death
 
     #Artifact:
@@ -1343,7 +1339,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #Compute values that are true through all RtB variations
         self.base_energy_regen = 12.
         if self.talents.vigor:
-            self.base_energy_regen *= 0.1
+            self.base_energy_regen *= 1.1
         if self.settings.cycle.blade_flurry:
             self.base_energy_regen *= .8 + (0.03333 * self.traits.blade_dancer)
 
@@ -1353,16 +1349,17 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.haste_multiplier = self.stats.get_haste_multiplier_from_rating(current_stats['haste']) * self.true_haste_mod
 
         combat_potency_proc_energy = 15 + (1 * self.traits.fortune_strikes)
-        self.combat_potency_regen_per_oh = combat_potency_proc_energy * .3 * self.stats.oh.speed / 1.4  # the new "normalized" formula
-        self.combat_potency_from_mg = combat_potency_proc_energy * .3
+        self.combat_potency_regen_per_oh = combat_potency_proc_energy * 3. * self.stats.oh.speed / 1.4  # the new "normalized" formula
+        self.combat_potency_from_mg = combat_potency_proc_energy * 3.
 
         self.main_gauche_proc_rate = self.outlaw_mastery_conversion * self.stats.get_mastery_from_rating(current_stats['mastery'])
         cost_reducer = self.main_gauche_proc_rate * self.combat_potency_from_mg
 
         #compute MG lumped ability costs
         self.run_through_energy_cost = self.get_spell_cost('run_through') - (4 * self.traits.fatebringer) - cost_reducer
+        self.between_the_eyes_energy_cost = self.get_spell_cost('between_the_eyes') - (4 * self.traits.fatebringer) - cost_reducer
         self.pistol_shot_energy_cost = self.get_spell_cost('run_through') - (4 * self.traits.fatebringer) - cost_reducer
-        self.saber_slash_energy_cost = self. self.get_spell_cost('saber_slash') - cost_reducer
+        self.saber_slash_energy_cost = self.get_spell_cost('saber_slash') - cost_reducer
         self.death_from_above_energy_cost = max(0, self.get_spell_cost('death_from_above')  - (4 * self.traits.fatebringer) - cost_reducer * (1 + self.settings.num_boss_adds))
         if self.talents.slice_and_dice:
             self.slice_and_dice_cost = self.get_spell_cost('slice_and_dice') - (4 * self.traits.fatebringer)
@@ -1372,48 +1369,194 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.ghostly_strike_cost = self.get_spell_cost('ghostly_strike') - cost_reducer
 
         self.white_swing_downtime = self.settings.response_time / self.get_spell_cd('vanish')
-        #compute dps phases each non-rerolling rtb buff combo (excluding tb and shark) ar and not
+        #compute dps phases each non-rerolling rtb buff combo ar and not
         phases = {}
         ar_phases = {}
 
-        for phase in self.settings.keep_list:
-            jolly = 'jr' in phase
-            melee = 'gm' in phase
-            buried = 'bt' in phase
-            broadsides = 'b' in phase
-            true_bearing = 'tb' in phase
-            shark = 's' in phase
+        keep_chance = 0.0
+        keep_tb_uptime = 0.0
+        keep_shark_uptime = 0.0
+        keep_gm_uptime = 0.0
+        maintainence_buff_duration = 6 * (1 + self.settings.finisher_threshold)
+        if self.talents.slice_and_dice:
+            aps_normal = self.outlaw_attack_counts_mincycle(current_stats, snd=True, duration=maintainence_buff_duration)
+            aps_ar = self.outlaw_attack_counts_mincycle(current_stats, snd=True, ar=True, duration=self.ar_duration)
+        else:
+            for phase in self.settings.cycle.keep_list:
+                jolly = 'jr' in phase
+                melee = 'gm' in phase
+                buried = 'bt' in phase
+                broadsides = 'b' in phase
+                true_bearing = 'tb' in phase
+                shark = 's' in phase
 
-            chance = self.rtb_probabilities[len(phase)]/self.rtb_buff_count[len(phase)]
-            aps = outlaw_attack_counts_mincycle(current_stats, jolly=jolly, 
-                    melee=melee, buried=buried, broadsides=broadsides)
+                chance = self.rtb_probabilities[len(phase)]/self.rtb_buff_count[len(phase)]
+                aps = self.outlaw_attack_counts_mincycle(current_stats, jolly=jolly, 
+                        melee=melee, buried=buried, broadsides=broadsides, shark=shark, true_bearing=true_bearing,
+                        duration=maintainence_buff_duration)
+                aps_ar = self.outlaw_attack_counts_mincycle(current_stats,  ar=True, jolly=jolly, 
+                        melee=melee, buried=buried, broadsides=broadsides, shark=shark, true_bearing=true_bearing,
+                        duration=self.ar_duration)
+
+                phases[phase] = (chance, aps)
+                ar_phases[phase] = (chance, aps_ar)
+                keep_chance += chance
+                if melee:
+                    keep_gm_uptime += chance
+                if true_bearing:
+                    keep_tb_uptime += chance
+                if shark:
+                    keep_shark_uptime += chance
+            #merge ar and non-ar into single phases
+            aps_normal = self.merge_attacks_per_second(phases, total_time=keep_chance)
+            aps_ar = self.merge_attacks_per_second(ar_phases, total_time=keep_chance)
+            #technically there is a convergence relationship here but ignoring it
+            if self.talents.alacrity:
+                alacrity_stacks = self.get_average_alacrity(aps_normal)
+                alacrity_stacks_ar = self.get_average_alacrity(aps_ar)
+            else:
+                alacrity_stacks = 0
+                alacrity_stacks_ar = 0
+            #now compute the average time for each reroll
+            phases = {}
+            ar_phases = {}
+            net_reroll_time = 0.0
+            net_reroll_time_ar = 0.0
+            reroll_tb_uptime = 0.0
+            reroll_shark_uptime = 0.0
+            reroll_gm_uptime = 0.0
+            for phase in self.settings.cycle.reroll_list:
+                jolly = 'jr' in phase
+                melee = 'gm' in phase
+                buried = 'bt' in phase
+                broadsides = 'b' in phase
+                true_bearing = 'tb' in phase
+                shark = 's' in phase
+
+                chance = self.rtb_probabilities[len(phase)]/self.rtb_buff_count[len(phase)]
+                aps, reroll_time = self.outlaw_attack_counts_reroll(current_stats, jolly=jolly, 
+                        melee=melee, buried=buried, broadsides=broadsides, alacrity_stacks=alacrity_stacks)
+                aps_ar, reroll_time_ar = self.outlaw_attack_counts_mincycle(current_stats,  ar=True, jolly=jolly, 
+                        melee=melee, buried=buried, broadsides=broadsides, alacrity_stacks = alacrity_stacks_ar)
+                phases[phase] = (chance * reroll_time, aps)
+                ar_phases[phase] = (chance * reroll_time_ar, aps_ar)
+                net_reroll_time += chance * reroll_time
+                net_reroll_time_ar += chance * reroll_time_ar
+                if true_bearing:
+                    reroll_tb_uptime += chance * reroll_time
+                if shark:
+                    reroll_shark_uptime += chance * reroll_time
+                if melee:
+                    reroll_gm_uptime += chance * reroll_time
+
+            reroll_tb_uptime *= 1./net_reroll_time
+            reroll_shark_uptime *= 1./net_reroll_time
+            reroll_gm_uptime *= 1./net_reroll_time
+
+            aps_reroll = self.merge_attacks_per_second(phases, total_time=net_reroll_time)
+            aps_reroll_ar = self.merge_attacks_per_second(phases, total_time=net_reroll_time_ar)
+            #now combine the reroll and keep dicts
+            rtb_keep_duration = 6 * (1+ self.settings.finisher_threshold)
+            #will pandemic into rtb based on keep_chance
+            rtb_keep_duration *= 1 + (0.3 * keep_chance)
+            reroll_duration = net_reroll_time * len(self.settings.cycle.reroll_list)
+            ar_reroll_duration = net_reroll_time_ar * len(self.settings.cycle.reroll_list)
+            phases = {'keep': (rtb_keep_duration, aps_normal),
+                      'reroll': (reroll_duration, aps_reroll)}
+            aps_normal = self.merge_attacks_per_second(phases, rtb_keep_duration + reroll_duration)
+            phases = {'keep': (rtb_keep_duration, aps_ar),
+                      'reroll': (ar_reroll_duration, aps_reroll_ar)}
+            aps_ar = self.merge_attacks_per_second(phases, rtb_keep_duration + ar_reroll_duration)
+
+            keep_uptime = rtb_keep_duration/(rtb_keep_duration + reroll_duration)
+            tb_uptime = (keep_uptime * keep_tb_uptime) + (1 - keep_uptime) * reroll_tb_uptime
+            gm_uptime = (keep_uptime * keep_gm_uptime) + (1 - keep_uptime) * reroll_gm_uptime
+            shark_uptime = (keep_uptime * keep_shark_uptime) + (1 - keep_uptime) * reroll_shark_uptime
+
+        #determine ar uptime and merge the two distributions
+        attacks_per_second = self.merge_attacks_per_second({'normal': (self.ar_cd - self.ar_duration, aps_normal),
+            'ar': (self.ar_duration, aps_ar)}, total_time=self.ar_cd)
+        ar_uptime = self.ar_duration / self.ar_cd
+        tb_seconds_per_second = 0
+        #if rtb loop on ar cooldown
+        if not self.talents.slice_and_dice:
+            old_ar_cd = self.ar_duration
+            loop_counter = 0
+            while (loop_counter < 20):
+                cp_spend_per_second = 0
+                for ability in attacks_per_second:
+                    if ability in self.finisher_damage_sources:
+                        for cp in xrange(7):
+                            cp_spend_per_second += attacks_per_second[ability][cp] * cp
+                tb_seconds_per_second = 2 * cp_spend_per_second * tb_uptime
+                new_ar_cd = self.ar_cd/(1 + tb_seconds_per_second)
+                #remerge the ars
+                attacks_per_second = self.merge_attacks_per_second({'normal': (new_ar_cd - self.ar_duration, aps_normal),
+                    'ar': (self.ar_duration, aps_ar)}, total_time=new_ar_cd)
+                
+                if old_ar_cd - new_ar_cd < 0.1:
+                    break
+                else:
+                    old_ar_cd = new_ar_cd
+            ar_uptime = self.ar_duration / new_ar_cd
+        
+        #add in cannonball and killing spree
+        if self.talents.killing_spree:
+            ksp_cd = self.get_spell_cd('killing_spree') / (1. + tb_seconds_per_second)
+            #ksp is 7 hits per hand
+            attacks_per_second['killing_spree'] = 7./ksp_cd
+        if self.talents.cannonball_barrage:
+            cannonball_barrage_cd = self.get_spell_cd('cannonball_barrage') / (1. + tb_seconds_per_second)
+            attacks_per_second['cannonball_barrage'] = 1./cannonball_barrage_cd
 
 
+        #figure swing timer and add mg
+        attack_speed_multiplier = self.haste_multiplier * (1 + (0.9 * self.talents.slice_and_dice))
+        attack_speed_multiplier *= (1 + (0.2 * ar_uptime))
+        if not self.talents.slice_and_dice:
+            attack_speed_multiplier *= (1 + (0.5 * gm_uptime))
+        swing_timer = self.stats.mh.speed / attack_speed_multiplier
+        attacks_per_second['mh_autoattacks'] = 1./swing_timer
+        attacks_per_second['oh_autoattacks'] = 1./swing_timer
+        attacks_per_second['main_gauche'] = self.main_gauche_proc_rate * attacks_per_second['mh_autoattacks'] * self.dual_wield_mh_hit_chance()
+        #add in mg
+        for ability in attacks_per_second:
+            if ability in ['ambush', 'ghostly_strike', 'killing_spree', 'saber_slash']:
+                attacks_per_second['main_gauche'] += self.main_gauche_proc_rate * attacks_per_second[ability]
+            elif ability in ['death_from_above_pulse', 'death_from_above_strike','run_through',]:
+                attacks_per_second['main_gauche'] += sum(attacks_per_second[ability]) * self.main_gauche_proc_rate
 
+        if not self.talents.slice_and_dice:
+            crit_mod = 1 + (0.25 * shark_uptime)
+            for ability in crit_rates:
+                if ability == 'between_the_eyes' and self.settings.cycle.between_the_eyes_policy == 'shark':
+                    crit_rates[ability] += 0.25
+                else:
+                    crit_rates[ability] += crit_mod
 
-
-
-
-
-        if self.traints.greed:
-            attacks_per_second['greed'] = 0.35 * attacks_per_second['run_through']
+        if self.traits.greed:
+            attacks_per_second['greed'] = 0.35 * sum(attacks_per_second['run_through'])
 
         if self.traits.blunderbuss:
             attacks_per_second['blunderbuss'] = 0.33 * attacks_per_second['pistol_shot']
             attacks_per_second['pistol_shot'] -= attacks_per_second['blunderbuss']
 
+        #print attacks_per_second
         return attacks_per_second, crit_rates, additional_info
 
     def outlaw_attack_counts_mincycle(self, current_stats, snd=False, ar=False,
-        jolly=False, melee=False, buried=False, broadsides=False, duration=30):
-
+        jolly=False, melee=False, buried=False, broadsides=False, duration=30,
+        #probably don't actually need shark or tb here but simpler
+        shark=False, true_bearing=True):
+        maintainence_buff ='roll_the_bones'
         attack_speed_multiplier = self.haste_multiplier
         if melee:
             attack_speed_multiplier *= 1.5
         if snd:
             attack_speed_multiplier *= 1.9
+            maintainence_buff = 'slice_and_dice'
 
-        energy_regen = self.base_energy_regen
+        energy_regen = self.base_energy_regen * self.haste_multiplier
         if buried:
             energy_regen *= 1.25
 
@@ -1435,43 +1578,55 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         gcd_budget = duration/gcd_size
 
         #since artifacts we'll just compute a one handed swing timer
-        swing_timer = self.stats.mh_speed / attack_speed_multiplier
-        swings = duration/swing_timer
-        swings *= (1 - self.white_swing_downtime)
         if self.talents.death_from_above and not ar:
-            dfa_cd = self.get_spell_cd('death_from_above') + self.settings.response_time
+            dfa_cd = self.get_spell_cd('death_from_above') + self.settings.response_time - (10 * true_bearing)
             dfa_count = duration/dfa_cd
-            dfa_lost_swings = self.lost_swings_from_swing_delay(1.3, swing_timer)
-            swings -= dfa_lost_swings * dfa_count
-
-        swing_hits = swings * self.dw_mh_hit_chance
-
-        combat_potency_energy = swing_hits * self.combat_potency_regen_per_oh
-        combat_potency_energy += swing_hits * self.main_gauche_proc_rate * self.combat_potency_from_mg
-        energy_budget += combat_potency_energy
+            dfa_lost_swings = self.lost_swings_from_swing_delay(1.3, self.mh.speed/attack_speed_multiplier)
+            dfa_energy_lost = dfa_lost_swings * (self.main_gauche_proc_rate * self.combat_potency_from_mg + self.combat_potency_regen_per_oh)
+            energy_budget -= dfa_energy_lost
+        
+        mg_cp_energy = self.get_mg_cp_regen_from_haste(attack_speed_multiplier) * (1 - self.white_swing_downtime)
+        energy_budget += mg_cp_energy
 
         attacks_per_second = {}
 
         #consider the cost of building to max cps and using rtb
         energy_budget -= ss_count * self.saber_slash_energy_cost
         #don't account for ps energy becuase ps is free
-        energy_budget -= self.roll_the_bones_cost
+        if snd:
+            energy_budget -= self.slice_and_dice_cost
+        else:
+            energy_budget -= self.roll_the_bones_cost
         gcd_budget -= (ss_count + ps_count + 1)
         attacks_per_second['saber_slash'] = float(ss_count)/duration
         attacks_per_second['pistol_shot'] = float(ps_count)/duration
-        attacks_per_second['roll_the_bones'] = float(finisher_list)/duration
+
+        attacks_per_second[maintainence_buff] = [0, 0, 0, 0, 0, 0, 0]
+        for cp in xrange(7):
+            attacks_per_second[maintainence_buff][cp] += finisher_list[cp]/duration
+
+        if (shark and self.settings.cycle.between_the_eyes_policy == 'shark') or self.settings.cycle.between_the_eyes_policy == 'always':
+            bte_count = duration/(20 + self.settings.response_time - (10 * true_bearing))
+            attacks_per_second['between_the_eyes'] = [0, 0, 0, 0, 0, 0, 0]
+            for cp in xrange(7):
+                attacks_per_second['between_the_eyes'][cp] += float(finisher_list[cp] * bte_count)/duration
+            attacks_per_second['pistol_shot'] += float(bte_count * ps_count)/duration
+            attacks_per_second['saber_slash'] += float(bte_count * ss_count)/duration
+            energy_budget -= (bte_count * ss_count) * self.saber_slash_energy_cost
+            energy_budget -= bte_count * self.between_the_eyes_energy_cost
+            gcd_budget -= bte_count * (ss_count + ps_count + 1)
 
         #consider DfA
         if self.talents.death_from_above and not ar:
             energy_budget -= ss_count * dfa_count * self.saber_slash_energy_cost
             energy_budget -= dfa_count * self.death_from_above_energy_cost
-            attacks_per_second['saber_slash'] = float(ss_count * dfa_count)/duration
-            attacks_per_second['pistol_shot'] = float(ps_count * dfa_count)/duration
-            attacks_per_second['death_from_above_strike'] = finisher_list
-            attacks_per_second['death_from_above_pulse'] = finisher_list
+            attacks_per_second['saber_slash'] += float(ss_count * dfa_count)/duration
+            attacks_per_second['pistol_shot'] += float(ps_count * dfa_count)/duration
+            attacks_per_second['death_from_above_strike'] = [0, 0, 0, 0, 0, 0, 0]
+            attacks_per_second['death_from_above_pulse'] = [0, 0, 0, 0, 0, 0, 0]
             for cp in xrange(7):
-                attacks_per_second['death_from_above_strike'][cp] *= float(dfa_count)/duration
-                attacks_per_second['death_from_above_pulse'][cp] *= float(dfa_count)/duration
+                attacks_per_second['death_from_above_strike'][cp] *= float(finisher_list[cp] * dfa_count)/duration
+                attacks_per_second['death_from_above_pulse'][cp] *= float(finisher_list[cp] * dfa_count)/duration
             #DfA forces a 2 second GCD
             gcd_budget -= dfa_count * (ss_count + ps_count + 2)
 
@@ -1488,7 +1643,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #Burn the rest of our energy until you run out of energy or gcds
         gcds_per_minicycle = ss_count + ps_count + 1
         energy_per_minicycle = ss_count * self.saber_slash_energy_cost + self.run_through_energy_cost
-        minicycle_count = min(gcd_budget/gcds_per_minicycle, energy_budget/energy_per_minicycle)
 
         alacrity_stacks = 0
         loop_counter = 0
@@ -1498,12 +1652,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
             loop_counter += 1
             minicycle_count = min(gcd_budget/gcds_per_minicycle, energy_budget/energy_per_minicycle)
-
+            
             attacks_per_second['saber_slash'] += float(minicycle_count * ss_count)/duration
             attacks_per_second['pistol_shot'] += float(minicycle_count * ps_count)/duration
-            attacks_per_second['run_through'] = finisher_list
+            attacks_per_second['run_through'] = [0, 0, 0, 0, 0, 0, 0]
             for cp in xrange(7):
-                attacks_per_second['run_through'][cp] *= float(minicycle_count)/duration
+                attacks_per_second['run_through'][cp] += float(minicycle_count * finisher_list[cp])/duration
+
             #Don't need to converge if we don't have alacrity
             if not self.talents.alacrity:
                 break
@@ -1511,20 +1666,77 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 energy_budget -= minicycle_count * energy_per_minicycle
                 gcd_budget -= minicycle_count * gcds_per_minicycle
 
-                old_alacrity_regen = energy_regen * (1 + (alacrity_stacks *0.01))
+                #ar doubles the effect of alacrity while up
+                old_alacrity_regen = energy_regen * (1 + (alacrity_stacks *0.01)) * (1 + int(ar))
                 new_alacrity_stacks = self.get_average_alacrity(attacks_per_second)
-                new_alacrity_regen = energy_regen * (1 + (new_alacrity_stacks *0.01))
-                energy_budget += (new_alacrity_regen - old_alacrity_regen) * duration
-                #compute new MG regen
-                #TODO: Compute new MG regen in alacrity loop
+                new_alacrity_regen = energy_regen * (1 + (new_alacrity_stacks *0.01)) * (1 + int(ar))
+                energy_budget += (new_alacrity_regen - old_alacrity_regen) * duration 
+                #compute new CP/MG regen
+                old_cp_mg = self.get_mg_cp_regen_from_haste(attack_speed_multiplier * 1 + (0.01 * alacrity_stacks))
+                new_cp_mg = self.get_mg_cp_regen_from_haste(attack_speed_multiplier * 1 + (0.01 * new_alacrity_stacks))
+                energy_budget += new_cp_mg - old_cp_mg
                 alacrity_stacks = new_alacrity_stacks
 
         #skip white swings and mg procs because we can do those later
         return attacks_per_second
 
-    def outlaw_attack_counts_reroll(self, current_stats, ar=False, 
-        jolly=False, melee=False, buried=False, broadsides=False):
-        return 8
+    def outlaw_attack_counts_reroll(self, current_stats, ar=False,
+        jolly=False, melee=False, buried=False, broadsides=False, alacrity_stacks=0):
+        #fetch minicycle value
+        minicycle_key = (self.settings.finisher_threshold, bool(self.talents.deeper_strategem), bool(self.talents.quick_draw),
+                         bool(self.talents.swordmaster), broadsides, jolly)
+        ss_count, ps_count, finisher_list = self.minicycle_table[minicycle_key]
+        reroll_energy_cost = (ss_count * self.saber_slash_energy_cost) + self.roll_the_bones_cost
+        energy_regen = self.base_energy_regen * (self.haste_multiplier + 0.01 * alacrity_stacks)
+        if buried:
+            energy_regen *= 1.25
+        attack_speed_multiplier = self.haste_multiplier + 0.01 * alacrity_stacks
+        if melee:
+            attack_speed_multiplier *= 1.5
+        if ar:
+            energy_regen *= 2.0
+            attack_speed_multiplier *= 1.2
+
+        mg_cp_energy = self.get_mg_cp_regen_from_haste(attack_speed_multiplier)
+        total_regen = energy_regen + mg_cp_energy
+        reroll_time = reroll_energy_cost / total_regen
+        attacks_per_second = {}
+        attacks_per_second['saber_slash'] = float(ss_count)/reroll_time
+        attacks_per_second['pistol_shot'] = float(ps_count)/reroll_time
+        attacks_per_second['roll_the_bones'] = [0, 0, 0, 0, 0, 0, 0]
+        for cp in xrange(7):
+            attacks_per_second['roll_the_bones'][cp] *= finisher_list[cp]/reroll_time
+        return attacks_per_second, reroll_time
+
+
+    #dict of (probability, aps) pairs
+    def merge_attacks_per_second(self, aps_dicts, total_time=1.0):
+        attacks_per_second = {}
+        for key in aps_dicts:
+            proportion, aps = aps_dicts[key]
+            uptime = float(proportion)/total_time
+
+            for ability in aps:
+                if ability in attacks_per_second:
+                    if isinstance(attacks_per_second[ability], list):
+                        for cp in xrange(7):
+                            attacks_per_second[ability][cp] += uptime * aps[ability][cp]
+                    else:    
+                        attacks_per_second[ability] += uptime * aps[ability]
+                else:
+                    if isinstance(aps[ability], list):
+                        attacks_per_second[ability] = aps[ability]
+                        for cp in xrange(7):
+                            attacks_per_second[ability][cp] *= uptime
+                    else:
+                        attacks_per_second[ability] = uptime * aps[ability]
+        return attacks_per_second
+
+    def get_mg_cp_regen_from_haste(self, haste_multiplier):
+        swing_per_second = (self.stats.mh.speed * self.dw_mh_hit_chance)/haste_multiplier
+        mg_regen = self.main_gauche_proc_rate * self.combat_potency_from_mg * swing_per_second
+        cp_regen = self.combat_potency_regen_per_oh * swing_per_second
+        return mg_regen + cp_regen
 
     def get_max_energy(self):
         self.max_energy = 100

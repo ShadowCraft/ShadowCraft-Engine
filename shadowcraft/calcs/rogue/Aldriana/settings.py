@@ -42,8 +42,8 @@ class Settings(object):
     def is_assassination_rogue(self):
         return self.cycle._cycle_type == 'assassination'
 
-    def is_combat_rogue(self):
-        return self.cycle._cycle_type == 'combat'
+    def is_outlaw_rogue(self):
+        return self.cycle._cycle_type == 'outlaw'
 
     def is_subtlety_rogue(self):
         return self.cycle._cycle_type == 'subtlety'
