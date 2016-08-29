@@ -1,6 +1,7 @@
 # Simple test program to debug + play with subtlety models.
 from os import path
 import sys
+from pprint import pprint
 sys.path.append(path.abspath(path.join(path.dirname(__file__), '..')))
 
 from shadowcraft.calcs.rogue.Aldriana import AldrianasRogueDamageCalculator
@@ -81,7 +82,7 @@ total_dps = sum(entry[1] for entry in dps_breakdown.items())
 #ep_values = calculator.get_ep()
 #tier_ep_values = calculator.get_other_ep(['rogue_t17_2pc', 'rogue_t17_4pc', 'rogue_t17_4pc_lfr'])
 
-#talent_ranks = calculator.get_talents_ranking()
+talent_ranks = calculator.get_talents_ranking()
 trait_ranks = calculator.get_trait_ranking()
 
 def max_length(dict_list):
@@ -109,10 +110,11 @@ def pretty_print(dict_list):
 dicts_for_pretty_print = [
     #ep_values,
     #tier_ep_values,
-    #talent_ranks,
     #trinkets_ep_value,
     dps_breakdown,
     trait_ranks
 ]
 pretty_print(dicts_for_pretty_print)
 print ' ' * (max_length(dicts_for_pretty_print) + 1), total_dps, ("total damage per second.")
+
+pprint(talent_ranks)
