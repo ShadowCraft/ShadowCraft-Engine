@@ -1436,8 +1436,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 chance = self.rtb_probabilities[len(phase)]/self.rtb_buff_count[len(phase)]
                 aps, reroll_time = self.outlaw_attack_counts_reroll(current_stats, jolly=jolly, 
                         melee=melee, buried=buried, broadsides=broadsides, alacrity_stacks=alacrity_stacks)
-                aps_ar, reroll_time_ar = self.outlaw_attack_counts_mincycle(current_stats,  ar=True, jolly=jolly, 
-                        melee=melee, buried=buried, broadsides=broadsides, alacrity_stacks = alacrity_stacks_ar)
+                aps_ar, reroll_time_ar = self.outlaw_attack_counts_reroll(current_stats,  ar=True, jolly=jolly, 
+                        melee=melee, buried=buried, broadsides=broadsides, alacrity_stacks=alacrity_stacks_ar)
                 phases[phase] = (chance * reroll_time, aps)
                 ar_phases[phase] = (chance * reroll_time_ar, aps_ar)
                 net_reroll_time += chance * reroll_time
