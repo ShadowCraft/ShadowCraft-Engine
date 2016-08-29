@@ -176,7 +176,7 @@ allowed_procs = {
         'trigger': 'all_attacks'
    },
 
-    'bloodthirsty_instinct': { #Equip: Your melee attacks have a chance to increase your Haste by 3399 for 10 sec. This effect occurs more often against targets at low health.
+    'bloodthirsty_instinct': { #Equip: Your melee attacks have a chance to increase your Haste by 3399 for 10 sec.  This effect occurs more often against targets at low health.
         'stat':'stats',
         'value': {'haste': 3399},
         'duration': 10,
@@ -189,7 +189,7 @@ allowed_procs = {
         'trigger': 'all_attacks',
    },
 
-    'chaos_talisman': { #Equip: Your melee autoattacks grant you Chaotic Energy, increasing your Strength or Agility by 55, stacking up to 20 times. If you do not autoattack an enemy for 4 sec, this effect will decrease by 1 stack every sec.
+    'chaos_talisman': { #Equip: Your melee autoattacks grant you Chaotic Energy, increasing your Strength or Agility by 55, stacking up to 20 times.  If you do not autoattack an enemy for 4 sec, this effect will decrease by 1 stack every sec.
         'stat':'stats',
         'value': {'agi': 42},
         'duration': 24, #decays 1/s after 4s
@@ -219,11 +219,11 @@ allowed_procs = {
    },
 
     'convergence_of_fates': { #Equip: Your attacks have a chance to reduce the remaining cooldown on one of your powerful abilities by 5 sec.
-        'stat':'stats',
-        'value': 5, #needs special modeling 
+        'stat':'ability_modifier',
+        'value': 0, #needs special modeling
         'duration': 0,
         'proc_name': 'Prescience', # reduce cd of shadow blades, vendetta, adrenaline rush
-        'scaling': 0, #no values appear to scale ¯\_(ツ)_/¯
+        'scaling': 0, #no values appear to scale
         'item_level': 875,
         'source': 'trinket',
         'type': 'rppm',
@@ -231,8 +231,22 @@ allowed_procs = {
         'trigger': 'all_attacks',
    },
 
-    'draught_of_souls': { #Use: Enter a fel-crazed rage, dealing 124520 damage to a random nearby enemy every second for 8 sec. You cannot use abilities during your rage, and your movement speed is slowed by 30%. (2 Min Cooldown)
-        'stat':'stats',
+    #removed the ":" not sure which way it should be
+    'darkmoon_deck_dominion': { #Equip: Increase critical strike by 668-1336. The amount of critical strike depends on the topmost card in the deck. Equip: Periodically shuffle the deck while in combat.
+        'stat': 'stats',
+        'value': {'crit':1336}, #not accurate, it should be shuffled every proc, may also stack
+        'duration': 20,
+        'proc_name': 'Dominion Deck', #this does some wierd shuffling crit values /wrists
+        'scaling': 0.750315, #only valid for the 1336 draw
+        'item_level': 815,
+        'type': 'rppm', 
+        'source': 'trinket',
+        'proc_rate': 1,
+        'trigger': 'all_attacks'
+    },
+
+    'draught_of_souls': { #Use: Enter a fel-crazed rage, dealing 124520 damage to a random nearby enemy every second for 8 sec.  You cannot use abilities during your rage, and your movement speed is slowed by 30%.  (2 Min Cooldown)
+        'stat':'spell_damage',
         'value': 996160, #124520 * 8
         'duration': 0,
         'proc_name': 'Fel-Crazed Rage',
@@ -247,7 +261,7 @@ allowed_procs = {
 
     'entwined_elemental_foci': { #Equip: Your attacks have a chance to grant Fiery, Frost, or Arcane enchants for 8 sec.
         'stat':'stats',
-        'value': {'haste': 0}, #needs special modeling 
+        'value': {'haste': 0}, #needs special modeling
         'duration': 8,
         'proc_name': 'Triumvirate',
         'scaling': 1.5,
@@ -258,7 +272,7 @@ allowed_procs = {
         'trigger': 'all_attacks',
    },
 
-    'faulty_countermeasure': { #Use: Sheathe your weapons in ice for 30 sec, giving your attacks a chance to cause 54933 additional Frost damage and slow the target's movement speed by 30% for 8 sec. (2 Min Cooldown)
+    'faulty_countermeasure': { #Use: Sheathe your weapons in ice for 30 sec, giving your attacks a chance to cause 54933 additional Frost damage and slow the target's movement speed by 30% for 8 sec.  (2 Min Cooldown)
         'stat':'spell_damage',
         'value': 0,
         'duration': 15,
@@ -273,7 +287,7 @@ allowed_procs = {
         'trigger': 'all_attacks'
    },
 
-    'giant_ornamental_pearl': { #Use: Become enveloped by a Gaseous Bubble that absorbs up to 233125 damage for 8 sec. When the bubble is consumed or expires, it explodes and deals 111900 Frost damage to all nearby enemies within 10 yards. (1 Min Cooldown)
+    'giant_ornamental_pearl': { #Use: Become enveloped by a Gaseous Bubble that absorbs up to 233125 damage for 8 sec.  When the bubble is consumed or expires, it explodes and deals 111900 Frost damage to all nearby enemies within 10 yards.  (1 Min Cooldown)
         'stat':'spell_damage',
         'value': 111900, #multiple targets not modeled
         'duration': 0,
@@ -288,7 +302,7 @@ allowed_procs = {
         'trigger': 'all_attacks',
    },
 
-    'horn_of_valor': { #Use: Sound the horn, increasing your primary stat by 2798 for 30 sec. (2 Min Cooldown)
+    'horn_of_valor': { #Use: Sound the horn, increasing your primary stat by 2798 for 30 sec.  (2 Min Cooldown)
         'stat':'stats',
         'value': {'agi': 2798},
         'duration': 30,
@@ -301,6 +315,19 @@ allowed_procs = {
         'proc_rate': 1,
         'trigger': 'all_attacks',
    },
+
+    'infernal_alchemist_stone': { #Equip: When you heal or deal damage you have a chance to increase your Strength, Agility, or Intellect by 3275 for 15 sec.  Your highest stat is always chosen.
+        'stat': 'stats',
+        'value': {'agi':3275},
+        'duration': 15,
+        'proc_name': 'Infernal Alchemist Stone',
+        'scaling': 1.839772,
+        'item_level': 815,
+        'type': 'rppm', #yes, it is rppm now
+        'source': 'trinket',
+        'proc_rate': 1,
+        'trigger': 'all_attacks'
+    },
 
     'mark_of_dargrul': { #Equip: Your melee attacks have a chance to trigger a Landslide, dealing 43597 Physical damage to all enemies directly in front of you.
         'stat':'spell_damage',
@@ -333,7 +360,7 @@ allowed_procs = {
 
     'natures_call': { #Equip: Your melee attacks have a chance to grant you a blessing of one of the Allies of Nature for 8 sec.
         'stat':'stats',
-        'value': {'haste': 0}, #needs special modeling 
+        'value': {'haste': 0}, #needs special modeling
         'duration': 8,
         'proc_name': 'Allies of Nature',
         'scaling': 1.98186,
@@ -344,9 +371,9 @@ allowed_procs = {
         'trigger': 'all_attacks',
    },
 
-    'nightblooming_frond': { #Equip: Your attacks have a chance to grant Recursive Strikes for 15 sec, causing your auto attacks to deal an additional 1557 damage and increase the intensity of Recursive Strikes.
-        'stat':'stats',
-        'value': 1557, #needs special modeling 
+    'nightblooming_frond': { #Equip: Your attacks have a chance to grant Recursive Strikes for 15 sec,causing your auto attacks to deal an additional 1557 damage and increase the intensity of Recursive Strikes.
+        'stat':'physical_damage',
+        'value': 1557, #needs special modeling
         'duration': 15,
         'proc_name': 'Recursive Strikes',
         'scaling': 0.5001606,
@@ -370,7 +397,7 @@ allowed_procs = {
         'trigger': 'all_attacks',
    },
 
-    'ravaged_seed_pod': { #Use: Contaminate the ground beneath your feet for 10 sec, dealing 18798 Shadow damage to enemies in the area each second. While you remain in this area, you gain 1540 Leech. (1 Min Cooldown)
+    'ravaged_seed_pod': { #Use: Contaminate the ground beneath your feet for 10 sec, dealing 18798 Shadow damage to enemies in the area each second.  While you remain in this area, you gain 1540 Leech.  (1 Min Cooldown)
         'stat':'spell_damage',
         'value': 18798, #multiple targets not modeled
         'duration': 10,
@@ -433,7 +460,7 @@ allowed_procs = {
         'trigger': 'all_attacks',
    },
     
-      'terrorbound_nexus': { #Equip: Your melee attacks have a chance to unleash 4 Shadow Waves that deal 86952 Shadow damage to enemies in their path. The waves travel 15 yards away from you, and then return.
+      'terrorbound_nexus': { #Equip: Your melee attacks have a chance to unleash 4 Shadow Waves that deal 86952 Shadow damage to enemies in their path.  The waves travel 15 yards away from you, and then return.
         'stat':'spell_damage',
         'value': 695616, #multiple targets not modeled, assuming 4 hits out and 4 in
         'duration': 0,
@@ -449,7 +476,7 @@ allowed_procs = {
         'trigger': 'all_attacks'
    },
 
-    'tiny_oozeling_in_a_jar': { #Equip: Your melee attacks have a chance to grant you Congealing Goo, stacking up to 6 times. Use: Consume all Congealing Goo to vomit on enemies in front of you for 3 sec, inflicting [6228 * (1 + $versadmg)] Nature damage per Goo consumed. (20 Sec Cooldown)
+    'tiny_oozeling_in_a_jar': { #Equip: Your melee attacks have a chance to grant you Congealing Goo, stacking up to 6 times.  Use: Consume all Congealing Goo to vomit on enemies in front of you for 3 sec, inflicting [6228 * (1 + $versadmg)] Nature damage per Goo consumed.  (20 Sec Cooldown)
         'stat':'spell_damage',
         'value': 37368, #4709 per stack * 6 stacks
         'duration': 0,
@@ -466,7 +493,7 @@ allowed_procs = {
         'trigger': 'all_attacks'
    },
 
-    'tirathons_betrayal': { #Use: Empower yourself with dark energy, causing your attacks to have a chance to inflict 38847 additional Shadow damage and grant you a shield for 38847. Lasts 15 sec. (1 Min, 15 Sec Cooldown)
+    'tirathons_betrayal': { #Use: Empower yourself with dark energy, causing your attacks to have a chance to inflict 38847 additional Shadow damage and grant you a shield for 38847. Lasts 15 sec.  (1 Min, 15 Sec Cooldown)
         'stat':'spell_damage',
         'value': 0,
         'duration': 15,
@@ -481,7 +508,7 @@ allowed_procs = {
         'trigger': 'all_attacks'
    },
 
-    'windscar_whetstone': { #Use: A Slicing Maelstrom surrounds you, inflicting (7 * 40619) Physical damage to nearby enemies over 6 sec. (2 Min Cooldown)
+    'windscar_whetstone': { #Use: A Slicing Maelstrom surrounds you, inflicting (7 * 40619) Physical damage to nearby enemies over 6 sec.  (2 Min Cooldown)
         'stat':'spell_damage',
         'value': 284333, #multiple targets not modeled
         'duration': 0,
@@ -495,6 +522,7 @@ allowed_procs = {
         'can_crit': True,
         'trigger': 'all_attacks'
    },
+    
     #6.2.3 procs
     'infallible_tracking_charm': {
         'stat':'spell_damage',
@@ -524,8 +552,6 @@ allowed_procs = {
         'haste_scales': False,
         'trigger': 'all_attacks'
    },
-
-
     #6.2 procs
     'maalus': {
         'stat': 'damage_modifier',
@@ -998,7 +1024,7 @@ allowed_melee_enchants = {
     },
     'mark_of_warsong': {
         'stat': 'stats',
-        'value': {'haste':5.5*100},
+        'value': {'haste':5.5 * 100},
         'duration': 20,
         'proc_name': 'Mark of the Bleeding Hollow',
         'type': 'rppm',
