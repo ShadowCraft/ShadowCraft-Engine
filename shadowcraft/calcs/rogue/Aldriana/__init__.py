@@ -1378,6 +1378,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         keep_shark_uptime = 0.0
         keep_gm_uptime = 0.0
         maintainence_buff_duration = 6 * (1 + self.settings.finisher_threshold)
+        
         if self.talents.slice_and_dice:
             aps_normal = self.outlaw_attack_counts_mincycle(current_stats, snd=True, duration=maintainence_buff_duration)
             aps_ar = self.outlaw_attack_counts_mincycle(current_stats, snd=True, ar=True, duration=self.ar_duration)
@@ -1505,7 +1506,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 else:
                     old_ar_cd = new_ar_cd
             ar_uptime = self.ar_duration / new_ar_cd
-        
+       
         #add in cannonball and killing spree
         if self.talents.killing_spree:
             ksp_cd = self.get_spell_cd('killing_spree') / (1. + tb_seconds_per_second)
@@ -1604,7 +1605,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         else:
             energy_budget -= self.roll_the_bones_cost
         gcd_budget -= (ss_count + ps_count + 1)
-        attacks_per_second['saber_slash'] = float(ss_count)/duration
+        attacks_per_second['saber_slash'] = float(ss_count + ps_count)/duration
         attacks_per_second['pistol_shot'] = float(ps_count)/duration
 
         attacks_per_second[maintainence_buff] = [0, 0, 0, 0, 0, 0, 0]
@@ -1617,7 +1618,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             for cp in xrange(7):
                 attacks_per_second['between_the_eyes'][cp] += float(finisher_list[cp] * bte_count)/duration
             attacks_per_second['pistol_shot'] += float(bte_count * ps_count)/duration
-            attacks_per_second['saber_slash'] += float(bte_count * ss_count)/duration
+            attacks_per_second['saber_slash'] += float(bte_count * (ss_count + ps_count))/duration
             energy_budget -= (bte_count * ss_count) * self.saber_slash_energy_cost
             energy_budget -= bte_count * self.between_the_eyes_energy_cost
             gcd_budget -= bte_count * (ss_count + ps_count + 1)
@@ -1626,7 +1627,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.talents.death_from_above and not ar:
             energy_budget -= ss_count * dfa_count * self.saber_slash_energy_cost
             energy_budget -= dfa_count * self.death_from_above_energy_cost
-            attacks_per_second['saber_slash'] += float(ss_count * dfa_count)/duration
+            attacks_per_second['saber_slash'] += float((ss_count + ps_count) * dfa_count)/duration
             attacks_per_second['pistol_shot'] += float(ps_count * dfa_count)/duration
             attacks_per_second['death_from_above_strike'] = [0, 0, 0, 0, 0, 0, 0]
             attacks_per_second['death_from_above_pulse'] = [0, 0, 0, 0, 0, 0, 0]
@@ -1658,8 +1659,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
             loop_counter += 1
             minicycle_count = min(gcd_budget/gcds_per_minicycle, energy_budget/energy_per_minicycle)
-            
-            attacks_per_second['saber_slash'] += float(minicycle_count * ss_count)/duration
+            attacks_per_second['saber_slash'] += float(minicycle_count * (ss_count + ps_count))/duration
             attacks_per_second['pistol_shot'] += float(minicycle_count * ps_count)/duration
             attacks_per_second['run_through'] = [0, 0, 0, 0, 0, 0, 0]
             for cp in xrange(7):
@@ -1707,7 +1707,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         total_regen = energy_regen + mg_cp_energy
         reroll_time = reroll_energy_cost / total_regen
         attacks_per_second = {}
-        attacks_per_second['saber_slash'] = float(ss_count)/reroll_time
+        attacks_per_second['saber_slash'] = float(ss_count + ps_count)/reroll_time
         attacks_per_second['pistol_shot'] = float(ps_count)/reroll_time
         attacks_per_second['roll_the_bones'] = [0, 0, 0, 0, 0, 0, 0]
         for cp in xrange(7):
@@ -1717,10 +1717,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     #dict of (probability, aps) pairs
     def merge_attacks_per_second(self, aps_dicts, total_time=1.0):
+        #print "CALL"
+        total = 0.0
         attacks_per_second = {}
         for key in aps_dicts:
             proportion, aps = aps_dicts[key]
             uptime = float(proportion)/total_time
+            total+= uptime
+            #print uptime, total
 
             for ability in aps:
                 if ability in attacks_per_second:
@@ -2074,7 +2078,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             #can add since we know cp_budget is negative
             self.energy_budget += self.cp_budget * energy_per_cp
             extra_builders += abs(self.cp_budget) / cp_per_builder
-            print extra_builders, energy_per_cp
             self.cp_budget = 0
 
         if self.cp_builder == 'shuriken_storm':
