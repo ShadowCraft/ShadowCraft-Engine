@@ -56,17 +56,18 @@ test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          versatility=1515,)
 
 # Initialize talents..
-test_talents = talents.Talents('3200000', test_spec, test_class, level=test_level)
+test_talents = talents.Talents('2200002', test_spec, test_class, level=test_level)
 
 #initialize artifact traits..
-test_traits = artifact.Artifact(test_spec, test_class, '110000000000000000')
+test_traits = artifact.Artifact(test_spec, test_class, '110000000000100000')
 
 # Set up settings.
-test_cycle = settings.SubtletyCycle(cp_builder='shuriken_storm', 
+test_cycle = settings.SubtletyCycle(cp_builder='backstab', 
                                     dance_finishers_allowed=True,
+                                    positional_uptime=0.9
     )
 test_settings = settings.Settings(test_cycle, response_time=.5, duration=450,
-                                 adv_params="", is_demon=True, num_boss_adds=10)
+                                 adv_params="", is_demon=True, num_boss_adds=0, marked_for_death_resets=2.0)
 
 # Build a DPS object.
 calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_traits, test_buffs, test_race, test_spec, test_settings, test_level)
@@ -81,7 +82,7 @@ total_dps = sum(entry[1] for entry in dps_breakdown.items())
 #tier_ep_values = calculator.get_other_ep(['rogue_t17_2pc', 'rogue_t17_4pc', 'rogue_t17_4pc_lfr'])
 
 #talent_ranks = calculator.get_talents_ranking()
-#trait_ranks = calculator.get_trait_ranking()
+trait_ranks = calculator.get_trait_ranking()
 
 def max_length(dict_list):
     max_len = 0
@@ -111,7 +112,7 @@ dicts_for_pretty_print = [
     #talent_ranks,
     #trinkets_ep_value,
     dps_breakdown,
-    #trait_ranks
+    trait_ranks
 ]
 pretty_print(dicts_for_pretty_print)
 print ' ' * (max_length(dicts_for_pretty_print) + 1), total_dps, ("total damage per second.")

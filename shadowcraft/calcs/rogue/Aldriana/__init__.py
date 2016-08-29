@@ -1634,6 +1634,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 damage_breakdown[key] *= (1 + self.stealth_shuriken_uptime * 3)
             if key in self.finisher_damage_sources:
                 damage_breakdown[key] *= ds_multiplier
+            if key == 'backstab':
+                damage_breakdown[key] *= 1 + (0.3 * self.settings.cycle.positional_uptime)
 
         #add AoE damage sources:
         if self.settings.num_boss_adds:    
@@ -1684,9 +1686,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attacks_per_second['oh_autoattacks'] = haste_multiplier / self.stats.oh.speed * (1 - white_swing_downtime)
 
         #Set up initial combo point budget
-        mfd_cps = self.talents.marked_for_death * (self.settings.duration/60. * 5 * (1 + self.settings.marked_for_death_resets))
+        mfd_cps = self.talents.marked_for_death * (self.settings.duration/60. * 5. * (1. + self.settings.marked_for_death_resets))
         self.cp_budget = mfd_cps
-
 
 
         #Enveloping Shadows generates 1 bonus cp per 6 seconds regardless of cps
@@ -1827,7 +1828,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         extra_evis = 0
         extra_builders = 0
-
         #Not enough dances, generate some more
         if self.dance_budget<0:
             cps_required = abs(self.dance_budget) * 20
@@ -1963,6 +1963,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         #convert half of evis to finality
         if self.traits.finality:
+            attacks_per_second['finality:eviscerate'] = [0, 0, 0, 0, 0, 0, 0]
             for cp in xrange(7):
                 attacks_per_second['finality:eviscerate'][cp] = attacks_per_second['eviscerate'][cp] * 0.5
                 attacks_per_second['eviscerate'][cp] *= 0.5
