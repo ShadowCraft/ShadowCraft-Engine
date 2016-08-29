@@ -159,7 +159,45 @@ allowed_procs = {
         'proc_rate': 0.92,
         'trigger': 'all_attacks'
     },
-     #7.0 procs
+    #7.0 neck enchants
+    'mark_of_the_hidden_satyr	': { #191259 Deals 41626 to 48375 damage. 
+        'stat':'spell_damage',
+        'value': 45000, #average 41626 to 48375
+        'duration': 0,
+        'proc_name': 'Mark of the Hidden Satyr',
+        'type': 'rppm',
+        'source': 'neck',
+        'proc_rate': 2.5,
+        'haste_scales': True,
+        'can_crit': True,
+        'trigger': 'all_attacks'
+   },
+
+    #aoe proc? ranged only?
+    'mark_of_the_distant_army': { #A distant army fires a volley of arrows, dealing 41628 to 48375 damage over 1.5 sec.
+        'stat':'physical_damage',
+        'value': 45000, #average 41626 to 48375
+        'duration': 0,
+        'proc_name': 'Mark of the Distant Army',
+        'type': 'rppm',
+        'source': 'neck',
+        'proc_rate': 2.5,
+        'haste_scales': True,
+        'can_crit': True,
+        'trigger': 'all_attacks'
+   },
+
+    'mark_of_the_claw': { #Permanently enchants a necklace to sometimes increase critical strike and haste by 550 for 6 sec.
+        'stat':'stats',
+        'value': {'haste': 550, 'crit': 550},
+        'duration': 6,
+        'proc_name': 'Mark of the Claw',
+        'source': 'trinket',
+        'type': 'rppm',
+        'proc_rate': 2.5,
+        'trigger': 'all_attacks',
+   },
+     #7.0 trinket procs
     'arcanogolem_digit': { #Equip: Your attacks have a chance to rake all enemies in front of you for 37356 Arcane damage.
         'stat':'spell_damage',
         'value': 37356, #multiple targets not modeled
