@@ -44,10 +44,16 @@ class Proc(object):
         tools = class_data.Util()
         #http://forums.elitistjerks.com/topic/130561-shadowcraft-for-mists-of-pandaria/page-3
         #see above for stat value initialization
+        #not sure if this is the correct way to handle damage procs. Most seem to have both disabled scaling and raw value or both enabled scaling and an {object:value},
+        #they should probably all use the same notation either way. If we want both, the scaling property should probably be set by value property instead of manually configured.
+        #the other option is to always handle it deeper into the calc module, but that is coupling object responsibilities and not ideal.
         if self.scaling:
             if self.source in ('trinket',):
-                for e in self.value:
-                    self.value[e] = round(self.scaling * tools.get_random_prop_point(self.item_level))
+                if hasattr(self.value,'__iter__'): #handle object value
+                    for e in self.value:
+                        self.value[e] = round(self.scaling * tools.get_random_prop_point(self.item_level))
+                else: #handle raw value
+                    self.value = round(self.scaling * tools.get_random_prop_point(self.item_level))
 
     def procs_off_auto_attacks(self):
         if self.trigger in ('all_attacks', 'auto_attacks', 'all_spells_and_attacks', 'all_melee_attacks'):
