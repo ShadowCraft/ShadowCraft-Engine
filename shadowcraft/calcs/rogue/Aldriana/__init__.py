@@ -1229,7 +1229,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #Legendaries
 
     #Rotation details:
-        # Roll the Bones handling
 
     def outlaw_dps_estimate(self):
         return sum(self.outlaw_dps_breakdown().values())
@@ -1375,6 +1374,21 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.white_swing_downtime = self.settings.response_time / self.get_spell_cd('vanish')
         #compute dps phases each non-rerolling rtb buff combo (excluding tb and shark) ar and not
         phases = {}
+        ar_phases = {}
+
+        for phase in self.settings.keep_list:
+            jolly = 'jr' in phase
+            melee = 'gm' in phase
+            buried = 'bt' in phase
+            broadsides = 'b' in phase
+            true_bearing = 'tb' in phase
+            shark = 's' in phase
+
+            chance = self.rtb_probabilities[len(phase)]/self.rtb_buff_count[len(phase)]
+            aps = outlaw_attack_counts_mincycle(current_stats, jolly=jolly, 
+                    melee=melee, buried=buried, broadsides=broadsides)
+
+
 
 
 
@@ -1505,30 +1519,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 #TODO: Compute new MG regen in alacrity loop
                 alacrity_stacks = new_alacrity_stacks
 
-        #Add in swings and MG APS
-        attacks_per_second['mh_autoattack'] = float(swings)/duration
-        attacks_per_second['mh_autoattack_hits'] = float(swing_hits)/duration
-        attacks_per_second['oh_autoattack'] = float(swings)/duration
-        attacks_per_second['oh_autoattack_hits'] = float(swing_hits)/duration
-
-        attacks_per_second['main_gauche'] = attacks_per_second['mh_autoattack_hits'] * self.main_gauche_proc_rate
-        aps_mg_sources = attacks_per_second['saber_slash'] + attacks_per_second['pistol_shot'] + \
-            sum(attacks_per_second['run_through'])
-        if self.talents.death_from_above:
-            aps_mg_sources += sum(attacks_per_second['death_from_above_strike']) + \
-                (1 + self.settings.num_boss_adds) * attacks_per_second['death_from_above_pulse']
-        if self.talents.ghostly_strike:
-            aps_mg_sources += attacks_per_second['ghostly_strike']
-
-        attacks_per_second['main_gauche'] += aps_mg_sources * self.main_gauche_proc_rate
-
+        #skip white swings and mg procs because we can do those later
         return attacks_per_second
 
     def outlaw_attack_counts_reroll(self, current_stats, ar=False, 
         jolly=False, melee=False, buried=False, broadsides=False):
         return 8
-
-
 
     def get_max_energy(self):
         self.max_energy = 100
@@ -1835,7 +1831,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #Not enough dances, generate some more
         if self.dance_budget<0:
             cps_required = abs(self.dance_budget) * 20
-            extra_evis += cps_required/self.avg_evis_cps
+            extra_evis += cps_required/self.settings.finisher_threshold
             self.energy_budget += self.net_evis_cost
             #just subtract the cps because we'll fix those next
             self.cp_budget -= cps_required
