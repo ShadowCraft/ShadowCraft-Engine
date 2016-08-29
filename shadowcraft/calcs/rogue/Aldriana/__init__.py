@@ -1449,9 +1449,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 if melee:
                     reroll_gm_uptime += chance * reroll_time
 
-            reroll_tb_uptime *= 1./net_reroll_time
-            reroll_shark_uptime *= 1./net_reroll_time
-            reroll_gm_uptime *= 1./net_reroll_time
+            if net_reroll_time:
+                reroll_tb_uptime *= 1./net_reroll_time
+                reroll_shark_uptime *= 1./net_reroll_time
+                reroll_gm_uptime *= 1./net_reroll_time
 
             aps_reroll = self.merge_attacks_per_second(phases, total_time=net_reroll_time)
             aps_reroll_ar = self.merge_attacks_per_second(phases, total_time=net_reroll_time_ar)
@@ -1473,6 +1474,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             gm_uptime = (keep_uptime * keep_gm_uptime) + (1 - keep_uptime) * reroll_gm_uptime
             shark_uptime = (keep_uptime * keep_shark_uptime) + (1 - keep_uptime) * reroll_shark_uptime
 
+            print shark_uptime
         #determine ar uptime and merge the two distributions
         attacks_per_second = self.merge_attacks_per_second({'normal': (self.ar_cd - self.ar_duration, aps_normal),
             'ar': (self.ar_duration, aps_ar)}, total_time=self.ar_cd)
@@ -1541,7 +1543,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second['blunderbuss'] = 0.33 * attacks_per_second['pistol_shot']
             attacks_per_second['pistol_shot'] -= attacks_per_second['blunderbuss']
 
-        #print attacks_per_second
+        print attacks_per_second
         return attacks_per_second, crit_rates, additional_info
 
     def outlaw_attack_counts_mincycle(self, current_stats, snd=False, ar=False,

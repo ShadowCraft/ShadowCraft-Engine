@@ -53,19 +53,20 @@ test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          versatility=1515,)
 
 # Initialize talents..
-test_talents = talents.Talents('0000001', test_spec, test_class, level=test_level)
+test_talents = talents.Talents('0000000', test_spec, test_class, level=test_level)
 
 #initialize artifact traits..
-test_traits = artifact.Artifact(test_spec, test_class, '000000000001000000')
+test_traits = artifact.Artifact(test_spec, test_class, '000000000000000000')
 
 # Set up settings.
 test_cycle = settings.OutlawCycle(blade_flurry=False,
-                                  jolly_roger_reroll=1,
-                                  grand_melee_reroll=1,
+                                  #jolly_roger_reroll=1,
+                                  #grand_melee_reroll=1,
                                   shark_reroll=1,
-                                  true_bearing_reroll=1,
-                                  buried_treasure_reroll=1,
-                                  broadsides_reroll=1)
+                                  #true_bearing_reroll=1,
+                                  #buried_treasure_reroll=1,
+                                  #broadsides_reroll=1
+                                  )
 test_settings = settings.Settings(test_cycle, response_time=.5, duration=360,
                                  adv_params="", is_demon=True, num_boss_adds=0)
 
@@ -83,7 +84,7 @@ total_dps = sum(entry[1] for entry in dps_breakdown.items())
 #calculator.get_weapon_ep(dps=True, enchants=True)
 
 #talent_ranks = calculator.get_talents_ranking()
-trait_ranks = calculator.get_trait_ranking()
+#trait_ranks = calculator.get_trait_ranking()
 
 def max_length(dict_list):
     max_len = 0
@@ -114,7 +115,7 @@ dicts_for_pretty_print = [#ep_values,
     #talent_ranks,
     #trinkets_ep_value,
     dps_breakdown,
-    trait_ranks
+    #trait_ranks
 ]
 pretty_print(dicts_for_pretty_print)
 print ' ' * (max_length(dicts_for_pretty_print) + 1), total_dps, ("total damage per second.")
