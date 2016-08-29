@@ -160,7 +160,7 @@ allowed_procs = {
         'trigger': 'all_attacks'
     },
     #7.0 neck enchants
-    'mark_of_the_hidden_satyr	': { #191259 Deals 41626 to 48375 damage. 
+    'mark_of_the_hidden_satyr': { #191259 Deals 41626 to 48375 damage. 
         'stat':'spell_damage',
         'value': 45000, #average 41626 to 48375
         'duration': 0,
