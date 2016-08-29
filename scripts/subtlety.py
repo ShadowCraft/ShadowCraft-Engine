@@ -21,7 +21,7 @@ i18n.set_language(test_language)
 
 # Set up level/class/race
 test_level = 110
-test_race = race.Race('pandaren')
+test_race = race.Race('human')
 test_class = 'rogue'
 test_spec = 'subtlety'
 
@@ -29,7 +29,8 @@ test_spec = 'subtlety'
 test_buffs = buffs.Buffs(
         'short_term_haste_buff',
         'flask_wod_agi',
-        'food_wod_versatility'
+        'food_wod_versatility',
+        #'food_legion_feast_150'
     )
 
 # Set up weapons.
@@ -55,18 +56,17 @@ test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          versatility=1515,)
 
 # Initialize talents..
-test_talents = talents.Talents('2000020', test_spec, test_class, level=test_level)
+test_talents = talents.Talents('3200000', test_spec, test_class, level=test_level)
 
 #initialize artifact traits..
 test_traits = artifact.Artifact(test_spec, test_class, '110000000000000000')
 
 # Set up settings.
-test_cycle = settings.SubtletyCycle(dance_cp_builder='shadowstrike',
-    #dance_finishers_allowed=['finality:nightblade','nightblade', 'finality:eviscerate', 'eviscerate'],
-    #dance_finishers_allowed =['nightblade']
+test_cycle = settings.SubtletyCycle(cp_builder='shuriken_storm', 
+                                    dance_finishers_allowed=True,
     )
 test_settings = settings.Settings(test_cycle, response_time=.5, duration=450,
-                                 adv_params="", is_demon=True, num_boss_adds=0)
+                                 adv_params="", is_demon=True, num_boss_adds=10)
 
 # Build a DPS object.
 calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_traits, test_buffs, test_race, test_spec, test_settings, test_level)

@@ -360,7 +360,7 @@ class RogueDamageCalculator(DamageCalculator):
         return 4.5 * self.get_weapon_damage('mh', ap)
 
     def between_the_eyes_damage(self, ap, cp):
-        return .75 * cp * ap * (1 + (0.08 / self.traits.black_powder))
+        return .75 * cp * ap * (1 + (0.08 * self.traits.black_powder))
 
     #7*55% AP
     def blunderbuss_damage(self, ap):
@@ -432,6 +432,9 @@ class RogueDamageCalculator(DamageCalculator):
     def oh_shadow_blades_damage(self, ap):
         return self.oh_penalty() * self.get_weapon_damage('oh', ap, is_normalized=False)
 
+    def second_shuriken_damage(self, ap):
+        return 0.264 * ap
+
     def shuriken_storm_damage(self, ap):
         return 0.5544 * ap
 
@@ -490,6 +493,7 @@ class RogueDamageCalculator(DamageCalculator):
             'shadowstrike':              self.shadowstrike_damage,
             'mh_shadow_blades':          self.mh_shadow_blades_damage,
             'oh_shadow_blades':          self.oh_shadow_blades_damage,
+            'second_shuriken':           self.second_shuriken_damage,
             'shuriken_storm':            self.shuriken_storm_damage,
             'shuriken_toss':             self.shuriken_toss_damage,
             'soul_rip':                  self.soul_rip_damage,
@@ -504,6 +508,9 @@ class RogueDamageCalculator(DamageCalculator):
         return cost
 
     def get_spell_cd(self, ability):
+        cd = self.ability_cds[ability]
+        if ability == 'adrenaline_rush':
+            cd -= 10 * self.traits.fortunes_boon
         return self.ability_cds[ability]
 
     def crit_rate(self, crit=None):

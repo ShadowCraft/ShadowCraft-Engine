@@ -645,8 +645,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 'crit': self.base_stats['crit'] * self.stat_multipliers['crit'],
                 'haste': self.base_stats['haste'] * self.stat_multipliers['haste'],
                 'mastery': self.base_stats['mastery'] * self.stat_multipliers['mastery'],
-                #'readiness': self.base_stats['readiness'] * self.stat_multipliers['readiness'],
-                #'multistrike': self.base_stats['multistrike'] * self.stat_multipliers['multistrike'],
+
                 'versatility': self.base_stats['versatility'] * self.stat_multipliers['versatility'],
             }
             for k in static_proc_stats:
@@ -1185,7 +1184,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         attacks_per_second['mh_autoattack_hits'] = attacks_per_second['mh_autoattacks'] * self.dw_mh_hit_chance
         attacks_per_second['oh_autoattack_hits'] = attacks_per_second['oh_autoattacks'] * self.dw_oh_hit_chance
-        
+
         self.settings.dmg_poison = 'dp' #hack in deadly poison for now
         self.get_poison_counts(attacks_per_second, current_stats)
 
@@ -1208,6 +1207,30 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     # Outlaw DPS functions
     ###########################################################################
 
+    #Legion TODO:
+
+    #Talents:
+        #T1:Ghostly Strike
+        #T3:Anticipation
+        #T5:Cannonball Barrage
+        #T5:Alacrity
+        #T5:Killing Spree
+        #T6:Marked for Death
+
+    #Artifact:
+        # 'curse_of_the_dreadblades',
+        # 'hidden_blade', (ambush proc weirdness)
+        # 'blurred_time',
+
+    #Items:
+        #Class hall set bonus
+        #Tier bonus
+        #Trinkets
+        #Legendaries
+
+    #Rotation details:
+        # Roll the Bones handling
+
     def outlaw_dps_estimate(self):
         return sum(self.outlaw_dps_breakdown().values())
 
@@ -1215,84 +1238,92 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if not self.spec == 'outlaw':
             raise InputNotModeledException(_('You must specify a outlaw cycle to match your outlaw spec.'))
 
-        self.spec_convergence_stats = ['haste', 'mastery']
-
-        #update spec specific proc rates
-        if getattr(self.stats.procs, 'legendary_capacitive_meta'):
-            getattr(self.stats.procs, 'legendary_capacitive_meta').proc_rate_modifier = 1.136
-        if getattr(self.stats.procs, 'fury_of_xuen'):
-            getattr(self.stats.procs, 'fury_of_xuen').proc_rate_modifier = 1.15
-
         #outlaw specific constants
         self.outlaw_cd_delay = 0 #this is for DFA convergence, mostly
 
+        self.damage_modifier_cache = 1 + (0.005 * self.traits.cursed_steel)
+
         self.ar_duration = 15
-        # recurance relation of 0.16*x until convergence
-        # https://www.wolframalpha.com/input/?i=15%2Bsum%28x%3D1+to+inf%29+of+15*.16%5Ex
-        if self.stats.gear_buffs.rogue_t18_2pc:
-            self.ar_duration = 17.8571 # it not clear what this means, magic number?
-        if self.stats.gear_buffs.rogue_t17_2pc:
-            self.extra_cp_chance += 0.2
+        self.ar_cd = self.get_spell_cd('adrenaline_rush')
 
         self.set_constants()
-        self.stat_multipliers['haste'] *= 1.05
-        self.stat_multipliers['ap'] *= 1.50
 
-        if self.talents.death_from_above:
-            self.spec_needs_converge = True
+        #table of minicycle ability amounts
+        #indexed by (min_spend_cps, deeper_strat, quick_draw, swordmaster, broadside, jollyroger)
+        #values are (ss_per_min_cycle, ps_per_min_cycle, finisher_cp_list)
+        #TODO: 60 element table is probably a bit much, should probably be condensed
+        self.minicycle_table = {
+            (4, True, True, False, True, True) : (0.92778015, 0.5566681, [0, 0, 0, 0, 0.46230870485305786, 0.40208783745765686, 0.13560345768928528]) ,
+            (4, True, True, False, True, False) : (1.2831669, 0.44910839, [0, 0, 0, 0, 0.35908344388008118, 0.49529376626014709, 0.14562278985977173]) ,
+            (4, True, True, False, False, True) : (1.3207548, 0.79245281, [0, 0, 0, 0, 0.37735849618911743, 0.62264150381088257, 0.0]) ,
+            (4, True, True, False, False, False) : (1.7271835, 0.60451424, [0, 0, 0, 0, 0.57409226894378662, 0.42590776085853577, 0.0]) ,
+            (4, True, False, True, True, True) : (1.7995313, 1.2596719, [0, 0, 0, 0, 0.19270744919776917, 0.39063876867294312, 0.41665378212928772]) ,
+            (4, True, False, True, True, False) : (1.759297, 0.79168367, [0, 0, 0, 0, 0.13849352300167084, 0.56256377696990967, 0.29894271492958069]) ,
+            (4, True, False, True, False, True) : (1.3918972, 0.97432804, [0, 0, 0, 0, 0.82430845499038696, 0.17569157481193542, 0.0]) ,
+            (4, True, False, True, False, False) : (1.7689608, 0.79603237, [0, 0, 0, 0, 0.7987181544303894, 0.20128187537193298, 0.0]) ,
+            (4, True, False, False, True, True) : (1.7663901, 1.059834, [0, 0, 0, 0, 0.17100141942501068, 0.45841407775878906, 0.37058448791503906]) ,
+            (4, True, False, False, True, False) : (1.7791812, 0.62271339, [0, 0, 0, 0, 0.11556066572666168, 0.63698828220367432, 0.24745103716850281]) ,
+            (4, True, False, False, False, True) : (1.5257645, 0.91545868, [0, 0, 0, 0, 0.80414772033691406, 0.19585229456424713, 0.0]) ,
+            (4, True, False, False, False, False) : (1.9706308, 0.68972075, [0, 0, 0, 0, 0.81240963935852051, 0.1875903457403183, 0.0]) ,
+            (4, False, True, False, True, True) : (0.90085906, 0.54051542, [0, 0, 0, 0, 0.46230870485305786, 0.53769129514694214, 0]) ,
+            (4, False, True, False, True, False) : (1.2441286, 0.43544501, [0, 0, 0, 0, 0.35908344388008118, 0.64091658592224121, 0]) ,
+            (4, False, True, False, False, True) : (1.3207548, 0.79245281, [0, 0, 0, 0, 0.37735849618911743, 0.62264150381088257, 0]) ,
+            (4, False, True, False, False, False) : (1.7271835, 0.60451424, [0, 0, 0, 0, 0.57409226894378662, 0.42590776085853577, 0]) ,
+            (4, False, False, True, True, True) : (1.6560036, 1.1592025, [0, 0, 0, 0, 0.19270744919776917, 0.80729258060455322, 0]) ,
+            (4, False, False, True, True, False) : (1.6573817, 0.74582177, [0, 0, 0, 0, 0.13849352300167084, 0.86150646209716797, 0]) ,
+            (4, False, False, True, False, True) : (1.3918972, 0.97432804, [0, 0, 0, 0, 0.82430845499038696, 0.17569157481193542, 0]) ,
+            (4, False, False, True, False, False) : (1.7689608, 0.79603237, [0, 0, 0, 0, 0.7987181544303894, 0.20128187537193298, 0]) ,
+            (4, False, False, False, True, True) : (1.640496, 0.98429757, [0, 0, 0, 0, 0.17100141942501068, 0.82899856567382812, 0]) ,
+            (4, False, False, False, True, False) : (1.693392, 0.59268725, [0, 0, 0, 0, 0.11556066572666168, 0.88443934917449951, 0]) ,
+            (4, False, False, False, False, True) : (1.5257645, 0.91545868, [0, 0, 0, 0, 0.80414772033691406, 0.19585229456424713, 0]) ,
+            (4, False, False, False, False, False) : (1.9706308, 0.68972075, [0, 0, 0, 0, 0.81240963935852051, 0.1875903457403183, 0]) ,
+            (5, True, True, False, True, True) : (1.5440897, 0.92645377, [0, 0, 0, 0, 0, 0.47792428731918335, 0.52207571268081665]) ,
+            (5, True, True, False, True, False) : (1.6837471, 0.58931148, [0, 0, 0, 0, 0, 0.52392536401748657, 0.47607460618019104]) ,
+            (5, True, True, False, False, True) : (1.509434, 0.90566039, [0, 0, 0, 0, 0, 0.71698111295700073, 0.28301885724067688]) ,
+            (5, True, True, False, False, False) : (2.0673864, 0.72358519, [0, 0, 0, 0, 0, 0.70232254266738892, 0.29767745733261108]) ,
+            (5, True, False, True, True, True) : (2.7676663, 1.9373665, [0, 0, 0, 0, 0, 0.32654938101768494, 0.67345058917999268]) ,
+            (5, True, False, True, True, False) : (2.0575211, 0.92588449, [0, 0, 0, 0, 0, 0.53625214099884033, 0.46374788880348206]) ,
+            (5, True, False, True, False, True) : (1.7693849, 1.2385694, [0, 0, 0, 0, 0, 0.69184529781341553, 0.30815470218658447]) ,
+            (5, True, False, True, False, False) : (2.1994596, 0.98975676, [0, 0, 0, 0, 0, 0.7762836217880249, 0.22371639311313629]) ,
+            (5, True, False, False, True, True) : (2.3502514, 1.4101509, [0, 0, 0, 0, 0, 0.41270622611045837, 0.58729374408721924]) ,
+            (5, True, False, False, True, False) : (1.9709414, 0.68982947, [0, 0, 0, 0, 0, 0.62002801895141602, 0.37997198104858398]) ,
+            (5, True, False, False, False, True) : (1.9163667, 1.14982, [0, 0, 0, 0, 0, 0.72999167442321777, 0.27000829577445984]) ,
+            (5, True, False, False, False, False) : (2.4447069, 0.85564739, [0, 0, 0, 0, 0, 0.80499798059463501, 0.19500201940536499]) ,
+            (5, False, True, False, True, True) : (1.475865, 0.88551903, [0, 0, 0, 0, 0, 1.0, 0]) ,
+            (5, False, True, False, True, False) : (1.6334157, 0.57169551, [0, 0, 0, 0, 0, 1.0, 0]) ,
+            (5, False, True, False, False, True) : (1.509434, 0.90566039, [0, 0, 0, 0, 0, 1.0, 0]) ,
+            (5, False, True, False, False, False) : (2.0673864, 0.72358519, [0, 0, 0, 0, 0, 1.0, 0]) ,
+            (5, False, False, True, True, True) : (2.5490196, 1.7843137, [0, 0, 0, 0, 0, 1.0, 0]) ,
+            (5, False, False, True, True, False) : (1.9435737, 0.87460816, [0, 0, 0, 0, 0, 1.0, 0]) ,
+            (5, False, False, True, False, True) : (1.7693849, 1.2385694, [0, 0, 0, 0, 0, 1.0, 0]) ,
+            (5, False, False, True, False, False) : (2.1994596, 0.98975676, [0, 0, 0, 0, 0, 1.0, 0]) ,
+            (5, False, False, False, True, True) : (2.1875, 1.3125, [0, 0, 0, 0, 0, 1.0, 0]) ,
+            (5, False, False, False, True, False) : (1.8803419, 0.65811968, [0, 0, 0, 0, 0, 1.0, 0]) ,
+            (5, False, False, False, False, True) : (1.9163667, 1.14982, [0, 0, 0, 0, 0, 1.0, 0]) ,
+            (5, False, False, False, False, False) : (2.4447069, 0.85564739, [0, 0, 0, 0, 0, 1.0, 0]) ,
+            (6, True, True, False, True, True) : (2.7550187, 1.6530112, [0, 0, 0, 0, 0, 0, 1.0]) ,
+            (6, True, True, False, True, False) : (2.4767113, 0.86684889, [0, 0, 0, 0, 0, 0, 1.0]) ,
+            (6, True, True, False, False, True) : (1.8489302, 1.1093582, [0, 0, 0, 0, 0, 0, 1.0]) ,
+            (6, True, True, False, False, False) : (2.4813204, 0.86846215, [0, 0, 0, 0, 0, 0, 1.0]) ,
+            (6, True, False, True, True, True) : (1.8811882, 1.3168317, [0, 0, 0, 0, 0, 0, 1.0]) ,
+            (6, True, False, True, True, False) : (2.0423892, 0.91907513, [0, 0, 0, 0, 0, 0, 1.0]) ,
+            (6, True, False, True, False, True) : (2.1186955, 1.4830868, [0, 0, 0, 0, 0, 0, 1.0]) ,
+            (6, True, False, True, False, False) : (2.6321666, 1.1844751, [0, 0, 0, 0, 0, 0, 1.0]) ,
+            (6, True, False, False, True, True) : (1.9298246, 1.1578947, [0, 0, 0, 0, 0, 0, 1.0]) ,
+            (6, True, False, False, True, False) : (2.1415608, 0.74954629, [0, 0, 0, 0, 0, 0, 1.0]) ,
+            (6, True, False, False, False, True) : (2.2952538, 1.3771522, [0, 0, 0, 0, 0, 0, 1.0]) ,
+            (6, True, False, False, False, False) : (2.9230175, 1.0230561, [0, 0, 0, 0, 0, 0, 1.0]) ,
+        }
 
-        cds = {'ar':self.get_spell_cd('adrenaline_rush'),
-               'ks':self.get_spell_cd('killing_spree')}
-
-        # actual damage calculations here
-        phases = {}
-        #AR phase
-        stats, aps, crits, procs, additional_info = self.determine_stats(self.outlaw_attack_counts_ar)
-        ar_tuple = self.compute_damage_from_aps(stats, aps, crits, procs, additional_info)
-        phases['ar'] = (self.ar_duration, self.update_with_bandits_guile(ar_tuple[0], ar_tuple[1]))
-        for e in cds:
-            cds[e] -= self.ar_duration / self.rb_cd_modifier(aps)
-
-        #none
-        self.tmp_ks_cd = cds['ks']
-        self.tmp_phase_length = cds['ar'] #This is to approximate the value of a full energy bar to be used when not during AR or SB
-        stats, aps, crits, procs, additional_info = self.determine_stats(self.outlaw_attack_counts_none)
-        none_tuple = self.compute_damage_from_aps(stats, aps, crits, procs, additional_info)
-        phases['none'] = (self.rb_actual_cds(aps, cds)['ar'] + self.settings.response_time + self.major_cd_delay,
-                            self.update_with_bandits_guile(none_tuple[0], none_tuple[1]) )
-
-        if self.stats.gear_buffs.rogue_t18_4pc:
-            for key in phases['ar'][1]:
-                    phases['ar'][1][key] *=1.15
-            for key in phases['none'][1]:
-                #15% damage boost with 16% uptime
-                phases['none'][1][key] *= 1.024
-
-
-        total_duration = phases['ar'][0] + phases['none'][0]
-        #average it together
-        damage_breakdown = self.average_damage_breakdowns(phases, denom = total_duration)
-
-        run_through_multiplier = 1
-        if getattr(self.stats.procs, 'bleeding_hollow_toxin_vessel'):
-            run_through_multiplier = 1+round(getattr(self.stats.procs, 'bleeding_hollow_toxin_vessel').value['ability_mod']*1.6784929152)/10000
-
+        stats, aps, crits, procs, additional_info = self.determine_stats(self.outlaw_attack_counts)
+        damage_breakdown, additional_info  = self.compute_damage_from_aps(stats, aps, crits, procs, additional_info)
 
         bf_mod = .35
         if self.settings.cycle.blade_flurry:
             damage_breakdown['blade_flurry'] = 0
             for key in damage_breakdown:
                 if key in self.blade_flurry_damage_sources:
-                    if key == "run_through":
-                        damage_breakdown['blade_flurry'] += bf_mod * damage_breakdown[key] * self.settings.num_boss_adds * run_through_multiplier
-                    else:
-                        damage_breakdown['blade_flurry'] += bf_mod * damage_breakdown[key] * self.settings.num_boss_adds
-
-        soul_cap_mod = 1.0
-        if getattr(self.stats.procs, 'soul_capacitor'):
-            soul_cap= getattr(self.stats.procs, 'soul_capacitor')
-            self.set_rppm_uptime(soul_cap)
-            soul_cap_mod = 1+(soul_cap.uptime * soul_cap.value['damage_mod']/10000.)
+                    damage_breakdown['blade_flurry'] += bf_mod * damage_breakdown[key] * self.settings.num_boss_adds
 
         infallible_trinket_mod = 1.0
         if self.settings.is_demon:
@@ -1301,357 +1332,208 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 self.set_rppm_uptime(ift)
                 infallible_trinket_mod = 1+(ift.uptime *0.10)
 
-        maalus_mod = 1.0
-        if getattr(self.stats.procs,'maalus'):
-            maalus = getattr(self.stats.procs, 'maalus')
-            maalus_val = maalus.value['damage_mod']/10000.
-            maalus_mod = 1 + (15.0/120* maalus_val) #super hackish
-
-        #outlaw gets it's own MS calculation due to BF mechanics
-        #calculate multistrike here, really cheap to calculate
-        #turns out the 2 chance system yields a very basic linear pattern, the damage modifier is 30% of the multistrike %!
-        #multistrike_multiplier = .3 * 2 * (self.stats.get_multistrike_chance_from_rating(rating=stats['multistrike']) + self.buffs.multistrike_bonus())
-        #multistrike_multiplier = min(.6, multistrike_multiplier)
-
         for ability in damage_breakdown:
-            damage_breakdown[ability] *=maalus_mod
-            if 'sr_' not in ability:
-                damage_breakdown[ability] *= soul_cap_mod
-                damage_breakdown[ability] *= infallible_trinket_mod
-            #Fel Lash doesn't MS
-            if ability == 'Fel Lash':
-                continue
-            #damage_breakdown[ability] *= (1 + multistrike_multiplier)
-            if ability == 'run_through':
-                damage_breakdown[ability] *= run_through_multiplier
-
-        #add maalus burst
-        if maalus_mod > 1.0:
-            damage_breakdown['maalus'] = sum(damage_breakdown.values())*(maalus_mod-1.0) * (self.settings.num_boss_adds+1)
+            damage_breakdown[ability] *= infallible_trinket_mod
 
         return damage_breakdown
 
-    def update_with_bandits_guile(self, damage_breakdown, additional_info):
-        for key in damage_breakdown:
-            if key in ('Mirror of the Blademaster', 'Fel Lash'):
-                continue
-            if key in ('killing_spree', 'mh_killing_spree', 'oh_killing_spree'):
-                if self.settings.cycle.ksp_immediately:
-                    damage_breakdown[key] *= self.bandits_guile_multiplier
-                else:
-                    damage_breakdown[key] *= self.max_bandits_guile_buff
-                if self.stats.gear_buffs.rogue_t16_4pc_bonus():
-                    #http://elitistjerks.com/f78/t132793-5_4_changes_discussion/p2/#post2301780
-                    #http://www.wolframalpha.com/input/?i=%28sum+of+1.5*1.1%5Ex+from+x%3D1+to+7%29+%2F+%281.5*7%29
-                    # No need to use anything other than a constant. Yay for convenience!
-                    damage_breakdown[key] *= 1.49084
-            elif key in ('saber_slash', 'pistol_shot'):
-                damage_breakdown[key] *= self.bandits_guile_multiplier
-            elif key in ('run_through', ):
-                damage_breakdown[key] *= self.bandits_guile_multiplier #* self.revealing_strike_multiplier
-            else:
-                damage_breakdown[key] *= self.bandits_guile_multiplier #* self.ksp_multiplier
-
-        return damage_breakdown
-
-    def outlaw_cpg_per_finisher(self, current_cp, ability_count):
-        if current_cp >= 5:
-            return ability_count
-        new_count = copy(ability_count)
-        new_count += 1
-
-        normal = self.outlaw_cpg_per_finisher(current_cp+1, new_count)
-
-        #disabled rvs modeling because i dont understand how it works anyway
-        #rvs_proc = self.outlaw_cpg_per_finisher(current_cp+2, new_count)
-        
-        #return (1 - self.extra_cp_chance)*normal + self.extra_cp_chance*rvs_proc
-        return normal
-
-    def outlaw_attack_counts(self, current_stats, ar=False, crit_rates=None):
+    def outlaw_attack_counts(self, current_stats, crit_rates=None):
         attacks_per_second = {}
         additional_info = {}
 
-        # base_energy_regen needs to be reset here due to determine_stats method
-        self.base_energy_regen = 12. # should extract this to a function
+        #Compute values that are true through all RtB variations
+        self.base_energy_regen = 12.
         if self.talents.vigor:
             self.base_energy_regen *= 0.1
         if self.settings.cycle.blade_flurry:
-            self.base_energy_regen *= .8
+            self.base_energy_regen *= .8 + (0.03333 * self.traits.blade_dancer)
 
         if crit_rates == None:
             crit_rates = self.get_crit_rates(current_stats)
 
-        haste_multiplier = self.stats.get_haste_multiplier_from_rating(current_stats['haste']) * self.true_haste_mod
+        self.haste_multiplier = self.stats.get_haste_multiplier_from_rating(current_stats['haste']) * self.true_haste_mod
 
-        self.attack_speed_increase = self.base_speed_multiplier * haste_multiplier
+        combat_potency_proc_energy = 15 + (1 * self.traits.fortune_strikes)
+        self.combat_potency_regen_per_oh = combat_potency_proc_energy * .3 * self.stats.oh.speed / 1.4  # the new "normalized" formula
+        self.combat_potency_from_mg = combat_potency_proc_energy * .3
 
-        main_gauche_proc_rate = self.outlaw_mastery_conversion * self.stats.get_mastery_from_rating(current_stats['mastery'])
+        self.main_gauche_proc_rate = self.outlaw_mastery_conversion * self.stats.get_mastery_from_rating(current_stats['mastery'])
+        cost_reducer = self.main_gauche_proc_rate * self.combat_potency_from_mg
 
-        combat_potency_regen_per_oh = 15 * .3 * self.stats.oh.speed / 1.4  # the new "normalized" formula
-        combat_potency_from_mg = 15 * .3
-        FINISHER_SIZE = 5
-        ruthlessness_value = 1 # 1CP gained at 20% chance per CP spent (5CP spent means 1 is always added)
+        #compute MG lumped ability costs
+        self.run_through_energy_cost = self.get_spell_cost('run_through') - (4 * self.traits.fatebringer) - cost_reducer
+        self.pistol_shot_energy_cost = self.get_spell_cost('run_through') - (4 * self.traits.fatebringer) - cost_reducer
+        self.saber_slash_energy_cost = self. self.get_spell_cost('saber_slash') - cost_reducer
+        self.death_from_above_energy_cost = max(0, self.get_spell_cost('death_from_above')  - (4 * self.traits.fatebringer) - cost_reducer * (1 + self.settings.num_boss_adds))
+        if self.talents.slice_and_dice:
+            self.slice_and_dice_cost = self.get_spell_cost('slice_and_dice') - (4 * self.traits.fatebringer)
+        else:
+            self.roll_the_bones_cost = self.get_spell_cost('roll_the_bones') - (4 * self.traits.fatebringer)
+        if self.talents.ghostly_strike:
+            self.ghostly_strike_cost = self.get_spell_cost('ghostly_strike') - cost_reducer
+
+        self.white_swing_downtime = self.settings.response_time / self.get_spell_cd('vanish')
+        #compute dps phases each non-rerolling rtb buff combo (excluding tb and shark) ar and not
+        phases = {}
+
+
+
+
+
+
+        if self.traints.greed:
+            attacks_per_second['greed'] = 0.35 * attacks_per_second['run_through']
+
+        if self.traits.blunderbuss:
+            attacks_per_second['blunderbuss'] = 0.33 * attacks_per_second['pistol_shot']
+            attacks_per_second['pistol_shot'] -= attacks_per_second['blunderbuss']
+
+        return attacks_per_second, crit_rates, additional_info
+
+    def outlaw_attack_counts_mincycle(self, current_stats, snd=False, ar=False,
+        jolly=False, melee=False, buried=False, broadsides=False, duration=30):
+
+        attack_speed_multiplier = self.haste_multiplier
+        if melee:
+            attack_speed_multiplier *= 1.5
+        if snd:
+            attack_speed_multiplier *= 1.9
+
+        energy_regen = self.base_energy_regen
+        if buried:
+            energy_regen *= 1.25
 
         if ar:
-            self.attack_speed_increase *= 1.2
-            self.base_energy_regen *= 2.0
+            attack_speed_multiplier *= 1.2
+            energy_regen *= 2.0
+
         gcd_size = 1.0 + self.settings.latency
         if ar:
             gcd_size -= .2
-        cp_per_cpg = 1.
-        dfa_cd = self.get_spell_cd('death_from_above') + self.settings.response_time
 
-        if self.stats.gear_buffs.rogue_t18_2pc and not ar:
-            self.attack_speed_increase *= 1 + (0.16 *0.2)
-            self.base_energy_regen *= 1.16
-            gcd_size -= (0.16 * 0.2)
+        #fetch minicycle value
+        minicycle_key = (self.settings.finisher_threshold, bool(self.talents.deeper_strategem), bool(self.talents.quick_draw),
+                         bool(self.talents.swordmaster), broadsides, jolly)
+        ss_count, ps_count, finisher_list = self.minicycle_table[minicycle_key]
 
-        # Combine energy cost scalers to reduce function calls (ie, 40% reduced energy cost). Assume multiplicative.
-        cost_modifier = self.stats.gear_buffs.rogue_t15_4pc_modifier()
-        # Turn the cost of the ability into the net loss of energy by reducing it by the energy gained from MG
-        cost_reducer = main_gauche_proc_rate * combat_potency_from_mg
+        # set up our initial budgets
+        energy_budget = duration * energy_regen
+        gcd_budget = duration/gcd_size
 
-        #these should probably extracted to functions.
-        run_through_energy_cost =  self.get_spell_cost('run_through', cost_mod=cost_modifier)
-        run_through_energy_cost -= cost_reducer
-        #run_through_energy_cost -= FINISHER_SIZE * self.relentless_strikes_energy_return_per_cp
-        pistol_shot_energy_cost =  self.get_spell_cost('pistol_shot', cost_mod=cost_modifier)
-        pistol_shot_energy_cost -= cost_reducer
-        saber_slash_energy_cost =  self.get_spell_cost('saber_slash', cost_mod=cost_modifier)
-        saber_slash_energy_cost -= cost_reducer
-        death_from_above_energy_cost = self.get_spell_cost('death_from_above', cost_mod=cost_modifier)
-        death_from_above_energy_cost -= cost_reducer * (2 + self.settings.num_boss_adds)
-
-        #need to reduce the cost of DFA by the strike's MG proc ...
-        #but also the MG procs from the AOE which hits the main target plus each additional add (strike + aoe)
-        if self.stats.gear_buffs.rogue_t16_2pc_bonus():
-            saber_slash_energy_cost -= 15 * self.extra_cp_chance
-
-        ## Base CPs and Attacks
-        #Autoattacks
-        white_swing_downtime = 0
-        #TODO: Add swing resets back for vanishes
-        self.swing_reset_spacing = None
-        if self.swing_reset_spacing is not None and not ar:
-            white_swing_downtime += self.settings.response_time / self.swing_reset_spacing #from vanish
-        swing_timer_mh = self.stats.mh.speed / self.attack_speed_increase
-        swing_timer_mh = self.stats.oh.speed / self.attack_speed_increase
-
-        attacks_per_second['mh_autoattacks'] = self.attack_speed_increase / self.stats.mh.speed * (1 - white_swing_downtime)
-        attacks_per_second['oh_autoattacks'] = self.attack_speed_increase / self.stats.oh.speed * (1 - white_swing_downtime)
-        #swing delays should be handled here
+        #since artifacts we'll just compute a one handed swing timer
+        swing_timer = self.stats.mh_speed / attack_speed_multiplier
+        swings = duration/swing_timer
+        swings *= (1 - self.white_swing_downtime)
         if self.talents.death_from_above and not ar:
-            lost_swings_mh = self.lost_swings_from_swing_delay(1.3, self.stats.mh.speed / self.attack_speed_increase)
-            lost_swings_oh = self.lost_swings_from_swing_delay(1.3, self.stats.oh.speed / self.attack_speed_increase)
+            dfa_cd = self.get_spell_cd('death_from_above') + self.settings.response_time
+            dfa_count = duration/dfa_cd
+            dfa_lost_swings = self.lost_swings_from_swing_delay(1.3, swing_timer)
+            swings -= dfa_lost_swings * dfa_count
 
-            attacks_per_second['mh_autoattacks'] -= lost_swings_mh / dfa_cd
-            attacks_per_second['oh_autoattacks'] -= lost_swings_oh / dfa_cd
+        swing_hits = swings * self.dw_mh_hit_chance
 
-        attacks_per_second['mh_autoattack_hits'] = attacks_per_second['mh_autoattacks'] * self.dw_mh_hit_chance
-        attacks_per_second['oh_autoattack_hits'] = attacks_per_second['oh_autoattacks'] * self.dw_oh_hit_chance
-        attacks_per_second['main_gauche'] = attacks_per_second['mh_autoattack_hits'] * main_gauche_proc_rate
-        combat_potency_regen = attacks_per_second['oh_autoattack_hits'] * combat_potency_regen_per_oh
+        combat_potency_energy = swing_hits * self.combat_potency_regen_per_oh
+        combat_potency_energy += swing_hits * self.main_gauche_proc_rate * self.combat_potency_from_mg
+        energy_budget += combat_potency_energy
 
-        #Base energy
+        attacks_per_second = {}
 
-        #TODO handle openers
-        #bonus_energy_from_openers = self.get_bonus_energy_from_openers('sinister_strike', 'revealing_strike')
-        bonus_energy_from_openers = 0
-        #if self.settings.opener_name in ('ambush', 'garrote'):
-        #    attacks_per_second[self.settings.opener_name] = self.total_openers_per_second
-        #    attacks_per_second['main_gauche'] += self.total_openers_per_second * main_gauche_proc_rate
+        #consider the cost of building to max cps and using rtb
+        energy_budget -= ss_count * self.saber_slash_energy_cost
+        #don't account for ps energy becuase ps is free
+        energy_budget -= self.roll_the_bones_cost
+        gcd_budget -= (ss_count + ps_count + 1)
+        attacks_per_second['saber_slash'] = float(ss_count)/duration
+        attacks_per_second['pistol_shot'] = float(ps_count)/duration
+        attacks_per_second['roll_the_bones'] = float(finisher_list)/duration
 
+        #consider DfA
         if self.talents.death_from_above and not ar:
-            attacks_per_second['main_gauche'] += (1 + self.settings.num_boss_adds) * main_gauche_proc_rate / dfa_cd
-        combat_potency_regen += combat_potency_from_mg * attacks_per_second['main_gauche']
-        energy_regen = self.base_energy_regen * haste_multiplier
-        if self.stats.gear_buffs.rogue_t17_4pc_lfr:
-            #http://www.wolframalpha.com/input/?i=1.1307+*+%281+-+e+**+%28-1+*+1.1+*+6%2F+60%29%29
-            #https://twitter.com/Celestalon/status/525350819856535552
-            energy_regen *= 1 + (.11778034322021550695 * .3) #11% uptime on 30% boost)
-        if self.stats.gear_buffs.rogue_t18_4pc_lfr:
-            energy_regen *= 1.05
-        energy_regen += self.bonus_energy_regen + combat_potency_regen + bonus_energy_from_openers
-        #Rough idea to factor in a full energy bar
-        if not ar:
-            energy_regen += self.get_max_energy() / self.settings.duration
+            energy_budget -= ss_count * dfa_count * self.saber_slash_energy_cost
+            energy_budget -= dfa_count * self.death_from_above_energy_cost
+            attacks_per_second['saber_slash'] = float(ss_count * dfa_count)/duration
+            attacks_per_second['pistol_shot'] = float(ps_count * dfa_count)/duration
+            attacks_per_second['death_from_above_strike'] = finisher_list
+            attacks_per_second['death_from_above_pulse'] = finisher_list
+            for cp in xrange(7):
+                attacks_per_second['death_from_above_strike'][cp] *= float(dfa_count)/duration
+                attacks_per_second['death_from_above_pulse'][cp] *= float(dfa_count)/duration
+            #DfA forces a 2 second GCD
+            gcd_budget -= dfa_count * (ss_count + ps_count + 2)
 
-        #Base actions
+        #consider ghostly strike
+        if self.talents.ghostly_strike:
+            gs_count = duration/15.
+            gs_cps = gs_count * (1 + broadsides)
+            gs_energy = self.ghostly_strike_cost * gs_count
+            #TODO: use these ghostly strike cps
+            energy_budget -= gs_energy
+            gcd_budget -= gs_count
+            attacks_per_second['ghostly_strike'] = float(gs_count)/duration
 
-        #Minicycle sizes and cpg_per_finisher stats
-        if self.talents.anticipation:
-            ss_per_finisher = (FINISHER_SIZE - ruthlessness_value) / (cp_per_cpg + self.extra_cp_chance)
-        else:
-            ss_per_finisher = self.outlaw_cpg_per_finisher(1, 0)
-        cp_per_finisher = FINISHER_SIZE
-        energy_cost_for_cpgs = ss_per_finisher * saber_slash_energy_cost
-        total_eviscerate_cost = energy_cost_for_cpgs + run_through_energy_cost
+        #Burn the rest of our energy until you run out of energy or gcds
+        gcds_per_minicycle = ss_count + ps_count + 1
+        energy_per_minicycle = ss_count * self.saber_slash_energy_cost + self.run_through_energy_cost
+        minicycle_count = min(gcd_budget/gcds_per_minicycle, energy_budget/energy_per_minicycle)
 
-        ss_per_snd = ss_per_finisher
-        snd_size = FINISHER_SIZE
-        snd_base_cost = 25
-        #snd_cost = ss_per_snd * saber_slash_energy_cost + snd_base_cost - snd_size * self.relentless_strikes_energy_return_per_cp
-        snd_cost = ss_per_snd * saber_slash_energy_cost + snd_base_cost
-        snd_duration = 6 + 6 * (snd_size + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp())
-        energy_spent_on_snd = snd_cost / snd_duration
+        alacrity_stacks = 0
+        loop_counter = 0
+        while energy_budget > 0.1 and gcd_budget > 0.1:
+            if loop_counter > 20:
+                   raise ConvergenceErrorException(_('Mini-cycles failed to converge.'))
 
-        #Base Actions
+            loop_counter += 1
+            minicycle_count = min(gcd_budget/gcds_per_minicycle, energy_budget/energy_per_minicycle)
 
-        #TODO model pistol shot procs
-        pistol_shot_interval = 10
-        
-        #marked for death CD
-        self.outlaw_cd_delay = (.5 * total_eviscerate_cost) / (2 * energy_regen)
-        marked_for_death_cd = self.get_spell_cd('marked_for_death') + self.outlaw_cd_delay + self.settings.response_time
-        if self.talents.marked_for_death:
-            energy_regen -= 10. / marked_for_death_cd
+            attacks_per_second['saber_slash'] += float(minicycle_count * ss_count)/duration
+            attacks_per_second['pistol_shot'] += float(minicycle_count * ps_count)/duration
+            attacks_per_second['run_through'] = finisher_list
+            for cp in xrange(7):
+                attacks_per_second['run_through'][cp] *= float(minicycle_count)/duration
+            #Don't need to converge if we don't have alacrity
+            if not self.talents.alacrity:
+                break
+            else:
+                energy_budget -= minicycle_count * energy_per_minicycle
+                gcd_budget -= minicycle_count * gcds_per_minicycle
 
-        energy_regen -= pistol_shot_energy_cost / pistol_shot_interval
+                old_alacrity_regen = energy_regen * (1 + (alacrity_stacks *0.01))
+                new_alacrity_stacks = self.get_average_alacrity(attacks_per_second)
+                new_alacrity_regen = energy_regen * (1 + (new_alacrity_stacks *0.01))
+                energy_budget += (new_alacrity_regen - old_alacrity_regen) * duration
+                #compute new MG regen
+                #TODO: Compute new MG regen in alacrity loop
+                alacrity_stacks = new_alacrity_stacks
 
-        energy_for_dfa = 0
-        if self.talents.death_from_above and not ar:
-            #dfa_gap probably should be handled more accurately especially in the non-anticipation case
-            dfa_interval = 1./(dfa_cd)
-            energy_for_dfa = energy_cost_for_cpgs + death_from_above_energy_cost
-            #energy_for_dfa -= cp_per_finisher * self.relentless_strikes_energy_return_per_cp
-            energy_for_dfa *= dfa_interval
+        #Add in swings and MG APS
+        attacks_per_second['mh_autoattack'] = float(swings)/duration
+        attacks_per_second['mh_autoattack_hits'] = float(swing_hits)/duration
+        attacks_per_second['oh_autoattack'] = float(swings)/duration
+        attacks_per_second['oh_autoattack_hits'] = float(swing_hits)/duration
 
-            attacks_per_second['death_from_above'] = dfa_interval
-            attacks_per_second['death_from_above_strike'] = [0, 0, 0, 0, 0, dfa_interval]
-            attacks_per_second['death_from_above_pulse'] = [0, 0, 0, 0, 0, dfa_interval * (self.settings.num_boss_adds+1)]
+        attacks_per_second['main_gauche'] = attacks_per_second['mh_autoattack_hits'] * self.main_gauche_proc_rate
+        aps_mg_sources = attacks_per_second['saber_slash'] + attacks_per_second['pistol_shot'] + \
+            sum(attacks_per_second['run_through'])
+        if self.talents.death_from_above:
+            aps_mg_sources += sum(attacks_per_second['death_from_above_strike']) + \
+                (1 + self.settings.num_boss_adds) * attacks_per_second['death_from_above_pulse']
+        if self.talents.ghostly_strike:
+            aps_mg_sources += attacks_per_second['ghostly_strike']
 
-        #Base CPGs
-        attacks_per_second['saber_slash_base'] = ss_per_snd / snd_duration
-        if self.talents.death_from_above and not ar:
-            attacks_per_second['saber_slash_base'] += ss_per_finisher / (1/dfa_interval)
+        attacks_per_second['main_gauche'] += aps_mg_sources * self.main_gauche_proc_rate
 
-        attacks_per_second['pistol_shot'] = 1. / pistol_shot_interval
-        extra_finishers_per_second = attacks_per_second['pistol_shot'] / 5.
+        return attacks_per_second
 
-        #Scaling CPGs
-        free_gcd = 1./gcd_size
-        free_gcd -= 1./snd_duration + (attacks_per_second['saber_slash_base'] + attacks_per_second['pistol_shot'] + extra_finishers_per_second)
-        if self.talents.marked_for_death:
-            free_gcd -= (1. / marked_for_death_cd)
-
-        #2 seconds is an approximation of GCD loss while in air
-        if self.talents.death_from_above and not ar:
-            free_gcd -= dfa_interval * (2. / gcd_size) #wowhead claims a 2s GCD
-        energy_available_for_run_through = energy_regen - energy_spent_on_snd - energy_for_dfa
-        total_run_through_per_second = energy_available_for_run_through / total_eviscerate_cost
-        run_through_actions_per_second = (total_run_through_per_second * ss_per_finisher + total_run_through_per_second)
-        if self.stats.gear_buffs.rogue_t17_4pc:
-            #http://www.wolframalpha.com/input/?i=sum+of+.2%5Ex+from+x%3D1+to+inf
-            #This increases the frequency of Eviscerates by 25% for every Evisc cast
-            run_through_actions_per_second += total_run_through_per_second * .25
-        attacks_per_second['saber_slash'] = total_run_through_per_second * ss_per_finisher
-
-        # If GCD capped
-        if run_through_actions_per_second > free_gcd:
-            gcd_cap_mod = run_through_actions_per_second / free_gcd
-            attacks_per_second['saber_slash'] = attacks_per_second['saber_slash'] / gcd_cap_mod
-            total_run_through_per_second = total_run_through_per_second / gcd_cap_mod
-
-        # Reintroduce flat gcds
-        attacks_per_second['saber_slash'] += attacks_per_second['saber_slash_base']
-        attacks_per_second['main_gauche'] += (attacks_per_second['saber_slash'] + attacks_per_second['pistol_shot'] +
-                                              total_run_through_per_second) * main_gauche_proc_rate
-        if self.talents.death_from_above and not ar:
-            attacks_per_second['main_gauche'] += attacks_per_second['death_from_above_strike'][5] * main_gauche_proc_rate
-
-        #attacks_per_second['eviscerate'] = [finisher_chance * total_evis_per_second for finisher_chance in finisher_size_breakdown]
-        attacks_per_second['run_through'] = [0,0,0,0,0,total_run_through_per_second]
-
-        for opener, cps in [('ambush', 2), ('garrote', 1)]:
-            if opener in attacks_per_second:
-                extra_finishers_per_second += attacks_per_second[opener] * cps / 5
-        attacks_per_second['run_through'][5] += extra_finishers_per_second
-        if self.talents.marked_for_death:
-            attacks_per_second['run_through'][5] += 1. / marked_for_death_cd
-        if self.stats.gear_buffs.rogue_t17_4pc:
-            attacks_per_second['run_through'][5] *= 1.25
-
-        #self.current_variables['cp_spent_on_damage_finishers_per_second'] = (total_evis_per_second) * cp_per_finisher
-        if 'garrote' in attacks_per_second:
-            attacks_per_second['garrote_ticks'] = 6 * attacks_per_second['garrote']
-
-        time_at_level = 4 / attacks_per_second['saber_slash']
-        cycle_duration = 3 * time_at_level + 15
+    def outlaw_attack_counts_reroll(self, current_stats, ar=False, 
+        jolly=False, melee=False, buried=False, broadsides=False):
+        return 8
 
 
-        #if self.level == 100:
-        #    self.bandits_guile_multiplier = 1 + (0*time_at_level + .1*time_at_level + .2*time_at_level + .5 * 15) / cycle_duration
-        #else:
-        #    avg_stacks = (3 * time_at_level + 45) / cycle_duration #45 is the duration (15s) multiplied by the stack power (30% BG)
-        #    self.bandits_guile_multiplier = 1 + .1 * avg_stacks
-
-        #hack bg multiplier until it can be removed later
-
-
-        self.bandits_guile_multiplier = 1.0
-
-        if not ar:
-            ks_duration = 3
-            if self.stats.gear_buffs.rogue_pvp_wod_4pc:
-                ks_duration += 1
-            final_ks_cd = self.rb_actual_cd(attacks_per_second, self.tmp_ks_cd) + self.major_cd_delay + self.ar_duration/2.
-            if not self.settings.cycle.ksp_immediately:
-                final_ks_cd += (3 * time_at_level)/2 * (3 * time_at_level)/cycle_duration
-            attacks_per_second['mh_killing_spree'] = (1 + 2*ks_duration) / (final_ks_cd + self.settings.response_time)
-            attacks_per_second['oh_killing_spree'] = (1 + 2*ks_duration) / (final_ks_cd + self.settings.response_time)
-            attacks_per_second['main_gauche'] += attacks_per_second['mh_killing_spree'] * main_gauche_proc_rate
-
-        #if self.talents.shadow_reflection:
-        #    sr_uptime = 8. / self.get_spell_cd('shadow_reflection')
-        #    lst = ('sinister_strike', 'eviscerate', 'revealing_strike')
-        #    if not ar:
-        #        lst += ('mh_killing_spree', 'oh_killing_spree')
-        #    for ability in lst:
-        #        if type(attacks_per_second[ability]) in (tuple, list):
-        #            attacks_per_second['sr_'+ability] = [0,0,0,0,0,0]
-        #            for i in xrange(1, 6):
-        #                attacks_per_second['sr_'+ability][i] = sr_uptime * attacks_per_second[ability][i]
-        #        else:
-        #            attacks_per_second['sr_'+ability] = sr_uptime * attacks_per_second[ability]
-
-        #self.get_poison_counts(attacks_per_second, current_stats)
-
-        #print attacks_per_second
-        return attacks_per_second, crit_rates, additional_info
-
-    def rb_actual_cds(self, attacks_per_second, base_cds, avg_rb_effect=10):
-        final_cds = {}
-        # If it's best to always use 5CP finishers as outlaw now, it should continue to be so, this is simpler and faster
-        for cd_name in base_cds:
-            final_cds[cd_name] = base_cds[cd_name] * self.rb_cd_modifier(attacks_per_second)
-        return final_cds
-
-    def rb_actual_cd(self, attacks_per_second, base_cd, avg_rb_effect=10):
-        # If it's best to always use 5CP finishers as outlaw now, it should continue to be so, this is simpler and faster
-        return base_cd * self.rb_cd_modifier(attacks_per_second)
-
-    def rb_cd_modifier(self, attacks_per_second, avg_rb_effect=10):
-        # If it's best to always use 5CP finishers as outlaw now, it should continue to be so, this is simpler and faster
-        offensive_finisher_rate = attacks_per_second['run_through'][5]
-        if 'death_from_above' in attacks_per_second:
-            offensive_finisher_rate += attacks_per_second['death_from_above']
-        return (1./avg_rb_effect) / (offensive_finisher_rate + (1./avg_rb_effect))
-
-    def outlaw_attack_counts_ar(self, current_stats, crit_rates=None):
-        return self.outlaw_attack_counts(current_stats, ar=True, crit_rates=crit_rates)
-
-    def outlaw_attack_counts_none(self, current_stats, crit_rates=None):
-        return self.outlaw_attack_counts(current_stats, crit_rates=crit_rates)
 
     def get_max_energy(self):
         self.max_energy = 100
         if self.talents.vigor:
             self.max_energy += 50
-        if self.stats.gear_buffs.rogue_pvp_4pc_extra_energy():
-            self.max_energy += 30
-        if self.stats.gear_buffs.rogue_t18_4pc_lfr:
-            self.max_energy += 20
         if self.race.expansive_mind:
             self.max_energy = round(self.max_energy * 1.05, 0)
         return self.max_energy
@@ -1662,13 +1544,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     #Legion TODO:
 
-    #Talents:
-        #T3:Ancitipcation
-
     #Artifact:
         # 'flickering_shadows',
-        # 'second_shuriken',
-        # 'legionblade'
 
     #Items:
         #Class hall set bonus
@@ -1678,7 +1555,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     #Rotation details:
         #Combo Point loss
-        #Finality evis stealth modifier handlings
         #Shuriken storm dances details
         #weaponmaster bonus cp gen
 
@@ -1689,9 +1565,16 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if not self.settings.is_subtlety_rogue():
             raise InputNotModeledException(_('You must specify a subtlety cycle to match your subtlety spec.'))
 
-        #check to make sure cycle is sane:
-        if self.settings.cycle.cp_builder == 'gloomblade' and not self.talents.gloomblade:
-            raise InputNotModeledException(_('Gloomblade must be talented to be priamry cp builder'))
+        self.cp_builder = self.settings.cycle.cp_builder
+        if self.cp_builder == 'shuriken_storm':
+            self.dance_cp_builder = 'shuriken_storm'
+        elif self.cp_builder == 'backstab':
+            self.dance_cp_builder = 'shadowstrike'
+        else:
+            raise InputNotModeledException(_("{} is not a valid cp_builder").format(self.cp_builder))
+
+        if self.cp_builder == 'backstab' and self.talents.gloomblade:
+            self.cp_builder = 'gloomblade'
 
         self.max_spend_cps = 5
         if self.talents.deeper_strategem:
@@ -1700,29 +1583,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.talents.anticipation:
             self.max_store_cps += 3
 
-        self.finisher_thresholds = {'eviscerate': min(self.settings.cycle.eviscerate_cps, self.max_spend_cps),
-                                    'finality:eviscerate': min(self.settings.cycle.finality_eviscerate_cps, self.max_spend_cps),
-                                    'nightblade': min(self.settings.cycle.nightblade_cps, self.max_spend_cps),
-                                    'finality:nightblade': min(self.settings.cycle.finality_nightblade_cps, self.max_spend_cps),
-                                    }
-
         self.set_constants()
 
         #symbols of death
-        self.damage_modifier_cache = 1.2
+        self.damage_modifier_cache = 1.2 * (1 +(0.005 * self.traits.legionblade))
 
         stats, aps, crits, procs, additional_info = self.determine_stats(self.subtlety_attack_counts)
         damage_breakdown, additional_info  = self.compute_damage_from_aps(stats, aps, crits, procs, additional_info)
-
-        trinket_multiplier = 1
-        if getattr(self.stats.procs, 'bleeding_hollow_toxin_vessel'):
-            trinket_multiplier = 1+round(getattr(self.stats.procs, 'bleeding_hollow_toxin_vessel').value['ability_mod']*1.940260238)/10000
-
-        soul_cap_mod = 1.0
-        if getattr(self.stats.procs, 'soul_capacitor'):
-            soul_cap= getattr(self.stats.procs, 'soul_capacitor')
-            self.set_rppm_uptime(soul_cap)
-            soul_cap_mod = 1+(soul_cap.uptime * soul_cap.value['damage_mod']/10000.)
 
         infallible_trinket_mod = 1.0
         if self.settings.is_demon:
@@ -1730,12 +1597,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 ift = getattr(self.stats.procs, 'infallible_tracking_charm_mod')
                 self.set_rppm_uptime(ift)
                 infallible_trinket_mod = 1+(ift.uptime *0.10)
-
-        maalus_mod = 1.0
-        if getattr(self.stats.procs,'maalus'):
-            maalus = getattr(self.stats.procs, 'maalus')
-            maalus_val = maalus.value['damage_mod']/10000.
-            maalus_mod = 1 + (15.0/120* maalus_val) #super hackish
 
         #nightstalker
         if self.talents.nightstalker:
@@ -1749,6 +1610,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                     damage_breakdown[key] *= 1 + (0.12 * self.dance_finality_nb_uptime)
                 elif key == 'nightblade_ticks':
                     damage_breakdown[key] *= 1 + (0.12 * self.dance_nb_uptime)
+                elif key in ('eviscerate', 'finality:eviscerate'):
+                    damage_breakdown[key] *= 1 + (0.12 * self.stealth_evis_uptime)
 
         #master of subtlety
         if self.talents.master_of_subtlety:
@@ -1760,24 +1623,31 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                     damage_breakdown[key] *= mos_full_multiplier
                 elif key == 'shuriken_storm':
                     damage_breakdown[key] *= 1 + (0.1 * self.stealth_shuriken_uptime)
+                elif key in ('eviscerate', 'finality:eviscerate'):
+                    damage_breakdown[key] *= 1 + (0.1 * self.stealth_evis_uptime)
                 else:
                     damage_breakdown[key] *= mos_uptime_multipler
 
+        ds_multiplier = 1.0
+        if self.talents.deeper_strategem:
+            ds_multiplier = 1.1
+
         for key in damage_breakdown:
-            damage_breakdown[key] *= maalus_mod
-            if key == 'shadowstrike':
-                damage_breakdown[key] *=trinket_multiplier
-            if "sr_" not in key:
-                damage_breakdown[key] *= soul_cap_mod
-                damage_breakdown[key] *= infallible_trinket_mod
+            damage_breakdown[key] *= infallible_trinket_mod
             if key == 'shuriken_storm':
                 damage_breakdown[key] *= (1 + self.stealth_shuriken_uptime * 3)
-            #if "Mirror" not in key:
-            #    damage_breakdown[key] *= mos_multiplier
+            if key in self.finisher_damage_sources:
+                damage_breakdown[key] *= ds_multiplier
 
-        #add maalus burst
-        if maalus_mod > 1.0:
-            damage_breakdown['maalus'] = sum(damage_breakdown.values())*(maalus_mod-1.0) * (self.settings.num_boss_adds+1)
+        #add AoE damage sources:
+        if self.settings.num_boss_adds:    
+            for key in damage_breakdown:
+                if key == 'shuriken_toss':
+                    damage_breakdown[key] *= 1 + self.settings.num_boss_adds
+                elif key == 'second_shuriken':
+                    damage_breakdown[key] *= 1 + self.settings.num_boss_adds
+                elif key == 'shadow_nova':
+                    damage_breakdown *= 1 + self.settings.num_boss_adds
 
         return damage_breakdown
 
@@ -1818,8 +1688,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attacks_per_second['oh_autoattacks'] = haste_multiplier / self.stats.oh.speed * (1 - white_swing_downtime)
 
         #Set up initial combo point budget
-        mfd_cps = self.talents.marked_for_death * (self.settings.duration/60. * 5 + self.settings.marked_for_death_resets * 5)
+        mfd_cps = self.talents.marked_for_death * (self.settings.duration/60. * 5 * (1 + self.settings.marked_for_death_resets))
         self.cp_budget = mfd_cps
+
+
 
         #Enveloping Shadows generates 1 bonus cp per 6 seconds regardless of cps
         #2 net energy per 6 seconds from relentless strikes
@@ -1830,14 +1702,15 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         #setup timelines
         sod_duration = 35
-        nightblade_duration = 6 + (2 * self.finisher_thresholds['nightblade'])
-        finality_nightblade_duration = 6 + (2 * self.finisher_thresholds['finality:nightblade'])
+        nightblade_duration = 6 + (2 * self.settings.finisher_threshold)
+        finality_nightblade_duration = 6 + (2 * self.settings.finisher_threshold)
 
         #Add attacks that could occur during first pass to aps
-        attacks_per_second[self.settings.cycle.dance_cp_builder] = 0
+        attacks_per_second[self.dance_cp_builder] = 0
         attacks_per_second['symbols_of_death'] = 0
         attacks_per_second['shadow_dance'] = 0
         attacks_per_second['vanish'] = 0
+        
 
         #Leaving space for opener handling for the first cast
         sod_timeline = range(0, self.settings.duration, sod_duration)
@@ -1850,12 +1723,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         dance_finality_nb_uptime = 0.0
         dance_nb_uptime = 0.0
-        #Timeline match of ruptures, fill in rest with either finality:eviscerate
-        for finisher in ['finality:nightblade', 'nightblade', 'finality:eviscerate', 'eviscerate', None]:
+        for finisher in ['finality:nightblade', 'nightblade', 'eviscerate']:
             attacks_per_second[finisher] = [0, 0, 0, 0, 0, 0, 0]
-            dance_count = 0
-            if finisher in self.settings.cycle.dance_finishers_allowed:
-                attacks_per_second[finisher] = [0, 0, 0, 0, 0, 0, 0]
+            #Timeline match of ruptures, fill in rest with eviscerate
+            if self.settings.cycle.dance_finishers_allowed:
+                dance_count = 0
                 if finisher == 'finality:nightblade' and self.traits.finality:
                     #Allow SoDs to be used on pandemic for match purposes
                     joint, sod_timeline, finality_nb_timeline = self.timeline_overlap(sod_timeline, finality_nb_timeline, -0.3 * sod_duration)
@@ -1866,15 +1738,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                     joint, sod_timeline, nightblade_timeline = self.timeline_overlap(sod_timeline, nightblade_timeline, -0.3 * sod_duration)
                     dance_count = len(joint)
                     dance_nb_uptime = dance_count/len(nightblade_timeline)
-                elif (finisher == 'finality:eviscerate') and self.traits.finality:
-                    dance_count = len(sod_timeline)
-                    sod_timeline = []
                 elif finisher == 'eviscerate':
                     dance_count = len(sod_timeline)
                     sod_timeline = []
 
             #Not using finishers during dance
-            if finisher is None and not self.settings.cycle.dance_finishers_allowed:
+            else:
+                finisher=None
                 dance_count = len(sod_timeline)
                 sod_timeline = []
 
@@ -1886,19 +1756,18 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 #merge attack counts into attacks_per_second
                 self.rotation_merge(attacks_per_second, attack_counts, dance_count)
 
-        del attacks_per_second[None]
         #Add in ruptures not previously covered
         nightblade_count = len(nightblade_timeline)
-        attacks_per_second['nightblade'][self.finisher_thresholds['nightblade']] += float(nightblade_count)/self.settings.duration
-        self.cp_budget -= self.finisher_thresholds['nightblade'] * nightblade_count
-        self.energy_budget += (40 * (0.2 * self.finisher_thresholds['nightblade']) - self.get_spell_cost('nightblade')) * nightblade_count
-        self.dance_budget += (3. * self.finisher_thresholds['nightblade'] * nightblade_count)/60.
+        attacks_per_second['nightblade'][self.settings.finisher_threshold] += float(nightblade_count)/self.settings.duration
+        self.cp_budget -= self.settings.finisher_threshold * nightblade_count
+        self.energy_budget += (40 * (0.2 * self.settings.finisher_threshold) - self.get_spell_cost('nightblade')) * nightblade_count
+        self.dance_budget += (3. * self.settings.finisher_threshold * nightblade_count)/60.
 
         finality_nightblade_count = len(finality_nb_timeline)
-        attacks_per_second['finality:nightblade'][self.finisher_thresholds['finality:nightblade']] += float(finality_nightblade_count)/self.settings.duration
-        self.cp_budget -= self.finisher_thresholds['finality:nightblade'] * finality_nightblade_count
-        self.energy_budget += (40 * (0.2 * self.finisher_thresholds['finality:nightblade']) - self.get_spell_cost('finality:nightblade')) * finality_nightblade_count
-        self.dance_budget += (3. * self.finisher_thresholds['finality:nightblade'] * finality_nightblade_count)/60.
+        attacks_per_second['finality:nightblade'][self.settings.finisher_threshold] += float(finality_nightblade_count)/self.settings.duration
+        self.cp_budget -= self.settings.finisher_threshold * finality_nightblade_count
+        self.energy_budget += (40 * (0.2 * self.settings.finisher_threshold) - self.get_spell_cost('finality:nightblade')) * finality_nightblade_count
+        self.dance_budget += (3. * self.settings.finisher_threshold * finality_nightblade_count)/60.
 
         #Add in various cooldown abilities
         #This could be made better with timelining but for now simple time average will do
@@ -1940,30 +1809,25 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         vanish_count = self.settings.duration/self.get_spell_cd('vanish')
         #Treat subterfuge as a mini-dance
         if self.talents.subterfuge:
-            if 'finality:eviscerate' in self.settings.cycle.dance_finishers_allowed and self.traits.finality:
-                net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(use_sod=use_sod, finisher='finality:eviscerate', vanish=True)
-            else:
-                net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(use_sod=use_sod, finisher='eviscerate', vanish=True)
+            net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(use_sod=use_sod, finisher='eviscerate', vanish=True)
         else:
-           net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(use_sod=use_sod, finisher='eviscerate', vanish=True)
+           net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(use_sod=use_sod, finisher=None, vanish=True)
         self.energy_budget += vanish_count * net_energy
         self.cp_budget += vanish_count * net_cps
         self.dance_budget += ((3. * spent_cps* vanish_count)/60)
         self.rotation_merge(attacks_per_second, attack_counts, vanish_count)
 
-        #Generate one final dance template
-        if 'finality:eviscerate' in self.settings.cycle.dance_finishers_allowed and self.traits.finality:
-            net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(use_sod=use_sod, finisher='finality:eviscerate')
-        elif 'eviscerate' in self.settings.cycle.dance_finishers_allowed:
+        #Generate one final dance templates
+        if self.settings.cycle.dance_finishers_allowed:
             net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(use_sod=use_sod, finisher='eviscerate')
         else:
             net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(use_sod=use_sod, finisher=None)
 
         #Now lets make sure all our budgets are positive
         cp_per_builder = 1 + self.shadow_blades_uptime
-        if self.settings.cycle.cp_builder == 'shuriken_storm':
+        if self.cp_builder == 'shuriken_storm':
             cp_per_builder += self.settings.num_boss_adds
-        energy_per_cp = self.get_spell_cost(self.settings.cycle.cp_builder) /(cp_per_builder)
+        energy_per_cp = self.get_spell_cost(self.cp_builder) /(cp_per_builder)
 
         extra_evis = 0
         extra_builders = 0
@@ -1996,22 +1860,20 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             #can add since we know cp_budget is negative
             self.energy_budget += self.cp_budget * energy_per_cp
             extra_builders += abs(self.cp_budget) / cp_per_builder
+            print extra_builders, energy_per_cp
             self.cp_budget = 0
 
-        if self.settings.cycle.cp_builder == 'shuriken_storm':
+        if self.cp_builder == 'shuriken_storm':
             attacks_per_second['shuriken_storm-no-dance'] = extra_builders / self.settings.duration
         else:
-            attacks_per_second[self.settings.cycle.cp_builder] = extra_builders / self.settings.duration
-        attacks_per_second['eviscerate'][self.finisher_thresholds['eviscerate']] += extra_evis
+            attacks_per_second[self.cp_builder] = extra_builders / self.settings.duration
+        attacks_per_second['eviscerate'][self.settings.finisher_threshold] += extra_evis
 
         #Hopefully energy budget here isn't negative, if it is we're in trouble
         #Now we convert all the energy we have left into mini-cycles
         #Each mini-cycle contains enough 1 dance and generators+finishers for one dance
         cps_per_dance = 20
-        if self.traits.finality:
-            finishers_per_minicycle = cps_per_dance/(0.5 * self.finisher_thresholds['finality:eviscerate'] + 0.5 * self.finisher_thresholds['eviscerate'])
-        else:
-            finishers_per_minicycle = cps_per_dance/self.finisher_thresholds['eviscerate']
+        finishers_per_minicycle = cps_per_dance/self.settings.finisher_threshold
 
         attack_counts_mini_cycle = attack_counts
         attack_counts_mini_cycle['eviscerate'] = [0, 0, 0, 0, 0, 0, 0]
@@ -2034,11 +1896,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 mini_cycle_count = 1
             #mini_cycle_count = 1
             #build the minicycle attack_counts
-            if self.settings.cycle.cp_builder == 'shuriken_storm':
+            if self.cp_builder == 'shuriken_storm':
                 attack_counts_mini_cycle['shuriken_storm-no-dance'] = builders_per_minicycle
             else:
-                attack_counts_mini_cycle[self.settings.cycle.cp_builder] = builders_per_minicycle
-            attack_counts_mini_cycle['eviscerate'][self.finisher_thresholds['eviscerate']] = finishers_per_minicycle
+                attack_counts_mini_cycle[self.cp_builder] = builders_per_minicycle
+            attack_counts_mini_cycle['eviscerate'][self.settings.finisher_threshold] = finishers_per_minicycle
             self.rotation_merge(attacks_per_second, attack_counts_mini_cycle, mini_cycle_count)
             self.energy_budget += mini_cycle_energy * mini_cycle_count
             self.cp_budget += net_cps - 20 + cps_to_generate
@@ -2049,7 +1911,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 new_alacrity_regen = self.energy_regen * (1 + (new_alacrity_stacks *0.01))
                 self.energy_budget += (new_alacrity_regen - old_alacrity_regen) * self.settings.duration
                 alacrity_stacks = new_alacrity_stacks
-
 
         #Now fixup attacks_per_second
         #convert nightblade casts into nightblade ticks
@@ -2073,7 +1934,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second['shadow_nova'] = attacks_per_second['symbols_of_death'] + attacks_per_second['vanish']
 
         self.stealth_shuriken_uptime = 0.
-        if self.settings.cycle.dance_cp_builder == 'shuriken_storm' and self.settings.cycle.cp_builder == 'shuriken_storm':
+        if self.cp_builder == 'shuriken_storm':
             self.stealth_shuriken_uptime = attacks_per_second['shuriken_storm'] / (attacks_per_second['shuriken_storm'] + attacks_per_second['shuriken_storm-no-dance'])
             attacks_per_second['shuriken_storm'] = attacks_per_second['shuriken_storm'] + attacks_per_second['shuriken_storm-no-dance']
             del attacks_per_second['shuriken_storm-no-dance']
@@ -2095,13 +1956,29 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             elif isinstance(attacks_per_second[ability], list) and not any(attacks_per_second[ability]):
                 del attacks_per_second[ability]
 
+        #determine how many evis used during dance
+        if self.settings.cycle.dance_finishers_allowed:
+            stealth_evis = attacks_per_second['shadow_dance']
+            if self.talents.subterfuge:
+                stealth_evis += attacks_per_second['vanish']
+        else:
+            stealth_evis = 0
+        self.stealth_evis_uptime = stealth_evis/sum(attacks_per_second['eviscerate'])
+
+        #convert half of evis to finality
+        if self.traits.finality:
+            for cp in xrange(7):
+                attacks_per_second['finality:eviscerate'][cp] = attacks_per_second['eviscerate'][cp] * 0.5
+                attacks_per_second['eviscerate'][cp] *= 0.5
+
+        if self.traits.second_shuriken and 'shuriken_toss' in attacks_per_second:
+            attacks_per_second['second_shuriken'] = 0.1 * attacks_per_second['shuriken_toss']
         #print attacks_per_second
 
         #add SoD auto crits
         if 'shadowstrike' in attacks_per_second:
             sod_shadowstrikes = attacks_per_second['symbols_of_death']/attacks_per_second['shadowstrike']
             crit_rates['shadowstrike'] = crit_rates['shadowstrike'] * (1. - sod_shadowstrikes) + sod_shadowstrikes
-        #print crit_rates
 
         if self.talents.weaponmaster:
             for ability in attacks_per_second:
@@ -2145,21 +2022,21 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         max_dance_energy = dance_gcds * self.energy_regen + self.max_energy
 
         if finisher:
-            net_energy += 40 * (0.2 * self.finisher_thresholds[finisher]) - self.get_spell_cost(finisher)
-            dance_gcds -=1
-            net_cps -= self.finisher_thresholds[finisher]
+            net_energy += 40 * (0.2 * self.settings.finisher_threshold) - self.get_spell_cost(finisher)
+            dance_gcds -= 1
+            net_cps -= self.settings.finisher_threshold
             attack_counts[finisher] = [0, 0, 0, 0, 0, 0, 0]
-            attack_counts[finisher][self.finisher_thresholds[finisher]] += 1
-            spent_cps += self.finisher_thresholds[finisher]
+            attack_counts[finisher][self.settings.finisher_threshold] += 1
+            spent_cps += self.settings.finisher_threshold
         #fill remaining gcds with shadowstrikes
-        cp_builder = self.settings.cycle.dance_cp_builder
-        cp_builder_cost = self.get_spell_cost(cp_builder, cost_mod=cost_mod)
-        builder_count = min(dance_gcds, math.floor((net_energy+max_dance_energy)/cp_builder_cost))
-        if vanish is True:
-            attack_counts[cp_builder] = min(builder_count, self.settings.cycle.max_vanish_builders)
+        cp_builder = self.dance_cp_builder
+        cp_builder_cost = float(self.get_spell_cost(cp_builder, cost_mod=cost_mod))
+        builder_count = min(dance_gcds, (net_energy+max_dance_energy)/cp_builder_cost)
+        if vanish:
+            attack_counts[cp_builder] = builder_count
             attack_counts['vanish'] = 1
         else:
-            attack_counts[cp_builder] = min(builder_count, self.settings.cycle.max_dance_builders)
+            attack_counts[cp_builder] = builder_count
             attack_counts['shadow_dance'] = 1
 
         net_energy -= attack_counts[cp_builder] * cp_builder_cost
