@@ -335,7 +335,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                         triggers_per_second += sum(attacks_per_second[ability])
         if proc.procs_off_apply_debuff() and not proc.procs_off_crit_only():
             if 'rupture' in attacks_per_second:
-                triggers_per_second += attacks_per_second['rupture']
+                triggers_per_second += sum(attacks_per_second['rupture'])
             if 'garrote' in attacks_per_second:
                 triggers_per_second += attacks_per_second['garrote']
             if 'hemorrhage_ticks' in attacks_per_second:
