@@ -518,7 +518,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             #Don't double count DfA
             if finisher in attacks_per_second and finisher != 'death_from_above_pulse':
                 for cp in xrange(7):
-                    print finisher
                     stacks_per_second += 0.2 * cp * attacks_per_second[finisher][cp]
         stack_time = 20/stacks_per_second
         if stack_time > self.settings.duration:
@@ -717,7 +716,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #T2:Nightstalker
         #T2:Subter
         #T2:SF
-        #T3:Deeper Strat
         #T5:Agonizing Poison
 
     #Artifact:
@@ -802,10 +800,32 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             finisher_list[self.settings.finisher_threshold] = 1.0
         #otherwise we need to enumerate paths to determine amount of waste given cp threshold
         else:
-            #TODO: This is nonsense
-            builders_per_finisher = 2.8
-            avg_finisher_size = 5.2
-            finisher_list = [0, 0, 0, 0, 0, 0.8, 0.2]
+            #TODO: Super hackish, do this right
+            finisher_list = [0, 0, 0, 0, 0, 0, 0]
+            if self.settings.finisher_threshold == 4:
+                paths = [(2, 2), (2, 3), (2, 4), (3, 2), (3, 3), (3, 4), (4,)]
+            elif self.settings.finisher_threshold == 5: 
+                paths = [(2, 2, 2), (2, 2, 3), (2, 2, 4), (2, 3), (2, 4), (3, 2), (3, 3), (3, 4), (4, 2), (4, 3), (4, 4)]
+            elif self.settings.finisher_threshold == 6:
+                paths = [(2, 2, 2), (2, 2, 3), (2, 2, 4), (2, 3, 2), (2, 3, 3), (2, 3, 4), (2, 4), 
+                         (3, 2, 2), (3, 2, 3), (3, 2, 4), (3, 3), (3, 4), (4, 2), (4, 3), (4, 4)]
+            else:
+                raise InputNotModeledException(_('Finisher thresholds less than 4 unimplemented'))
+            max_cps = 5
+            if self.talents.deeper_strategem:
+                max_cps = 6
+            builders_per_finisher = 0.0
+            avg_finisher_size = 0.0
+            finisher_list = [0, 0, 0, 0, 0, 0, 0]
+            for path in paths:
+                chance = 1.0
+                for step in path:
+                    chance *= cpg_cps[step]
+                builders_per_finisher += chance * len(path)
+                size = min(max_cps, sum(path))
+                avg_finisher_size += chance * size
+                finisher_list[size] += chance
+
         cp_builder_energy_per_finisher = builders_per_finisher * self.get_spell_cost(self.cp_builder)
 
         #set up our energy budget

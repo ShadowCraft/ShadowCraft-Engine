@@ -54,14 +54,15 @@ test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          mastery=5999,
                          versatility=1515,)
 # Initialize talents..
-test_talents = talents.Talents('3020023', test_spec, test_class, level=test_level)
+test_talents = talents.Talents('3010023', test_spec, test_class, level=test_level)
 
 #initialize artifact traits..
 test_traits = artifact.Artifact(test_spec, test_class, '100000000000000000')
 
 # Set up settings.
 test_cycle = settings.AssassinationCycle()
-test_settings = settings.Settings(test_cycle, response_time=.5, duration=360)
+test_settings = settings.Settings(test_cycle, response_time=.5, duration=360,
+                                  finisher_threshold=5)
 
 # Build a DPS object.
 calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_traits, test_buffs, test_race, test_spec, test_settings, test_level)
