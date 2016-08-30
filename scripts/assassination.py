@@ -54,7 +54,7 @@ test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          mastery=5999,
                          versatility=1515,)
 # Initialize talents..
-test_talents = talents.Talents('3010023', test_spec, test_class, level=test_level)
+test_talents = talents.Talents('0000000', test_spec, test_class, level=test_level)
 
 #initialize artifact traits..
 test_traits = artifact.Artifact(test_spec, test_class, '100000000000000000')
@@ -77,7 +77,7 @@ total_dps = sum(entry[1] for entry in dps_breakdown.items())
 
 
 talent_ranks = calculator.get_talents_ranking()
-#trait_ranks = calculator.get_trait_ranking()
+trait_ranks = calculator.get_trait_ranking()
 
 def max_length(dict_list):
     max_len = 0
@@ -108,7 +108,7 @@ dicts_for_pretty_print = [
     #talent_ranks,
     #trinkets_ep_value,
     dps_breakdown,
-    #trait_ranks
+    trait_ranks
 ]
 pretty_print(dicts_for_pretty_print)
 

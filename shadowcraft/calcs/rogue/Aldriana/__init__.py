@@ -481,36 +481,26 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         mh_hits_per_second = self.get_mh_procs_per_second(poison, attacks_per_second, None)
         oh_hits_per_second = self.get_oh_procs_per_second(poison, attacks_per_second, None)
         total_hits_per_second = mh_hits_per_second + oh_hits_per_second
-        if poison:
-            poison_base_proc_rate = .3
-        else:
+        if not poison:
             return
-        proc_multiplier = 1
-        if self.spec == 'outlaw':
-            if self.settings.cycle.blade_flurry:
-                ms_value = 1 + min(2 * (self.stats.get_multistrike_chance_from_rating(rating=current_stats['multistrike']) + self.buffs.multistrike_bonus()), 2)
-                proc_multiplier += min(self.settings.num_boss_adds, [4, 999][self.level==100]) * ms_value
 
-        if self.settings.is_assassination_rogue():
-            poison_base_proc_rate += .2
-            poison_envenom_proc_rate = poison_base_proc_rate + .3
-            aps_envenom = attacks_per_second['envenom']
-            if self.talents.death_from_above:
-                aps_envenom = map(add, attacks_per_second['death_from_above_strike'], attacks_per_second['envenom'])
-            envenom_uptime = min(sum([(1 + cps + self.stats.gear_buffs.rogue_t15_2pc_bonus_cp()) * aps_envenom[cps] for cps in xrange(1, 6)]), 1)
-            avg_poison_proc_rate = poison_base_proc_rate * (1 - envenom_uptime) + poison_envenom_proc_rate * envenom_uptime
+        if self.talents.agonizing_poison:
+            poison_base_proc_rate = 0.2  
         else:
-            avg_poison_proc_rate = poison_base_proc_rate
+            poison_base_proc_rate = 0.5
+        poison_envenom_proc_rate = poison_base_proc_rate + 0.3
+        aps_envenom = attacks_per_second['envenom']
+        if self.talents.death_from_above:
+            aps_envenom = map(add, attacks_per_second['death_from_above_strike'], attacks_per_second['envenom'])
+        envenom_uptime = min(sum([(1 + cps) * aps_envenom[cps] for cps in xrange(1, 6)]), 1)
+        avg_poison_proc_rate = poison_base_proc_rate * (1 - envenom_uptime) + poison_envenom_proc_rate * envenom_uptime
 
-        if self.settings.dmg_poison == 'sp':
-            poison_procs = avg_poison_proc_rate * total_hits_per_second * proc_multiplier - 1 / self.settings.duration
-            attacks_per_second['swift_poison'] = poison_procs
-        elif self.settings.dmg_poison == 'dp':
-            poison_procs = avg_poison_proc_rate * total_hits_per_second * proc_multiplier - 1 / self.settings.duration
+        if self.talents.agonizing_poison:
+            attacks_per_second['agonizing_poison'] = total_hits_per_second * avg_poison_proc_rate
+        else:
+            poison_procs = avg_poison_proc_rate * total_hits_per_second - 1 / self.settings.duration
             attacks_per_second['deadly_instant_poison'] = poison_procs
-            attacks_per_second['deadly_poison'] = 1. / 3  * proc_multiplier
-        elif self.settings.dmg_poison == 'wp':
-            attacks_per_second['wound_poison'] = total_hits_per_second * avg_poison_proc_rate
+            attacks_per_second['deadly_poison'] = 1. / 3  
 
     def get_average_alacrity(self, attacks_per_second):
         stacks_per_second = 0.0
@@ -711,20 +701,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     #Legion TODO:
 
     #Talents:
-        #T1:Master Poisoner
-        #T1:Elaborate Planning
         #T2:Nightstalker
         #T2:Subter
         #T2:SF
-        #T5:Agonizing Poison
 
     #Artifact:
         # 'poison_knives',
-        # 'surge_of_toxins',
         # 'bag_of_tricks',
-        # 'master_alchemist',
         # 'from_the_shadows',
-        # 'blood_of_the_assassinated',
 
     #Items:
         #Class hall set bonus
@@ -767,6 +751,46 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         stats, aps, crits, procs, additional_info = self.determine_stats(self.assassination_attack_counts)
         damage_breakdown, additional_info  = self.compute_damage_from_aps(stats, aps, crits, procs, additional_info)
+
+        agonizing_poison_mod = 1
+        if self.talents.agonizing_poison:
+            agonizing_poison_mod = 0.04
+            if self.traits.surge_of_toxins:
+                agonizing_poison_mod += 0.01 * self.surge_of_toxins_multiplier
+            agonizing_poison_mod += 1
+            agonizing_poison_mod *= 1 + (0.01 * self.traits.master_alchemist)
+            agonizing_poison_mod *= 1 + (0.01 * self.traits.poison_knives)
+            if self.talents.master_poisoner:
+                agonizing_poison_mod *= 1.2
+
+            agonizing_poison_mod *= 1 + (self.assassination_mastery_conversion * self.stats.get_mastery_from_rating(stats['mastery'])/2)
+        
+        elaborate_planning_mod = 1
+        if self.talents.elaborate_planning:
+            elaborate_planning_mod = 1 + (0.15 * self.elaborate_planning_multiplier)
+
+        hemo_mod = 1 + 0.25 * self.talents.hemorrhage
+
+        surge_mod = 1
+        if self.traits.surge_of_toxins:
+            surge_mod = 1 + self.surge_of_toxins_multiplier
+
+        bota_mod = 1    
+        if self.traits.blood_of_the_assassinated:
+            bota_mod = 1 + self.bota_multiplier
+
+        for ability in damage_breakdown:
+            damage_breakdown[ability] *= agonizing_poison_mod
+            damage_breakdown[ability] *= elaborate_planning_mod
+            if ability in ['rupture_ticks', 'garrote_ticks']:
+                damage_breakdown[ability] *= hemo_mod
+            if ability in ['deadly_poison_ticks', 'deadly_instant_poison',
+                           'kingsbane', 'kingsbane_ticks']:
+                damage_breakdown[ability] *= surge_mod
+            if ability == 'rupture_ticks':
+                damage_breakdown[ability] *= bota_mod
+
+
 
 
         return damage_breakdown
@@ -954,8 +978,37 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 energy_budget += (new_alacrity_regen - old_alacrity_regen) * self.settings.duration
                 alacrity_stacks = new_alacrity_stacks
 
-        #print attacks_per_second
+        attacks_per_second['mh_autoattacks'] = (self.haste_multiplier * (1 + (alacrity_stacks * 0.01)))/self.stats.mh.speed 
+        attacks_per_second['oh_autoattacks'] = attacks_per_second['mh_autoattacks']
 
+        #poison computations, use old function for now
+        self.get_poison_counts(attacks_per_second, current_stats)
+        if self.talents.agonizing_poison:
+            stack_time = 5./attacks_per_second['agonizing_poison']
+            max_time = self.settings.duration - stack_time
+            self.agonizing_poison_stacks = (max_time/self.settings.duration) * 5 + (stack_time/self.settings.duration) * 2.5
+
+        if self.talents.elaborate_planning:
+            finisher_aps = 0.0
+            for ability in attacks_per_second:
+                if ability in self.finisher_damage_sources and 'ticks' not in ability:
+                    finisher_aps += sum(attacks_per_second[ability])
+            self.elaborate_planning_multiplier = min(1, 5 * finisher_aps)
+
+        if self.traits.surge_of_toxins:
+            finisher_aps = 0.0
+            for ability in attacks_per_second:
+                if ability in self.finisher_damage_sources and 'ticks' not in ability:
+                    finisher_aps += sum([0.02 * cp * 5for cp in attacks_per_second[ability]])
+            self.surge_of_toxins_multiplier = finisher_aps
+
+        if self.traits.blood_of_the_assassinated:
+            self.bota_multiplier = 0.35 * sum(attacks_per_second['rupture']) * 10
+            self.bota_multiplier *= 2
+
+
+
+        #print attacks_per_second
         return attacks_per_second, crit_rates, additional_info
 
     ###########################################################################
