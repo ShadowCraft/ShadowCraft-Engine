@@ -356,7 +356,7 @@ class RogueDamageCalculator(DamageCalculator):
     def mh_kingsbane_damage(self, ap):
        return 3 * self.get_weapon_damage('mh', ap) * (1 + (0.4 * self.talents.master_poisoner))
     def oh_kingsbane_damage(self, ap):
-        return 3 * self.oh_penalty * self.get_weapon_damage('oh', ap) * (1 + (0.4 * self.talents.master_poisoner))
+        return 3 * self.oh_penalty() * self.get_weapon_damage('oh', ap) * (1 + (0.4 * self.talents.master_poisoner))
     def kingsbane_tick_damage(self, ap):
         return 0.45 * ap * (1 + (0.4 * self.talents.master_poisoner))
     def mh_mutilate_damage(self, ap):
@@ -527,6 +527,8 @@ class RogueDamageCalculator(DamageCalculator):
         cd = self.ability_cds[ability]
         if ability == 'adrenaline_rush':
             cd -= 10 * self.traits.fortunes_boon
+        elif ability == 'vendetta':
+            cd -= 10 * self.traits.master_assassin
         return cd
 
     def crit_rate(self, crit=None):

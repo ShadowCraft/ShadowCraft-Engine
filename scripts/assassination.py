@@ -34,8 +34,8 @@ test_buffs = buffs.Buffs(
     )
 
 # Set up weapons.
-test_mh = stats.Weapon(812.0, 1.8, 'dagger', 'mark_of_the_shattered_hand')
-test_oh = stats.Weapon(812.0, 1.8, 'dagger', 'mark_of_the_frostwolf')
+test_mh = stats.Weapon(4821.0, 1.8, 'dagger', None)
+test_oh = stats.Weapon(4821.0, 1.8, 'dagger', None)
 
 # Set up procs.
 #test_procs = procs.ProcsList(('scales_of_doom', 691), ('beating_heart_of_the_mountain', 701),
@@ -47,18 +47,17 @@ test_gear_buffs = stats.GearBuffs('gear_specialization')
 
 # Set up a calcs object..
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
-                         agi=7655,
+                         agi=20909,
                          stam=19566,
-                         crit=2665,
-                         haste=1594,
-                         mastery=3350,
-                         versatility=6522,)
-
+                         crit=4402,
+                         haste=5150,
+                         mastery=5999,
+                         versatility=1515,)
 # Initialize talents..
-test_talents = talents.Talents('0000000', test_spec, test_class, level=test_level)
+test_talents = talents.Talents('3020020', test_spec, test_class, level=test_level)
 
 #initialize artifact traits..
-test_traits = artifact.Artifact(test_spec, test_class, '100000000000100000')
+test_traits = artifact.Artifact(test_spec, test_class, '100000000000000000')
 
 # Set up settings.
 test_cycle = settings.AssassinationCycle()
@@ -72,7 +71,7 @@ dps_breakdown = calculator.get_dps_breakdown()
 total_dps = sum(entry[1] for entry in dps_breakdown.items())
 
 # Compute EP values.
-ep_values = calculator.get_ep(baseline_dps=total_dps)
+#ep_values = calculator.get_ep(baseline_dps=total_dps)
 #tier_ep_values = calculator.get_other_ep(['rogue_t14_4pc', 'rogue_t14_2pc', 'rogue_t15_4pc', 'rogue_t15_2pc', 'rogue_t16_2pc', 'rogue_t16_4pc'])
 
 
@@ -103,9 +102,9 @@ def pretty_print(dict_list, total_sum = 1., show_percent=False):
         print '-' * (max_len + 15)
 
 dicts_for_pretty_print = [
-    ep_values,
+    #ep_values,
     #tier_ep_values,
-    talent_ranks,
+    #talent_ranks,
     #trinkets_ep_value,
     dps_breakdown,
     #trait_ranks

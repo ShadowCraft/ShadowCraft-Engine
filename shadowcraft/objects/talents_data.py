@@ -76,8 +76,8 @@ talents = {
         ('deeper_strategem', 'anticipation', 'vigor'),
         ('leeching_poison', 'elusiveness', 'cheat_death'),
         ('thuggee', 'prey_on_the_weak', 'internal_bleeding'),
-        ('agonizing_poison', 'alacrity', 'blood_sweat'),
-        ('lemon_zest', 'marked_for_death', 'death_from_above')
+        ('agonizing_poison', 'alacrity', 'exsanguinate'),
+        ('venom_rush', 'marked_for_death', 'death_from_above')
     ),
     ('rogue', 'outlaw'): (
         ('ghostly_strike', 'swordmaster', 'quick_draw'),
