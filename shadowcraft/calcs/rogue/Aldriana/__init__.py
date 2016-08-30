@@ -518,6 +518,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             #Don't double count DfA
             if finisher in attacks_per_second and finisher != 'death_from_above_pulse':
                 for cp in xrange(7):
+                    print finisher
                     stacks_per_second += 0.2 * cp * attacks_per_second[finisher][cp]
         stack_time = 20/stacks_per_second
         if stack_time > self.settings.duration:
@@ -878,12 +879,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         if self.talents.death_from_above:
             dfa_cd = self.get_spell_cd('death_from_above') + self.settings.response_time
-            dfa_per_second = 1./self.dfa_cd
+            dfa_per_second = 1./dfa_cd
             attacks_per_second['death_from_above_strike'] = [0, 0, 0, 0, 0, 0, 0]
             attacks_per_second['death_from_above_pulse'] = [0, 0, 0, 0, 0, 0, 0]
             for cp in xrange(7):
-                attacks_per_second['death_from_above_pulse'] = dfa_per_second * finisher_list[cp]
-                attacks_per_second['death_from_above_strike'] = dfa_per_second * finisher_list[cp]
+                attacks_per_second['death_from_above_pulse'][cp] = dfa_per_second * finisher_list[cp]
+                attacks_per_second['death_from_above_strike'][cp] = dfa_per_second * finisher_list[cp]
             attacks_per_second[self.cp_builder] += dfa_per_second * builders_per_finisher
             dfa_cost_per_second = self.get_spell_cost('death_from_above') * dfa_per_second
             dfa_cost_per_second += cp_builder_energy_per_finisher * dfa_per_second

@@ -54,7 +54,7 @@ test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          mastery=5999,
                          versatility=1515,)
 # Initialize talents..
-test_talents = talents.Talents('3020020', test_spec, test_class, level=test_level)
+test_talents = talents.Talents('3020023', test_spec, test_class, level=test_level)
 
 #initialize artifact traits..
 test_traits = artifact.Artifact(test_spec, test_class, '100000000000000000')
