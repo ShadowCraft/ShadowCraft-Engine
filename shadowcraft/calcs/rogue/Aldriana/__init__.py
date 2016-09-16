@@ -485,7 +485,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             return
 
         if self.talents.agonizing_poison:
-            poison_base_proc_rate = 0.2  
+            poison_base_proc_rate = 0.2
         else:
             poison_base_proc_rate = 0.5
         poison_envenom_proc_rate = poison_base_proc_rate + 0.3
@@ -500,7 +500,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         else:
             poison_procs = avg_poison_proc_rate * total_hits_per_second - 1 / self.settings.duration
             attacks_per_second['deadly_instant_poison'] = poison_procs
-            attacks_per_second['deadly_poison'] = 1. / 3  
+            attacks_per_second['deadly_poison'] = 1. / 3
 
     def get_average_alacrity(self, attacks_per_second):
         stacks_per_second = 0.0
@@ -764,7 +764,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 agonizing_poison_mod *= 1.2
 
             agonizing_poison_mod *= 1 + (self.assassination_mastery_conversion * self.stats.get_mastery_from_rating(stats['mastery'])/2)
-        
+
         elaborate_planning_mod = 1
         if self.talents.elaborate_planning:
             elaborate_planning_mod = 1 + (0.15 * self.elaborate_planning_multiplier)
@@ -775,7 +775,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.traits.surge_of_toxins:
             surge_mod = 1 + self.surge_of_toxins_multiplier
 
-        bota_mod = 1    
+        bota_mod = 1
         if self.traits.blood_of_the_assassinated:
             bota_mod = 1 + self.bota_multiplier
 
@@ -828,10 +828,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             finisher_list = [0, 0, 0, 0, 0, 0, 0]
             if self.settings.finisher_threshold == 4:
                 paths = [(2, 2), (2, 3), (2, 4), (3, 2), (3, 3), (3, 4), (4,)]
-            elif self.settings.finisher_threshold == 5: 
+            elif self.settings.finisher_threshold == 5:
                 paths = [(2, 2, 2), (2, 2, 3), (2, 2, 4), (2, 3), (2, 4), (3, 2), (3, 3), (3, 4), (4, 2), (4, 3), (4, 4)]
             elif self.settings.finisher_threshold == 6:
-                paths = [(2, 2, 2), (2, 2, 3), (2, 2, 4), (2, 3, 2), (2, 3, 3), (2, 3, 4), (2, 4), 
+                paths = [(2, 2, 2), (2, 2, 3), (2, 2, 4), (2, 3, 2), (2, 3, 3), (2, 3, 4), (2, 4),
                          (3, 2, 2), (3, 2, 3), (3, 2, 4), (3, 3), (3, 4), (4, 2), (4, 3), (4, 4)]
             else:
                 raise InputNotModeledException(_('Finisher thresholds less than 4 unimplemented'))
@@ -963,7 +963,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if loop_counter > 20:
                    raise ConvergenceErrorException(_('Mini-cycles failed to converge.'))
             loop_counter += 1
-            
+
             total_minicycles = float(energy_budget) / mini_cycle_energy
             attacks_per_second[self.cp_builder] += float(total_minicycles * builders_per_finisher) / self.settings.duration
             finishers_per_second = total_minicycles / self.settings.duration
@@ -978,7 +978,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 energy_budget += (new_alacrity_regen - old_alacrity_regen) * self.settings.duration
                 alacrity_stacks = new_alacrity_stacks
 
-        attacks_per_second['mh_autoattacks'] = (self.haste_multiplier * (1 + (alacrity_stacks * 0.01)))/self.stats.mh.speed 
+        attacks_per_second['mh_autoattacks'] = (self.haste_multiplier * (1 + (alacrity_stacks * 0.01)))/self.stats.mh.speed
         attacks_per_second['oh_autoattacks'] = attacks_per_second['mh_autoattacks']
 
         #poison computations, use old function for now
@@ -1186,7 +1186,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         keep_shark_uptime = 0.0
         keep_gm_uptime = 0.0
         maintainence_buff_duration = 6 * (1 + self.settings.finisher_threshold)
-        
+
         if self.talents.slice_and_dice:
             aps_normal = self.outlaw_attack_counts_mincycle(current_stats, snd=True, duration=maintainence_buff_duration)
             aps_ar = self.outlaw_attack_counts_mincycle(current_stats, snd=True, ar=True, duration=self.ar_duration)
@@ -1200,10 +1200,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 shark = 's' in phase
 
                 chance = self.rtb_probabilities[len(phase)]/self.rtb_buff_count[len(phase)]
-                aps = self.outlaw_attack_counts_mincycle(current_stats, jolly=jolly, 
+                aps = self.outlaw_attack_counts_mincycle(current_stats, jolly=jolly,
                         melee=melee, buried=buried, broadsides=broadsides, shark=shark, true_bearing=true_bearing,
                         duration=maintainence_buff_duration)
-                aps_ar = self.outlaw_attack_counts_mincycle(current_stats,  ar=True, jolly=jolly, 
+                aps_ar = self.outlaw_attack_counts_mincycle(current_stats,  ar=True, jolly=jolly,
                         melee=melee, buried=buried, broadsides=broadsides, shark=shark, true_bearing=true_bearing,
                         duration=self.ar_duration)
 
@@ -1243,9 +1243,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 shark = 's' in phase
 
                 chance = self.rtb_probabilities[len(phase)]/self.rtb_buff_count[len(phase)]
-                aps, reroll_time = self.outlaw_attack_counts_reroll(current_stats, jolly=jolly, 
+                aps, reroll_time = self.outlaw_attack_counts_reroll(current_stats, jolly=jolly,
                         melee=melee, buried=buried, broadsides=broadsides, alacrity_stacks=alacrity_stacks)
-                aps_ar, reroll_time_ar = self.outlaw_attack_counts_reroll(current_stats,  ar=True, jolly=jolly, 
+                aps_ar, reroll_time_ar = self.outlaw_attack_counts_reroll(current_stats,  ar=True, jolly=jolly,
                         melee=melee, buried=buried, broadsides=broadsides, alacrity_stacks=alacrity_stacks_ar)
                 phases[phase] = (chance * reroll_time, aps)
                 ar_phases[phase] = (chance * reroll_time_ar, aps_ar)
@@ -1308,13 +1308,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 #remerge the ars
                 attacks_per_second = self.merge_attacks_per_second({'normal': (new_ar_cd - self.ar_duration, aps_normal),
                     'ar': (self.ar_duration, aps_ar)}, total_time=new_ar_cd)
-                
+
                 if old_ar_cd - new_ar_cd < 0.1:
                     break
                 else:
                     old_ar_cd = new_ar_cd
             ar_uptime = self.ar_duration / new_ar_cd
-       
+
         #add in cannonball and killing spree
         if self.talents.killing_spree:
             ksp_cd = self.get_spell_cd('killing_spree') / (1. + tb_seconds_per_second)
@@ -1396,10 +1396,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.talents.death_from_above and not ar:
             dfa_cd = self.get_spell_cd('death_from_above') + self.settings.response_time - (10 * true_bearing)
             dfa_count = duration/dfa_cd
-            dfa_lost_swings = self.lost_swings_from_swing_delay(1.3, self.mh.speed/attack_speed_multiplier)
+            dfa_lost_swings = self.lost_swings_from_swing_delay(1.3, self.stats.mh.speed/attack_speed_multiplier)
             dfa_energy_lost = dfa_lost_swings * (self.main_gauche_proc_rate * self.combat_potency_from_mg + self.combat_potency_regen_per_oh)
             energy_budget -= dfa_energy_lost
-        
+
         mg_cp_energy = self.get_mg_cp_regen_from_haste(attack_speed_multiplier) * (1 - self.white_swing_downtime)
         energy_budget += mg_cp_energy
 
@@ -1484,7 +1484,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 old_alacrity_regen = energy_regen * (1 + (alacrity_stacks *0.01)) * (1 + int(ar))
                 new_alacrity_stacks = self.get_average_alacrity(attacks_per_second)
                 new_alacrity_regen = energy_regen * (1 + (new_alacrity_stacks *0.01)) * (1 + int(ar))
-                energy_budget += (new_alacrity_regen - old_alacrity_regen) * duration 
+                energy_budget += (new_alacrity_regen - old_alacrity_regen) * duration
                 #compute new CP/MG regen
                 old_cp_mg = self.get_mg_cp_regen_from_haste(attack_speed_multiplier * 1 + (0.01 * alacrity_stacks))
                 new_cp_mg = self.get_mg_cp_regen_from_haste(attack_speed_multiplier * 1 + (0.01 * new_alacrity_stacks))
@@ -1539,7 +1539,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                     if isinstance(attacks_per_second[ability], list):
                         for cp in xrange(7):
                             attacks_per_second[ability][cp] += uptime * aps[ability][cp]
-                    else:    
+                    else:
                         attacks_per_second[ability] += uptime * aps[ability]
                 else:
                     if isinstance(aps[ability], list):
@@ -1668,7 +1668,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 damage_breakdown[key] *= 1 + (0.3 * self.settings.cycle.positional_uptime)
 
         #add AoE damage sources:
-        if self.settings.num_boss_adds:    
+        if self.settings.num_boss_adds:
             for key in damage_breakdown:
                 if key == 'shuriken_toss':
                     damage_breakdown[key] *= 1 + self.settings.num_boss_adds
@@ -1737,7 +1737,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attacks_per_second['symbols_of_death'] = 0
         attacks_per_second['shadow_dance'] = 0
         attacks_per_second['vanish'] = 0
-        
+
 
         #Leaving space for opener handling for the first cast
         sod_timeline = range(0, self.settings.duration, sod_duration)

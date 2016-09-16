@@ -96,7 +96,7 @@ class RogueDamageCalculator(DamageCalculator):
             'ambush':              (60., 'strike'),
             'between_the_eyes':    (35., 'strike'),
             'blunderbuss':         (40., 'strike'),
-            'ghostly_stike':       (30., 'strike'),
+            'ghostly_strike':       (30., 'strike'),
             'pistol_shot':         (40., 'strike'),
             'roll_the_bones':      (25., 'buff'),
             'run_through':         (35., 'strike'),
