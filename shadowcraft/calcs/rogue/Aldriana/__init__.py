@@ -1292,9 +1292,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         ar_uptime = self.ar_duration / self.ar_cd
         tb_seconds_per_second = 0
 
-        print aps_normal
-        print aps_ar
-        print attacks_per_second
+        # print aps_normal
+        # print aps_ar
+        # print attacks_per_second
         #if rtb loop on ar cooldown
         if not self.talents.slice_and_dice:
             old_ar_cd = self.ar_cd
@@ -1307,15 +1307,15 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                             cp_spend_per_second += attacks_per_second[ability][cp] * cp
                 tb_seconds_per_second = 2 * cp_spend_per_second * tb_uptime
                 new_ar_cd = self.ar_cd/(1 + tb_seconds_per_second)
-                print attacks_per_second
-                print cp_spend_per_second, tb_seconds_per_second
+                # print attacks_per_second
+                # print cp_spend_per_second, tb_seconds_per_second
                 #remerge the aps
                 #print new_ar_cd
                 #print attacks_per_second
                 attacks_per_second = self.merge_attacks_per_second({'normal': (new_ar_cd - self.ar_duration, aps_normal),
                     'ar': (self.ar_duration, aps_ar)}, total_time=new_ar_cd)
-                print new_ar_cd
-                print "-------"
+                # print new_ar_cd
+                # print "-------"
                 if old_ar_cd - new_ar_cd < 0.1:
                     break
                 else:
@@ -1323,8 +1323,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
             ar_uptime = self.ar_duration / new_ar_cd
 
-        print self.ar_duration, new_ar_cd
-        print ar_uptime
+        # print self.ar_duration, new_ar_cd
+        # print ar_uptime
         #add in cannonball and killing spree
         if self.talents.killing_spree:
             ksp_cd = self.get_spell_cd('killing_spree') / (1. + tb_seconds_per_second)
@@ -1366,7 +1366,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second['blunderbuss'] = 0.33 * attacks_per_second['pistol_shot']
             attacks_per_second['pistol_shot'] -= attacks_per_second['blunderbuss']
 
-        print attacks_per_second
+        # print attacks_per_second
         return attacks_per_second, crit_rates, additional_info
 
     def outlaw_attack_counts_mincycle(self, current_stats, snd=False, ar=False,
