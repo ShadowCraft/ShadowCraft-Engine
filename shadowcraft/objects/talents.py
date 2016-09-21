@@ -76,11 +76,11 @@ class Talents(object):
     def set_talent(self, name):
         # Clears talents in the tier and sets the new one
         if name not in self.allowed_talents:
-            return False
+            raise InvalidTalentException("Invalid talent")
         for talent in self.class_talents[self.get_tier_for_talent(name)]:
             setattr(self, talent, False)
         setattr(self, name, True)
-    
+
     def get_active_talents(self):
         active_talents = []
         for row in self.class_talents:

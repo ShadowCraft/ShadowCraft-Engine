@@ -14,7 +14,7 @@ class Stats(object):
     mastery_rating_conversion_values     = {60:13.0, 70:14.0,  80:15.0,  85:17.0,  90:23.0,  100:110.0,  110:350.0}
     versatility_rating_conversion_values = {60:13.0, 70:14.0,  80:15.0,  85:17.0,  90:27.0,  100:130.0,  110:400.0}
 
-    def __init__(self, mh, oh, procs, gear_buffs, str=0, agi=0, int=0, spirit=0, stam=0, ap=0, crit=0, haste=0, mastery=0, 
+    def __init__(self, mh, oh, procs, gear_buffs, str=0, agi=0, int=0, stam=0, ap=0, crit=0, haste=0, mastery=0,
                 versatility=0, level=None):
         # This will need to be adjusted if at any point we want to support
         # other classes, but this is probably the easiest way to do it for
@@ -22,7 +22,6 @@ class Stats(object):
         self.str = str
         self.agi = agi
         self.int = int
-        self.spirit = spirit
         self.stam = stam
         self.ap = ap
         self.crit = crit
@@ -31,11 +30,11 @@ class Stats(object):
         self.versatility = versatility
         self.mh = mh
         self.oh = oh
-        self.procs = procs
         self.gear_buffs = gear_buffs
         self.level = level
+        self.procs = procs
+
     def _set_constants_for_level(self):
-        self.procs.level = self.level
         try:
             self.crit_rating_conversion        = self.crit_rating_conversion_values[self.level]
             self.haste_rating_conversion       = self.haste_rating_conversion_values[self.level]
@@ -48,7 +47,7 @@ class Stats(object):
         object.__setattr__(self, name, value)
         if name == 'level' and value is not None:
             self._set_constants_for_level()
-    
+
     def get_mastery_from_rating(self, rating=None):
         if rating is None:
             rating = self.mastery
@@ -63,7 +62,7 @@ class Stats(object):
         if rating is None:
             rating = self.haste
         return 1 + rating / (100. * self.haste_rating_conversion)
-    
+
     def get_versatility_multiplier_from_rating(self, rating=None):
         if rating is None:
             rating = self.versatility
@@ -90,7 +89,7 @@ class Weapon(object):
         #elif self.type in ['2h_sword', '2h_mace', '2h_axe', 'polearm']:
         #    self._normalization_speed = 3.3
         #elif
-        
+
         # commented out for micro performance's sake
         # should be re-enabled if other classes ever make use of Shadowcraft
         if self.type == 'dagger':
@@ -158,14 +157,14 @@ class GearBuffs(object):
     ]
 
     allowed_buffs = frozenset(other_gear_buffs)
-    
+
     def __init__(self, *args):
         for arg in args:
             if not isinstance(arg, (list,tuple)):
                 arg = (arg,0)
             if arg[0] in self.allowed_buffs:
                 setattr(self, arg[0], True)
-                
+
 
     def __getattr__(self, name):
         # Any gear buff we haven't assigned a value to, we don't have.
@@ -181,12 +180,12 @@ class GearBuffs(object):
             return 1.03
         else:
             return 1
-    
+
     def rogue_pvp_4pc_extra_energy(self):
         if self.rogue_pvp_4pc:
             return 30
         return 0
-    
+
     def rogue_t14_2pc_damage_bonus(self, spell):
         if self.rogue_t14_2pc:
             bonus = {
@@ -198,43 +197,43 @@ class GearBuffs(object):
                 if spell in spells:
                     return 1 + bonus[spells]
         return 1
-    
+
     def rogue_t14_4pc_extra_time(self, is_combat=False):
         if is_combat:
             return self.rogue_t14_4pc * 6
         return self.rogue_t14_4pc * 12
-    
+
     def rogue_t15_2pc_bonus_cp(self):
         if self.rogue_t15_2pc:
             return 1
         return 0
-    
+
     def rogue_t15_4pc_reduced_cost(self, uptime= 12. / 180.): #This is for Mut calcs
         cost_reduction = .15
         if self.rogue_t15_4pc:
             return 1. - (cost_reduction * uptime)
         return 1.
-    
+
     def rogue_t15_4pc_modifier(self, is_sb=False): #This is for Combat/Sub calcs
         if self.rogue_t15_4pc and is_sb:
             return .85 # 1 - .15
         return 1.
-    
+
     def rogue_t16_2pc_bonus(self):
         if self.rogue_t16_2pc:
             return True
         return False
-    
+
     def rogue_t16_4pc_bonus(self):
         if self.rogue_t16_4pc:
             return True
         return False
-    
+
     def rogue_t17_2pc_bonus(self):
         if self.rogue_t17_2pc:
             return True
         return False
-    
+
     def rogue_t17_4pc_bonus(self):
         if self.rogue_t17_4pc:
             return True
@@ -244,12 +243,12 @@ class GearBuffs(object):
         if self.rogue_t18_2pc:
             return True
         return False
-       
+
     def rogue_t18_4pc_bonus(self):
         if self.rogue_T18_4pc:
             return True
         return False
-    
+
     def gear_specialization_multiplier(self):
         if self.gear_specialization:
             return 1.05

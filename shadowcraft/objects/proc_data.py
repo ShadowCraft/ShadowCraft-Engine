@@ -160,7 +160,7 @@ allowed_procs = {
         'trigger': 'all_attacks'
     },
     #7.0 neck enchants
-    'mark_of_the_hidden_satyr': { #191259 Deals 41626 to 48375 damage. 
+    'mark_of_the_hidden_satyr': { #191259 Deals 41626 to 48375 damage.
         'stat':'spell_damage',
         'value': 45000, #average 41626 to 48375
         'duration': 0,
@@ -277,7 +277,7 @@ allowed_procs = {
         'proc_name': 'Dominion Deck', #this does some wierd shuffling crit values /wrists
         'scaling': 0.750315, #only valid for the 1336 draw
         'item_level': 815,
-        'type': 'rppm', 
+        'type': 'rppm',
         'source': 'trinket',
         'proc_rate': 1,
         'trigger': 'all_attacks'
@@ -288,7 +288,7 @@ allowed_procs = {
         'value': 996160, #124520 * 8
         'duration': 0,
         'proc_name': 'Fel-Crazed Rage',
-        'scaling': 40, 
+        'scaling': 40,
         'item_level': 875,
         'source': 'trinket',
         'type': 'icd',
@@ -497,7 +497,7 @@ allowed_procs = {
         'haste_scales': True,
         'trigger': 'all_attacks',
    },
-    
+
       'terrorbound_nexus': { #Equip: Your melee attacks have a chance to unleash 4 Shadow Waves that deal 86952 Shadow damage to enemies in their path.  The waves travel 15 yards away from you, and then return.
         'stat':'spell_damage',
         'value': 695616, #multiple targets not modeled, assuming 4 hits out and 4 in
@@ -560,7 +560,7 @@ allowed_procs = {
         'can_crit': True,
         'trigger': 'all_attacks'
    },
-    
+
     #6.2.3 procs
     'infallible_tracking_charm': {
         'stat':'spell_damage',

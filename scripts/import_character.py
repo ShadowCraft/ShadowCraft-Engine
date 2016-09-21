@@ -113,19 +113,19 @@ class CharacterData:
                 4427 : [{'stat':'hit', 'value':175}],
                 4908 : [{'stat':'agi', 'value':120}, {'stat':'crit', 'value':80}], # Tiger Claw Inscrption
     }
-    
-    trinkets = {87057 : 'heroic_bottle_of_infinite_stars', 
+
+    trinkets = {87057 : 'heroic_bottle_of_infinite_stars',
                 86132 : 'bottle_of_infinite_stars',
                 87167 : 'heroic_terror_in_the_mists',
                 79328 : 'relic_of_xuen',
                 86791 : 'lfr_bottle_of_infinite_stars',
-                86332 : 'terror_in_the_mists', 
+                86332 : 'terror_in_the_mists',
                 87079 : 'heroic_jade_bandit_figurine',
                 75274 : 'zen_alchemist_stone',
-                86890 : 'lfr_terror_in_the_mists', 
+                86890 : 'lfr_terror_in_the_mists',
                 89082 : 'hawkmasters_talon',
                 86043 : 'jade_bandit_figurine',
-                81267 : 'searing_words', 
+                81267 : 'searing_words',
                 81265 : 'flashing_steel_talisman',
                 81125 : 'windswept_pages',
                 86772 : 'lfr_jade_bandit_figurine',
@@ -139,44 +139,44 @@ class CharacterData:
                      'set_bonus' : {2 : 'rogue_t14_2pc', 4 : 'rogue_t14_4pc'}}}
 
     glyphs = {# Major
-              u'Glyph of Adrenaline Rush'          :     'adrenaline_rush',    
-              u'Glyph of Ambush'                   :     'ambush',             
-              u'Glyph of Blade Flurry'             :     'blade_flurry',       
-              u'Glyph of Blind'                    :     'blind',              
-              u'Glyph of Cheap Shot'               :     'cheap_shot',         
-              u'Glyph of Cloak of Shadows'         :     'cloak_of_shadows',   
-              u'Glyph of Crippling Poison'         :     'crippling_poison',   
-              u'Glyph of Deadly Momentum'          :     'deadly_momentum',    
-              u'Glyph of Debilitation'             :     'debilitation',       
-              u'Glyph of Evasion'                  :     'evasion',            
-              u'Glyph of Expose Armor'             :     'expose_armor',       
-              u'Glyph of Feint'                    :     'feint',              
-              u'Glyph of Garrote'                  :     'garrote',            
-              u'Glyph of Gouge'                    :     'gouge',              
-              u'Glyph of Kick'                     :     'kick',               
-              u'Glyph of Recuperate'               :     'recuperate',         
-              u'Glyph of Sap'                      :     'sap',                
-              u'Glyph of Shadow Walk'              :     'shadow_walk',        
-              u'Glyph of Shiv'                     :     'shiv',               
-              u'Glyph of Smoke Bomb'               :     'smoke_bomb',         
-              u'Glyph of Sprint'                   :     'sprint',             
-              u'Glyph of Stealth'                  :     'stealth',            
-              u'Glyph of Vanish'                   :     'vanish',             
-              u'Glyph of Vendetta'                 :     'vendetta',           
-              # Minor                             
-              u'Glyph of Blurred Speed'            :     'blurred_speed',      
-              u'Glyph of Decoy'                    :     'decoy',              
-              u'Glyph of Detection'                :     'detection',          
-              u'Glyph of Disguise'                 :     'disguise',           
-              u'Glyph of Distract'                 :     'distract',           
-              u'Glyph of Hemorrhage'               :     'hemorrhage',         
-              u'Glyph of Killing Spree'            :     'killing_spree',      
-              u'Glyph of Pick Lock'                :     'pick_lock',          
-              u'Glyph of Pick Pocket'              :     'pick_pocket',        
-              u'Glyph of Poisons'                  :     'poisons',            
-              u'Glyph of Safe Fall'                :     'safe_fall',          
+              u'Glyph of Adrenaline Rush'          :     'adrenaline_rush',
+              u'Glyph of Ambush'                   :     'ambush',
+              u'Glyph of Blade Flurry'             :     'blade_flurry',
+              u'Glyph of Blind'                    :     'blind',
+              u'Glyph of Cheap Shot'               :     'cheap_shot',
+              u'Glyph of Cloak of Shadows'         :     'cloak_of_shadows',
+              u'Glyph of Crippling Poison'         :     'crippling_poison',
+              u'Glyph of Deadly Momentum'          :     'deadly_momentum',
+              u'Glyph of Debilitation'             :     'debilitation',
+              u'Glyph of Evasion'                  :     'evasion',
+              u'Glyph of Expose Armor'             :     'expose_armor',
+              u'Glyph of Feint'                    :     'feint',
+              u'Glyph of Garrote'                  :     'garrote',
+              u'Glyph of Gouge'                    :     'gouge',
+              u'Glyph of Kick'                     :     'kick',
+              u'Glyph of Recuperate'               :     'recuperate',
+              u'Glyph of Sap'                      :     'sap',
+              u'Glyph of Shadow Walk'              :     'shadow_walk',
+              u'Glyph of Shiv'                     :     'shiv',
+              u'Glyph of Smoke Bomb'               :     'smoke_bomb',
+              u'Glyph of Sprint'                   :     'sprint',
+              u'Glyph of Stealth'                  :     'stealth',
+              u'Glyph of Vanish'                   :     'vanish',
+              u'Glyph of Vendetta'                 :     'vendetta',
+              # Minor
+              u'Glyph of Blurred Speed'            :     'blurred_speed',
+              u'Glyph of Decoy'                    :     'decoy',
+              u'Glyph of Detection'                :     'detection',
+              u'Glyph of Disguise'                 :     'disguise',
+              u'Glyph of Distract'                 :     'distract',
+              u'Glyph of Hemorrhage'               :     'hemorrhage',
+              u'Glyph of Killing Spree'            :     'killing_spree',
+              u'Glyph of Pick Lock'                :     'pick_lock',
+              u'Glyph of Pick Pocket'              :     'pick_pocket',
+              u'Glyph of Poisons'                  :     'poisons',
+              u'Glyph of Safe Fall'                :     'safe_fall',
               u'Glyph of Tricks of the Trade'      :     'tricks_of_the_trade'}
-    
+
     reforgeMap = {113: ('spirit', 'dodge_rating'),
                   114: ('spirit','parry_rating'),
                   115: ('spirit','hit'),
@@ -273,7 +273,7 @@ class CharacterData:
         item_data = self.raw_data['data'][u'items'][u'offHand']
         weapon_data = get_item_cached(self.region, item_data[u'id'])
         return self.get_weapon(weapon_data, item_data)
-    
+
     def get_mh_type(self):
         return self.get_mh()[2]
 
@@ -328,8 +328,8 @@ class CharacterData:
         return [str, agi, ap - 2 * agi, crit, hit, exp, haste, mast]
 
     def get_gear_stats(self):
-        #           
-        lst = {'agi': 0, 'str':0, 'int':0, 'spirit':0, 'stam':0, 'crit':0, 'hit':0, 'exp':0, 'haste':0, 'mastery':0, 'ap':0, 'pvp_power':0, 'pvp_resil':0}
+        #
+        lst = {'agi': 0, 'str':0, 'int':0, 'stam':0, 'crit':0, 'haste':0, 'mastery':0, 'versatility':0}
         reforge = ('none', 'none')
         reforgeID = None
         gemColorToSocketColors = {u'RED': (u'RED'), u'YELLOW':(u'YELLOW'), u'BLUE':(u'BLUE'), u'META':(u'META'), u'COGWHEEL':(u'COGWHEEL'), u'HYDRAULIC':(u'HYDRAULIC'),
@@ -423,10 +423,10 @@ class CharacterData:
             pp.pprint(lst)
         return lst
         #return [lst['str'], lst['agi'], lst['int'], lst['spirit'], lst['stam'], lst['ap'], lst['crit'], lst['hit'], lst['exp'], lst['haste'], lst['mastery']]
-    
+
     def has_chaotic_metagem(self):
         return self.chaotic_metagem
-        
+
     def get_current_spec_data(self):
         specs_data = self.raw_data['data'][u'talents']
         if u'selected' in specs_data[0]:
