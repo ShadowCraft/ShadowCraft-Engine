@@ -1182,9 +1182,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         ar_phases = {}
 
         keep_chance = 0.0
-        keep_tb_uptime = 0.0
-        keep_shark_uptime = 0.0
-        keep_gm_uptime = 0.0
+        keep_tb_chance = 0.0
+        keep_shark_chance = 0.0
+        keep_gm_chance = 0.0
         maintainence_buff_duration = 6 * (1 + self.settings.finisher_threshold)
 
         if self.talents.slice_and_dice:
@@ -1206,23 +1206,25 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 aps_ar = self.outlaw_attack_counts_mincycle(current_stats,  ar=True, jolly=jolly,
                         melee=melee, buried=buried, broadsides=broadsides, shark=shark, true_bearing=true_bearing,
                         duration=self.ar_duration)
-
                 phases[phase] = (chance, aps)
                 ar_phases[phase] = (chance, aps_ar)
                 keep_chance += chance
                 if melee:
-                    keep_gm_uptime += chance
+                    keep_gm_chance += chance
                 if true_bearing:
-                    keep_tb_uptime += chance
+                    keep_tb_chance += chance
                 if shark:
-                    keep_shark_uptime += chance
+                    keep_shark_chance += chance
+            keep_gm_uptime = keep_gm_chance/keep_chance
+            keep_tb_uptime = keep_tb_chance/keep_chance
+            keep_shark_uptime = keep_shark_chance/keep_chance
             #merge ar and non-ar into single phases
-            aps_normal = self.merge_attacks_per_second(phases, total_time=keep_chance)
-            aps_ar = self.merge_attacks_per_second(ar_phases, total_time=keep_chance)
+            aps_keep = self.merge_attacks_per_second(phases, total_time=keep_chance)
+            aps_keep_ar = self.merge_attacks_per_second(ar_phases, total_time=keep_chance)
             #technically there is a convergence relationship here but ignoring it
             if self.talents.alacrity:
-                alacrity_stacks = self.get_average_alacrity(aps_normal)
-                alacrity_stacks_ar = self.get_average_alacrity(aps_ar)
+                alacrity_stacks = self.get_average_alacrity(aps_keep)
+                alacrity_stacks_ar = self.get_average_alacrity(aps_keep_ar)
             else:
                 alacrity_stacks = 0
                 alacrity_stacks_ar = 0
@@ -1231,9 +1233,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             ar_phases = {}
             net_reroll_time = 0.0
             net_reroll_time_ar = 0.0
-            reroll_tb_uptime = 0.0
-            reroll_shark_uptime = 0.0
-            reroll_gm_uptime = 0.0
+            reroll_tb_time = 0.0
+            reroll_shark_time = 0.0
+            reroll_gm_time = 0.0
             for phase in self.settings.cycle.reroll_list:
                 jolly = 'jr' in phase
                 melee = 'gm' in phase
@@ -1252,17 +1254,17 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 net_reroll_time += chance * reroll_time
                 net_reroll_time_ar += chance * reroll_time_ar
                 if true_bearing:
-                    reroll_tb_uptime += chance * reroll_time
+                    reroll_tb_time += chance * reroll_time
                 if shark:
-                    reroll_shark_uptime += chance * reroll_time
+                    reroll_shark_time += chance * reroll_time
                 if melee:
-                    reroll_gm_uptime += chance * reroll_time
+                    reroll_gm_time += chance * reroll_time
 
             #check for reroll time, to protect from divide by zero
             if net_reroll_time:
-                reroll_tb_uptime *= 1./net_reroll_time
-                reroll_shark_uptime *= 1./net_reroll_time
-                reroll_gm_uptime *= 1./net_reroll_time
+                reroll_tb_uptime = reroll_tb_time/net_reroll_time
+                reroll_shark_uptime = reroll_shark_time/net_reroll_time
+                reroll_gm_uptime = reroll_gm_time/net_reroll_time
             else:
                 reroll_tb_uptime = 0
                 reroll_shark_uptime = 0
@@ -1275,11 +1277,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             #will pandemic into rtb based on keep_chance
             rtb_keep_duration *= 1 + (0.3 * keep_chance)
             reroll_duration = net_reroll_time * len(self.settings.cycle.reroll_list)
-            ar_reroll_duration = net_reroll_time_ar * len(self.settings.cycle.reroll_list)
-            phases = {'keep': (rtb_keep_duration, aps_normal),
+
+            ar_reroll_duration = net_reroll_time_ar
+
+            phases = {'keep': (rtb_keep_duration, aps_keep),
                       'reroll': (reroll_duration, aps_reroll)}
             aps_normal = self.merge_attacks_per_second(phases, rtb_keep_duration + reroll_duration)
-            phases = {'keep': (rtb_keep_duration, aps_ar),
+            phases = {'keep': (rtb_keep_duration, aps_keep_ar),
                       'reroll': (ar_reroll_duration, aps_reroll_ar)}
             aps_ar = self.merge_attacks_per_second(phases, rtb_keep_duration + ar_reroll_duration)
 
@@ -1293,9 +1297,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             'ar': (self.ar_duration, aps_ar)}, total_time=self.ar_cd)
         ar_uptime = self.ar_duration / self.ar_cd
         tb_seconds_per_second = 0
+
+        print aps_normal
+        print aps_ar
+        print attacks_per_second
+        raw_input()
         #if rtb loop on ar cooldown
         if not self.talents.slice_and_dice:
-            old_ar_cd = self.ar_duration
+            old_ar_cd = self.ar_cd
             loop_counter = 0
             while (loop_counter < 20):
                 cp_spend_per_second = 0
@@ -1305,16 +1314,24 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                             cp_spend_per_second += attacks_per_second[ability][cp] * cp
                 tb_seconds_per_second = 2 * cp_spend_per_second * tb_uptime
                 new_ar_cd = self.ar_cd/(1 + tb_seconds_per_second)
-                #remerge the ars
+                print attacks_per_second
+                print cp_spend_per_second, tb_seconds_per_second
+                #remerge the aps
+                #print new_ar_cd
+                #print attacks_per_second
                 attacks_per_second = self.merge_attacks_per_second({'normal': (new_ar_cd - self.ar_duration, aps_normal),
                     'ar': (self.ar_duration, aps_ar)}, total_time=new_ar_cd)
-
+                print new_ar_cd
+                print "-------"
                 if old_ar_cd - new_ar_cd < 0.1:
                     break
                 else:
                     old_ar_cd = new_ar_cd
+
             ar_uptime = self.ar_duration / new_ar_cd
 
+        print self.ar_duration, new_ar_cd
+        print ar_uptime
         #add in cannonball and killing spree
         if self.talents.killing_spree:
             ksp_cd = self.get_spell_cd('killing_spree') / (1. + tb_seconds_per_second)
@@ -1356,7 +1373,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second['blunderbuss'] = 0.33 * attacks_per_second['pistol_shot']
             attacks_per_second['pistol_shot'] -= attacks_per_second['blunderbuss']
 
-        #print attacks_per_second
+        print attacks_per_second
         return attacks_per_second, crit_rates, additional_info
 
     def outlaw_attack_counts_mincycle(self, current_stats, snd=False, ar=False,
@@ -1461,6 +1478,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         alacrity_stacks = 0
         loop_counter = 0
+        attacks_per_second['run_through'] = [0, 0, 0, 0, 0, 0, 0]
         while energy_budget > 0.1 and gcd_budget > 0.1:
             if loop_counter > 20:
                    raise ConvergenceErrorException(_('Mini-cycles failed to converge.'))
@@ -1469,7 +1487,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             minicycle_count = min(gcd_budget/gcds_per_minicycle, energy_budget/energy_per_minicycle)
             attacks_per_second['saber_slash'] += float(minicycle_count * (ss_count + ps_count))/duration
             attacks_per_second['pistol_shot'] += float(minicycle_count * ps_count)/duration
-            attacks_per_second['run_through'] = [0, 0, 0, 0, 0, 0, 0]
+
             for cp in xrange(7):
                 attacks_per_second['run_through'][cp] += float(minicycle_count * finisher_list[cp])/duration
 
@@ -1510,7 +1528,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if ar:
             energy_regen *= 2.0
             attack_speed_multiplier *= 1.2
-
         mg_cp_energy = self.get_mg_cp_regen_from_haste(attack_speed_multiplier)
         total_regen = energy_regen + mg_cp_energy
         reroll_time = reroll_energy_cost / total_regen
@@ -1519,7 +1536,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attacks_per_second['pistol_shot'] = float(ps_count)/reroll_time
         attacks_per_second['roll_the_bones'] = [0, 0, 0, 0, 0, 0, 0]
         for cp in xrange(7):
-            attacks_per_second['roll_the_bones'][cp] *= finisher_list[cp]/reroll_time
+            attacks_per_second['roll_the_bones'][cp] = finisher_list[cp]/reroll_time
         return attacks_per_second, reroll_time
 
 

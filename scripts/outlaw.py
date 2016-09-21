@@ -46,15 +46,15 @@ test_gear_buffs = stats.GearBuffs('gear_specialization') #tier buffs located her
 
 # Set up a calcs object..
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
-                         agi=20909,
-                         stam=19566,
-                         crit=4402,
-                         haste=5150,
-                         mastery=5999,
-                         versatility=1515,)
+                         agi=21122,
+                         stam=28367,
+                         crit=6306,
+                         haste=3260,
+                         mastery=3706,
+                         versatility=3486,)
 
 # Initialize talents..
-test_talents = talents.Talents('1000000', test_spec, test_class, level=test_level)
+test_talents = talents.Talents('1010022', test_spec, test_class, level=test_level)
 
 #initialize artifact traits..
 test_traits = artifact.Artifact(test_spec, test_class, '000000000000000000')
@@ -66,10 +66,12 @@ test_cycle = settings.OutlawCycle(blade_flurry=False,
                                   shark_reroll=1,
                                   true_bearing_reroll=1,
                                   buried_treasure_reroll=1,
-                                  broadsides_reroll=1
+                                  broadsides_reroll=1,
+                                  between_the_eyes_policy='never'
                                   )
 test_settings = settings.Settings(test_cycle, response_time=.5, duration=360,
-                                 adv_params="", is_demon=True, num_boss_adds=0)
+                                 adv_params="", is_demon=True, num_boss_adds=0,
+                                 finisher_threshold=5)
 
 # Build a DPS object.
 calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_traits, test_buffs, test_race, test_spec, test_settings, test_level)
@@ -84,7 +86,7 @@ total_dps = sum(entry[1] for entry in dps_breakdown.items())
 #mh_enchants_and_dps_ep_values, oh_enchants_and_dps_ep_values =
 #calculator.get_weapon_ep(dps=True, enchants=True)
 
-talent_ranks = calculator.get_talents_ranking()
+#talent_ranks = calculator.get_talents_ranking()
 #trait_ranks = calculator.get_trait_ranking()
 
 def max_length(dict_list):
@@ -121,4 +123,4 @@ dicts_for_pretty_print = [#ep_values,
 pretty_print(dicts_for_pretty_print)
 print ' ' * (max_length(dicts_for_pretty_print) + 1), total_dps, ("total damage per second.")
 
-pprint(talent_ranks)
+#pprint(talent_ranks)
