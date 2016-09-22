@@ -86,7 +86,7 @@ class RogueDamageCalculatorFactory:
 
         # Set up settings.
         test_settings = _settings.Settings(self.cycle, response_time=self.response_time, duration=self.duration,
-                                         adv_params=self.adv_params, is_demon=self.is_demon, num_boss_adds=self.num_boss_adds)
+                                         adv_params=self.adv_params, is_demon=self.is_demon, num_boss_adds=self.num_boss_adds, finisher_threshold=self.finisher_threshold)
 
         self.calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_traits, self.buffs, test_race, self.spec, test_settings, self.level)
         self.calculator.level = 110
