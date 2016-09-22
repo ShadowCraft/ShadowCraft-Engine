@@ -285,6 +285,42 @@ class TestOutlawRogueDamageCalculator(RogueDamageCalculatorTestBase, unittest.Te
         self.assertGreater(rank1, base)
 
 
+    # These are sanity checks; they are what is expected from current modeling, so they're included to help
+    # guard against regressions in the calculator.
+    def test_best_rank_1(self):
+        gstrike = self.factory.build(talent_str='0000000').get_dps()
+        swords = self.factory.build(talent_str='1000000').get_dps()
+        quick = self.factory.build(talent_str='2000000').get_dps()
+        self.assertGreater(gstrike, swords, 'Swordmaster %s > Ghostly Strike %s' % (swords, gstrike))
+        self.assertGreater(gstrike, quick, 'Quick Draw %s > Ghostly Strike %s' % (quick, gstrike))
+
+
+    def test_best_rank_3(self):
+        stratagem = self.factory.build(talent_str='0000000').get_dps()
+        anticipation = self.factory.build(talent_str='0010000').get_dps()
+        vigor = self.factory.build(talent_str='0020000').get_dps()
+        self.assertGreater(stratagem, anticipation, 'Anticipation %s > Stratagem %s' % (anticipation, stratagem))
+        self.assertGreater(stratagem, vigor, 'Vigor %s > Stratagem %s' % (vigor, stratagem))
+
+
+    def test_best_rank_6(self):
+        cannons = self.factory.build(talent_str='0000000').get_dps()
+        alacrity = self.factory.build(talent_str='0000010').get_dps()
+        kspree = self.factory.build(talent_str='0000020').get_dps()
+        self.assertGreater(alacrity, kspree, 'KSpree %s > Alacrity %s' % (kspree, alacrity))
+        self.assertGreater(alacrity, cannons, 'Cannons %s > Alacrity %s' % (cannons, alacrity))
+
+
+    def test_best_rank_7(self):
+        snd = self.factory.build(talent_str='0000000').get_dps()
+        mfd = self.factory.build(talent_str='0000001').get_dps()
+        dfa = self.factory.build(talent_str='0000002').get_dps()
+        self.assertGreater(mfd, snd, 'SnD %s > Marked for Death %s' % (snd, mfd))
+        self.assertGreater(mfd, dfa, 'Death From Above %s > mfd %s' % (dfa, mfd))
+
+
+
+
 class TestAssassinationRogueDamageCalculator(RogueDamageCalculatorTestBase, unittest.TestCase):
     def setUp(self):
         self.calculator = RogueDamageCalculatorFactory('assassination').build()
