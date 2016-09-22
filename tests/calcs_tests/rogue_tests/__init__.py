@@ -156,11 +156,18 @@ class TestOutlawRogueDamageCalculator(RogueDamageCalculatorTestBase, unittest.Te
         a, b = self.compare({'traits': '000000000000000000'}, {'traits': '001000000000000000'}, 'get_dps')
         self.assertGreater(b, a)
 
-    def test_blade_dancer_single_target_dps(self):
-        a, b = self.compare({'traits': '000000000000000000'}, {'traits': '000100000000000000', 'num_boss_adds': 0}, 'get_dps')
-        self.assertEqual(b, a)
+    def test_blade_flurry_hurts_single_target_dps(self):
+        cycle = _settings.OutlawCycle(blade_flurry=True)
+        a, b = self.compare({}, {'num_boss_adds': 0}, 'get_dps')
+        self.assertLess(b, a)
+
+    def test_blade_dancer_improves_blade_flurry_penalty(self):
+        cycle = _settings.OutlawCycle(blade_flurry=True)
+        a, b = self.compare({'traits': '000000000000000000'}, {'traits': '000100000000000000'}, 'get_dps')
+        self.assertLess(a, b)
 
     def test_blade_dancer_multi_target_dps(self):
+        cycle = _settings.OutlawCycle(blade_flurry=True)
         a, b = self.compare({'traits': '000000000000000000'}, {'traits': '000100000000000000', 'num_boss_adds': 3}, 'get_dps')
         self.assertGreater(b, a)
 
@@ -189,7 +196,8 @@ class TestOutlawRogueDamageCalculator(RogueDamageCalculatorTestBase, unittest.Te
         self.assertEqual(b, a)
 
     def test_black_powder_dps(self):
-        a, b = self.compare({'traits': '000000000000000000'}, {'traits': '000000000010000000'}, 'get_dps')
+        cycle = _settings.OutlawCycle(between_the_eyes_policy='shark')
+        a, b = self.compare({'traits': '000000000000000000', 'cycle': cycle}, {'traits': '000000000010000000', 'cycle': cycle}, 'get_dps')
         self.assertGreater(b, a)
 
     def test_greed_dps(self):
