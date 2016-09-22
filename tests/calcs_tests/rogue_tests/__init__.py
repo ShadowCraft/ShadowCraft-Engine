@@ -1,165 +1,170 @@
 import unittest
-from shadowcraft.calcs.rogue import RogueDamageCalculator
+from shadowcraft.calcs.rogue.Aldriana import AldrianasRogueDamageCalculator
 from shadowcraft.core import exceptions
-from shadowcraft.objects import buffs
-from shadowcraft.objects import race
-from shadowcraft.objects import stats
-from shadowcraft.objects import procs
-from shadowcraft.objects.rogue import rogue_talents
+from shadowcraft.objects import buffs as _buffs
+from shadowcraft.objects import race as _race
+from shadowcraft.objects import stats as _stats
+from shadowcraft.objects import procs as _procs
+from shadowcraft.objects import talents as _talents
+from shadowcraft.objects import artifact as _artifact
+from shadowcraft.calcs.rogue.Aldriana import settings as _settings
 
-class TestRogueDamageCalculator(unittest.TestCase):
+class RogueDamageCalculatorTestBase(object):
     def setUp(self):
-        test_buffs = buffs.Buffs(
-            'stat_multiplier_buff',
-            'crit_chance_buff',
-            'melee_haste_buff',
-            'attack_power_buff',
-            'str_and_agi_buff',
-            'armor_debuff',
-            'spell_damage_debuff',
-            'spell_crit_debuff'
-            )
-        test_mh = stats.Weapon(737, 1.8, 'dagger', 'hurricane')
-        test_oh = stats.Weapon(573, 1.4, 'dagger', 'hurricane')
-        test_ranged = stats.Weapon(1104, 2.0, 'thrown')
-        test_procs = procs.ProcsList('darkmoon_card_hurricane')
-        test_gear_buffs = stats.GearBuffs('chaotic_metagem')
-        test_stats = stats.Stats(20, 3485, 190, 1517, 1086, 641, 899, 666, test_mh, test_oh, test_ranged, test_procs, test_gear_buffs)
-        test_race = race.Race('night_elf')
-        test_talents = rogue_talents.RogueTalents('0333230113022110321', '0020000000000000000', '0030030000000000000')
-        self.calculator = RogueDamageCalculator(test_stats, test_talents, None, test_buffs, test_race)
+        self.talent_str = '1000000'
+        self.buffs = _buffs.Buffs('short_term_haste_buff', 'flask_wod_agi', 'food_wod_versatility')
+        self.procs = _procs.ProcsList()
+        self.gear_buffs = _stats.GearBuffs('gear_specialization')
+        self.traits = '000000000000000000'
+        self.level = 110
+        self.race = 'pandaren'
+        self.agi = 20909
+        self.stam = 19566
+        self.crit = 4402
+        self.haste = 5150
+        self.mastery = 5999
+        self.versatility = 1515
+        self.response_time = 0.5
+        self.duration = 360
+        self.is_demon = False
+        self.num_boss_adds = 0
+        self.adv_params = 0
 
-    def test_get_spell_hit_from_talents(self):
-        self.assertAlmostEqual(self.calculator.get_spell_hit_from_talents(), .04)
-        self.calculator.talents.precision = 0
-        self.assertAlmostEqual(self.calculator.get_spell_hit_from_talents(), .0)
+    def buildSpecDefaults(self, spec, weapon_dps=2100):
+        self.spec = spec
+        if spec == "outlaw":
+            self.mh = _stats.Weapon(weapon_dps * 2.6, 2.6, 'sword', None)
+            self.oh = _stats.Weapon(weapon_dps * 2.6, 2.6, 'sword', None)
+            self.cycle = _settings.OutlawCycle(blade_flurry=False,
+                                              jolly_roger_reroll=1,
+                                              grand_melee_reroll=1,
+                                              shark_reroll=1,
+                                              true_bearing_reroll=1,
+                                              buried_treasure_reroll=1,
+                                              broadsides_reroll=1)
+        elif spec == "assassination":
+            self.mh = _stats.Weapon(weapon_dps * 1.8, 1.8, 'dagger', None)
+            self.oh = _stats.Weapon(weapon_dps * 1.8, 1.8, 'dagger', None)
+            self.cycle = _settings.AssassinationCycle()
+        elif spec == "subtlety":
+            self.mh = _stats.Weapon(weapon_dps * 1.8, 1.8, 'dagger', None)
+            self.oh = _stats.Weapon(weapon_dps * 1.8, 1.8, 'dagger', None)
+            self.cycle = _settings.SubtletyCycle(cp_builder='backstab',  dance_finishers_allowed=True, positional_uptime=0.9)
+        else:
+            raise "Invalid spec: %s" % spec
 
-    def test_get_melee_hit_from_talents(self):
-        self.assertAlmostEqual(self.calculator.get_melee_hit_from_talents(), .04)
-        self.calculator.talents.precision = 3
-        self.assertAlmostEqual(self.calculator.get_melee_hit_from_talents(), .06)
+
+    def buildCalculator(self):
+        test_race = _race.Race(self.race)
+        test_class = 'rogue'
+
+        # Set up a calcs object..
+        test_stats = _stats.Stats(self.mh, self.oh, self.procs,
+                                    self.gear_buffs,
+                                    agi=self.agi,
+                                    stam=self.stam,
+                                    crit=self.crit,
+                                    haste=self.haste,
+                                    mastery=self.mastery,
+                                    versatility=self.versatility)
+
+        # Initialize talents..
+        test_talents = _talents.Talents(self.talent_str, self.spec, test_class, level=self.level)
+
+        #initialize artifact traits..
+        test_traits = _artifact.Artifact(self.spec, test_class, self.traits)
+
+        # Set up settings.
+        test_settings = _settings.Settings(self.cycle, response_time=self.response_time, duration=self.duration,
+                                         adv_params=self.adv_params, is_demon=self.is_demon, num_boss_adds=self.num_boss_adds)
+
+        self.calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_traits, self.buffs, test_race, self.spec, test_settings, self.level)
+        self.calculator.level = 110
 
     def test_oh_penalty(self):
         self.assertAlmostEqual(self.calculator.oh_penalty(), 0.5)
 
-    def test_talents_modifiers_assassins_resolve(self):
-        self.assertAlmostEqual(self.calculator.talents_modifiers([]), 1.0)
-        self.assertAlmostEqual(self.calculator.talents_modifiers(['assassins_resolve']), 1.2)
-        self.calculator.stats.mh.type = '1h_axe'
-        self.assertAlmostEqual(self.calculator.talents_modifiers(['assassins_resolve']), 1.0)
-
-    def test_talents_modifiers(self):
-        self.assertAlmostEqual(self.calculator.talents_modifiers(['opportunity', 'assassins_resolve']), 1.2 * 1.3)
-
     def test_crit_damage_modifiers(self):
-        self.assertAlmostEqual(self.calculator.crit_damage_modifiers(), 1 + (2 * 1.03 - 1) * 1)
-        self.assertAlmostEqual(self.calculator.crit_damage_modifiers(is_spell=True), 1 + (1.5 * 1.03 - 1) * 1)
-        self.assertAlmostEqual(self.calculator.crit_damage_modifiers(lethality=True), 1 + (2 * 1.03 - 1) * 1.3)
+        self.assertAlmostEqual(self.calculator.crit_damage_modifiers(), 1 + (2 * 1. - 1) * 1)
 
-    # Just do some basic checks for the individual abilities, increasing AP
-    # should increase damage and similar for combo points.
-    # The optional armor argument isn't tested for now.
-    # Should probably compare damage and crit_damage individually so it can
-    # catch some error where crit_damage is lower even with higher AP.
+    def test_dps_breakdowns(self):
+        # TODO: Add assertions. This at least runs it though.
+        print "DPS Breakdown"
+        print(self.calculator.get_dps_breakdown())
 
-    def test_mh_damage(self):
-        self.assertTrue(self.calculator.mh_damage(0) < self.calculator.mh_damage(1))
+    def test_get_talents_ranking(self):
+        # TODO: Add assertions. This at least runs it though.
+        print "Talent ranking"
+        print(self.calculator.get_talents_ranking())
 
-    def test_oh_damage(self):
-        self.assertTrue(self.calculator.oh_damage(0) < self.calculator.oh_damage(1))
+    def test_get_trait_ranking(self):
+        # TODO: Add assertions. This at least runs it though.
+        print "Trait ranking"
+        print(self.calculator.get_trait_ranking())
 
-    def test_backstab_damage(self):
-        self.assertTrue(self.calculator.backstab_damage(0) < self.calculator.backstab_damage(1))
+    def test_ep(self):
+        ep_values = self.calculator.get_ep()
 
-    def test_mh_mutilate_damage(self):
-        self.assertTrue(self.calculator.mh_mutilate_damage(0) < self.calculator.mh_mutilate_damage(1))
-        not_poisoned = self.calculator.mh_mutilate_damage(1, is_poisoned=False)
-        poisoned = self.calculator.mh_mutilate_damage(1)
-        self.assertAlmostEqual(not_poisoned[0] * 1.2, poisoned[0])
-        self.assertAlmostEqual(not_poisoned[1] * 1.2, poisoned[1])
-
-    def test_oh_mutilate_damage(self):
-        self.assertTrue(self.calculator.oh_mutilate_damage(0) < self.calculator.oh_mutilate_damage(1))
-        not_poisoned = self.calculator.oh_mutilate_damage(1, is_poisoned=False)
-        poisoned = self.calculator.oh_mutilate_damage(1)
-        self.assertAlmostEqual(not_poisoned[0] * 1.2, poisoned[0])
-        self.assertAlmostEqual(not_poisoned[1] * 1.2, poisoned[1])
-
-    def test_sinister_strike_damage(self):
-        self.assertTrue(self.calculator.sinister_strike_damage(0) < self.calculator.sinister_strike_damage(1))
-
-    def test_hemorrhage_damage(self):
-        self.assertTrue(self.calculator.hemorrhage_damage(0) < self.calculator.hemorrhage_damage(1))
-
-    def test_hemorrhage_tick_damage(self):
-        self.assertTrue(self.calculator.hemorrhage_tick_damage(0) < self.calculator.hemorrhage_tick_damage(1))
-        self.assertTrue(self.calculator.hemorrhage_tick_damage(0, from_crit_hemo=False) < self.calculator.hemorrhage_tick_damage(0, from_crit_hemo=True))
-
-    def test_ambush_damage(self):
-        self.assertTrue(self.calculator.ambush_damage(0) < self.calculator.ambush_damage(1))
-
-    def test_revealing_strike_damage(self):
-        self.assertTrue(self.calculator.revealing_strike_damage(0) < self.calculator.revealing_strike_damage(1))
-
-    def test_venomous_wounds_damage(self):
-        self.assertTrue(self.calculator.venomous_wounds_damage(0) < self.calculator.venomous_wounds_damage(1))
-
-    def test_main_gauche_damage(self):
-        self.assertTrue(self.calculator.main_gauche_damage(0) < self.calculator.main_gauche_damage(1))
-
-    def test_mh_killing_spree_damage(self):
-        self.assertTrue(self.calculator.mh_killing_spree_damage(0) < self.calculator.mh_killing_spree_damage(1))
-
-    def test_oh_killing_spree_damage(self):
-        self.assertTrue(self.calculator.oh_killing_spree_damage(0) < self.calculator.oh_killing_spree_damage(1))
-
-    def test_instant_poison_damage(self):
-        self.assertTrue(self.calculator.instant_poison_damage(0) < self.calculator.instant_poison_damage(1))
-        self.assertTrue(self.calculator.instant_poison_damage(0, mastery=0) < self.calculator.instant_poison_damage(0, mastery=1))
-
-    def test_deadly_poison_tick_damage(self):
-        # test mastery
-        self.assertTrue(self.calculator.deadly_poison_tick_damage(0) < self.calculator.deadly_poison_tick_damage(1))
-        self.assertTrue(self.calculator.deadly_poison_tick_damage(0, dp_stacks=1) < self.calculator.deadly_poison_tick_damage(0, dp_stacks=2))
-
-    def test_wound_poison_damage(self):
-        self.assertTrue(self.calculator.wound_poison_damage(0) < self.calculator.wound_poison_damage(1))
-        self.assertTrue(self.calculator.wound_poison_damage(0, mastery=0) < self.calculator.wound_poison_damage(0, mastery=1))
-
-    def test_garrote_tick_damage(self):
-        self.assertTrue(self.calculator.garrote_tick_damage(0) < self.calculator.garrote_tick_damage(1))
-
-    def test_rupture_tick_damage(self):
-        self.assertTrue(self.calculator.rupture_tick_damage(0, 1) < self.calculator.rupture_tick_damage(1, 1))
-        self.assertTrue(self.calculator.rupture_tick_damage(0, 1) < self.calculator.rupture_tick_damage(0, 2))
-        self.assertRaises(IndexError, self.calculator.rupture_tick_damage, 0, 6)
-
-    def test_eviscerate_damage(self):
-        self.assertTrue(self.calculator.eviscerate_damage(0, 1) < self.calculator.eviscerate_damage(1, 1))
-        self.assertTrue(self.calculator.eviscerate_damage(0, 1) < self.calculator.eviscerate_damage(0, 2))
-
-    def test_envenom_damage(self):
-        self.assertTrue(self.calculator.envenom_damage(0, 1) < self.calculator.envenom_damage(1, 1))
-        self.assertTrue(self.calculator.envenom_damage(0, 1) < self.calculator.envenom_damage(0, 2))
-
-    def test_melee_crit_rate(self):
-        agi_per_crit = self.calculator.level == 80 and 83.15 or 324.72
-        crit_rating_per_crit = self.calculator.level == 80 and 45.906 or 179.279998779296875
-        self.assertAlmostEqual(self.calculator.melee_crit_rate(agi=1000),
-            0.01 * (1000 / agi_per_crit - 0.295) + 0.01 * (1517 / crit_rating_per_crit) + 0.05 - 0.048)
-        self.assertTrue(self.calculator.spell_crit_rate(0) < self.calculator.spell_crit_rate(1))
-
-    def test_spell_crit_rate(self):
-        self.assertTrue(self.calculator.melee_crit_rate(0) < self.calculator.melee_crit_rate(1))
-
-    def test_crit_cap(self):
-        pass
-
-
-class TestRogueDamageCalculatorLevels(TestRogueDamageCalculator):
-    def setUp(self):
-        super(TestRogueDamageCalculatorLevels, self).setUp()
-        self.calculator.level = 80
+        self.assertTrue(ep_values['agi'] < 1.5)
+        self.assertTrue(ep_values['agi'] > 1.0)
+        self.assertTrue(ep_values['mastery'] < 1.0)
+        self.assertTrue(ep_values['mastery'] > 0.0)
+        self.assertTrue(ep_values['haste'] < 1.0)
+        self.assertTrue(ep_values['haste'] > 0.0)
+        self.assertTrue(ep_values['versatility'] < 1.0)
+        self.assertTrue(ep_values['versatility'] > 0.0)
+        self.assertTrue(ep_values['crit'] < 1.0)
+        self.assertTrue(ep_values['crit'] > 0.0)
 
     def test_set_constants_for_level(self):
-        self.assertRaises(exceptions.InvalidLevelException, self.calculator.__setattr__, 'level', 86)
+        self.assertRaises(exceptions.InvalidLevelException, self.calculator.__setattr__, 'level', 111)
+
+## Single target
+
+class TestOutlawRogueDamageCalculator(RogueDamageCalculatorTestBase, unittest.TestCase):
+    def setUp(self):
+        super(TestOutlawRogueDamageCalculator, self).setUp()
+        self.buildSpecDefaults('outlaw')
+        self.num_boss_adds = 0
+        self.buildCalculator()
+
+
+class TestAssassinationRogueDamageCalculator(RogueDamageCalculatorTestBase, unittest.TestCase):
+    def setUp(self):
+        super(TestAssassinationRogueDamageCalculator, self).setUp()
+        self.buildSpecDefaults('assassination')
+        self.num_boss_adds = 0
+        self.buildCalculator()
+
+
+class TestSubtletyRogueDamageCalculator(RogueDamageCalculatorTestBase, unittest.TestCase):
+    def setUp(self):
+        super(TestSubtletyRogueDamageCalculator, self).setUp()
+        self.buildSpecDefaults('subtlety')
+        self.num_boss_adds = 0
+        self.buildCalculator()
+
+## Multi-target
+
+class TestAOEOutlawRogueDamageCalculator(RogueDamageCalculatorTestBase, unittest.TestCase):
+    def setUp(self):
+        super(TestAOEOutlawRogueDamageCalculator, self).setUp()
+        self.buildSpecDefaults('outlaw')
+        self.num_boss_adds = 3
+        self.buildCalculator()
+
+
+class TestAOEAssassinationRogueDamageCalculator(RogueDamageCalculatorTestBase, unittest.TestCase):
+    def setUp(self):
+        super(TestAOEAssassinationRogueDamageCalculator, self).setUp()
+        self.buildSpecDefaults('assassination')
+        self.num_boss_adds = 3
+        self.buildCalculator()
+
+
+class TestAOESubtletyRogueDamageCalculator(RogueDamageCalculatorTestBase, unittest.TestCase):
+    def setUp(self):
+        super(TestAOESubtletyRogueDamageCalculator, self).setUp()
+        self.buildSpecDefaults('subtlety')
+        self.num_boss_adds = 3
+        self.buildCalculator()

@@ -533,35 +533,20 @@ class DamageCalculator(object):
         allowed_talent_list = self.talents.get_allowed_talents_for_level() if list == None else list #cache
 
         for tier, level in zip(self.talents.class_talents, tier_levels):
-
             tier_ranking = {} #reinitialized to clear dict for each new tier
-            
             for talent in tier:
-                
                 if talent in allowed_talent_list:
-                    
                     setattr(self.talents, talent, not getattr(self.talents, talent)) # this is a rather arcane way to handle state :/
-                    
                     try:
-                        
                         new_dps = self.get_dps()
-                        
                         if new_dps != baseline_dps:
-                        
                             tier_ranking[talent] = abs(new_dps - baseline_dps)
-                        
                         else:
-                        
                             tier_ranking[talent] = 'not implemented' #unique error: no dps delta for this talent
-                    
                     except:
-                    
                         tier_ranking[talent] = 'implementation error' #unique error: error attempting to calc dps with this talent
-                    
                     setattr(self.talents, talent, not getattr(self.talents, talent))
-
             talents_ranking[level] = tier_ranking #place each tier into the talent tree
-
         return talents_ranking
 
     def get_trait_ranking(self, list=None):
@@ -603,11 +588,6 @@ class DamageCalculator(object):
         # this is what callers will (initially) be looking at.
         pass
 
-    #def get_all_activated_stat_boosts(self):
-    #    racial_boosts = self.race.get_racial_stat_boosts()
-    #    gear_boosts = self.stats.gear_buffs.get_all_activated_boosts()
-    #    return racial_boosts + gear_boosts
-
     def armor_mitigation_multiplier(self, armor=None):
         if not armor:
             armor = self.target_base_armor
@@ -618,10 +598,8 @@ class DamageCalculator(object):
         # damage value.
         return damage * self.armor_mitigation_multiplier(armor)
 
-    def melee_hit_chance(self, base_miss_chance, dodgeable, parryable, weapon_type, blockable=False, bonus_hit=0):
+    def melee_hit_chance(self, base_miss_chance, dodgeable, parryable, weapon_type, blockable=False):
         miss_chance = base_miss_chance
-
-        # Expertise represented as the reduced chance to be dodged, not true "Expertise".
 
         if dodgeable:
             dodge_chance = self.base_dodge_chance
@@ -629,13 +607,14 @@ class DamageCalculator(object):
             dodge_chance = 0
 
         if parryable:
-            # Expertise will negate dodge and spell miss, *then* parry
-            parry_expertise = max(expertise - self.base_dodge_chance, 0)
-            parry_chance = max(self.base_parry_chance - parry_expertise, 0)
+            parry_chance = self.base_parry_chance
         else:
             parry_chance = 0
 
-        block_chance = self.base_block_chance * blockable
+        if blockable:
+            block_chance = self.base_block_chance
+        else:
+            block_chance = 0
 
         return (1 - (miss_chance + dodge_chance + parry_chance)) * (1 - block_chance)
 
@@ -643,13 +622,13 @@ class DamageCalculator(object):
         hit_chance = self.melee_hit_chance(self.base_one_hand_miss_rate, dodgeable=False, parryable=False, weapon_type=None)
         return hit_chance
 
-    def one_hand_melee_hit_chance(self, dodgeable=False, parryable=False, weapon=None, bonus_hit=0):
+    def one_hand_melee_hit_chance(self, dodgeable=False, parryable=False, weapon=None, blockable=False):
         # Most attacks by DPS aren't parryable due to positional negation. But
         # if you ever want to attacking from the front, you can just set that
         # to True.
         if weapon == None:
             weapon = self.stats.mh
-        hit_chance = self.melee_hit_chance(self.base_one_hand_miss_rate, dodgeable, parryable, weapon.type)
+        hit_chance = self.melee_hit_chance(self.base_one_hand_miss_rate, dodgeable, parryable, weapon.type, blockable)
         return hit_chance
 
     def off_hand_melee_hit_chance(self, dodgeable=False, parryable=False, weapon=None, bonus_hit=0):

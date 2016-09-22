@@ -3,7 +3,6 @@ from shadowcraft.core import exceptions
 class InvalidBuffException(exceptions.InvalidInputException):
     pass
 
-
 class Buffs(object):
 
     allowed_buffs = frozenset([
@@ -80,7 +79,6 @@ class Buffs(object):
             if buff not in self.allowed_buffs:
                 raise InvalidBuffException(_('Invalid buff {buff}').format(buff=buff))
             setattr(self, buff, True)
-        self.level = kwargs.get('level', 100)
 
     def __getattr__(self, name):
         # Any buff we haven't assigned a value to, we don't have.

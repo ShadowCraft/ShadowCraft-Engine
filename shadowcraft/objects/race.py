@@ -131,7 +131,7 @@ class Race(object):
         object.__setattr__(self, name, value)
         if name == 'level':
             self._set_constants_for_level()
-    
+
     def _set_constants_for_level(self):
         try:
             self.stats = self.stat_set[self.level]
@@ -148,7 +148,7 @@ class Race(object):
             return False
         else:
             object.__getattribute__(self, name)
-    
+
     def get_stats_from_race(self, level, secondaries=False):
         str = Race.rogue_base_stats[level][0] + Race.racial_stat_offset[self.race_name][0]
         agi = Race.rogue_base_stats[level][1] + Race.racial_stat_offset[self.race_name][1]

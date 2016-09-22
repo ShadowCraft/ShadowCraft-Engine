@@ -36,10 +36,10 @@ class Proc(object):
         self.on_crit = on_crit
         self.on_procced_strikes = on_procced_strikes
         self.proc_rate_modifier = proc_rate_modifier
-        
+
         #separate method just to keep the constructor clean
         self.update_proc_value()
-    
+
     def update_proc_value(self):
         tools = class_data.Util()
         #http://forums.elitistjerks.com/topic/130561-shadowcraft-for-mists-of-pandaria/page-3
@@ -114,12 +114,12 @@ class Proc(object):
             return True
         else:
             return False
-    
+
     def get_rppm_proc_rate(self, haste=1.):
         if self.is_real_ppm():
             return haste * self.proc_rate * self.proc_rate_modifier
         raise InvalidProcException(_('Invalid proc handling for proc {proc}').format(proc=self.proc_name))
-    
+
     def get_proc_rate(self, speed=None, haste=1.0):
         if self.is_ppm():
             if speed is None:
@@ -138,7 +138,7 @@ class Proc(object):
             return False
         # probably should configure this somehow, but type check is probably enough
         raise InvalidProcException(_('Invalid data for proc {proc}').format(proc=self.proc_name))
-    
+
     def is_rppm(self):
         return self.is_real_ppm()
     def is_real_ppm(self):
@@ -165,7 +165,7 @@ class ProcsList(object):
 
     def set_proc(self, proc):
         setattr(self, proc, Proc(**self.allowed_procs[proc]))
-    
+
     def del_proc(self, proc):
         setattr(self, proc, False)
 
@@ -174,7 +174,7 @@ class ProcsList(object):
         if proc in self.allowed_procs:
             return False
         object.__getattribute__(self, proc)
-    
+
     def get_all_procs_for_stat(self, stat=None):
         procs = []
         for proc_name in self.allowed_procs:

@@ -14,10 +14,10 @@ class InvalidJSONException(exceptions.InvalidInputException):
 
 def from_json(json_string, character_class='rogue'):
     j = json.loads(json_string)
-    try: 
+    try:
         race_object = race.Race(str(j['race']), character_class=character_class)
         level = int(j['level'])
-    
+
         s = j['settings']
         settings_type = s['type']
         if settings_type == 'assassination':
@@ -39,7 +39,7 @@ def from_json(json_string, character_class='rogue'):
         # Settings(cycle, time_in_execute_range=.35, tricks_on_cooldown=True, response_time=.5, mh_poison='ip', oh_poison='dp', duration=300):
         settings_object = settings.Settings(cycle, s.get('time_in_execute_range', .35), s.get('tricks_on_cooldown', True),
             s.get('response_time', .5), s.get('mh_poison', 'ip'), s.get('oh_poison', 'dp'), s.get('duration', 300))
-    
+
         stats_dict = j['stats']
         # Weapon(damage, speed, weapon_type, enchant=None):
         mh_dict = stats_dict['mh']
@@ -53,8 +53,9 @@ def from_json(json_string, character_class='rogue'):
         # Stats(str, agi, ap, crit, hit, exp, haste, mastery, mh, oh, ranged, procs, gear_buffs, level=85):
         def s(stat):
             return int(stats_dict[stat])
-        stats_object = stats.Stats(s('str'), s('agi'), s('ap'), s('crit'), s('hit'), s('exp'), s('haste'), s('mastery'), 
-            mh, oh, ranged, procs_list, gear_buffs, level)
+        stats_object = stats.Stats(
+            mh, oh, procs_list, gear_buffs,
+            str=s('str'), agi=s('agi'), crit=s('crit'), haste=s('haste'), mastery=s('mastery'))
         glyphs = rogue_glyphs.RogueGlyphs(*j['glyphs'])
         talents = rogue_talents.RogueTalents(*j['talents'])
         buffs_object = buffs.Buffs(*j['buffs'])
@@ -66,74 +67,74 @@ def from_json(json_string, character_class='rogue'):
 
 if __name__ == '__main__':
     json_string = """{
-        "level": 85, 
+        "level": 85,
         "stats": {
             "str": 20,
-            "agi": 4756, 
-            "ap": 190, 
-            "crit": 1022, 
-            "hit": 1329, 
-            "exp": 159, 
-            "haste": 1291, 
-            "mastery": 1713, 
+            "agi": 4756,
+            "ap": 190,
+            "crit": 1022,
+            "hit": 1329,
+            "exp": 159,
+            "haste": 1291,
+            "mastery": 1713,
             "gear_buffs": [
-                "rogue_t11_2pc", 
-                "leather_specialization", 
-                "potion_of_the_tolvir", 
+                "rogue_t11_2pc",
+                "leather_specialization",
+                "potion_of_the_tolvir",
                 "chaotic_metagem"
-            ], 
+            ],
             "procs": [
-                "heroic_prestors_talisman_of_machination", 
-                "fluid_death", 
+                "heroic_prestors_talisman_of_machination",
+                "fluid_death",
                 "rogue_t11_4pc"
-            ], 
+            ],
             "mh": {
-                "type": "dagger", 
-                "speed": 1.8, 
-                "damage": 939.5, 
+                "type": "dagger",
+                "speed": 1.8,
+                "damage": 939.5,
                 "enchant": "landslide"
             },
             "oh": {
-                "type": "dagger", 
-                "speed": 1.4, 
-                "damage": 730.5, 
+                "type": "dagger",
+                "speed": 1.4,
+                "damage": 730.5,
                 "enchant": "landslide"
-            }, 
+            },
             "ranged": {
-                "type": "thrown", 
-                "speed": 2.2, 
+                "type": "thrown",
+                "speed": 2.2,
                 "damage": 1371.5
             }
         },
         "buffs": [
-            "short_term_haste_buff", 
-            "stat_multiplier_buff", 
-            "crit_chance_buff", 
-            "all_damage_buff", 
-            "melee_haste_buff", 
-            "attack_power_buff", 
-            "str_and_agi_buff", 
-            "armor_debuff", 
-            "physical_vulnerability_debuff", 
-            "spell_damage_debuff", 
-            "spell_crit_debuff", 
-            "bleed_damage_debuff", 
-            "agi_flask", 
+            "short_term_haste_buff",
+            "stat_multiplier_buff",
+            "crit_chance_buff",
+            "all_damage_buff",
+            "melee_haste_buff",
+            "attack_power_buff",
+            "str_and_agi_buff",
+            "armor_debuff",
+            "physical_vulnerability_debuff",
+            "spell_damage_debuff",
+            "spell_crit_debuff",
+            "bleed_damage_debuff",
+            "agi_flask",
             "guild_feast"
-        ], 
+        ],
         "settings": {
-            "type": "assassination", 
+            "type": "assassination",
             "response_time": 1
-        }, 
+        },
         "talents": [
-            "0333230113022110321", 
-            "0020000000000000000", 
+            "0333230113022110321",
+            "0020000000000000000",
             "2030030000000000000"
-        ], 
-        "race": "night_elf", 
+        ],
+        "race": "night_elf",
         "glyphs": [
-            "backstab", 
-            "mutilate", 
+            "backstab",
+            "mutilate",
             "rupture"
         ]
     }"""

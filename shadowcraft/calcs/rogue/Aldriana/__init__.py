@@ -271,7 +271,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         average_hit = proc_value * multiplier
         average_damage = average_hit * (1 + crit_rate * (crit_multiplier - 1)) * proc_count
-        #print proc.proc_name, average_hit, multiplier
 
         if proc.stat == 'physical_dot':
             average_damage *= proc.uptime / proc_count
@@ -423,7 +422,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         t1 = max(min( num_sum - delay_remainder,        .5 )/swing_timer,      0)
         t2 = max(min( num_sum - delay_remainder - .5,   .5 )/swing_timer * .5, 0)
 
-        #print "total delay: ", t0, t1, t2, (t0+t1+t2)
         return (t0+t1+t2)/swing_timer
 
     def set_uptime_for_ramping_proc(self, proc, procs_per_second):
@@ -959,7 +957,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         alacrity_stacks = 0
         while energy_budget > 0.1:
-            #print self.energy_budget
             if loop_counter > 20:
                    raise ConvergenceErrorException(_('Mini-cycles failed to converge.'))
             loop_counter += 1
@@ -1006,9 +1003,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.bota_multiplier = 0.35 * sum(attacks_per_second['rupture']) * 10
             self.bota_multiplier *= 2
 
-
-
-        #print attacks_per_second
         return attacks_per_second, crit_rates, additional_info
 
     ###########################################################################
@@ -1298,10 +1292,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         ar_uptime = self.ar_duration / self.ar_cd
         tb_seconds_per_second = 0
 
-        print aps_normal
-        print aps_ar
-        print attacks_per_second
-        raw_input()
+        # print aps_normal
+        # print aps_ar
+        # print attacks_per_second
         #if rtb loop on ar cooldown
         if not self.talents.slice_and_dice:
             old_ar_cd = self.ar_cd
@@ -1314,15 +1307,15 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                             cp_spend_per_second += attacks_per_second[ability][cp] * cp
                 tb_seconds_per_second = 2 * cp_spend_per_second * tb_uptime
                 new_ar_cd = self.ar_cd/(1 + tb_seconds_per_second)
-                print attacks_per_second
-                print cp_spend_per_second, tb_seconds_per_second
+                # print attacks_per_second
+                # print cp_spend_per_second, tb_seconds_per_second
                 #remerge the aps
                 #print new_ar_cd
                 #print attacks_per_second
                 attacks_per_second = self.merge_attacks_per_second({'normal': (new_ar_cd - self.ar_duration, aps_normal),
                     'ar': (self.ar_duration, aps_ar)}, total_time=new_ar_cd)
-                print new_ar_cd
-                print "-------"
+                # print new_ar_cd
+                # print "-------"
                 if old_ar_cd - new_ar_cd < 0.1:
                     break
                 else:
@@ -1330,8 +1323,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
             ar_uptime = self.ar_duration / new_ar_cd
 
-        print self.ar_duration, new_ar_cd
-        print ar_uptime
+        # print self.ar_duration, new_ar_cd
+        # print ar_uptime
         #add in cannonball and killing spree
         if self.talents.killing_spree:
             ksp_cd = self.get_spell_cd('killing_spree') / (1. + tb_seconds_per_second)
@@ -1373,7 +1366,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second['blunderbuss'] = 0.33 * attacks_per_second['pistol_shot']
             attacks_per_second['pistol_shot'] -= attacks_per_second['blunderbuss']
 
-        print attacks_per_second
+        # print attacks_per_second
         return attacks_per_second, crit_rates, additional_info
 
     def outlaw_attack_counts_mincycle(self, current_stats, snd=False, ar=False,
@@ -1923,7 +1916,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         alacrity_stacks = 0
         while self.energy_budget > 0.1:
-            #print self.energy_budget
             if loop_counter > 20:
                    raise ConvergenceErrorException(_('Mini-cycles failed to converge.'))
             loop_counter += 1
@@ -2016,7 +2008,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         if self.traits.second_shuriken and 'shuriken_toss' in attacks_per_second:
             attacks_per_second['second_shuriken'] = 0.1 * attacks_per_second['shuriken_toss']
-        #print attacks_per_second
 
         #add SoD auto crits
         if 'shadowstrike' in attacks_per_second:

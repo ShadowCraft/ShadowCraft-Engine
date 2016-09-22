@@ -1099,10 +1099,10 @@ class Util(object):
 
     def get_base_armor(self, level):
         if level < 100:
-            raise exceptions.InvalidInputException(_('There\'s no armor value for a target level {level}').format(level=str(e)))
+            raise exceptions.InvalidInputException(_('There\'s no armor value for a target level {level}').format(level=str(level)))
         return self.BASE_ARMOR[level]
 
     def get_k_value(self, level):
         if level < 100:
-            raise exceptions.InvalidInputException(_('There\'s no k value for a level {level} player').format(level=str(e)))
+            raise exceptions.InvalidInputException(_('There\'s no k value for a level {level} player').format(level=str(level)))
         return self.ATTACKER_K_VALUE[level]
