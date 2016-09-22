@@ -146,96 +146,144 @@ class TestOutlawRogueDamageCalculator(RogueDamageCalculatorTestBase, unittest.Te
         self.factory = RogueDamageCalculatorFactory('outlaw')
         self.calculator = self.factory.build()
 
+
     # This is a dumb test but illustrates how we can test changes in a calculator
     def test_mastery_helps_dps(self):
         a, b = self.compare({"mastery": 3706}, {"mastery": 4706}, 'get_dps_breakdown')
         self.assertGreater(b["main_gauche"], a["main_gauche"])
 
+
     def test_cursed_edges_dps(self):
-        a, b = self.compare_dps({'traits': '000000000000000000'}, {'traits': '010000000000000000'})
-        self.assertGreater(b, a)
+        base, rank1 = self.compare_dps({'traits': '000000000000000000'}, {'traits': '010000000000000000'})
+        self.assertGreater(rank1, base)
+        rank2 = self.factory.build(traits='020000000000000000', num_boss_adds=3).get_dps()
+        rank3 = self.factory.build(traits='030000000000000000', num_boss_adds=3).get_dps()
+        self.assertGreater(rank2, rank1)
+        self.assertGreater(rank3, rank2)
+
 
     def test_fates_thirst_dps(self):
-        a, b = self.compare_dps({'traits': '000000000000000000'}, {'traits': '001000000000000000'})
-        self.assertGreater(b, a)
+        base, rank1 = self.compare_dps({'traits': '000000000000000000'}, {'traits': '001000000000000000'})
+        self.assertGreater(rank1, base)
+        rank2 = self.factory.build(traits='002000000000000000', num_boss_adds=3).get_dps()
+        rank3 = self.factory.build(traits='003000000000000000', num_boss_adds=3).get_dps()
+        self.assertGreater(rank2, rank1)
+        self.assertGreater(rank3, rank2)
+
 
     def test_blade_flurry_hurts_single_target_dps(self):
         cycle = _settings.OutlawCycle(blade_flurry=True)
-        a, b = self.compare_dps({}, {'num_boss_adds': 0})
-        self.assertLess(b, a)
+        base, rank1 = self.compare_dps({}, {'num_boss_adds': 0})
+        self.assertLess(rank1, base)
+
 
     def test_blade_dancer_improves_blade_flurry_penalty(self):
         cycle = _settings.OutlawCycle(blade_flurry=True)
-        a, b = self.compare_dps({'traits': '000000000000000000'}, {'traits': '000100000000000000'})
-        self.assertLess(a, b)
+        base, rank1 = self.compare_dps({'traits': '000000000000000000'}, {'traits': '000100000000000000'})
+        self.assertGreater(rank1, base)
+        rank2 = self.factory.build(traits='000200000000000000').get_dps()
+        rank3 = self.factory.build(traits='000300000000000000').get_dps()
+        self.assertGreater(rank2, rank1)
+        self.assertGreater(rank3, rank2)
+
 
     def test_blade_dancer_multi_target_dps(self):
         cycle = _settings.OutlawCycle(blade_flurry=True)
-        a, b = self.compare_dps({'traits': '000000000000000000'}, {'traits': '000100000000000000', 'num_boss_adds': 3})
-        self.assertGreater(b, a)
+        base, rank1 = self.compare_dps({'traits': '000000000000000000'}, {'traits': '000100000000000000', 'num_boss_adds': 3})
+        self.assertGreater(rank1, base)
+        rank2 = self.factory.build(traits='000200000000000000', num_boss_adds=3).get_dps()
+        rank3 = self.factory.build(traits='000300000000000000', num_boss_adds=3).get_dps()
+        self.assertGreater(rank2, rank1)
+        self.assertGreater(rank3, rank2)
+
 
     def test_fatebringer_dps(self):
-        a, b = self.compare_dps({'traits': '000000000000000000'}, {'traits': '000010000000000000'})
-        self.assertGreater(b, a)
+        base, rank1 = self.compare_dps({'traits': '000000000000000000'}, {'traits': '000010000000000000'})
+        self.assertGreater(rank1, base)
+        rank2 = self.factory.build(traits='000020000000000000').get_dps()
+        rank3 = self.factory.build(traits='000030000000000000').get_dps()
+        self.assertGreater(rank2, rank1)
+        self.assertGreater(rank3, rank2)
+
 
     def test_gunslinger_dps(self):
-        a, b = self.compare_dps({'traits': '000000000000000000'}, {'traits': '000001000000000000'})
-        self.assertGreater(b, a)
+        base, rank1 = self.compare_dps({'traits': '000000000000000000'}, {'traits': '000001000000000000'})
+        self.assertGreater(rank1, base)
+
 
     def test_hidden_blade_dps(self):
-        a, b = self.compare_dps({'traits': '000000000000000000'}, {'traits': '000000100000000000'})
-        self.assertGreater(b, a)
+        base, rank1 = self.compare_dps({'traits': '000000000000000000'}, {'traits': '000000100000000000'})
+        self.assertGreater(rank1, base)
+
 
     def test_fortune_strikes_dps(self):
-        a, b = self.compare_dps({'traits': '000000000000000000'}, {'traits': '000000010000000000'})
-        self.assertGreater(b, a)
+        base, rank1 = self.compare_dps({'traits': '000000000000000000'}, {'traits': '000000010000000000'})
+        self.assertGreater(rank1, base)
+        rank2 = self.factory.build(traits='000000020000000000').get_dps()
+        rank3 = self.factory.build(traits='000000030000000000').get_dps()
+        self.assertGreater(rank2, rank1)
+        self.assertGreater(rank3, rank2)
+
 
     def test_ghostly_shell_dps(self):
-        a, b = self.compare_dps({'traits': '000000000000000000'}, {'traits': '000000001000000000'})
-        self.assertEqual(b, a)
+        base, rank1 = self.compare_dps({'traits': '000000000000000000'}, {'traits': '000000001000000000'})
+        self.assertEqual(base, rank1)
+
 
     def test_deception_dps(self):
-        a, b = self.compare_dps({'traits': '000000000000000000'}, {'traits': '000000000100000000'})
-        self.assertEqual(b, a)
+        base, rank1 = self.compare_dps({'traits': '000000000000000000'}, {'traits': '000000000100000000'})
+        self.assertEqual(base, rank1)
+
 
     def test_black_powder_dps(self):
         cycle = _settings.OutlawCycle(between_the_eyes_policy='shark')
-        a, b = self.compare_dps({'traits': '000000000000000000', 'cycle': cycle}, {'traits': '000000000010000000', 'cycle': cycle})
-        self.assertGreater(b, a)
+        base, rank1 = self.compare_dps({'traits': '000000000000000000', 'cycle': cycle}, {'traits': '000000000010000000', 'cycle': cycle})
+        self.assertGreater(rank1, base)
+
 
     def test_greed_dps(self):
-        a, b = self.compare_dps({'traits': '000000000000000000'}, {'traits': '000000000001000000'})
-        self.assertGreater(b, a)
+        base, rank1 = self.compare_dps({'traits': '000000000000000000'}, {'traits': '000000000001000000'})
+        self.assertGreater(rank1, base)
+
 
     def test_blurred_time_dps(self):
-        a, b = self.compare_dps({'traits': '000000000000000000'}, {'traits': '000000000000100000'})
-        self.assertGreater(b, a)
+        base, rank1 = self.compare_dps({'traits': '000000000000000000'}, {'traits': '000000000000100000'})
+        self.assertGreater(rank1, base)
+
 
     def test_fortunes_boon_dps(self):
-        a, b = self.compare_dps({'traits': '000000000000000000'}, {'traits': '000000000000010000'})
-        self.assertGreater(b, a)
+        base, rank1 = self.compare_dps({'traits': '000000000000000000'}, {'traits': '000000000000010000'})
+        self.assertGreater(rank1, base)
+        rank2 = self.factory.build(traits='000000000000020000').get_dps()
+        rank3 = self.factory.build(traits='000000000000030000').get_dps()
+        self.assertGreater(rank2, rank1)
+        self.assertGreater(rank3, rank2)
+
 
     def test_fortunes_strike_dps(self):
-        a, b = self.compare_dps({'traits': '000000000000000000'}, {'traits': '000000000000001000'})
-        self.assertGreater(b, a)
+        base, rank1 = self.compare_dps({'traits': '000000000000000000'}, {'traits': '000000000000001000'})
+        self.assertGreater(rank1, base)
 
-        a, b2 = self.compare_dps({'traits': '000000000000000000'}, {'traits': '000000000000002000'})
-        self.assertGreater(b2, b)
+        rank2 = self.factory.build(traits='000000000000002000').get_dps()
+        rank3 = self.factory.build(traits='000000000000003000').get_dps()
+        self.assertGreater(rank2, rank1)
+        self.assertGreater(rank3, rank2)
 
-        a, b3 = self.compare_dps({'traits': '000000000000000000'}, {'traits': '000000000000003000'})
-        self.assertGreater(b3, b2)
 
     def test_blademaster_dps(self):
-        a, b = self.compare_dps({'traits': '000000000000000000'}, {'traits': '000000000000000100'})
-        self.assertEqual(b, a)
+        base, rank1 = self.compare_dps({'traits': '000000000000000000'}, {'traits': '000000000000000100'})
+        self.assertEqual(base, rank1)
+
 
     def test_blunderbuss_dps(self):
-        a, b = self.compare_dps({'traits': '000000000000000000'}, {'traits': '000000000000000010'})
-        self.assertGreater(b, a)
+        base, rank1 = self.compare_dps({'traits': '000000000000000000'}, {'traits': '000000000000000010'})
+        self.assertGreater(rank1, base)
+
 
     def test_cursed_steel_dps(self):
-        a, b = self.compare_dps({'traits': '000000000000000000'}, {'traits': '000000000000000001'})
-        self.assertGreater(b, a)
+        base, rank1 = self.compare_dps({'traits': '000000000000000000'}, {'traits': '000000000000000001'})
+        self.assertGreater(rank1, base)
+
 
 class TestAssassinationRogueDamageCalculator(RogueDamageCalculatorTestBase, unittest.TestCase):
     def setUp(self):
