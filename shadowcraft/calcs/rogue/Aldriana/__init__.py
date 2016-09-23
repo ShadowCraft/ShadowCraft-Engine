@@ -154,6 +154,40 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         return crit_rates
 
+
+    def get_haste_multiplier(self, current_stats):
+        return self.stats.get_haste_multiplier_from_rating(current_stats['haste']) * self.true_haste_mod
+
+
+    def get_energy_regen(self, current_stats, buried=False, ar=False, alacrity_stacks=0):
+        regen = 10.
+        if self.spec == "outlaw":
+            regen = 12.
+            if self.settings.cycle.blade_flurry:
+                regen *= .8 + (0.03333 * self.traits.blade_dancer)
+            if buried:
+                regen *= 1.25
+            if ar:
+                regen *= 2.0
+        else:
+            alacrity_stacks = 0
+        if self.talents.vigor:
+            regen *= 1.1
+        regen *= self.get_haste_multiplier(current_stats) + 0.01 * alacrity_stacks
+        return regen
+
+
+    def get_attack_speed_multiplier(self, current_stats, snd=False, melee=False, ar=False, alacrity_stacks=0):
+        attack_speed_multiplier = self.get_haste_multiplier(current_stats) + 0.01 * alacrity_stacks
+        if melee:
+            attack_speed_multiplier *= 1.5
+        elif snd:
+            attack_speed_multiplier *= 1.9
+        if ar:
+            attack_speed_multiplier *= 1.2
+        return attack_speed_multiplier
+
+
     def set_constants(self):
         # General setup that we'll use in all 3 cycles.
         self.load_from_advanced_parameters()
@@ -215,6 +249,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #hit chances
         self.dw_mh_hit_chance = self.dual_wield_mh_hit_chance()
         self.dw_oh_hit_chance = self.dual_wield_oh_hit_chance()
+        return self
 
     def load_from_advanced_parameters(self):
         self.true_haste_mod = self.get_adv_param('haste_buff', 1., min_bound=.1, max_bound=3.)
@@ -851,10 +886,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         cp_builder_energy_per_finisher = builders_per_finisher * self.get_spell_cost(self.cp_builder)
 
         #set up our energy budget
-        self.haste_multiplier = self.stats.get_haste_multiplier_from_rating(current_stats['haste']) * self.true_haste_mod
-        energy_regen = 10 * self.haste_multiplier
-        if self.talents.vigor:
-            energy_regen *= 1.1
+        haste_multiplier = self.get_haste_multiplier(current_stats)
+        energy_regen = self.get_energy_regen(current_stats)
 
         #set up rupture
         attacks_per_second['rupture'] = [0, 0, 0, 0, 0, 0, 0]
@@ -975,7 +1008,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 energy_budget += (new_alacrity_regen - old_alacrity_regen) * self.settings.duration
                 alacrity_stacks = new_alacrity_stacks
 
-        attacks_per_second['mh_autoattacks'] = (self.haste_multiplier * (1 + (alacrity_stacks * 0.01)))/self.stats.mh.speed
+        attacks_per_second['mh_autoattacks'] = (haste_multiplier * (1 + (alacrity_stacks * 0.01)))/self.stats.mh.speed
         attacks_per_second['oh_autoattacks'] = attacks_per_second['mh_autoattacks']
 
         #poison computations, use old function for now
@@ -1138,17 +1171,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attacks_per_second = {}
         additional_info = {}
 
-        #Compute values that are true through all RtB variations
-        self.base_energy_regen = 12.
-        if self.talents.vigor:
-            self.base_energy_regen *= 1.1
-        if self.settings.cycle.blade_flurry:
-            self.base_energy_regen *= .8 + (0.03333 * self.traits.blade_dancer)
-
         if crit_rates == None:
             crit_rates = self.get_crit_rates(current_stats)
-
-        self.haste_multiplier = self.stats.get_haste_multiplier_from_rating(current_stats['haste']) * self.true_haste_mod
 
         combat_potency_proc_energy = 15 + (1 * self.traits.fortune_strikes)
         self.combat_potency_regen_per_oh = combat_potency_proc_energy * 0.3 * self.stats.oh.speed / 1.4  # the new "normalized" formula
@@ -1336,7 +1360,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
 
         #figure swing timer and add mg
-        attack_speed_multiplier = self.haste_multiplier * (1 + (0.9 * self.talents.slice_and_dice))
+        attack_speed_multiplier = self.get_attack_speed_multiplier(current_stats, snd=self.talents.slice_and_dice)
         attack_speed_multiplier *= (1 + (0.2 * ar_uptime))
         if not self.talents.slice_and_dice:
             attack_speed_multiplier *= (1 + (0.5 * gm_uptime))
@@ -1369,25 +1393,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         # print attacks_per_second
         return attacks_per_second, crit_rates, additional_info
 
-    def outlaw_attack_counts_mincycle(self, current_stats, snd=False, ar=False,
-        jolly=False, melee=False, buried=False, broadsides=False, duration=30,
-        #probably don't actually need shark or tb here but simpler
-        shark=False, true_bearing=True):
-        maintainence_buff ='roll_the_bones'
-        attack_speed_multiplier = self.haste_multiplier
-        if melee:
-            attack_speed_multiplier *= 1.5
-        if snd:
-            attack_speed_multiplier *= 1.9
-            maintainence_buff = 'slice_and_dice'
+    # probably don't actually need shark or tb here but simpler
+    def outlaw_attack_counts_mincycle(self, current_stats, snd=False, ar=False, jolly=False, melee=False,
+                                      buried=False, broadsides=False, duration=30, shark=False, true_bearing=True):
 
-        energy_regen = self.base_energy_regen * self.haste_multiplier
-        if buried:
-            energy_regen *= 1.25
-
-        if ar:
-            attack_speed_multiplier *= 1.2
-            energy_regen *= 2.0
+        maintainence_buff = 'slice_and_dice' if snd else 'roll_the_bones'
+        attack_speed_multiplier = self.get_attack_speed_multiplier(current_stats, snd, melee, ar)
+        energy_regen = self.get_energy_regen(current_stats, buried, ar)
 
         gcd_size = 1.0 + self.settings.latency
         if ar:
@@ -1426,17 +1438,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attacks_per_second['saber_slash'] = float(ss_count + ps_count)/duration
         attacks_per_second['pistol_shot'] = float(ps_count)/duration
 
-        attacks_per_second[maintainence_buff] = [0, 0, 0, 0, 0, 0, 0]
-        for cp in xrange(7):
-            attacks_per_second[maintainence_buff][cp] += finisher_list[cp]/duration
+        attacks_per_second[maintainence_buff] = [v / duration for v in finisher_list]
 
         if (shark and self.settings.cycle.between_the_eyes_policy == 'shark') or self.settings.cycle.between_the_eyes_policy == 'always':
-            bte_count = duration/(20 + self.settings.response_time - (10 * true_bearing))
-            attacks_per_second['between_the_eyes'] = [0, 0, 0, 0, 0, 0, 0]
-            for cp in xrange(7):
-                attacks_per_second['between_the_eyes'][cp] += float(finisher_list[cp] * bte_count)/duration
-            attacks_per_second['pistol_shot'] += float(bte_count * ps_count)/duration
-            attacks_per_second['saber_slash'] += float(bte_count * (ss_count + ps_count))/duration
+            bte_count = duration / (20 + self.settings.response_time - (10 * true_bearing))
+            attacks_per_second['between_the_eyes'] = [float(v * bte_count) / duration for v in finisher_list]
+            attacks_per_second['pistol_shot'] += float(bte_count * ps_count) / duration
+            attacks_per_second['saber_slash'] += float(bte_count * (ss_count + ps_count)) / duration
             energy_budget -= (bte_count * ss_count) * self.saber_slash_energy_cost
             energy_budget -= bte_count * self.between_the_eyes_energy_cost
             gcd_budget -= bte_count * (ss_count + ps_count + 1)
@@ -1445,13 +1453,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.talents.death_from_above and not ar:
             energy_budget -= ss_count * dfa_count * self.saber_slash_energy_cost
             energy_budget -= dfa_count * self.death_from_above_energy_cost
-            attacks_per_second['saber_slash'] += float((ss_count + ps_count) * dfa_count)/duration
-            attacks_per_second['pistol_shot'] += float(ps_count * dfa_count)/duration
-            attacks_per_second['death_from_above_strike'] = [0, 0, 0, 0, 0, 0, 0]
-            attacks_per_second['death_from_above_pulse'] = [0, 0, 0, 0, 0, 0, 0]
-            for cp in xrange(7):
-                attacks_per_second['death_from_above_strike'][cp] *= float(finisher_list[cp] * dfa_count)/duration
-                attacks_per_second['death_from_above_pulse'][cp] *= float(finisher_list[cp] * dfa_count)/duration
+            attacks_per_second['saber_slash'] += float((ss_count + ps_count) * dfa_count) / duration
+            attacks_per_second['pistol_shot'] += float(ps_count * dfa_count) / duration
+            attacks_per_second['death_from_above_strike'] = [float(v * dfa_count) / duration for v in finisher_list]
+            attacks_per_second['death_from_above_pulse'] = [float(v * dfa_count) / duration for v in finisher_list]
             #DfA forces a 2 second GCD
             gcd_budget -= dfa_count * (ss_count + ps_count + 2)
 
@@ -1463,7 +1468,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             #TODO: use these ghostly strike cps
             energy_budget -= gs_energy
             gcd_budget -= gs_count
-            attacks_per_second['ghostly_strike'] = float(gs_count)/duration
+            attacks_per_second['ghostly_strike'] = float(gs_count) / duration
 
         #Burn the rest of our energy until you run out of energy or gcds
         gcds_per_minicycle = ss_count + ps_count + 1
@@ -1471,18 +1476,17 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         alacrity_stacks = 0
         loop_counter = 0
-        attacks_per_second['run_through'] = [0, 0, 0, 0, 0, 0, 0]
+        attacks_per_second['run_through'] = [0] * 7
         while energy_budget > 0.1 and gcd_budget > 0.1:
             if loop_counter > 20:
                    raise ConvergenceErrorException(_('Mini-cycles failed to converge.'))
 
             loop_counter += 1
-            minicycle_count = min(gcd_budget/gcds_per_minicycle, energy_budget/energy_per_minicycle)
-            attacks_per_second['saber_slash'] += float(minicycle_count * (ss_count + ps_count))/duration
-            attacks_per_second['pistol_shot'] += float(minicycle_count * ps_count)/duration
-
-            for cp in xrange(7):
-                attacks_per_second['run_through'][cp] += float(minicycle_count * finisher_list[cp])/duration
+            minicycle_count = min(gcd_budget / gcds_per_minicycle, energy_budget / energy_per_minicycle)
+            attacks_per_second['saber_slash'] += float(minicycle_count * (ss_count + ps_count)) / duration
+            attacks_per_second['pistol_shot'] += float(minicycle_count * ps_count) / duration
+            for i, v in enumerate(finisher_list):
+                attacks_per_second['run_through'][i] += float(minicycle_count * v) / duration
 
             #Don't need to converge if we don't have alacrity
             if not self.talents.alacrity:
@@ -1512,37 +1516,27 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                          bool(self.talents.swordmaster), broadsides, jolly)
         ss_count, ps_count, finisher_list = self.minicycle_table[minicycle_key]
         reroll_energy_cost = (ss_count * self.saber_slash_energy_cost) + self.roll_the_bones_cost
-        energy_regen = self.base_energy_regen * (self.haste_multiplier + 0.01 * alacrity_stacks)
-        if buried:
-            energy_regen *= 1.25
-        attack_speed_multiplier = self.haste_multiplier + 0.01 * alacrity_stacks
-        if melee:
-            attack_speed_multiplier *= 1.5
-        if ar:
-            energy_regen *= 2.0
-            attack_speed_multiplier *= 1.2
+
+        energy_regen = self.get_energy_regen(current_stats, buried, ar, alacrity_stacks)
+        attack_speed_multiplier = self.get_attack_speed_multiplier(current_stats, False, melee, ar, alacrity_stacks)
         mg_cp_energy = self.get_mg_cp_regen_from_haste(attack_speed_multiplier)
+
         total_regen = energy_regen + mg_cp_energy
         reroll_time = reroll_energy_cost / total_regen
         attacks_per_second = {}
-        attacks_per_second['saber_slash'] = float(ss_count + ps_count)/reroll_time
-        attacks_per_second['pistol_shot'] = float(ps_count)/reroll_time
-        attacks_per_second['roll_the_bones'] = [0, 0, 0, 0, 0, 0, 0]
-        for cp in xrange(7):
-            attacks_per_second['roll_the_bones'][cp] = finisher_list[cp]/reroll_time
+        attacks_per_second['saber_slash'] = float(ss_count + ps_count) / reroll_time
+        attacks_per_second['pistol_shot'] = float(ps_count) / reroll_time
+        attacks_per_second['roll_the_bones'] = [v / reroll_time for v in finisher_list]
         return attacks_per_second, reroll_time
 
 
     #dict of (probability, aps) pairs
     def merge_attacks_per_second(self, aps_dicts, total_time=1.0):
-        #print "CALL"
         total = 0.0
         attacks_per_second = {}
         for key in aps_dicts:
             proportion, aps = aps_dicts[key]
             uptime = float(proportion)/total_time
-            total+= uptime
-            #print uptime, total
 
             for ability in aps:
                 if ability in attacks_per_second:
@@ -1700,11 +1694,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             use_sod = True
 
         #Set up initial energy budget
-        base_energy_regen = 10.
-        haste_multiplier = self.stats.get_haste_multiplier_from_rating(current_stats['haste']) * self.true_haste_mod
-        self.energy_regen = base_energy_regen * haste_multiplier
-        if self.talents.vigor:
-            self.energy_regen *= 1.1
+        haste_multiplier = self.get_haste_multiplier(current_stats)
+        self.energy_regen = self.get_energy_regen(current_stats)
 
         self.max_energy = 100.
         if self.talents.vigor:

@@ -153,6 +153,25 @@ class TestOutlawRogueDamageCalculator(RogueDamageCalculatorTestBase, unittest.Te
         self.assertGreater(b["main_gauche"], a["main_gauche"])
 
 
+    def test_energy_regen(self):
+        self.calculator.set_constants()
+        # This is 12.4 base because the calculator currently averages Heroism out over the course of the fight.
+        # Should fix at some point.
+        self.assertAlmostEqual(self.calculator.get_energy_regen({'haste': 0}), 12.4)
+        self.assertAlmostEqual(self.calculator.get_energy_regen({'haste': 5000}), 14.3076923)
+        self.assertAlmostEqual(self.calculator.get_energy_regen({'haste': 5000}, buried=True), 17.8846153846)
+        self.assertAlmostEqual(self.calculator.get_energy_regen({'haste': 5000}, ar=True), 28.615384615384613)
+        self.assertAlmostEqual(self.calculator.get_energy_regen({'haste': 5000}, buried=True, ar=True), 35.76923076923077)
+        self.assertAlmostEqual(self.calculator.get_energy_regen({'haste': 5000}, alacrity_stacks=10), 15.50769230769231)
+        cycle = _settings.OutlawCycle(blade_flurry=True)
+        self.assertEqual(self.factory.build(cycle=cycle).set_constants().get_energy_regen({'haste': 0}), 12.4 * 0.8)
+
+
+    def test_energy_regen_blade_dancer(self):
+        cycle = _settings.OutlawCycle(blade_flurry=True)
+        self.assertEqual(self.factory.build(cycle=cycle,traits='000200000000000000').set_constants().get_energy_regen({'haste': 0}), 12.4 * (0.8 + 0.03333 * 2))
+
+
     def test_cursed_edges_dps(self):
         base, rank1 = self.compare_dps({'traits': '000000000000000000'}, {'traits': '010000000000000000'})
         self.assertGreater(rank1, base)
