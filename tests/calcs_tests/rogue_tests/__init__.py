@@ -192,13 +192,13 @@ class TestOutlawRogueDamageCalculator(RogueDamageCalculatorTestBase, unittest.Te
 
     def test_blade_flurry_hurts_single_target_dps(self):
         cycle = _settings.OutlawCycle(blade_flurry=True)
-        base, rank1 = self.compare_dps({}, {'num_boss_adds': 0})
+        base, rank1 = self.compare_dps({}, {'num_boss_adds': 0, 'cycle': cycle})
         self.assertLess(rank1, base)
 
 
     def test_blade_dancer_improves_blade_flurry_penalty(self):
         cycle = _settings.OutlawCycle(blade_flurry=True)
-        base, rank1 = self.compare_dps({'traits': '000000000000000000'}, {'traits': '000100000000000000'})
+        base, rank1 = self.compare_dps({'traits': '000000000000000000', 'cycle': cycle}, {'traits': '000100000000000000', 'cycle': cycle})
         self.assertGreater(rank1, base)
         rank2 = self.factory.build(traits='000200000000000000').get_dps()
         rank3 = self.factory.build(traits='000300000000000000').get_dps()
@@ -208,10 +208,11 @@ class TestOutlawRogueDamageCalculator(RogueDamageCalculatorTestBase, unittest.Te
 
     def test_blade_dancer_multi_target_dps(self):
         cycle = _settings.OutlawCycle(blade_flurry=True)
-        base, rank1 = self.compare_dps({'traits': '000000000000000000'}, {'traits': '000100000000000000', 'num_boss_adds': 3})
+        base = self.factory.build(traits='000000000000000000', cycle=cycle).get_dps()
+        rank1 = self.factory.build(traits='000100000000000000', cycle=cycle, num_boss_adds=3).get_dps()
+        rank2 = self.factory.build(traits='000200000000000000', cycle=cycle, num_boss_adds=3).get_dps()
+        rank3 = self.factory.build(traits='000300000000000000', cycle=cycle, num_boss_adds=3).get_dps()
         self.assertGreater(rank1, base)
-        rank2 = self.factory.build(traits='000200000000000000', num_boss_adds=3).get_dps()
-        rank3 = self.factory.build(traits='000300000000000000', num_boss_adds=3).get_dps()
         self.assertGreater(rank2, rank1)
         self.assertGreater(rank3, rank2)
 
