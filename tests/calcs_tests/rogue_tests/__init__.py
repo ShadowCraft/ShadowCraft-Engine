@@ -139,6 +139,11 @@ class RogueDamageCalculatorTestBase:
     def test_set_constants_for_level(self):
         self.assertRaises(exceptions.InvalidLevelException, self.calculator.__setattr__, 'level', 111)
 
+
+    def test_get_talents_ranking_does_not_change_talents(self):
+        active_talents = self.calculator.talents.get_active_talents()
+        self.assertEqual(self.calculator.talents.get_active_talents(), active_talents)
+
 ## Single target
 
 class TestOutlawRogueDamageCalculator(RogueDamageCalculatorTestBase, unittest.TestCase):
@@ -338,7 +343,14 @@ class TestOutlawRogueDamageCalculator(RogueDamageCalculatorTestBase, unittest.Te
         self.assertGreater(mfd, snd, 'SnD %s > Marked for Death %s' % (snd, mfd))
         self.assertGreater(mfd, dfa, 'Death From Above %s > mfd %s' % (dfa, mfd))
 
+    def test_get_talents_ranking_does_not_persist_talents_in_same_row(self):
+        self.calculator.talents.initialize_talents("0000000")
+        ranking_without_existing = self.calculator.get_talents_ranking()
 
+        self.calculator.talents.initialize_talents("1000000")
+        ranking_with_existing = self.calculator.get_talents_ranking()
+
+        self.assertEqual(ranking_without_existing[15], ranking_with_existing[15])
 
 
 class TestAssassinationRogueDamageCalculator(RogueDamageCalculatorTestBase, unittest.TestCase):

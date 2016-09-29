@@ -56,10 +56,24 @@ class Talents(object):
             if int(i) not in range(4):
                 raise InvalidTalentException(_('Values in the talent string must be 0, 1, 2, 3, or sometimes 4'))
             if int(i) == 0 or i == '.':
-                pass
+                setattr(self, self.class_talents[j][int(i) - 1], False)
             else:
                 setattr(self, self.class_talents[j][int(i) - 1], True)
             j += 1
+
+    def get_talent_string(self):
+        talent_str = ""
+        for row in self.class_talents:
+            got_talent = False
+            for index, talent in enumerate(row):
+                if getattr(self, talent):
+                    got_talent = True
+                    talent_str += str(index + 1)
+                    break
+            if not got_talent:
+                talent_str += "0"
+        return talent_str
+
 
     def reset_talents(self):
         for talent in self.allowed_talents:
@@ -73,13 +87,16 @@ class Talents(object):
             if name in self.class_talents[i]:
                 return i
 
-    def set_talent(self, name):
+    def set_talent(self, name, value=True):
         # Clears talents in the tier and sets the new one
         if name not in self.allowed_talents:
             raise InvalidTalentException("Invalid talent")
         for talent in self.class_talents[self.get_tier_for_talent(name)]:
             setattr(self, talent, False)
-        setattr(self, name, True)
+        setattr(self, name, value)
+
+    def get_talent(self, name):
+        return getattr(self, name)
 
     def get_active_talents(self):
         active_talents = []
