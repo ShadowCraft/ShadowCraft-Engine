@@ -528,16 +528,20 @@ class DamageCalculator(object):
 
     def get_talents_ranking(self, list=None):
         talents_ranking = {}
+        existing_talents = self.talents.get_talent_string()
+
         tier_levels = [15, 30, 45, 60, 75, 90, 100] #list of levels for our tiers, because it is not in the talent data
-        baseline_dps = self.get_dps() #cache
         allowed_talent_list = self.talents.get_allowed_talents_for_level() if list == None else list #cache
 
         for tier, level in zip(self.talents.class_talents, tier_levels):
             tier_ranking = {} #reinitialized to clear dict for each new tier
+            self.talents.initialize_talents(existing_talents)
+            self.talents.set_talent(tier[0], False) # Wipes the row
+            baseline_dps = self.get_dps()
             for talent in tier:
                 if talent in allowed_talent_list:
-                    setattr(self.talents, talent, not getattr(self.talents, talent)) # this is a rather arcane way to handle state :/
                     try:
+                        self.talents.set_talent(talent, True)
                         new_dps = self.get_dps()
                         if new_dps != baseline_dps:
                             tier_ranking[talent] = abs(new_dps - baseline_dps)
@@ -545,8 +549,8 @@ class DamageCalculator(object):
                             tier_ranking[talent] = 'not implemented' #unique error: no dps delta for this talent
                     except:
                         tier_ranking[talent] = 'implementation error' #unique error: error attempting to calc dps with this talent
-                    setattr(self.talents, talent, not getattr(self.talents, talent))
             talents_ranking[level] = tier_ranking #place each tier into the talent tree
+        self.talents.initialize_talents(existing_talents)
         return talents_ranking
 
     def get_trait_ranking(self, list=None):
