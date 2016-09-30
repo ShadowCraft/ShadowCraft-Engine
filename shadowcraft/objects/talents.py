@@ -52,11 +52,12 @@ class Talents(object):
         if len(talent_string) > self.max_rows:
             raise InvalidTalentException(_('Talent strings must be 7 or less characters long'))
         j = 0
+        self.reset_talents()
         for i in talent_string:
             if int(i) not in range(4):
                 raise InvalidTalentException(_('Values in the talent string must be 0, 1, 2, 3, or sometimes 4'))
             if int(i) == 0 or i == '.':
-                setattr(self, self.class_talents[j][int(i) - 1], False)
+                pass
             else:
                 setattr(self, self.class_talents[j][int(i) - 1], True)
             j += 1
