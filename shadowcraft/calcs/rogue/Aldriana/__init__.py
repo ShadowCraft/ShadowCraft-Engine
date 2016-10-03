@@ -1338,7 +1338,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                     #old_ar_cd = new_ar_cd
 
             ar_uptime = self.ar_duration / ar_cd
-
         # Add in Cannonball and Killing Spree
         if self.talents.killing_spree:
             ksp_cd = self.get_spell_cd('killing_spree') / (1. + tb_seconds_per_second)
@@ -1560,15 +1559,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attacks_per_second['roll_the_bones'] = [v / reroll_time for v in finisher_list]
         return attacks_per_second, reroll_time
 
-
     #dict of (probability, aps) pairs
     def merge_attacks_per_second(self, aps_dicts, total_time=1.0):
-        total = 0.0
         attacks_per_second = {}
         for key in aps_dicts:
             proportion, aps = aps_dicts[key]
             uptime = float(proportion)/total_time
-
             for ability in aps:
                 if ability in attacks_per_second:
                     if isinstance(attacks_per_second[ability], list):
@@ -1578,7 +1574,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                         attacks_per_second[ability] += uptime * aps[ability]
                 else:
                     if isinstance(aps[ability], list):
-                        attacks_per_second[ability] = aps[ability]
+                        attacks_per_second[ability] = copy(aps[ability])
                         for cp in xrange(7):
                             attacks_per_second[ability][cp] *= uptime
                     else:
