@@ -921,8 +921,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             exsang_downtime = garrote_cooldown - exsang_garrote_duration
             normal_garrote_per_exsang = (self.exsang_cd - garrote_cooldown) / base_garrote_duration
             attacks_per_second['garrote'] = (1 + normal_garrote_per_exsang) / self.exsang_cd
-            attacks_per_second['garrote_ticks'] = 1.5 * float(exsang_garrote_duration) / self.exsang_cd + \
-                                                  3.0 * float(self.exsang_cd - exsang_garrote_duration) / self.exsang_cd
+            attacks_per_second['garrote_ticks'] = 2./3 * float(exsang_garrote_duration) / self.exsang_cd + \
+                                                  1./3 * float(self.exsang_cd - exsang_garrote_duration - exsang_downtime) / self.exsang_cd
         else:
             attacks_per_second['garrote'] = 1. / base_garrote_duration
             attacks_per_second['garrote_ticks'] = 1. / 3
