@@ -57,7 +57,7 @@ test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
 test_talents = talents.Talents('1010022', test_spec, test_class, level=test_level)
 
 #initialize artifact traits..
-test_traits = artifact.Artifact(test_spec, test_class, '000000000000000000')
+test_traits = artifact.Artifact(test_spec, test_class, '100000000000000000')
 
 # Set up settings.
 test_cycle = settings.OutlawCycle(blade_flurry=False,

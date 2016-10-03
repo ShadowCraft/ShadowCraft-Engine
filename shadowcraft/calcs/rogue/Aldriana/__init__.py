@@ -1046,10 +1046,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     #Talents:
         #T3:Anticipation
-        #T6:Marked for Death
 
     #Artifact:
-        # 'curse_of_the_dreadblades',
         # 'hidden_blade', (ambush proc weirdness)
         # 'blurred_time',
 
@@ -1075,6 +1073,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         self.ar_duration = 15
         self.ar_cd = self.get_spell_cd('adrenaline_rush')
+        self.cotd_cd = self.get_spell_cd('curse_of_the_dreadblades')
 
         self.set_constants()
 
@@ -1316,26 +1315,29 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         ar_uptime = self.ar_duration / self.ar_cd
         tb_seconds_per_second = 0
 
+        ar_cd_modifier = 1
         # If RtB loop on AR cooldown
         if not self.talents.slice_and_dice:
-            old_ar_cd = self.ar_cd
             loop_counter = 0
             while (loop_counter < 20):
+                loop_counter +=1
+                ar_cd = self.ar_cd * ar_cd_modifier
                 cp_spend_per_second = 0
                 for ability in attacks_per_second:
                     if ability in self.finisher_damage_sources:
                         for cp in xrange(7):
                             cp_spend_per_second += attacks_per_second[ability][cp] * cp
-                tb_seconds_per_second = 2 * cp_spend_per_second * tb_uptime
-                new_ar_cd = self.ar_cd/(1 + tb_seconds_per_second)
+                #tb_seconds_per_second = 2 * cp_spend_per_second * tb_uptime
+                ar_cd_modifier = (1 - (2 * tb_uptime)/(1. / cp_spend_per_second + 2 * tb_uptime))
+                new_ar_cd = self.ar_cd * ar_cd_modifier
                 attacks_per_second = self.merge_attacks_per_second({'normal': (new_ar_cd - self.ar_duration, aps_normal),
                     'ar': (self.ar_duration, aps_ar)}, total_time=new_ar_cd)
-                if old_ar_cd - new_ar_cd < 0.1:
+                if ar_cd - new_ar_cd < 0.1:
                     break
-                else:
-                    old_ar_cd = new_ar_cd
+                #else:
+                    #old_ar_cd = new_ar_cd
 
-            ar_uptime = self.ar_duration / new_ar_cd
+            ar_uptime = self.ar_duration / ar_cd
 
         # Add in Cannonball and Killing Spree
         if self.talents.killing_spree:
@@ -1346,6 +1348,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             cannonball_barrage_cd = self.get_spell_cd('cannonball_barrage') / (1. + tb_seconds_per_second)
             attacks_per_second['cannonball_barrage'] = 1./cannonball_barrage_cd
 
+        print attacks_per_second
 
         # Figure swing timer and add Main Gauche
         attack_speed_multiplier = self.get_attack_speed_multiplier(current_stats, snd=self.talents.slice_and_dice)
@@ -1393,6 +1396,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if ar:
             gcd_size -= .2
 
+        max_cps = 5
+        if self.talents.deeper_strategem:
+            max_cps += 1
+
         #fetch minicycle value
         minicycle_key = (self.settings.finisher_threshold, bool(self.talents.deeper_strategem), bool(self.talents.quick_draw),
                          bool(self.talents.swordmaster), broadsides, jolly)
@@ -1427,6 +1434,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attacks_per_second['pistol_shot'] = float(ps_count)/duration
 
         attacks_per_second[maintainence_buff] = [v / duration for v in finisher_list]
+        print gcd_budget
+        print energy_budget
 
         if (shark and self.settings.cycle.between_the_eyes_policy == 'shark') or self.settings.cycle.between_the_eyes_policy == 'always':
             bte_count = duration / (20 + self.settings.response_time - (10 * true_bearing))
@@ -1448,15 +1457,55 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             #DfA forces a 2 second GCD
             gcd_budget -= dfa_count * (ss_count + ps_count + 2)
 
+        bonus_cps = 0
+        attacks_per_second['run_through'] = [0] * 7
+
         #consider ghostly strike
         if self.talents.ghostly_strike:
             gs_count = duration/15.
-            gs_cps = gs_count * (1 + broadsides)
+            bonus_cps += gs_count * (1 + broadsides)
             gs_energy = self.ghostly_strike_cost * gs_count
-            #TODO: use these ghostly strike cps
             energy_budget -= gs_energy
             gcd_budget -= gs_count
             attacks_per_second['ghostly_strike'] = float(gs_count) / duration
+
+        #consider MfD
+        if self.talents.marked_for_death:
+            mfd_count = (1 + self.settings.marked_for_death_resets) / duration
+            bonus_cps += 5 * (1 + self.settings.marked_for_death_resets) * mfd_count
+
+        #consider Curse of the Dreadblades
+        if self.traits.curse_of_the_dreadblades:
+            curse_cd_multiplier = duration / self.cotd_cd
+            print curse_cd_multiplier, "-----"
+            #curse lasts 12 seconds, half to RT, half to CP builders
+            curse_gcds = (12. / gcd_size) * curse_cd_multiplier
+            rt_count = curse_gcds / 2
+            ps_per_ss = 0.35
+            if self.talents.swordmaster:
+                ps_per_ss += 0.1
+            if jolly:
+                ps_per_ss += 0.25
+
+            ss_count = (curse_gcds / 2) * (1 / (ps_per_ss + 1))
+            ps_count = (curse_gcds / 2) * (ps_per_ss / (ps_per_ss + 1))
+
+            attacks_per_second['saber_slash'] += ss_count / self.cotd_cd
+            attacks_per_second['pistol_shot'] += ps_count / self.cotd_cd
+            attacks_per_second['run_through'][max_cps] += rt_count / self.cotd_cd
+            gcd_budget -= curse_gcds
+            energy_budget -= (ss_count * self.saber_slash_energy_cost) + (rt_count * self.run_through_energy_cost)
+
+            #Curse gives 8 cps with anticipation so 3 left over
+            if self.talents.anticipation:
+                bonus_cps += 3 * curse_cd_multiplier
+
+        #spend bonus cps for max cp RTs
+
+        extra_rt = (bonus_cps / max_cps) / duration
+        gcd_budget -= extra_rt
+        energy_budget -= extra_rt * self.run_through_energy_cost
+        attacks_per_second['run_through'][max_cps] += extra_rt
 
         #Burn the rest of our energy until you run out of energy or gcds
         gcds_per_minicycle = ss_count + ps_count + 1
@@ -1464,7 +1513,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         alacrity_stacks = 0
         loop_counter = 0
-        attacks_per_second['run_through'] = [0] * 7
         while energy_budget > 0.1 and gcd_budget > 0.1:
             if loop_counter > 20:
                    raise ConvergenceErrorException(_('Mini-cycles failed to converge.'))
