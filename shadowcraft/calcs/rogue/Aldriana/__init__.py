@@ -1348,8 +1348,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             cannonball_barrage_cd = self.get_spell_cd('cannonball_barrage') / (1. + tb_seconds_per_second)
             attacks_per_second['cannonball_barrage'] = 1./cannonball_barrage_cd
 
-        print attacks_per_second
-
         # Figure swing timer and add Main Gauche
         attack_speed_multiplier = self.get_attack_speed_multiplier(current_stats, snd=self.talents.slice_and_dice)
         attack_speed_multiplier *= (1 + (0.2 * ar_uptime))
@@ -1434,8 +1432,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attacks_per_second['pistol_shot'] = float(ps_count)/duration
 
         attacks_per_second[maintainence_buff] = [v / duration for v in finisher_list]
-        print gcd_budget
-        print energy_budget
 
         if (shark and self.settings.cycle.between_the_eyes_policy == 'shark') or self.settings.cycle.between_the_eyes_policy == 'always':
             bte_count = duration / (20 + self.settings.response_time - (10 * true_bearing))
@@ -1477,7 +1473,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #consider Curse of the Dreadblades
         if self.traits.curse_of_the_dreadblades:
             curse_cd_multiplier = duration / self.cotd_cd
-            print curse_cd_multiplier, "-----"
             #curse lasts 12 seconds, half to RT, half to CP builders
             curse_gcds = (12. / gcd_size) * curse_cd_multiplier
             rt_count = curse_gcds / 2
