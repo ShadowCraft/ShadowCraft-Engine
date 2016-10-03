@@ -313,35 +313,43 @@ class TestOutlawRogueDamageCalculator(RogueDamageCalculatorTestBase, unittest.Te
     # These are sanity checks; they are what is expected from current modeling, so they're included to help
     # guard against regressions in the calculator.
     def test_best_rank_1(self):
-        gstrike = self.factory.build(talent_str='0000000').get_dps()
-        swords = self.factory.build(talent_str='1000000').get_dps()
-        quick = self.factory.build(talent_str='2000000').get_dps()
-        self.assertGreater(gstrike, swords, 'Swordmaster %s > Ghostly Strike %s' % (swords, gstrike))
-        self.assertGreater(gstrike, quick, 'Quick Draw %s > Ghostly Strike %s' % (quick, gstrike))
+        base = self.factory.build(talent_str='0000000').get_dps()
+        gstrike = self.factory.build(talent_str='1000000').get_dps()
+        swords = self.factory.build(talent_str='2000000').get_dps()
+        quick = self.factory.build(talent_str='3000000').get_dps()
+        self.assertGreater(gstrike, base, 'No Talents %s >= Ghostly Strike %s' % (base, gstrike))
+        self.assertGreater(gstrike, swords, 'Swordmaster %s >= Ghostly Strike %s' % (swords, gstrike))
+        self.assertGreater(gstrike, quick, 'Quick Draw %s >= Ghostly Strike %s' % (quick, gstrike))
 
 
     def test_best_rank_3(self):
-        stratagem = self.factory.build(talent_str='0000000').get_dps()
-        anticipation = self.factory.build(talent_str='0010000').get_dps()
-        vigor = self.factory.build(talent_str='0020000').get_dps()
-        self.assertGreater(stratagem, anticipation, 'Anticipation %s > Stratagem %s' % (anticipation, stratagem))
-        self.assertGreater(stratagem, vigor, 'Vigor %s > Stratagem %s' % (vigor, stratagem))
+        base = self.factory.build(talent_str='0010000').get_dps()
+        stratagem = self.factory.build(talent_str='0010000').get_dps()
+        anticipation = self.factory.build(talent_str='0020000').get_dps()
+        vigor = self.factory.build(talent_str='0030000').get_dps()
+        self.assertGreater(stratagem, base, 'No Talents %s >= Stratagem %s' % (base, stratagem))
+        self.assertGreater(stratagem, anticipation, 'Anticipation %s >= Stratagem %s' % (anticipation, stratagem))
+        self.assertGreater(stratagem, vigor, 'Vigor %s >= Stratagem %s' % (vigor, stratagem))
 
 
     def test_best_rank_6(self):
-        cannons = self.factory.build(talent_str='0000000').get_dps()
-        alacrity = self.factory.build(talent_str='0000010').get_dps()
-        kspree = self.factory.build(talent_str='0000020').get_dps()
-        self.assertGreater(alacrity, kspree, 'KSpree %s > Alacrity %s' % (kspree, alacrity))
-        self.assertGreater(alacrity, cannons, 'Cannons %s > Alacrity %s' % (cannons, alacrity))
+        base = self.factory.build(talent_str='0000000').get_dps()
+        cannons = self.factory.build(talent_str='0000010').get_dps()
+        alacrity = self.factory.build(talent_str='0000020').get_dps()
+        kspree = self.factory.build(talent_str='0000030').get_dps()
+        self.assertGreater(alacrity, base, 'No Talents %s >= Alacrity %s' % (base, alacrity))
+        self.assertGreater(alacrity, kspree, 'KSpree %s >= Alacrity %s' % (kspree, alacrity))
+        self.assertGreater(alacrity, cannons, 'Cannons %s >= Alacrity %s' % (cannons, alacrity))
 
 
     def test_best_rank_7(self):
-        snd = self.factory.build(talent_str='0000000').get_dps()
-        mfd = self.factory.build(talent_str='0000001').get_dps()
-        dfa = self.factory.build(talent_str='0000002').get_dps()
-        self.assertGreater(mfd, snd, 'SnD %s > Marked for Death %s' % (snd, mfd))
-        self.assertGreater(mfd, dfa, 'Death From Above %s > mfd %s' % (dfa, mfd))
+        base = self.factory.build(talent_str='0000000').get_dps()
+        snd = self.factory.build(talent_str='0000001').get_dps()
+        mfd = self.factory.build(talent_str='0000002').get_dps()
+        dfa = self.factory.build(talent_str='0000003').get_dps()
+        self.assertGreater(mfd, base, 'No Talents %s >= Marked for Death %s' % (base, mfd))
+        self.assertGreater(mfd, snd, 'SnD %s >= Marked for Death %s' % (snd, mfd))
+        self.assertGreater(mfd, dfa, 'Death From Above %s >= mfd %s' % (dfa, mfd))
 
     def test_get_talents_ranking_does_not_persist_talents_in_same_row(self):
         self.calculator.talents.initialize_talents("0000000")
