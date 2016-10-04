@@ -27,11 +27,10 @@ class RogueDamageCalculator(DamageCalculator):
                              'ghostly_strike', 'greed', 'killing_spree', 'main_gauche',
                              'pistol_shot', 'run_through', 'saber_slash']
     subtlety_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
-                               'backstab', 'eviscerate', 'finality:eviscerate', 'gloomblade',
-                               'goremaws_bite', 'nightblade', 'finality:nightblade', 'shadowstrike',
+                               'backstab', 'eviscerate', 'gloomblade',
+                               'goremaws_bite', 'nightblade', 'shadowstrike',
                                'shadow_blades', 'shuriken_storm', 'shuriken_toss',
-                               'nightblade_ticks', 'finality:nightblade_ticks',
-                                'soul_rip', 'shadow_nova']
+                               'nightblade_ticks', 'soul_rip', 'shadow_nova']
     #All damage sources mitigated by armor
     physical_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
                                 'fan_of_knives', 'hemorrhage', 'mutilate', 'poisoned_knife',
@@ -41,17 +40,15 @@ class RogueDamageCalculator(DamageCalculator):
                                 'eviscerate', 'shadowstrike', 'shuriken_storm', 'shuriken_toss']
     #All damage sources the scale with mastery (assn or sub)
     mastery_scaling_damage_sources = ['deadly_poison', 'deadly_instant_poison', 'evenom',
-                                      'eviscerate', 'finality:eviscerate', 'nightblade_ticks',
-                                      'finality:nightblade_ticks']
+                                      'eviscerate', 'nightblade_ticks']
     #All damage sources that deal damage with both hands
     dual_wield_damage_sources = ['kingsbane', 'mutilate', 'greed', 'killing_spree',
                                  'goremaws_bite', 'shadow_blades']
     #All damage sources that scale with cps
     finisher_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
                                  'envenom', 'rupture_ticks', 'between_the_eyes',
-                                 'run_through', 'eviscerate', 'finality:eviscerate',
-                                'nightblade', 'finality:nightblade',
-                                'nightblade_ticks', 'finality:nightblade_ticks',
+                                 'run_through', 'eviscerate',
+                                'nightblade', 'nightblade_ticks',
                                 'roll_the_bones', 'slice_and_dice']
     #All damage source that are replicated by Blade Flurry
     blade_flurry_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
@@ -105,10 +102,8 @@ class RogueDamageCalculator(DamageCalculator):
             #subtlety
             'backstab':            (35., 'strike'),
             'eviscerate':          (35., 'strike'),
-            'finality:eviscerate': (35., 'strike'),
             'gloomblade':          (35., 'strike'),
             'nightblade':          (25., 'strike'),
-            'finality:nightblade': (25., 'strike'),
             'shadowstrike':        (40., 'strike'),
             'shuriken_storm':      (35., 'strike'),
             'shuriken_toss':       (40., 'strike'),
@@ -421,8 +416,6 @@ class RogueDamageCalculator(DamageCalculator):
 
     def eviscerate_damage(self, ap, cp):
         return 1.28 * cp * ap
-    def finality_eviscerate_damage(self, ap, cp):
-        return 1.5 * cp * ap
 
     def gloomblade_damage(self, ap):
         return 4.25 * self.get_weapon_damage('mh', ap) * (1 + (0.0333 * self.traits.the_quiet_knife))
@@ -436,8 +429,6 @@ class RogueDamageCalculator(DamageCalculator):
     #Nightblade doesn't actually scale with cps but passing cps for simplicity
     def nightblade_tick_damage(self, ap, cp):
         return 1.2 * ap * (1 + (0.05 * self.traits.demons_kiss))
-    def finality_nightblade_tick_damage(self, ap, cp):
-        return 1.4 * ap * (1 + (0.05 * self.traits.demons_kiss))
 
     def shadowstrike_damage(self, ap):
         return 8.5 * self.get_weapon_damage('mh', ap) * (1 + (0.05 * self.traits.precision_strike))
@@ -500,12 +491,10 @@ class RogueDamageCalculator(DamageCalculator):
             #subtlety
             'backstab':                  self.backstab_damage,
             'eviscerate':                self.eviscerate_damage,
-            'finality:eviscerate':       self.finality_eviscerate_damage,
             'gloomblade':                self.gloomblade_damage,
             'mh_goremaws_bite':          self.mh_goremaws_bite_damage,
             'oh_goremaws_bite':          self.oh_goremaws_bite_damage,
             'nightblade_ticks':          self.nightblade_tick_damage,
-            'finality:nightblade_ticks': self.finality_nightblade_tick_damage,
             'shadowstrike':              self.shadowstrike_damage,
             'mh_shadow_blades':          self.mh_shadow_blades_damage,
             'oh_shadow_blades':          self.oh_shadow_blades_damage,

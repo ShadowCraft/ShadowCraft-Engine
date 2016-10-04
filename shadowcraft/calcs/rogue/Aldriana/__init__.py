@@ -1663,11 +1663,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                     damage_breakdown[key] *= ns_full_multiplier
                 elif key == 'shuriken_storm':
                     damage_breakdown[key] *= 1 + (0.12 * self.stealth_shuriken_uptime)
-                elif key == 'finality_nightblade_ticks':
-                    damage_breakdown[key] *= 1 + (0.12 * self.dance_finality_nb_uptime)
                 elif key == 'nightblade_ticks':
                     damage_breakdown[key] *= 1 + (0.12 * self.dance_nb_uptime)
-                elif key in ('eviscerate', 'finality:eviscerate'):
+                elif key in ('eviscerate'):
                     damage_breakdown[key] *= 1 + (0.12 * self.stealth_evis_uptime)
 
         #master of subtlety
@@ -1680,10 +1678,16 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                     damage_breakdown[key] *= mos_full_multiplier
                 elif key == 'shuriken_storm':
                     damage_breakdown[key] *= 1 + (0.1 * self.stealth_shuriken_uptime)
-                elif key in ('eviscerate', 'finality:eviscerate'):
+                elif key in ('eviscerate'):
                     damage_breakdown[key] *= 1 + (0.1 * self.stealth_evis_uptime)
                 else:
                     damage_breakdown[key] *= mos_uptime_multipler
+
+        if self.traits.finality:
+            #4% increase per cp applied every to every other
+            finality_damage_boost = 1 + 0.02 * self.settings.finisher_threshold
+            damage_breakdown['eviscerate'] *= finality_damage_boost
+            damage_breakdown['nightblade_ticks'] *= finality_damage_boost
 
         ds_multiplier = 1.0
         if self.talents.deeper_strategem:
@@ -1758,7 +1762,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #setup timelines
         sod_duration = 35
         nightblade_duration = 6 + (2 * self.settings.finisher_threshold)
-        finality_nightblade_duration = 6 + (2 * self.settings.finisher_threshold)
 
         #Add attacks that could occur during first pass to aps
         attacks_per_second[self.dance_cp_builder] = 0
@@ -1769,27 +1772,15 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         #Leaving space for opener handling for the first cast
         sod_timeline = range(0, self.settings.duration, sod_duration)
-        if self.traits.finality:
-            finality_nb_timeline = range(0, self.settings.duration, finality_nightblade_duration + nightblade_duration)
-            nightblade_timeline = range(nightblade_duration, self.settings.duration, finality_nightblade_duration + nightblade_duration)
-        else:
-            finality_nb_timeline = []
-            nightblade_timeline = range(nightblade_duration, self.settings.duration, nightblade_duration)
+        nightblade_timeline = range(nightblade_duration, self.settings.duration, nightblade_duration)
 
-        dance_finality_nb_uptime = 0.0
         dance_nb_uptime = 0.0
-        for finisher in ['finality:nightblade', 'nightblade', 'eviscerate']:
+        for finisher in ['nightblade', 'eviscerate']:
             attacks_per_second[finisher] = [0, 0, 0, 0, 0, 0, 0]
             #Timeline match of ruptures, fill in rest with eviscerate
             if self.settings.cycle.dance_finishers_allowed:
                 dance_count = 0
-                if finisher == 'finality:nightblade' and self.traits.finality:
-                    #Allow SoDs to be used on pandemic for match purposes
-                    joint, sod_timeline, finality_nb_timeline = self.timeline_overlap(sod_timeline, finality_nb_timeline, -0.3 * sod_duration)
-                    #if there is overlap compute a dance rotation for this combo
-                    dance_count = len(joint)
-                    dance_finality_nb_uptime = dance_count/len(finality_nb_timeline)
-                elif finisher == 'nightblade':
+                if finisher == 'nightblade':
                     joint, sod_timeline, nightblade_timeline = self.timeline_overlap(sod_timeline, nightblade_timeline, -0.3 * sod_duration)
                     dance_count = len(joint)
                     dance_nb_uptime = dance_count/len(nightblade_timeline)
@@ -1817,12 +1808,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.cp_budget -= self.settings.finisher_threshold * nightblade_count
         self.energy_budget += (40 * (0.2 * self.settings.finisher_threshold) - self.get_spell_cost('nightblade')) * nightblade_count
         self.dance_budget += (3. * self.settings.finisher_threshold * nightblade_count)/60.
-
-        finality_nightblade_count = len(finality_nb_timeline)
-        attacks_per_second['finality:nightblade'][self.settings.finisher_threshold] += float(finality_nightblade_count)/self.settings.duration
-        self.cp_budget -= self.settings.finisher_threshold * finality_nightblade_count
-        self.energy_budget += (40 * (0.2 * self.settings.finisher_threshold) - self.get_spell_cost('finality:nightblade')) * finality_nightblade_count
-        self.dance_budget += (3. * self.settings.finisher_threshold * finality_nightblade_count)/60.
 
         #Add in various cooldown abilities
         #This could be made better with timelining but for now simple time average will do
@@ -1966,13 +1951,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         #Now fixup attacks_per_second
         #convert nightblade casts into nightblade ticks
-        for ability in ('finality:nightblade', 'nightblade'):
-            if ability in attacks_per_second:
-                tick_name = ability + '_ticks'
-                attacks_per_second[tick_name] = [0, 0, 0, 0, 0, 0, 0]
-                for cp in xrange(7):
-                    attacks_per_second[tick_name][cp] = (3 + cp) * attacks_per_second[ability][cp]
-                del attacks_per_second[ability]
+        if 'nightblade' in attacks_per_second:
+            print 'NB'
+            attacks_per_second['nightblade_ticks'] = [0, 0, 0, 0, 0, 0, 0]
+            for cp in xrange(7):
+                attacks_per_second['nightblade_ticks'][cp] = (3 + cp) * attacks_per_second['nightblade'][cp]
+            del attacks_per_second['nightblade']
+            print attacks_per_second
 
         #convert some white swings into shadowblades
         #since weapon speeds are now fixed just handle a single shadowblades
@@ -1999,7 +1984,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.mos_time =  float(stealth_time)/self.settings.duration
 
         if self.talents.nightstalker:
-            self.dance_finality_nb_uptime = dance_finality_nb_uptime
             self.dance_nb_uptime = dance_nb_uptime
 
         for ability in attacks_per_second.keys():
@@ -2016,13 +2000,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         else:
             stealth_evis = 0
         self.stealth_evis_uptime = stealth_evis/sum(attacks_per_second['eviscerate'])
-
-        #convert half of evis to finality
-        if self.traits.finality:
-            attacks_per_second['finality:eviscerate'] = [0, 0, 0, 0, 0, 0, 0]
-            for cp in xrange(7):
-                attacks_per_second['finality:eviscerate'][cp] = attacks_per_second['eviscerate'][cp] * 0.5
-                attacks_per_second['eviscerate'][cp] *= 0.5
 
         if self.traits.second_shuriken and 'shuriken_toss' in attacks_per_second:
             attacks_per_second['second_shuriken'] = 0.1 * attacks_per_second['shuriken_toss']
