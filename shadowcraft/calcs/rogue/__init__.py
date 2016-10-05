@@ -295,6 +295,7 @@ class RogueDamageCalculator(DamageCalculator):
                 both_hands = ability in self.dual_wield_damage_sources
                 cps = max_cps if ability in self.finisher_damage_sources else 0
 
+
                 if ability in self.physical_damage_sources:
                     modifier *= armor_modifier
                 #assume for now that all non-physical damage sources are shadow
@@ -326,14 +327,14 @@ class RogueDamageCalculator(DamageCalculator):
 
     #general abilities
     def death_from_above_pulse_damage(self, ap, cp):
-        return 0.3666 * cp * ap
+        return 0.732 * cp * ap
 
     #assassination
     def deadly_poison_tick_damage(self, ap):
-        return .275 * ap * (1 + (0.05 * self.traits.master_alchemist)) * (1 + (0.4 * self.talents.master_poisoner))
+        return 0.3575 * ap * (1 + (0.05 * self.traits.master_alchemist)) * (1 + (0.4 * self.talents.master_poisoner))
 
     def deadly_instant_poison_damage(self, ap):
-        return .142 * ap * (1 + (0.05 * self.traits.master_alchemist)) * (1 + (0.4 * self.talents.master_poisoner))
+        return 0.221 * ap * (1 + (0.05 * self.traits.master_alchemist)) * (1 + (0.4 * self.talents.master_poisoner))
 
     #Maybe add better handling for 'rule of three' for artifact traits
     def envenom_damage(self, ap, cp):
@@ -371,7 +372,7 @@ class RogueDamageCalculator(DamageCalculator):
         return 4.5 * self.get_weapon_damage('mh', ap)
 
     def between_the_eyes_damage(self, ap, cp):
-        return .75 * cp * ap * (1 + (0.08 * self.traits.black_powder))
+        return .75 * cp * ap * (1 + (0.06 * self.traits.black_powder))
 
     #7*55% AP
     def blunderbuss_damage(self, ap):
@@ -404,7 +405,7 @@ class RogueDamageCalculator(DamageCalculator):
         return 1.5 * ap
 
     def run_through_damage(self, ap, cp):
-        return 1.5 * ap * cp * (1 + (0.08 * self.traits.fates_thirst))
+        return 1.5 * ap * cp * (1 + (0.06 * self.traits.fates_thirst))
 
     def saber_slash_damage(self, ap):
         return 2.6 * self.get_weapon_damage('mh', ap) * (1 + (0.15 * self.traits.cursed_edges))
@@ -415,7 +416,7 @@ class RogueDamageCalculator(DamageCalculator):
         return 3.7 * self.get_weapon_damage('mh', ap) * (1 + (0.0333 * self.traits.the_quiet_knife))
 
     def eviscerate_damage(self, ap, cp):
-        return 1.28 * cp * ap
+        return 1.472 * cp * ap
 
     def gloomblade_damage(self, ap):
         return 4.25 * self.get_weapon_damage('mh', ap) * (1 + (0.0333 * self.traits.the_quiet_knife))
@@ -428,7 +429,7 @@ class RogueDamageCalculator(DamageCalculator):
 
     #Nightblade doesn't actually scale with cps but passing cps for simplicity
     def nightblade_tick_damage(self, ap, cp):
-        return 1.2 * ap * (1 + (0.05 * self.traits.demons_kiss))
+        return 1.38 * ap * (1 + (0.05 * self.traits.demons_kiss))
 
     def shadowstrike_damage(self, ap):
         return 8.5 * self.get_weapon_damage('mh', ap) * (1 + (0.05 * self.traits.precision_strike))
@@ -440,10 +441,10 @@ class RogueDamageCalculator(DamageCalculator):
         return self.oh_penalty() * self.get_weapon_damage('oh', ap, is_normalized=False)
 
     def second_shuriken_damage(self, ap):
-        return 0.264 * ap
+        return 0.338 * ap
 
     def shuriken_storm_damage(self, ap):
-        return 0.5544 * ap
+        return 0.7215 * ap
 
     def shuriken_toss_damage(self, ap):
         return 1.2 * ap

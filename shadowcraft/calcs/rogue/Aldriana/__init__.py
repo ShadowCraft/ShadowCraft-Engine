@@ -213,7 +213,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         }
         self.stat_multipliers = {
             'str': 1.,
-            'agi': self.stats.gear_buffs.gear_specialization_multiplier(),
+            #UI handling gear specialization for now
+            'agi': 1,
             'ap': 1,
             'crit': 1. + (0.02 * self.race.human_spirit),
             'haste': 1. + (0.02 * self.race.human_spirit),
@@ -1181,15 +1182,15 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         cost_reducer = self.main_gauche_proc_rate * self.combat_potency_from_mg
 
         # Compute Main Gauche lumped ability costs
-        self.run_through_energy_cost = self.get_spell_cost('run_through') - (4 * self.traits.fatebringer) - cost_reducer
-        self.between_the_eyes_energy_cost = self.get_spell_cost('between_the_eyes') - (4 * self.traits.fatebringer) - cost_reducer
-        self.pistol_shot_energy_cost = self.get_spell_cost('run_through') - (4 * self.traits.fatebringer) - cost_reducer
+        self.run_through_energy_cost = self.get_spell_cost('run_through') - (3 * self.traits.fatebringer) - cost_reducer
+        self.between_the_eyes_energy_cost = self.get_spell_cost('between_the_eyes') - (3 * self.traits.fatebringer) - cost_reducer
+        self.pistol_shot_energy_cost = self.get_spell_cost('run_through') - (3 * self.traits.fatebringer) - cost_reducer
         self.saber_slash_energy_cost = self.get_spell_cost('saber_slash') - cost_reducer
-        self.death_from_above_energy_cost = max(0, self.get_spell_cost('death_from_above')  - (4 * self.traits.fatebringer) - cost_reducer * (1 + self.settings.num_boss_adds))
+        self.death_from_above_energy_cost = max(0, self.get_spell_cost('death_from_above')  - (3 * self.traits.fatebringer) - cost_reducer * (1 + self.settings.num_boss_adds))
         if self.talents.slice_and_dice:
-            self.slice_and_dice_cost = self.get_spell_cost('slice_and_dice') - (4 * self.traits.fatebringer)
+            self.slice_and_dice_cost = self.get_spell_cost('slice_and_dice') - (3 * self.traits.fatebringer)
         else:
-            self.roll_the_bones_cost = self.get_spell_cost('roll_the_bones') - (4 * self.traits.fatebringer)
+            self.roll_the_bones_cost = self.get_spell_cost('roll_the_bones') - (3 * self.traits.fatebringer)
         if self.talents.ghostly_strike:
             self.ghostly_strike_cost = self.get_spell_cost('ghostly_strike') - cost_reducer
 
@@ -1952,12 +1953,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #Now fixup attacks_per_second
         #convert nightblade casts into nightblade ticks
         if 'nightblade' in attacks_per_second:
-            print 'NB'
             attacks_per_second['nightblade_ticks'] = [0, 0, 0, 0, 0, 0, 0]
             for cp in xrange(7):
                 attacks_per_second['nightblade_ticks'][cp] = (3 + cp) * attacks_per_second['nightblade'][cp]
             del attacks_per_second['nightblade']
-            print attacks_per_second
 
         #convert some white swings into shadowblades
         #since weapon speeds are now fixed just handle a single shadowblades
@@ -2017,6 +2016,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 else:
                     attacks_per_second[ability] *=1.06
 
+        #for a in attacks_per_second:
+        #    if isinstance(attacks_per_second[a], list):
+        #        print a, 1./sum(attacks_per_second[a])
+        #    else:
+        #        print a, 1./attacks_per_second[a]
         return attacks_per_second, crit_rates, additional_info
 
     #Computes the net energy and combo points from a shadow dance rotation

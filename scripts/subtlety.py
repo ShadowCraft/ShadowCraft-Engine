@@ -48,27 +48,45 @@ test_gear_buffs = stats.GearBuffs('gear_specialization') #tier buffs located her
 
 # Set up a calcs object..
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
-                         agi=20909,
+                         agi=21122,
                          stam=19566,
-                         crit=4402,
-                         haste=5150,
-                         #haste=0,
-                         mastery=5999,
-                         versatility=1515,)
+                         crit=4188,
+                         haste=3630,
+                         mastery=4373,
+                         versatility=4153,)
 
 # Initialize talents..
-test_talents = talents.Talents('2200002', test_spec, test_class, level=test_level)
+test_talents = talents.Talents('2210011', test_spec, test_class, level=test_level)
 
 #initialize artifact traits..
-test_traits = artifact.Artifact(test_spec, test_class, '110000000000100000')
+test_traits = artifact.Artifact(test_spec, test_class, trait_dict={
+    'goremaws_bite':       1,
+    'shadow_fangs':        1,
+    'gutripper':           3,
+    'fortunes_bite':       0,
+    'catlike_reflexes':    3,
+    'embrace_of_darkness': 0,
+    'ghost_armor':         3,
+    'precision_strike':    0,
+    'energetic_stabbing':  3+3,
+    'flickering_shadows':  1,
+    'second_shuriken':     0,
+    'demons_kiss':         0,
+    'finality':            1,
+    'the_quiet_knife':     3,
+    'akarris_soul':        1,
+    'soul_shadows':        0,
+    'shadow_nova':         0,
+    'legionblade':         0,
+})
 
 # Set up settings.
-test_cycle = settings.SubtletyCycle(cp_builder='backstab', 
+test_cycle = settings.SubtletyCycle(cp_builder='backstab',
                                     dance_finishers_allowed=True,
-                                    positional_uptime=0.9
+                                    positional_uptime=1.
     )
 test_settings = settings.Settings(test_cycle, response_time=.5, duration=450,
-                                 adv_params="", is_demon=True, num_boss_adds=0, marked_for_death_resets=2.0)
+                                 adv_params="", is_demon=True, num_boss_adds=0, marked_for_death_resets=0.0)
 
 # Build a DPS object.
 calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_traits, test_buffs, test_race, test_spec, test_settings, test_level)
@@ -82,8 +100,8 @@ total_dps = sum(entry[1] for entry in dps_breakdown.items())
 #ep_values = calculator.get_ep()
 #tier_ep_values = calculator.get_other_ep(['rogue_t17_2pc', 'rogue_t17_4pc', 'rogue_t17_4pc_lfr'])
 
-talent_ranks = calculator.get_talents_ranking()
-trait_ranks = calculator.get_trait_ranking()
+#talent_ranks = calculator.get_talents_ranking()
+#trait_ranks = calculator.get_trait_ranking()
 
 def max_length(dict_list):
     max_len = 0
@@ -112,9 +130,9 @@ dicts_for_pretty_print = [
     #tier_ep_values,
     #trinkets_ep_value,
     dps_breakdown,
-    trait_ranks
+    #trait_ranks
 ]
 pretty_print(dicts_for_pretty_print)
 print ' ' * (max_length(dicts_for_pretty_print) + 1), total_dps, ("total damage per second.")
 
-pprint(talent_ranks)
+#pprint(talent_ranks)
