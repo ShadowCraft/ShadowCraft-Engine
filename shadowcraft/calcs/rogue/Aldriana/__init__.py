@@ -1929,9 +1929,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             #add in dance energy
             mini_cycle_energy += net_energy
             if cps_to_generate:
-                mini_cycle_count = 0.9*float(self.energy_budget) / abs(mini_cycle_energy)
+                mini_cycle_count = float(self.energy_budget) / abs(mini_cycle_energy)
             else:
                 mini_cycle_count = 1
+
+            mini_cycle_count = min(mini_cycle_count, 1)
+            #print loop_counter, mini_cycle_count
             #mini_cycle_count = 1
             #build the minicycle attack_counts
             if self.cp_builder == 'shuriken_storm':

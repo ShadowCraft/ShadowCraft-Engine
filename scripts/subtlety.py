@@ -63,7 +63,7 @@ test_traits = artifact.Artifact(test_spec, test_class, trait_dict={
     'goremaws_bite':       1,
     'shadow_fangs':        1,
     'gutripper':           3,
-    'fortunes_bite':       0,
+    'fortunes_bite':       1,
     'catlike_reflexes':    3,
     'embrace_of_darkness': 0,
     'ghost_armor':         3,
@@ -97,7 +97,7 @@ total_dps = sum(entry[1] for entry in dps_breakdown.items())
 
 # Compute EP values.
 #ep_values = calculator.get_ep(baseline_dps=total_dps)
-#ep_values = calculator.get_ep()
+ep_values = calculator.get_ep()
 #tier_ep_values = calculator.get_other_ep(['rogue_t17_2pc', 'rogue_t17_4pc', 'rogue_t17_4pc_lfr'])
 
 #talent_ranks = calculator.get_talents_ranking()
@@ -126,7 +126,7 @@ def pretty_print(dict_list):
         print '-' * (max_len + 15)
 
 dicts_for_pretty_print = [
-    #ep_values,
+    ep_values,
     #tier_ep_values,
     #trinkets_ep_value,
     dps_breakdown,
