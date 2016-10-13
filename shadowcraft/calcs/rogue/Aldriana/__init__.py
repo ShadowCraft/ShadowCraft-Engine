@@ -788,16 +788,17 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         agonizing_poison_mod = 1
         if self.talents.agonizing_poison:
-            agonizing_poison_mod = 0.04
-            if self.traits.surge_of_toxins:
-                agonizing_poison_mod += 0.01 * self.surge_of_toxins_multiplier
-            agonizing_poison_mod += 1
-            agonizing_poison_mod *= 1 + (0.01 * self.traits.master_alchemist)
-            agonizing_poison_mod *= 1 + (0.01 * self.traits.poison_knives)
+            agonizing_poison_adder = 0.0 + 0.01 * self.traits.master_alchemist + 0.02 * self.traits.poison_knives
+            #if self.traits.surge_of_toxins:
+            #    agonizing_poison_mod += 0.01 * self.surge_of_toxins_multiplier
+            agonizing_poison_mod_per_stack= 0.04 * (1 + (self.assassination_mastery_conversion * self.stats.get_mastery_from_rating(stats['mastery'])/2) + agonizing_poison_adder) / 100
             if self.talents.master_poisoner:
-                agonizing_poison_mod *= 1.2
+                agonizing_poison_mod_per_stack *= 1.2
 
-            agonizing_poison_mod *= 1 + (self.assassination_mastery_conversion * self.stats.get_mastery_from_rating(stats['mastery'])/2)
+            if self.traits.surge_of_toxins:
+                agonizing_poison_mod_per_stack *= 1 + self.surge_of_toxins_multiplier
+
+            agonizing_poison_mod *= 1 + agonizing_poison_mod_per_stack * self.agonizing_poison_stacks
 
         elaborate_planning_mod = 1
         if self.talents.elaborate_planning:
@@ -1030,7 +1031,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             finisher_aps = 0.0
             for ability in attacks_per_second:
                 if ability in self.finisher_damage_sources and 'ticks' not in ability:
-                    finisher_aps += sum([0.02 * cp * 5for cp in attacks_per_second[ability]])
+                    finisher_aps += sum([0.02 * cp * 5 for cp in attacks_per_second[ability]])
             self.surge_of_toxins_multiplier = finisher_aps
 
         if self.traits.blood_of_the_assassinated:
@@ -1920,7 +1921,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         alacrity_stacks = 0
         while self.energy_budget > 0.1:
-            if loop_counter > 20:
+            if loop_counter > 50:
                    raise ConvergenceErrorException(_('Mini-cycles failed to converge.'))
             loop_counter += 1
             cps_to_generate = max(cps_per_dance - self.cp_budget, 0)
