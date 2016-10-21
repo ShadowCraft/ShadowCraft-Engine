@@ -825,9 +825,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if ability == 'rupture_ticks':
                 damage_breakdown[ability] *= bota_mod
 
-
-
-
         return damage_breakdown
 
     def assassination_attack_counts(self, current_stats, crit_rates=None):
@@ -1037,6 +1034,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.traits.blood_of_the_assassinated:
             self.bota_multiplier = 0.35 * sum(attacks_per_second['rupture']) * 10
             self.bota_multiplier *= 2
+
+        #for a in attacks_per_second:
+        #    if isinstance(attacks_per_second[a], list):
+        #        print a, 1./sum(attacks_per_second[a])
+        #    else:
+        #        print a, 1./attacks_per_second[a]
 
         return attacks_per_second, crit_rates, additional_info
 

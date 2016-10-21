@@ -47,17 +47,37 @@ test_gear_buffs = stats.GearBuffs('gear_specialization')
 
 # Set up a calcs object..
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
-                         agi=20909,
-                         stam=19566,
-                         crit=4402,
-                         haste=5150,
-                         mastery=5999,
-                         versatility=1515,)
+                         agi=22294,
+                         stam=28368,
+                         crit=10431,
+                         haste=1518,
+                         mastery=1001,
+                         versatility=3809,)
 # Initialize talents..
-test_talents = talents.Talents('0000000', test_spec, test_class, level=test_level)
+#test_talents = talents.Talents('2110031', test_spec, test_class, level=test_level)
+test_talents = talents.Talents('2110011', test_spec, test_class, level=test_level)
 
 #initialize artifact traits..
-test_traits = artifact.Artifact(test_spec, test_class, '100000000000000000')
+test_traits = artifact.Artifact(test_spec, test_class, trait_dict={
+    'kingsbane':                 1,
+    'assassins_blades':          1,
+    'toxic_blades':              3,
+    'poison_knives':             3,
+    'urge_to_kill':              1,
+    'balanced_blades ':          0,
+    'surge_of_toxins':           0,
+    'shadow_walker':             0,
+    'master_assassin':           3,
+    'shadow_swiftness':          0,
+    'serrated_edge':             0,
+    'bag_of_tricks':             1,
+    'master_alchemist':          3,
+    'gushing_wounds':            3+3,
+    'fade_into_shadows':         0,
+    'from_the_shadows':          0,
+    'blood_of_the_assassinated': 1,
+    'slayers_precision':         0,
+})
 
 # Set up settings.
 test_cycle = settings.AssassinationCycle()
@@ -76,8 +96,8 @@ total_dps = sum(entry[1] for entry in dps_breakdown.items())
 #tier_ep_values = calculator.get_other_ep(['rogue_t14_4pc', 'rogue_t14_2pc', 'rogue_t15_4pc', 'rogue_t15_2pc', 'rogue_t16_2pc', 'rogue_t16_4pc'])
 
 
-talent_ranks = calculator.get_talents_ranking()
-trait_ranks = calculator.get_trait_ranking()
+#talent_ranks = calculator.get_talents_ranking()
+#trait_ranks = calculator.get_trait_ranking()
 
 def max_length(dict_list):
     max_len = 0
@@ -108,11 +128,11 @@ dicts_for_pretty_print = [
     #talent_ranks,
     #trinkets_ep_value,
     dps_breakdown,
-    trait_ranks
+    #trait_ranks
 ]
 pretty_print(dicts_for_pretty_print)
 
 #pretty_print([dps_breakdown], total_sum=total_dps, show_percent=True)
 print ' ' * (max_length([dps_breakdown]) + 1), total_dps, ("total damage per second.")
 
-pprint(talent_ranks)
+#pprint(talent_ranks)
