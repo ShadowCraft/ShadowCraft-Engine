@@ -1014,6 +1014,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             bag_of_tricks_proc_chance = (haste_multiplier * (1 + (alacrity_stacks))) * (1./sum(attacks_per_second['envenom'])) / 60
             attacks_per_second['poison_bomb'] = bag_of_tricks_proc_chance * sum(attacks_per_second['envenom'])
 
+        if self.traits.from_the_shadows:
+            attacks_per_second['from_the_shadows'] = 1. / self.vendetta_cd
+
         #poison computations, use old function for now
         self.get_poison_counts(attacks_per_second, current_stats)
         if self.talents.agonizing_poison:

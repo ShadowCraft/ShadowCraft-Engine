@@ -74,7 +74,7 @@ test_traits = artifact.Artifact(test_spec, test_class, trait_dict={
     'master_alchemist':          3,
     'gushing_wounds':            3+3,
     'fade_into_shadows':         0,
-    'from_the_shadows':          0,
+    'from_the_shadows':          1,
     'blood_of_the_assassinated': 1,
     'slayers_precision':         0,
 })

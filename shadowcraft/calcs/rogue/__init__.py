@@ -21,7 +21,7 @@ class RogueDamageCalculator(DamageCalculator):
                                     'deadly_poison', 'deadly_instant_poison', 'envenom',
                                     'fan_of_knives', 'garrote_ticks', 'hemorrhage',
                                     'kingsbane', 'kingsbane_ticks', 'mutilate',
-                                    'poisoned_knife', 'poison_bomb', 'rupture_ticks']
+                                    'poisoned_knife', 'poison_bomb', 'rupture_ticks', 'from_the_shadows']
     outlaw_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
                              'ambush', 'between_the_eyes', 'blunderbuss', 'cannonball_barrage',
                              'ghostly_strike', 'greed', 'killing_spree', 'main_gauche',
@@ -343,6 +343,10 @@ class RogueDamageCalculator(DamageCalculator):
     def fan_of_knives_damage(self, ap):
         return .8316 * ap
 
+    #Lumping 40 ticks together for simplicity
+    def from_the_shadows_damage(self, ap):
+        return 40 * 0.35 * ap
+
     def garrote_tick_damage(self, ap):
         return .9 * ap
 
@@ -470,6 +474,7 @@ class RogueDamageCalculator(DamageCalculator):
             'deadly_instant_poison':     self.deadly_instant_poison_damage,
             'envenom':                   self.envenom_damage,
             'fan_of_knives_damage':      self.fan_of_knives_damage,
+            'from_the_shadows':          self.from_the_shadows_damage,
             'garrote_ticks':             self.garrote_tick_damage,
             'hemorrhage':                self.hemorrhage_damage,
             'mh_kingsbane':              self.mh_kingsbane_damage,
