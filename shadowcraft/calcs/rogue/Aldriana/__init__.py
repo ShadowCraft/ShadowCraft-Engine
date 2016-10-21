@@ -825,9 +825,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if ability == 'rupture_ticks':
                 damage_breakdown[ability] *= bota_mod
 
-
-
-
         return damage_breakdown
 
     def assassination_attack_counts(self, current_stats, crit_rates=None):
