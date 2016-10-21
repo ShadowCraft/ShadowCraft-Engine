@@ -91,7 +91,7 @@ class OutlawCycle(Cycle):
                   #2 buffs
                   ('jr', 'gm'), ('jr', 's'), ('jr', 'tb'),
                   ('jr', 'bt'), ('jr', 'b'), ('gm', 's'),
-                  ('gm', 'tb'), ('gm', 'bt'), ('gm', 'b'), 
+                  ('gm', 'tb'), ('gm', 'bt'), ('gm', 'b'),
                   ('s', 'tb'), ('s', 'bt'), ('s', 'b'),
                   ('tb', 'bt'), ('tb', 'b'), ('bt', 'b'),
                   #single buffs
@@ -143,7 +143,7 @@ class SubtletyCycle(Cycle):
     _cycle_type = 'subtlety'
 
     def __init__(self, cp_builder='backstab', positional_uptime=1.0, symbols_policy='just',
-                 dance_finishers_allowed=True):
+                 dance_finishers_allowed=True, compute_cp_waste=False):
         self.cp_builder = cp_builder #Allowed values: 'shuriken_storm', 'backstab' (implies gloomblade if selected and ssk during dance)
         self.positional_uptime = positional_uptime #Range 0.0 to 1.0, time behind target
         self.symbols_policy = symbols_policy #Allowed values:
@@ -151,3 +151,5 @@ class SubtletyCycle(Cycle):
                                              #'just'   - Only use SoD when needed to refresh
         #Allow finishers to be scheduled during dance
         self.dance_finishers_allowed= dance_finishers_allowed
+        #EXPERIMENTAL CP Waste Test
+        self.compute_cp_waste = compute_cp_waste

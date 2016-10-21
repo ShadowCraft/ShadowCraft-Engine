@@ -1013,6 +1013,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attacks_per_second['mh_autoattacks'] = (haste_multiplier * (1 + (alacrity_stacks * 0.01)))/self.stats.mh.speed
         attacks_per_second['oh_autoattacks'] = attacks_per_second['mh_autoattacks']
 
+        if self.traits.bag_of_tricks:
+            bag_of_tricks_proc_chance = (haste_multiplier * (1 + (alacrity_stacks))) * (1./sum(attacks_per_second['envenom'])) / 60
+            attacks_per_second['poison_bomb'] = bag_of_tricks_proc_chance * sum(attacks_per_second['envenom'])
+
         #poison computations, use old function for now
         self.get_poison_counts(attacks_per_second, current_stats)
         if self.talents.agonizing_poison:
@@ -1037,6 +1041,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.traits.blood_of_the_assassinated:
             self.bota_multiplier = 0.35 * sum(attacks_per_second['rupture']) * 10
             self.bota_multiplier *= 2
+
+        # for a in attacks_per_second:
+        #     if isinstance(attacks_per_second[a], list):
+        #         print a, 1./sum(attacks_per_second[a])
+        #     else:
+        #         print a, 1./attacks_per_second[a]
 
         return attacks_per_second, crit_rates, additional_info
 

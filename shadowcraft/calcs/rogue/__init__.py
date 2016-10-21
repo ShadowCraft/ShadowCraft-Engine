@@ -21,7 +21,7 @@ class RogueDamageCalculator(DamageCalculator):
                                     'deadly_poison', 'deadly_instant_poison', 'envenom',
                                     'fan_of_knives', 'garrote_ticks', 'hemorrhage',
                                     'kingsbane', 'kingsbane_ticks', 'mutilate',
-                                    'poisoned_knife', 'rupture_ticks']
+                                    'poisoned_knife', 'poison_bomb', 'rupture_ticks']
     outlaw_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
                              'ambush', 'between_the_eyes', 'blunderbuss', 'cannonball_barrage',
                              'ghostly_strike', 'greed', 'killing_spree', 'main_gauche',
@@ -40,7 +40,7 @@ class RogueDamageCalculator(DamageCalculator):
                                 'eviscerate', 'shadowstrike', 'shuriken_storm', 'shuriken_toss']
     #All damage sources the scale with mastery (assn or sub)
     mastery_scaling_damage_sources = ['deadly_poison', 'deadly_instant_poison', 'evenom',
-                                      'eviscerate', 'nightblade_ticks']
+                                      'eviscerate', 'nightblade_ticks', 'poison_bomb']
     #All damage sources that deal damage with both hands
     dual_wield_damage_sources = ['kingsbane', 'mutilate', 'greed', 'killing_spree',
                                  'goremaws_bite', 'shadow_blades']
@@ -364,6 +364,10 @@ class RogueDamageCalculator(DamageCalculator):
     def poisoned_knife_damage(self, ap):
         return 0.6 * ap
 
+    #Lumping 6 ticks together for simplicity
+    def poison_bomb_damage(self, ap):
+        return 6 * 1.2 * ap
+
     def rupture_tick_damage(self, ap, cp):
         return .3 * cp * ap * (1 + (0.0333 * self.traits.gushing_wounds))
 
@@ -474,6 +478,7 @@ class RogueDamageCalculator(DamageCalculator):
             'mh_mutilate':               self.mh_mutilate_damage,
             'oh_mutilate':               self.oh_mutilate_damage,
             'poisoned_knife':            self.poisoned_knife_damage,
+            'poison_bomb':               self.poison_bomb_damage,
             'rupture_ticks':             self.rupture_tick_damage,
             #outlaw
             'ambush':                    self.ambush_damage,
