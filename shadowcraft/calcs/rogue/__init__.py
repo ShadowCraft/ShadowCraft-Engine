@@ -521,6 +521,9 @@ class RogueDamageCalculator(DamageCalculator):
         cost = self.ability_info[ability][0] * cost_mod
         if ability == 'shadowstrike':
             cost -= 0.25 * (5 * self.traits.energetic_stabbing)
+            #Assume 5 yards away so 10 + 5/2
+            if self.stats.gear_buffs.shadow_satyrs_walk:
+                cost -= 12
         return cost
 
     def get_spell_cd(self, ability):

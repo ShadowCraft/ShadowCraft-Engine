@@ -44,7 +44,7 @@ test_oh = stats.Weapon(4821.0, 1.8, 'dagger', None)
 test_procs = procs.ProcsList()
 
 # Set up gear buffs.
-test_gear_buffs = stats.GearBuffs('gear_specialization') #tier buffs located here
+test_gear_buffs = stats.GearBuffs('gear_specialization',) #tier buffs located here
 
 # Set up a calcs object..
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
