@@ -573,20 +573,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.buffs.felmouth_food():
             self.stats.procs.set_proc('felmouth_frenzy')
 
-        shatt_hand = 0
-        for hand in ('mh', 'oh'):
-            if getattr(getattr(self.stats, hand), 'mark_of_the_shattered_hand'):
-                self.stats.procs.set_proc('mark_of_the_shattered_hand_dot') #this enables the proc if it's not active, doesn't duplicate
-                shatt_hand += 1
-        if shatt_hand > 0:
-            if shatt_hand > 1:
-                getattr(self.stats.procs, 'mark_of_the_shattered_hand_dot').proc_rate = 5
-            else:
-                getattr(self.stats.procs, 'mark_of_the_shattered_hand_dot').proc_rate = 2.5
-            self.set_rppm_uptime(getattr(self.stats.procs, 'mark_of_the_shattered_hand_dot'))
-        if not shatt_hand:
-            self.stats.procs.del_proc('mark_of_the_shattered_hand_dot')
-
         #sort the procs into groups
         for proc in self.stats.procs.get_all_procs_for_stat():
             if (proc.stat == 'stats'):
