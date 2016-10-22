@@ -124,7 +124,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             'mh_autoattacks': min(base_melee_crit_rate, self.dw_mh_hit_chance),
             'oh_autoattacks': min(base_melee_crit_rate, self.dw_oh_hit_chance),
         }
-
         for attack in ('rupture_ticks', 'shuriken_toss'):
             crit_rates[attack] = base_melee_crit_rate
 
@@ -789,16 +788,17 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         agonizing_poison_mod = 1
         if self.talents.agonizing_poison:
             agonizing_poison_adder = 0.0 + 0.01 * self.traits.master_alchemist + 0.02 * self.traits.poison_knives
+            agonizing_poison_adder += 1 + (self.assassination_mastery_conversion * self.stats.get_mastery_from_rating(stats['mastery'])) / 2
             #if self.traits.surge_of_toxins:
             #    agonizing_poison_mod += 0.01 * self.surge_of_toxins_multiplier
-            agonizing_poison_mod_per_stack= 0.04 * (1 + (self.assassination_mastery_conversion * self.stats.get_mastery_from_rating(stats['mastery'])/2) + agonizing_poison_adder) / 100
+            agonizing_poison_mod_per_stack= 0.04 * agonizing_poison_adder
             if self.talents.master_poisoner:
                 agonizing_poison_mod_per_stack *= 1.2
 
             if self.traits.surge_of_toxins:
                 agonizing_poison_mod_per_stack *= 1 + self.surge_of_toxins_multiplier
 
-            agonizing_poison_mod *= 1 + agonizing_poison_mod_per_stack * self.agonizing_poison_stacks
+            agonizing_poison_mod = 1 + (agonizing_poison_mod_per_stack * self.agonizing_poison_stacks)
 
         elaborate_planning_mod = 1
         if self.talents.elaborate_planning:
@@ -872,7 +872,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 max_cps = 6
             builders_per_finisher = 0.0
             avg_finisher_size = 0.0
-            finisher_list = [0, 0, 0, 0, 0, 0, 0]
+            finisher_list = [0., 0., 0., 0., 0., 0., 0.]
+
             for path in paths:
                 chance = 1.0
                 for step in path:
@@ -1047,6 +1048,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #         print a, 1./sum(attacks_per_second[a])
         #     else:
         #         print a, 1./attacks_per_second[a]
+        # print "--------"
 
         return attacks_per_second, crit_rates, additional_info
 

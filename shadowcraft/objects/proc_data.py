@@ -64,21 +64,6 @@ allowed_procs = {
         'proc_rate': 1.0,
         'trigger': 'all_attacks'
     },
-    #weapon enchant support
-    'mark_of_the_shattered_hand_dot': {
-        'stat': 'physical_dot',
-        'value': 750,
-        'duration': 6,
-        'proc_name': 'Mark of the Shattered Hand DOT',
-        'type': 'rppm',
-        'source': 'weapon',
-        'item_level': 100,
-        'icd': 0,
-        'proc_rate': 2.5,
-        'can_crit': False,
-        'haste_scales': True,
-        'trigger': 'all_attacks',
-    },
     #racials
     'touch_of_the_grave': {
         'stat': 'spell_damage',
@@ -192,7 +177,7 @@ allowed_procs = {
         'value': {'haste': 550, 'crit': 550},
         'duration': 6,
         'proc_name': 'Mark of the Claw',
-        'source': 'trinket',
+        'source': 'neck',
         'type': 'rppm',
         'proc_rate': 2.5,
         'trigger': 'all_attacks',

@@ -70,7 +70,7 @@ class RogueDamageCalculator(DamageCalculator):
     6: 1,
     }
 
-    assassination_mastery_conversion = .035
+    assassination_mastery_conversion = .04
     outlaw_mastery_conversion = .022
     subtlety_mastery_conversion = .0276
 

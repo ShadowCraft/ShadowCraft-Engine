@@ -21,7 +21,7 @@ test_language = 'local'
 i18n.set_language(test_language)
 
 # Set up level/class/race
-test_level = 100
+test_level = 110
 test_race = race.Race('none')
 test_class = 'rogue'
 test_spec = 'assassination'
@@ -65,7 +65,7 @@ test_traits = artifact.Artifact(test_spec, test_class, trait_dict={
     'poison_knives':             3,
     'urge_to_kill':              1,
     'balanced_blades ':          0,
-    'surge_of_toxins':           0,
+    'surge_of_toxins':           1,
     'shadow_walker':             0,
     'master_assassin':           3,
     'shadow_swiftness':          0,
@@ -74,7 +74,7 @@ test_traits = artifact.Artifact(test_spec, test_class, trait_dict={
     'master_alchemist':          3,
     'gushing_wounds':            3+3,
     'fade_into_shadows':         0,
-    'from_the_shadows':          1,
+    'from_the_shadows':          0,
     'blood_of_the_assassinated': 1,
     'slayers_precision':         0,
 })
