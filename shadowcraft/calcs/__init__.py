@@ -28,7 +28,7 @@ class DamageCalculator(object):
 
     def __init__(self, stats, talents, traits, buffs, race, spec, settings=None, level=110, target_level=None, char_class='rogue'):
         self.WOW_BUILD_TARGET = '7.0.0' # should reflect the game patch being targetted
-        self.SHADOWCRAFT_BUILD = '0.01' # <1 for beta builds, 1.00 is GM, >1 for any bug fixes, reset for each warcraft patch
+        self.SHADOWCRAFT_BUILD = '0.02' # <1 for beta builds, 1.00 is GM, >1 for any bug fixes, reset for each warcraft patch
         self.tools = class_data.Util()
         self.stats = stats
         self.talents = talents
