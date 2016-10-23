@@ -783,8 +783,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
             if self.traits.surge_of_toxins:
                 agonizing_poison_mod_per_stack *= 1 + self.surge_of_toxins_multiplier
+            print agonizing_poison_mod_per_stack
 
             agonizing_poison_mod = 1 + (agonizing_poison_mod_per_stack * self.agonizing_poison_stacks)
+            print agonizing_poison_mod
 
         elaborate_planning_mod = 1
         if self.talents.elaborate_planning:
@@ -998,7 +1000,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attacks_per_second['oh_autoattacks'] = attacks_per_second['mh_autoattacks']
 
         if self.traits.bag_of_tricks:
-            bag_of_tricks_proc_chance = (haste_multiplier * (1 + (alacrity_stacks))) * (1./sum(attacks_per_second['envenom'])) / 60
+            bag_of_tricks_proc_chance = (haste_multiplier + (0.1 * alacrity_stacks)) * (1./sum(attacks_per_second['envenom'])) / 60
             attacks_per_second['poison_bomb'] = bag_of_tricks_proc_chance * sum(attacks_per_second['envenom'])
 
         if self.traits.from_the_shadows:

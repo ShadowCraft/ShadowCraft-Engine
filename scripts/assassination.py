@@ -51,11 +51,11 @@ test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          stam=28368,
                          crit=10431,
                          haste=1518,
-                         mastery=1001,
+                         mastery=9335,
                          versatility=3809,)
 # Initialize talents..
 #test_talents = talents.Talents('2110031', test_spec, test_class, level=test_level)
-test_talents = talents.Talents('2110011', test_spec, test_class, level=test_level)
+test_talents = talents.Talents('1110021', test_spec, test_class, level=test_level)
 
 #initialize artifact traits..
 test_traits = artifact.Artifact(test_spec, test_class, trait_dict={
@@ -65,7 +65,7 @@ test_traits = artifact.Artifact(test_spec, test_class, trait_dict={
     'poison_knives':             3,
     'urge_to_kill':              1,
     'balanced_blades ':          0,
-    'surge_of_toxins':           1,
+    'surge_of_toxins':           0,
     'shadow_walker':             0,
     'master_assassin':           3,
     'shadow_swiftness':          0,
