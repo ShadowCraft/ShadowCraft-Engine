@@ -546,6 +546,20 @@ allowed_procs = {
         'trigger': 'all_attacks'
    },
 
+   'jacins_ruse_2pc': { #Equip:  Your spells and attacks have a chance to increase your Mastery by 3000 for 15 sec.
+	'stat':'stats',
+	'value':{'mastery':3000},
+	'duration':15,
+	'proc_name': "Jacin's Ruse",
+	'item_level': 820,
+	'type': 'rppm',
+	'source': 'unique',
+	'icd': 0,
+	'proc_rate': 1,
+	'can_crit': False,
+	'trigger': 'all_attacks'
+    },
+
     #6.2.3 procs
     'infallible_tracking_charm': {
         'stat':'spell_damage',

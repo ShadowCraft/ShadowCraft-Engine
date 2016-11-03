@@ -572,6 +572,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         if self.buffs.felmouth_food():
             self.stats.procs.set_proc('felmouth_frenzy')
+        if self.stats.gear_buffs.jacins_ruse_2pc_bonus():
+            self.stats.procs.set_proc('jacins_ruse_2pc')
 
         #sort the procs into groups
         for proc in self.stats.procs.get_all_procs_for_stat():
