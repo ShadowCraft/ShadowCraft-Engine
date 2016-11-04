@@ -806,6 +806,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.traits.blood_of_the_assassinated:
             bota_mod = 1 + self.bota_multiplier
 
+        if self.stats.gear_buffs.the_dreadlords_deceit:
+            avg_dreadlord_stacks = 0.5/aps['fan_of_knives']
+            damage_breakdown['fan_of_knives'] *= (1 + (0.35 * avg_dreadlord_stacks))
+
         for ability in damage_breakdown:
             damage_breakdown[ability] *= agonizing_poison_mod
             damage_breakdown[ability] *= elaborate_planning_mod
@@ -931,6 +935,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #compute cooldowned talents:
         mfd_cps = self.talents.marked_for_death * (self.settings.duration/60. * 5. * (1. + self.settings.marked_for_death_resets))
         cp_budget = mfd_cps
+
+        if self.stats.gear_buffs.the_dreadlords_deceit:
+            fok_interval = 1./60
+            attacks_per_second['fan_of_knives'] = fok_interval
+            cp_budget += self.settings.duration * fok_interval
+            net_energy_per_second -= fok_interval * 35
 
         if self.traits.kingsbane:
             attacks_per_second['kingsbane'] = 1./self.kingsbane_cd
@@ -1699,6 +1709,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.talents.deeper_strategem:
             ds_multiplier = 1.1
 
+
+        if self.stats.gear_buffs.the_dreadlords_deceit:
+            avg_dreadlord_stacks = 0.5/aps['shuriken_storm']
+            damage_breakdown['shuriken_storm'] *= (1 + (0.35 * avg_dreadlord_stacks))
+
         for key in damage_breakdown:
             damage_breakdown[key] *= infallible_trinket_mod
             if key == 'shuriken_storm':
@@ -1976,6 +1991,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second['soul_rip'] = attacks_per_second['shadowstrike']
         if self.traits.shadow_nova:
             attacks_per_second['shadow_nova'] = attacks_per_second['symbols_of_death'] + attacks_per_second['vanish']
+
+        #FIXME: Kinda hackish, better approach would be to compute a seperate dance rotation
+        if self.stats.gear_buffs.the_dreadlords_deceit and self.cp_builder =='backstab':
+            shuriken_interval = 1./60
+            attacks_per_second['shadowstrike'] -= shuriken_interval
+            attacks_per_second['shuriken_storm'] = shuriken_interval
+            self.stealth_shuriken_uptime = 1.
 
         self.stealth_shuriken_uptime = 0.
         if self.cp_builder == 'shuriken_storm':

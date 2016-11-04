@@ -158,6 +158,7 @@ class GearBuffs(object):
         'march_of_the_legion_2pc',      # Proc 35K damage when fighting demons, 6+Haste RPPM
         #Legendaries
         'shadow_satyrs_walk',
+        'the_dreadlords_deceit'
 
     ]
 

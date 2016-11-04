@@ -473,7 +473,7 @@ class RogueDamageCalculator(DamageCalculator):
             'deadly_poison':             self.deadly_poison_tick_damage,
             'deadly_instant_poison':     self.deadly_instant_poison_damage,
             'envenom':                   self.envenom_damage,
-            'fan_of_knives_damage':      self.fan_of_knives_damage,
+            'fan_of_knives':             self.fan_of_knives_damage,
             'from_the_shadows':          self.from_the_shadows_damage,
             'garrote_ticks':             self.garrote_tick_damage,
             'hemorrhage':                self.hemorrhage_damage,
