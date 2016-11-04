@@ -547,17 +547,32 @@ allowed_procs = {
    },
 
    'jacins_ruse_2pc': { #Equip:  Your spells and attacks have a chance to increase your Mastery by 3000 for 15 sec.
-	'stat':'stats',
-	'value':{'mastery':3000},
-	'duration':15,
-	'proc_name': "Jacin's Ruse",
-	'item_level': 820,
-	'type': 'rppm',
-	'source': 'unique',
-	'icd': 0,
-	'proc_rate': 1,
-	'can_crit': False,
-	'trigger': 'all_attacks'
+    	'stat':'stats',
+    	'value':{'mastery':3000},
+    	'duration':15,
+    	'proc_name': "Jacin's Ruse",
+    	'item_level': 820,
+    	'type': 'rppm',
+    	'source': 'unique',
+    	'icd': 0,
+    	'proc_rate': 1,
+    	'can_crit': False,
+    	'trigger': 'all_attacks'
+    },
+
+    'march_of_the_legion_2pc': { #Equip: Your spells and attacks against Demons have a chance to deal an additional 27200 to 36800 Fire damage.
+        'stat':'spell_damage',
+        'value': 35000,
+        'duration':0,
+        'proc_name': "March of the Legion",
+        'item_level': 820,
+        'type': 'rppm',
+        'source': 'unique',
+        'icd': 0,
+        'proc_rate': 6,
+        'haste_scales': True,
+        'can_crit': True,
+        'trigger': 'all_attacks'
     },
 
     #6.2.3 procs

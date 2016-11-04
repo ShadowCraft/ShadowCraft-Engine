@@ -574,6 +574,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.stats.procs.set_proc('felmouth_frenzy')
         if self.stats.gear_buffs.jacins_ruse_2pc_bonus():
             self.stats.procs.set_proc('jacins_ruse_2pc')
+        if self.stats.gear_buffs.march_of_the_legion_2pc and self.settings.is_demon:
+            self.stats.procs.set_proc('march_of_the_legion_2pc')
 
         #sort the procs into groups
         for proc in self.stats.procs.get_all_procs_for_stat():
