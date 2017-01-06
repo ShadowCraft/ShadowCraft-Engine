@@ -1731,7 +1731,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 elif key == 'second_shuriken':
                     damage_breakdown[key] *= 1 + self.settings.num_boss_adds
                 elif key == 'shadow_nova':
-                    damage_breakdown[shadow_nova] *= 1 + self.settings.num_boss_adds
+                    damage_breakdown[key] *= 1 + self.settings.num_boss_adds
 
         return damage_breakdown
 
