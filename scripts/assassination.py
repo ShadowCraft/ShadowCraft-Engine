@@ -47,15 +47,15 @@ test_gear_buffs = stats.GearBuffs('gear_specialization', )
 
 # Set up a calcs object..
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
-                         agi=22294,
+                         agi=25583,
                          stam=28368,
-                         crit=10431,
-                         haste=1518,
-                         mastery=9335,
-                         versatility=3809,)
+                         crit=11133,
+                         haste=1666,
+                         mastery=2469,
+                         versatility=3085,)
 # Initialize talents..
 #test_talents = talents.Talents('2110031', test_spec, test_class, level=test_level)
-test_talents = talents.Talents('1110021', test_spec, test_class, level=test_level)
+test_talents = talents.Talents('2110011', test_spec, test_class, level=test_level)
 
 #initialize artifact traits..
 test_traits = artifact.Artifact(test_spec, test_class, trait_dict={
@@ -64,17 +64,17 @@ test_traits = artifact.Artifact(test_spec, test_class, trait_dict={
     'toxic_blades':              3,
     'poison_knives':             3,
     'urge_to_kill':              1,
-    'balanced_blades ':          0,
-    'surge_of_toxins':           0,
+    'balanced_blades ':          2,
+    'surge_of_toxins':           1,
     'shadow_walker':             0,
-    'master_assassin':           3,
+    'master_assassin':           3+3,
     'shadow_swiftness':          0,
-    'serrated_edge':             0,
+    'serrated_edge':             3,
     'bag_of_tricks':             1,
     'master_alchemist':          3,
-    'gushing_wounds':            3+3,
+    'gushing_wounds':            3,
     'fade_into_shadows':         0,
-    'from_the_shadows':          0,
+    'from_the_shadows':          1,
     'blood_of_the_assassinated': 1,
     'slayers_precision':         0,
 })

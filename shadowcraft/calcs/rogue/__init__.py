@@ -30,7 +30,7 @@ class RogueDamageCalculator(DamageCalculator):
                                'backstab', 'eviscerate', 'gloomblade',
                                'goremaws_bite', 'nightblade', 'shadowstrike',
                                'shadow_blades', 'shuriken_storm', 'shuriken_toss',
-                               'nightblade_ticks', 'soul_rip', 'shadow_nova']
+                               'nightblade_ticks', 'soul_rip', 'shadow_nova', 'second_shuriken']
     #All damage sources mitigated by armor
     physical_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
                                 'fan_of_knives', 'hemorrhage', 'mutilate', 'poisoned_knife',
@@ -196,8 +196,9 @@ class RogueDamageCalculator(DamageCalculator):
         damage_breakdown = {}
 
         crit_damage_modifier = self.crit_damage_modifiers()
-        base_modifier = self.get_base_modifier(current_stats)
-        armor_modifier = self.armor_mitigation_multiplier()
+
+        modifier_dict = self.damage_modifiers.compile_modifier_dict()
+        print modifier_dict
 
         # this removes keys with empty values, prevents errors from:
         # attacks_per_second['sinister_strike'] = None
@@ -209,12 +210,12 @@ class RogueDamageCalculator(DamageCalculator):
             # Assumes mh and oh attacks are both active at the same time.  As
             # they should always be.
             # Friends don't let friends raid without gear.
-            mh_base_damage = self.mh_damage(average_ap) * armor_modifier * base_modifier
+            mh_base_damage = self.mh_damage(average_ap) * modifier_dict['autoattacks']
             mh_hit_rate = self.dw_mh_hit_chance - crit_rates['mh_autoattacks']
             average_mh_hit = mh_hit_rate * mh_base_damage + crit_rates['mh_autoattacks'] * mh_base_damage * crit_damage_modifier
             mh_dps_tuple = average_mh_hit * attacks_per_second['mh_autoattacks']
 
-            oh_base_damage = self.oh_damage(average_ap) * armor_modifier * base_modifier
+            oh_base_damage = self.oh_damage(average_ap) * modifier_dict['autoattacks']
             oh_hit_rate = self.dw_oh_hit_chance - crit_rates['oh_autoattacks']
             average_oh_hit = oh_hit_rate * oh_base_damage + crit_rates['oh_autoattacks'] * oh_base_damage * crit_damage_modifier
             oh_dps_tuple = average_oh_hit * attacks_per_second['oh_autoattacks']
@@ -228,7 +229,6 @@ class RogueDamageCalculator(DamageCalculator):
 
         #compute damage breakdown for each spec
         if self.spec == 'assassination':
-            potent_poisons_mod = (1 + self.assassination_mastery_conversion * self.stats.get_mastery_from_rating(current_stats['mastery'])) * base_modifier
 
             for ability in self.assassination_damage_sources:
                 if ability not in attacks_per_second:
@@ -236,14 +236,9 @@ class RogueDamageCalculator(DamageCalculator):
                 aps = attacks_per_second[ability]
                 crits = crit_rates[ability]
                 crit_mod = crit_damage_modifier
-                modifier = base_modifier
+                modifier = modifier_dict[ability]
                 both_hands = ability in self.dual_wield_damage_sources
                 cps = max_cps if ability in self.finisher_damage_sources else 0
-
-                if ability in self.physical_damage_sources:
-                    modifier *= armor_modifier
-                if ability in self.mastery_scaling_damage_sources:
-                    modifier *= potent_poisons_mod
 
                 #override for "weird" abilities
                 #death from above strike is actually an envenom with 1.5
@@ -251,7 +246,7 @@ class RogueDamageCalculator(DamageCalculator):
                 #manually add in base modifier because DfA strike is in
                 #physical sources
                 if ability == 'death_from_above_strike':
-                    modifier = base_modifier * 1.5 * potent_poisons_mod
+                    modifier *= 1.5
                     ability = 'envenom'
                 damage_breakdown[ability] = self.get_ability_dps(average_ap, ability, aps, crits, modifier, crit_mod, both_hands, cps)
 
@@ -262,12 +257,9 @@ class RogueDamageCalculator(DamageCalculator):
                 aps = attacks_per_second[ability]
                 crits = crit_rates[ability]
                 crit_mod = crit_damage_modifier
-                modifier = base_modifier
+                modifier = modifier_dict[ability]
                 both_hands = ability in self.dual_wield_damage_sources
                 cps = max_cps if ability in self.finisher_damage_sources else 0
-
-                if ability in self.physical_damage_sources:
-                    modifier *= armor_modifier
 
                 #override for "weird" abilities
                 #death from above strike is actually an evis with 1.5 modifier
@@ -282,8 +274,6 @@ class RogueDamageCalculator(DamageCalculator):
                 damage_breakdown[ability] = self.get_ability_dps(average_ap, ability, aps, crits, modifier, crit_mod, both_hands, cps)
 
         if self.spec == 'subtlety':
-            executioner_mod = executioner_mod = 1 + self.subtlety_mastery_conversion * self.stats.get_mastery_from_rating(current_stats['mastery'])
-            shadow_fangs_mod = (1 + (0.04 * self.traits.shadow_fangs))
 
             for ability in self.subtlety_damage_sources:
                 if ability not in attacks_per_second:
@@ -291,28 +281,16 @@ class RogueDamageCalculator(DamageCalculator):
                 aps = attacks_per_second[ability]
                 crits = crit_rates[ability]
                 crit_mod = crit_damage_modifier
-                modifier = base_modifier
+                modifier = modifier_dict[ability]
                 both_hands = ability in self.dual_wield_damage_sources
                 cps = max_cps if ability in self.finisher_damage_sources else 0
-
-
-                if ability in self.physical_damage_sources:
-                    modifier *= armor_modifier
-                #assume for now that all non-physical damage sources are shadow
-                #damage
-                else:
-                    modifier *= shadow_fangs_mod
-                if ability in self.mastery_scaling_damage_sources:
-                    modifier *= executioner_mod
 
                 #override for "weird" abilities
                 #death from above strike is actually an evis with 1.5 modifier
                 #and dfa pulse needs mastery
                 if ability == 'death_from_above_strike':
-                    modifier *= 1.5 * executioner_mod
+                    modifier *= 1.5 
                     ability = 'eviscerate'
-                if ability == 'death_from_above_pulse':
-                    modifier *= executioner_mod
 
                 damage_breakdown[ability] = self.get_ability_dps(average_ap, ability, aps, crits, modifier, crit_mod, both_hands, cps)
 

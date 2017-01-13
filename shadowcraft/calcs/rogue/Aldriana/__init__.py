@@ -9,6 +9,7 @@ __builtin__._ = gettext.gettext
 
 from shadowcraft.calcs.rogue import RogueDamageCalculator
 from shadowcraft.core import exceptions
+from shadowcraft.objects import modifiers
 from shadowcraft.objects import procs
 from shadowcraft.objects import proc_data
 
@@ -748,15 +749,50 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if not self.spec == 'assassination':
             raise InputNotModeledException(_('You must specify a assassination cycle to match your assassination spec.'))
 
-        #outlaw specific constants
+        #assassination specific constants
+        #set up damage modifier list and all relevant modifiers, use None for placeholder values
+        self.damage_modifiers = modifiers.ModifierList(self.assassination_damage_sources + ['autoattacks'])
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('versatility', None, [], blacklist=True))
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('armor', self.armor_mitigation_multiplier(), ['death_from_above_pulse',
+            'fan_of_knives', 'hemorrhage', 'mutilate', 'autoattacks']))
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('potent_poisons', None, ['deadly_poison',
+            'deadly_instant_poison', 'envenom', 'poison_bomb',]))
 
-        self.damage_modifier_cache = 1 + (0.005 * self.traits.slayers_precision)
+        #time averaged vendetta modifier used for most things
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('vendetta_time_average', None, [], blacklist=True))
+
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('vendetta_exsang', None, ['rupture_ticks']))
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('vendetta_kb', None, ['kingsbane', 'kingsbane_ticks']))
+
+        #talent specific modifiers
+        if self.talents.elaborate_planning:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('elaborate_planning', None, [], blacklist=True))
+        if self.talents.hemorrhage:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('hemorrhage', 1.25, ['rupture_ticks', 'garrote_ticks']))
+        if self.talents.agonizing_poison:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('agonizing_poison', None, [], blacklist=True))
+
+        #trait specific modifiers
+        if self.traits.blood_of_the_assassinated:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('blood_of_the_assassinated', None, ['rupture_ticks']))
+        if self.traits.surge_of_toxins:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('surge_of_toxins', None, ['deadly_poison',
+            'deadly_instant_poison', 'envenom', 'poison_bomb',]))
+
+        if self.traits.slayers_precision:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('slayers_precision',
+            1.05 + (0.005 * self.traits.slayers_precision - 1), [], blacklist=True))
+
+        #gear specific modifiers
+        if self.stats.gear_buffs.the_dreadlords_deceit:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('the_dreadlords_deceit', None, ['fan_of_knives']))
 
         self.set_constants()
 
         self.vendetta_cd = self.get_spell_cd('vendetta')
-        #cp stacking handlers
+        self.vendetta_multiplier = 0.3 * (20 / self.vendetta_cd)
 
+        #cd stacking handlers
         if self.settings.cycle.kingsbane_with_vendetta == 'only':
             self.kingsbane_cd = min(self.vendetta_cd, self.get_spell_cd('kingsbane'))
             kb_venn_uptime = 1.0
@@ -771,55 +807,64 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.exsang_cd = self.get_spell_cd('exsanguinate')
             exsang_venn_uptime = self.exsang_cd/self.vendetta_cd
 
+        self.damage_modifiers.update_modifier_value('vendetta_time_average', 1 + self.vendetta_multiplier)
+        self.damage_modifiers.update_modifier_value('vendetta_exsang', 1 + (self.vendetta_multiplier * exsang_venn_uptime))
+        self.damage_modifiers.update_modifier_value('vendetta_kb', 1 + (self.vendetta_multiplier * kb_venn_uptime))
 
         stats, aps, crits, procs, additional_info = self.determine_stats(self.assassination_attack_counts)
-        damage_breakdown, additional_info  = self.compute_damage_from_aps(stats, aps, crits, procs, additional_info)
 
-        agonizing_poison_mod = 1
+        self.damage_modifiers.update_modifier_value('versatility', self.stats.get_versatility_multiplier_from_rating(rating=stats['versatility']))
+        self.damage_modifiers.update_modifier_value('potent_poisons', (1 + self.assassination_mastery_conversion * self.stats.get_mastery_from_rating(stats['mastery'])))
+
+        if self.traits.blood_of_the_assassinated:
+            bota_uptime = 0.35 * sum(aps['rupture']) * 10 # procs/ability * ability/second * seconds/proc gives unit-less uptime
+            bota_multiplier = 2 * bota_uptime
+            self.damage_modifiers.update_modifier_value('blood_of_the_assassinated', bota_multiplier)
+
+        finisher_aps = 0.0
+        for ability in aps:
+            if ability in self.finisher_damage_sources and 'ticks' not in ability:
+                finisher_aps += sum(aps[ability])
+
+        #actually 2% per cp up to max of 5
+        surge_of_toxins_multiplier = 1.
+        if self.traits.surge_of_toxins:
+            finisher_cpps = 0.0 #finisher cps per second
+            for ability in aps:
+                if ability in self.finisher_damage_sources and 'ticks' not in ability:
+                    finisher_cpps += sum([min(cp, 5) * aps[ability][cp] for cp in xrange(len(aps[ability]))])
+            surge_uptime = finisher_aps * 5 #attacks/second * seconds/attack
+            surge_of_toxins_multiplier = 1. + ((0.02 * finisher_cpps) * surge_uptime)
+            self.damage_modifiers.update_modifier_value('surge_of_toxins', surge_of_toxins_multiplier)
+
+        if self.talents.elaborate_planning:
+            ep_uptime = finisher_aps * 5 #attacks/second * seconds/attack
+            self.damage_modifiers.update_modifier_value('elaborate_planning', 1 + (0.15 * ep_uptime))
+
+
         if self.talents.agonizing_poison:
+            stack_time = 5./aps['agonizing_poison']
+            max_time = self.settings.duration - stack_time
+            agonizing_poison_stacks = (max_time/self.settings.duration) * 5 + (stack_time/self.settings.duration) * 2.5
+
             agonizing_poison_adder = 0.0 + 0.01 * self.traits.master_alchemist + 0.02 * self.traits.poison_knives
             agonizing_poison_adder += 1 + (self.assassination_mastery_conversion * self.stats.get_mastery_from_rating(stats['mastery'])) / 2
-            #if self.traits.surge_of_toxins:
-            #    agonizing_poison_mod += 0.01 * self.surge_of_toxins_multiplier
+
             agonizing_poison_mod_per_stack= 0.04 * agonizing_poison_adder
             if self.talents.master_poisoner:
                 agonizing_poison_mod_per_stack *= 1.2
 
             if self.traits.surge_of_toxins:
-                agonizing_poison_mod_per_stack *= 1 + self.surge_of_toxins_multiplier
-            print agonizing_poison_mod_per_stack
+                agonizing_poison_mod_per_stack *= surge_of_toxins_multiplier
 
-            agonizing_poison_mod = 1 + (agonizing_poison_mod_per_stack * self.agonizing_poison_stacks)
-            print agonizing_poison_mod
-
-        elaborate_planning_mod = 1
-        if self.talents.elaborate_planning:
-            elaborate_planning_mod = 1 + (0.15 * self.elaborate_planning_multiplier)
-
-        hemo_mod = 1 + 0.25 * self.talents.hemorrhage
-
-        surge_mod = 1
-        if self.traits.surge_of_toxins:
-            surge_mod = 1 + self.surge_of_toxins_multiplier
-
-        bota_mod = 1
-        if self.traits.blood_of_the_assassinated:
-            bota_mod = 1 + self.bota_multiplier
+            agonizing_poison_mod = 1 + (agonizing_poison_mod_per_stack * agonizing_poison_stacks)
+            self.damage_modifiers.update_modifier_value('agonizing_poison', agonizing_poison_mod)
 
         if self.stats.gear_buffs.the_dreadlords_deceit:
             avg_dreadlord_stacks = 0.5/aps['fan_of_knives']
-            damage_breakdown['fan_of_knives'] *= (1 + (0.35 * avg_dreadlord_stacks))
+            self.damage_modifiers.update_modifier_value('the_dreadlords_deceit', 1 + (0.35 * avg_dreadlord_stacks))
 
-        for ability in damage_breakdown:
-            damage_breakdown[ability] *= agonizing_poison_mod
-            damage_breakdown[ability] *= elaborate_planning_mod
-            if ability in ['rupture_ticks', 'garrote_ticks']:
-                damage_breakdown[ability] *= hemo_mod
-            if ability in ['deadly_poison_ticks', 'deadly_instant_poison',
-                           'kingsbane', 'kingsbane_ticks']:
-                damage_breakdown[ability] *= surge_mod
-            if ability == 'rupture_ticks':
-                damage_breakdown[ability] *= bota_mod
+        damage_breakdown, additional_info  = self.compute_damage_from_aps(stats, aps, crits, procs, additional_info)
 
         return damage_breakdown
 
@@ -1022,35 +1067,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         #poison computations, use old function for now
         self.get_poison_counts(attacks_per_second, current_stats)
-        if self.talents.agonizing_poison:
-            stack_time = 5./attacks_per_second['agonizing_poison']
-            max_time = self.settings.duration - stack_time
-            self.agonizing_poison_stacks = (max_time/self.settings.duration) * 5 + (stack_time/self.settings.duration) * 2.5
 
-        if self.talents.elaborate_planning:
-            finisher_aps = 0.0
-            for ability in attacks_per_second:
-                if ability in self.finisher_damage_sources and 'ticks' not in ability:
-                    finisher_aps += sum(attacks_per_second[ability])
-            self.elaborate_planning_multiplier = min(1, 5 * finisher_aps)
-
-        if self.traits.surge_of_toxins:
-            finisher_aps = 0.0
-            for ability in attacks_per_second:
-                if ability in self.finisher_damage_sources and 'ticks' not in ability:
-                    finisher_aps += sum([0.02 * cp * 5 for cp in attacks_per_second[ability]])
-            self.surge_of_toxins_multiplier = finisher_aps
-
-        if self.traits.blood_of_the_assassinated:
-            self.bota_multiplier = 0.35 * sum(attacks_per_second['rupture']) * 10
-            self.bota_multiplier *= 2
-
-        # for a in attacks_per_second:
-        #     if isinstance(attacks_per_second[a], list):
-        #         print a, 1./sum(attacks_per_second[a])
-        #     else:
-        #         print a, 1./attacks_per_second[a]
-        # print "--------"
+        for a in attacks_per_second:
+            if isinstance(attacks_per_second[a], list):
+                print a, 1./sum(attacks_per_second[a])
+            else:
+                print a, 1./attacks_per_second[a]
+        print "--------"
 
         return attacks_per_second, crit_rates, additional_info
 
@@ -1658,11 +1681,53 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         self.set_constants()
 
-        #symbols of death
-        self.damage_modifier_cache = 1.2 * (1 +(0.005 * self.traits.legionblade))
+        #set up damage modifier list and all relevant modifiers, use None for placeholder values
+        self.damage_modifiers = modifiers.ModifierList(self.subtlety_damage_sources + ['autoattacks'])
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('versatility', None, [], blacklist=True))
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('armor', self.armor_mitigation_multiplier(), ['death_from_above_pulse',
+            'death_from_above_strike', 'shuriken_storm', 'eviscerate', 'backstab', 'shadowstrike', 'autoattacks',]))
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('executioner', None, ['eviscerate', 'nightblade_ticks']))
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('symbols_of_death', 1.2, [], blacklist=True))
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('shadow_fangs', 1.04, [], blacklist=True))
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('stealth_shuriken_storm', None, ['shuriken_storm', 'second_shuriken']))
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('backstab_positional', 1 + 0.3 * self.settings.cycle.positional_uptime, ['backstab']))
+
+        #talent specific modifiers
+
+        if self.traits.nightstalker:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('nightstalker_ssk', None, ['shadowstrike']))
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('nightstalker_shuriken_storm', None, ['shuriken_storm']))
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('nightstalker_nightblade', None, ['nightblade_ticks']))
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('nightstalker_evis', None, ['eviscerate']))
+
+        if self.talents.master_of_subtlety:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('mos_ssk', None, ['shadowstrike']))
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('mos_shuriken_storm', None, ['shuriken_storm']))
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('mos_evis', None, ['eviscerate']))
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('mos_other', None, ['shadowstrike', 'eviscerate'], blacklist=True))
+
+
+        if self.talents.deeper_strategem:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('deeper_strategem', 1.1, ['nightblade_ticks', 'eviscerate', 'death_from_above_strike', 'death_from_above_pulse']))
+
+
+        #trait specific modifiers
+        if self.traits.finality:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('finality', None, ['nightblade_ticks', 'eviscerate']))
+
+        if self.traits.legionblade:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('legionblade',
+            1.05 + (0.005 * self.traits.legionblade - 1), [], blacklist=True))
+
+        #gear specific modifiers
+        if self.stats.gear_buffs.the_dreadlords_deceit:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('the_dreadlords_deceit', None, ['fan_of_knives']))
 
         stats, aps, crits, procs, additional_info = self.determine_stats(self.subtlety_attack_counts)
-        damage_breakdown, additional_info  = self.compute_damage_from_aps(stats, aps, crits, procs, additional_info)
+        
+        self.damage_modifiers.update_modifier_value('executioner', (1 + self.subtlety_mastery_conversion * self.stats.get_mastery_from_rating(stats['mastery'])))
+        self.damage_modifiers.update_modifier_value('versatility', self.stats.get_versatility_multiplier_from_rating(rating=stats['versatility']))
+        self.damage_modifiers.update_modifier_value('stealth_shuriken_storm', 1 + self.stealth_shuriken_uptime * 3)
 
         infallible_trinket_mod = 1.0
         if self.settings.is_demon:
@@ -1674,54 +1739,33 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #nightstalker
         if self.talents.nightstalker:
             ns_full_multiplier = 0.12
-            for key  in damage_breakdown:
-                if key == 'shadowstrike':
-                    damage_breakdown[key] *= ns_full_multiplier
-                elif key == 'shuriken_storm':
-                    damage_breakdown[key] *= 1 + (0.12 * self.stealth_shuriken_uptime)
-                elif key == 'nightblade_ticks':
-                    damage_breakdown[key] *= 1 + (0.12 * self.dance_nb_uptime)
-                elif key in ('eviscerate'):
-                    damage_breakdown[key] *= 1 + (0.12 * self.stealth_evis_uptime)
+            self.damage_modifiers.update_modifier_value('nightstalker_ssk', 1 + ns_full_multiplier)
+            self.damage_modifiers.update_modifier_value('nightstalker_shuriken_storm', 1 + (0.12 * self.stealth_shuriken_uptime))
+            self.damage_modifiers.update_modifier_value('nightstalker_nightblade', 1 + (0.12 * self.dance_nb_uptime))
+            self.damage_modifiers.update_modifier_value('nightstalker_evis', 1 + (0.12 * self.stealth_evis_uptime))
 
         #master of subtlety
         if self.talents.master_of_subtlety:
             mos_full_multiplier = 1.1
             mos_uptime_multipler = 1. + (0.1 * self.mos_time)
-
-            for key in damage_breakdown:
-                if key == 'shadowstrike':
-                    damage_breakdown[key] *= mos_full_multiplier
-                elif key == 'shuriken_storm':
-                    damage_breakdown[key] *= 1 + (0.1 * self.stealth_shuriken_uptime)
-                elif key in ('eviscerate'):
-                    damage_breakdown[key] *= 1 + (0.1 * self.stealth_evis_uptime)
-                else:
-                    damage_breakdown[key] *= mos_uptime_multipler
+            self.damage_modifiers.update_modifier_value('mos_ssk', mos_full_multiplier)
+            self.damage_modifiers.update_modifier_value('mos_shuriken_storm', 1 + (0.1 * self.stealth_shuriken_uptime))
+            self.damage_modifiers.update_modifier_value('mos_evis', 1 + (0.1 * self.stealth_evis_uptime))
+            self.damage_modifiers.update_modifier_value('mos_other', mos_uptime_multipler)
 
         if self.traits.finality:
             #4% increase per cp applied every to every other
             finality_damage_boost = 1 + 0.02 * self.settings.finisher_threshold
-            damage_breakdown['eviscerate'] *= finality_damage_boost
-            damage_breakdown['nightblade_ticks'] *= finality_damage_boost
-
-        ds_multiplier = 1.0
-        if self.talents.deeper_strategem:
-            ds_multiplier = 1.1
-
+            self.damage_modifiers.update_modifier_value('finality', finality_damage_boost)
 
         if self.stats.gear_buffs.the_dreadlords_deceit:
             avg_dreadlord_stacks = 0.5/aps['shuriken_storm']
-            damage_breakdown['shuriken_storm'] *= (1 + (0.35 * avg_dreadlord_stacks))
+            self.damage_modifiers.update_modifier_value('the_dreadlords_deceit', 1 + (0.35 * avg_dreadlord_stacks))
+
+        damage_breakdown, additional_info  = self.compute_damage_from_aps(stats, aps, crits, procs, additional_info)
 
         for key in damage_breakdown:
             damage_breakdown[key] *= infallible_trinket_mod
-            if key == 'shuriken_storm':
-                damage_breakdown[key] *= (1 + self.stealth_shuriken_uptime * 3)
-            if key in self.finisher_damage_sources:
-                damage_breakdown[key] *= ds_multiplier
-            if key == 'backstab':
-                damage_breakdown[key] *= 1 + (0.3 * self.settings.cycle.positional_uptime)
 
         #add AoE damage sources:
         if self.settings.num_boss_adds:
