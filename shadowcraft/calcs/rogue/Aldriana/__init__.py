@@ -1727,7 +1727,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         #gear specific modifiers
         if self.stats.gear_buffs.the_dreadlords_deceit:
-            self.damage_modifiers.register_modifier(modifiers.DamageModifier('the_dreadlords_deceit', None, ['fan_of_knives']))
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('the_dreadlords_deceit', None, ['shuriken_storm']))
 
         stats, aps, crits, procs, additional_info = self.determine_stats(self.subtlety_attack_counts)
 
