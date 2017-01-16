@@ -1700,7 +1700,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         #talent specific modifiers
 
-        if self.traits.nightstalker:
+        if self.talents.nightstalker:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('nightstalker_ssk', None, ['shadowstrike']))
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('nightstalker_shuriken_storm', None, ['shuriken_storm']))
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('nightstalker_nightblade', None, ['nightblade_ticks']))
@@ -2043,7 +2043,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second['shadow_nova'] = attacks_per_second['symbols_of_death'] + attacks_per_second['vanish']
 
         #FIXME: Kinda hackish, better approach would be to compute a seperate dance rotation
-        if self.stats.gear_buffs.the_dreadlords_deceit and self.cp_builder =='backstab':
+        if self.stats.gear_buffs.the_dreadlords_deceit and (self.cp_builder =='backstab' or self.cp_builder == 'gloomblade'):
             shuriken_interval = 1./60
             attacks_per_second['shadowstrike'] -= shuriken_interval
             attacks_per_second['shuriken_storm'] = shuriken_interval
