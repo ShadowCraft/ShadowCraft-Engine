@@ -543,13 +543,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if finisher in attacks_per_second and finisher != 'death_from_above_pulse':
                 for cp in xrange(7):
                     stacks_per_second += 0.2 * cp * attacks_per_second[finisher][cp]
-        stack_time = 20/stacks_per_second
+        stack_time = 10/stacks_per_second
         if stack_time > self.settings.duration:
             max_stacks = self.settings.duration * stacks_per_second
             return max_stacks/2
         else:
             max_time = self.settings.duration - stack_time
-            return (max_time/self.settings.duration) * 20 + (stack_time/self.settings.duration) * 10
+            return (max_time/self.settings.duration) * 10 + (stack_time/self.settings.duration) * 5
 
     def determine_stats(self, attack_counts_function):
         current_stats = {
@@ -757,6 +757,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             'fan_of_knives', 'hemorrhage', 'mutilate', 'autoattacks']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('potent_poisons', None, ['deadly_poison',
             'deadly_instant_poison', 'envenom', 'poison_bomb',]))
+        #Generic tuning aura
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('assassination_aura', 1.07, [], blacklist=True))
 
         #time averaged vendetta modifier used for most things
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('vendetta_time_average', None, [], blacklist=True))
@@ -771,6 +773,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('hemorrhage', 1.25, ['rupture_ticks', 'garrote_ticks']))
         if self.talents.agonizing_poison:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('agonizing_poison', None, [], blacklist=True))
+        if self.talents.deeper_strategem:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('deeper_strategem', 1.05, ['rupture_ticks', 'envenom', 'death_from_above_pulse', 'death_from_above_strike']))
 
         #trait specific modifiers
         if self.traits.blood_of_the_assassinated:
@@ -839,7 +843,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         if self.talents.elaborate_planning:
             ep_uptime = finisher_aps * 5 #attacks/second * seconds/attack
-            self.damage_modifiers.update_modifier_value('elaborate_planning', 1 + (0.15 * ep_uptime))
+            self.damage_modifiers.update_modifier_value('elaborate_planning', 1 + (0.12 * ep_uptime))
 
 
         if self.talents.agonizing_poison:
@@ -978,7 +982,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         net_energy_per_second -= rupture_cost_per_second - garrote_cost_per_second
 
         #compute cooldowned talents:
-        mfd_cps = self.talents.marked_for_death * (self.settings.duration/60. * 5. * (1. + self.settings.marked_for_death_resets))
+        mfd_cps = self.talents.marked_for_death * (self.settings.duration/60. * (5. + self.talents.deeper_strategem) * (1. + self.settings.marked_for_death_resets))
         cp_budget = mfd_cps
 
         if self.stats.gear_buffs.the_dreadlords_deceit:
@@ -1049,9 +1053,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             energy_budget -= total_minicycles * mini_cycle_energy
 
             if self.talents.alacrity:
-                old_alacrity_regen = energy_regen * (1 + (alacrity_stacks *0.01))
+                old_alacrity_regen = energy_regen * (1 + (alacrity_stacks *0.02))
                 new_alacrity_stacks = self.get_average_alacrity(attacks_per_second)
-                new_alacrity_regen = energy_regen * (1 + (new_alacrity_stacks *0.01))
+                new_alacrity_regen = energy_regen * (1 + (new_alacrity_stacks *0.02))
                 energy_budget += (new_alacrity_regen - old_alacrity_regen) * self.settings.duration
                 alacrity_stacks = new_alacrity_stacks
 
@@ -1565,13 +1569,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 gcd_budget -= minicycle_count * gcds_per_minicycle
 
                 #ar doubles the effect of alacrity while up
-                old_alacrity_regen = energy_regen * (1 + (alacrity_stacks *0.01)) * (1 + int(ar))
+                old_alacrity_regen = energy_regen * (1 + (alacrity_stacks *0.02)) * (1 + int(ar))
                 new_alacrity_stacks = self.get_average_alacrity(attacks_per_second)
-                new_alacrity_regen = energy_regen * (1 + (new_alacrity_stacks *0.01)) * (1 + int(ar))
+                new_alacrity_regen = energy_regen * (1 + (new_alacrity_stacks *0.02)) * (1 + int(ar))
                 energy_budget += (new_alacrity_regen - old_alacrity_regen) * duration
                 #compute new CP/MG regen
-                old_cp_mg = self.get_mg_cp_regen_from_haste(attack_speed_multiplier * 1 + (0.01 * alacrity_stacks))
-                new_cp_mg = self.get_mg_cp_regen_from_haste(attack_speed_multiplier * 1 + (0.01 * new_alacrity_stacks))
+                old_cp_mg = self.get_mg_cp_regen_from_haste(attack_speed_multiplier * 1 + (0.02 * alacrity_stacks))
+                new_cp_mg = self.get_mg_cp_regen_from_haste(attack_speed_multiplier * 1 + (0.02 * new_alacrity_stacks))
                 energy_budget += new_cp_mg - old_cp_mg
                 alacrity_stacks = new_alacrity_stacks
 
@@ -1691,6 +1695,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('shadow_fangs', 1.04, [], blacklist=True))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('stealth_shuriken_storm', None, ['shuriken_storm', 'second_shuriken']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('backstab_positional', 1 + 0.3 * self.settings.cycle.positional_uptime, ['backstab']))
+        #Generic tuning aura
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('subtlety_aura', 1.09, [], blacklist=True))
 
         #talent specific modifiers
 
@@ -1708,7 +1714,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
 
         if self.talents.deeper_strategem:
-            self.damage_modifiers.register_modifier(modifiers.DamageModifier('deeper_strategem', 1.1, ['nightblade_ticks', 'eviscerate', 'death_from_above_strike', 'death_from_above_pulse']))
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('deeper_strategem', 1.05, ['nightblade_ticks', 'eviscerate', 'death_from_above_strike', 'death_from_above_pulse']))
 
 
         #trait specific modifiers
@@ -1724,7 +1730,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('the_dreadlords_deceit', None, ['fan_of_knives']))
 
         stats, aps, crits, procs, additional_info = self.determine_stats(self.subtlety_attack_counts)
-        
+
         self.damage_modifiers.update_modifier_value('executioner', (1 + self.subtlety_mastery_conversion * self.stats.get_mastery_from_rating(stats['mastery'])))
         self.damage_modifiers.update_modifier_value('versatility', self.stats.get_versatility_multiplier_from_rating(rating=stats['versatility']))
         self.damage_modifiers.update_modifier_value('stealth_shuriken_storm', 1 + self.stealth_shuriken_uptime * 3)
@@ -1813,7 +1819,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attacks_per_second['oh_autoattacks'] = haste_multiplier / self.stats.oh.speed * (1 - white_swing_downtime)
 
         #Set up initial combo point budget
-        mfd_cps = self.talents.marked_for_death * (self.settings.duration/60. * 5. * (1. + self.settings.marked_for_death_resets))
+        mfd_cps = self.talents.marked_for_death * (self.settings.duration/60. * (5. + self.talents.deeper_strategem) * (1. + self.settings.marked_for_death_resets))
         self.cp_budget = mfd_cps
 
 
@@ -2011,9 +2017,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.cp_budget += net_cps - 20 + cps_to_generate
             #Update energy budget with alacrity and haste procs
             if self.talents.alacrity:
-                old_alacrity_regen = self.energy_regen * (1 + (alacrity_stacks *0.01))
+                old_alacrity_regen = self.energy_regen * (1 + (alacrity_stacks *0.02))
                 new_alacrity_stacks = self.get_average_alacrity(attacks_per_second)
-                new_alacrity_regen = self.energy_regen * (1 + (new_alacrity_stacks *0.01))
+                new_alacrity_regen = self.energy_regen * (1 + (new_alacrity_stacks *0.02))
                 self.energy_budget += (new_alacrity_regen - old_alacrity_regen) * self.settings.duration
                 alacrity_stacks = new_alacrity_stacks
 
@@ -2051,9 +2057,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         #Full additive assumption for now
         if self.talents.master_of_subtlety:
-            stealth_time = 9. * attacks_per_second['shadow_dance'] + 6 * attacks_per_second['vanish']
+            stealth_time = 8. * attacks_per_second['shadow_dance'] + 5 * attacks_per_second['vanish']
             if self.talents.subterfuge:
-                 stealth_time = 11. * attacks_per_second['shadow_dance'] + 9 * attacks_per_second['vanish']
+                 stealth_time = 10. * attacks_per_second['shadow_dance'] + 8 * attacks_per_second['vanish']
             self.mos_time =  float(stealth_time)/self.settings.duration
 
         if self.talents.nightstalker:
@@ -2107,11 +2113,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attack_counts = {}
 
         if self.talents.master_of_shadows:
-            net_energy += 30
+            net_energy += 25
 
         cost_mod = 1.0
         if self.talents.shadow_focus:
-            cost_mod = 0.7
+            cost_mod = 0.8
 
         if use_sod:
             net_energy -= self.get_spell_cost('symbols_of_death', cost_mod=cost_mod)

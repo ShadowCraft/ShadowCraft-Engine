@@ -78,7 +78,7 @@ class RogueDamageCalculator(DamageCalculator):
             #general
             'crimson_vial':        (30.,  'buff'),
             'death_from_above':    (25., 'strike'),
-            'feint':               (20., 'buff'),
+            'feint':               (35., 'buff'),
             'kick':                (15., 'strike'),
             #assassination
             'envenom':             (35., 'strike'),
@@ -289,7 +289,7 @@ class RogueDamageCalculator(DamageCalculator):
                 #death from above strike is actually an evis with 1.5 modifier
                 #and dfa pulse needs mastery
                 if ability == 'death_from_above_strike':
-                    modifier *= 1.5 
+                    modifier *= 1.5
                     ability = 'eviscerate'
 
                 damage_breakdown[ability] = self.get_ability_dps(average_ap, ability, aps, crits, modifier, crit_mod, both_hands, cps)
@@ -305,7 +305,7 @@ class RogueDamageCalculator(DamageCalculator):
 
     #general abilities
     def death_from_above_pulse_damage(self, ap, cp):
-        return 0.732 * cp * ap
+        return 0.8784 * cp * ap #20% buff in 7.1.5
 
     #assassination
     def deadly_poison_tick_damage(self, ap):
@@ -351,7 +351,7 @@ class RogueDamageCalculator(DamageCalculator):
         return 6 * 1.2 * ap
 
     def rupture_tick_damage(self, ap, cp):
-        return .3 * cp * ap * (1 + (0.0333 * self.traits.gushing_wounds))
+        return 1.5 * ap * (1 + (0.0333 * self.traits.gushing_wounds))
 
     #outlaw
     def ambush_damage(self, ap):
@@ -405,13 +405,13 @@ class RogueDamageCalculator(DamageCalculator):
         return 1.472 * cp * ap
 
     def gloomblade_damage(self, ap):
-        return 4.25 * self.get_weapon_damage('mh', ap) * (1 + (0.0333 * self.traits.the_quiet_knife))
+        return 5.25 * self.get_weapon_damage('mh', ap) * (1 + (0.0333 * self.traits.the_quiet_knife))
 
     def mh_goremaws_bite_damage(self, ap):
-        return 5 * self.get_weapon_damage('mh', ap)
+        return 10 * self.get_weapon_damage('mh', ap)
 
     def oh_goremaws_bite_damage(self, ap):
-        return 5 * self.oh_penalty() * self.get_weapon_damage('oh', ap)
+        return 10 * self.oh_penalty() * self.get_weapon_damage('oh', ap)
 
     #Nightblade doesn't actually scale with cps but passing cps for simplicity
     def nightblade_tick_damage(self, ap, cp):
@@ -499,9 +499,9 @@ class RogueDamageCalculator(DamageCalculator):
         cost = self.ability_info[ability][0] * cost_mod
         if ability == 'shadowstrike':
             cost -= 0.25 * (5 * self.traits.energetic_stabbing)
-            #Assume 5 yards away so 10 + 5/2
+            #Assume 5 yards away so 3 + 5/3
             if self.stats.gear_buffs.shadow_satyrs_walk:
-                cost -= 12
+                cost -= 4.67
         return cost
 
     def get_spell_cd(self, ability):
