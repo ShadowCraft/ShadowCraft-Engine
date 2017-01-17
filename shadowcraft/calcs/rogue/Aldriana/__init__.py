@@ -822,7 +822,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         if self.traits.blood_of_the_assassinated:
             bota_uptime = 0.35 * sum(aps['rupture']) * 10 # procs/ability * ability/second * seconds/proc gives unit-less uptime
-            bota_multiplier = 2 * bota_uptime
+            bota_multiplier = 1 + 2 * bota_uptime
             self.damage_modifiers.update_modifier_value('blood_of_the_assassinated', bota_multiplier)
 
         finisher_aps = 0.0
