@@ -154,6 +154,8 @@ class GearBuffs(object):
         'rogue_t18_2pc',                # Dispatch deals 25% additional damage as Nature damage, SnD internal ticks have 8% change to proc ARfor 4 sec, Vanish awards 5cps and increases all damage done by 30% for 10 sec
         'rogue_t18_4pc',                # Dispatch generates +2cps, AR increased damage by 15%, Evis and Rupture reduce the CD of vanish by 1 seconds per CP
         'rogue_t18_4pc_lfr',            # Energy increased by 20, 5% increase in energy regen
+        'rogue_t19_2pc',                # Mutilate causes 30% bleed over 8 seconds, Nightblades lasts additional 2 seconds per CP
+        'rogue_t19_4pc',                # 10% envenom damage per bleed, 30% SSk generates additional CP if nightblade up
         'jacins_ruse_2pc',              # Proc 3000 mastery for 15s, 1 rppm
         'march_of_the_legion_2pc',      # Proc 35K damage when fighting demons, 6+Haste RPPM
         #Legendaries

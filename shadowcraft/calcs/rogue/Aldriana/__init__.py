@@ -754,7 +754,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.damage_modifiers = modifiers.ModifierList(self.assassination_damage_sources + ['autoattacks'])
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('versatility', None, [], blacklist=True))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('armor', self.armor_mitigation_multiplier(), ['death_from_above_pulse',
-            'fan_of_knives', 'hemorrhage', 'mutilate', 'autoattacks']))
+            'fan_of_knives', 'hemorrhage', 'mutilate', 'autoattacks', 't19_2pc']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('potent_poisons', None, ['deadly_poison',
             'deadly_instant_poison', 'envenom', 'poison_bomb',]))
         #Generic tuning aura
@@ -770,7 +770,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.talents.elaborate_planning:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('elaborate_planning', None, [], blacklist=True))
         if self.talents.hemorrhage:
-            self.damage_modifiers.register_modifier(modifiers.DamageModifier('hemorrhage', 1.25, ['rupture_ticks', 'garrote_ticks']))
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('hemorrhage', 1.25, ['rupture_ticks', 'garrote_ticks', 't19_2pc']))
         if self.talents.agonizing_poison:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('agonizing_poison', None, [], blacklist=True))
         if self.talents.deeper_strategem:
@@ -790,6 +790,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #gear specific modifiers
         if self.stats.gear_buffs.the_dreadlords_deceit:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('the_dreadlords_deceit', None, ['fan_of_knives']))
+        if self.stats.gear_buffs.rogue_t19_4pc:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('t19_4pc', 1.2, ['envenom']))
 
         self.set_constants()
 
@@ -854,7 +856,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             agonizing_poison_adder = 0.0 + 0.01 * self.traits.master_alchemist + 0.02 * self.traits.poison_knives
             agonizing_poison_adder += 1 + (self.assassination_mastery_conversion * self.stats.get_mastery_from_rating(stats['mastery'])) / 2
 
-            agonizing_poison_mod_per_stack= 0.04 * agonizing_poison_adder
+            #12% reduction from 4% per stack
+            agonizing_poison_mod_per_stack= 0.0352 * agonizing_poison_adder
             if self.talents.master_poisoner:
                 agonizing_poison_mod_per_stack *= 1.2
 
@@ -867,6 +870,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.stats.gear_buffs.the_dreadlords_deceit:
             avg_dreadlord_stacks = 0.5/aps['fan_of_knives']
             self.damage_modifiers.update_modifier_value('the_dreadlords_deceit', 1 + (0.35 * avg_dreadlord_stacks))
+
+        if self.stats.gear_buffs.rogue_t19_4pc:
+            if aps['mutilate'] < 0.125:
+                t19_4pc_multiplier = 0.1 * (aps['mutilate'] / 0.125)
+                self.damage_modifiers.update_modifier_value('t19_4pc', 1.2 + t19_4pc_multiplier)
 
         damage_breakdown, additional_info  = self.compute_damage_from_aps(stats, aps, crits, procs, additional_info)
 
@@ -1071,6 +1079,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         #poison computations, use old function for now
         self.get_poison_counts(attacks_per_second, current_stats)
+        if self.stats.gear_buffs.rogue_t19_2pc:
+            attacks_per_second['t19_2pc'] = attacks_per_second['mutilate']
 
         for a in attacks_per_second:
             if isinstance(attacks_per_second[a], list):
@@ -1649,7 +1659,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     #Items:
         #Class hall set bonus
-        #Tier bonus
         #Trinkets
         #Legendaries
 
@@ -1833,6 +1842,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #setup timelines
         sod_duration = 35
         nightblade_duration = 6 + (2 * self.settings.finisher_threshold)
+        if self.stats.gear_buffs.rogue_t19_2pc:
+            nightblade_duration = 6 + (4 * self.settings.finisher_threshold)
 
         #Add attacks that could occur during first pass to aps
         attacks_per_second[self.dance_cp_builder] = 0
@@ -2029,6 +2040,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second['nightblade_ticks'] = [0, 0, 0, 0, 0, 0, 0]
             for cp in xrange(7):
                 attacks_per_second['nightblade_ticks'][cp] = (3 + cp) * attacks_per_second['nightblade'][cp]
+                if self.stats.gear_buffs.rogue_t19_2pc:
+                    attacks_per_second['nightblade_ticks'][cp] = (3 + (2 * cp)) * attacks_per_second['nightblade'][cp]
             del attacks_per_second['nightblade']
 
         #convert some white swings into shadowblades
@@ -2155,6 +2168,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         net_energy -= attack_counts[cp_builder] * cp_builder_cost
         if cp_builder == 'shadowstrike':
             net_cps += attack_counts['shadowstrike'] * (1 + self.talents.premeditation) + self.shadow_blades_uptime
+            if self.stats.gear_buffs.rogue_t19_4pc:
+                net_cps += attack_counts['shadowstrike'] * 0.3
         elif cp_builder == 'shuriken_storm':
             net_cps += min(1 + self.settings.num_boss_adds, self.max_store_cps) + self.shadow_blades_uptime
 
