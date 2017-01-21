@@ -159,8 +159,16 @@ class GearBuffs(object):
         'jacins_ruse_2pc',              # Proc 3000 mastery for 15s, 1 rppm
         'march_of_the_legion_2pc',      # Proc 35K damage when fighting demons, 6+Haste RPPM
         #Legendaries
-        'shadow_satyrs_walk',
-        'the_dreadlords_deceit'
+        'the_dreadlords_deceit',             #fok/ssk damage increased by 35% per 2 seconds up to 1 minute
+        'duskwalker_footpads',               #Vendetta CD reduced by 1 second for each 50 energy spent
+        'thraxis_tricksy_treads',            #
+        'shadow_satyrs_walk',                #3+1/3yd energy refund on ssk
+        'insignia_of_ravenholdt',            #15% damage as shadow on cp generators
+        'zoldyck_family_training_shakles',   #Poisons and Bleeds deal 30% additional damage below 30% health
+        'greenskins_waterlogged_wristcuffs', #
+        'denial_of_the_half-giants',         # Finishers extend ShB by 0.3 seconds per cp spent
+        'shivarran_symmetry',                #
+        'mantle_of_the_master_assassin',     #100% crit during stealth and for 6 seconds after
 
     ]
 
