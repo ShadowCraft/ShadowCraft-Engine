@@ -785,14 +785,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         if self.traits.slayers_precision:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('slayers_precision',
-            1.05 + (0.005 * self.traits.slayers_precision - 1), [], blacklist=True))
+            1.05 + (0.005 * (self.traits.slayers_precision - 1)), [], blacklist=True))
 
         #gear specific modifiers
         if self.stats.gear_buffs.the_dreadlords_deceit:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('the_dreadlords_deceit', None, ['fan_of_knives']))
         if self.stats.gear_buffs.zoldyck_family_training_shakles:
             #Assume spend 30% of the time sub 30% health, imperfect but good enough
-            self.damage_modifiers.register_modifier(modifiers.DamageModifier('zoldyck_family_training_shakles', 1.09, ['deadly_poison', 
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('zoldyck_family_training_shakles', 1.09, ['deadly_poison',
                 'garrote_ticks', 'kingsbane_ticks', 'rupture_ticks']))
         if self.stats.gear_buffs.rogue_t19_4pc:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('t19_4pc', 1.2, ['envenom']))
@@ -1086,12 +1086,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.stats.gear_buffs.rogue_t19_2pc:
             attacks_per_second['t19_2pc'] = attacks_per_second['mutilate']
 
-        for a in attacks_per_second:
-            if isinstance(attacks_per_second[a], list):
-                print a, 1./sum(attacks_per_second[a])
-            else:
-                print a, 1./attacks_per_second[a]
-        print "--------"
+        # for a in attacks_per_second:
+        #     if isinstance(attacks_per_second[a], list):
+        #         print a, 1./sum(attacks_per_second[a])
+        #     else:
+        #         print a, 1./attacks_per_second[a]
+        # print "--------"
 
         return attacks_per_second, crit_rates, additional_info
 
@@ -1736,7 +1736,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         if self.traits.legionblade:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('legionblade',
-            1.05 + (0.005 * self.traits.legionblade - 1), [], blacklist=True))
+            1.05 + (0.005 * (self.traits.legionblade - 1)), [], blacklist=True))
 
         #gear specific modifiers
         if self.stats.gear_buffs.the_dreadlords_deceit:
