@@ -790,9 +790,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #gear specific modifiers
         if self.stats.gear_buffs.the_dreadlords_deceit:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('the_dreadlords_deceit', None, ['fan_of_knives']))
-        if self.stats.gear_buffs.zoldyck_family_training_shakles:
+
+        if self.stats.gear_buffs.zoldyck_family_training_shackles:
             #Assume spend 30% of the time sub 30% health, imperfect but good enough
-            self.damage_modifiers.register_modifier(modifiers.DamageModifier('zoldyck_family_training_shakles', 1.09, ['deadly_poison',
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('zoldyck_family_training_shackles', 1.09, ['deadly_poison', 'deadly_instant_poison',
                 'garrote_ticks', 'kingsbane_ticks', 'rupture_ticks']))
         if self.stats.gear_buffs.rogue_t19_4pc:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('t19_4pc', 1.2, ['envenom']))

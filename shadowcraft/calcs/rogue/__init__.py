@@ -21,7 +21,7 @@ class RogueDamageCalculator(DamageCalculator):
                                     'deadly_poison', 'deadly_instant_poison', 'envenom',
                                     'fan_of_knives', 'garrote_ticks', 'hemorrhage',
                                     'kingsbane', 'kingsbane_ticks', 'mutilate',
-                                    'poisoned_knife', 'poison_bomb', 'rupture_ticks', 'from_the_shadows', 
+                                    'poisoned_knife', 'poison_bomb', 'rupture_ticks', 'from_the_shadows',
                                     't19_2pc']
     outlaw_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
                              'ambush', 'between_the_eyes', 'blunderbuss', 'cannonball_barrage',
@@ -199,7 +199,6 @@ class RogueDamageCalculator(DamageCalculator):
         crit_damage_modifier = self.crit_damage_modifiers()
 
         modifier_dict = self.damage_modifiers.compile_modifier_dict()
-        #print modifier_dict
 
         # this removes keys with empty values, prevents errors from:
         # attacks_per_second['sinister_strike'] = None

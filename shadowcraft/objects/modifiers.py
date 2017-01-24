@@ -22,6 +22,10 @@ class ModifierList(object):
 	def compile_modifier_dict(self):
 		lumped_modifier = {s:1 for s in self.sources}
 		for mod in self.modifiers.values():
+			# for key in lumped_modifier:
+			# 	print key, lumped_modifier[key]
+			# print "-----"
+			# print mod.name, mod.value, mod.ability_list, mod.blacklist
 			if mod.value is None:
 				raise exceptions.InvalidInputException(_('Modifier {mod} is uninitialized').format(mod=mod.name))
 			if not mod.blacklist:

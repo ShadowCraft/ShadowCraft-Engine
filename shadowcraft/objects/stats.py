@@ -164,9 +164,9 @@ class GearBuffs(object):
         'thraxis_tricksy_treads',            #
         'shadow_satyrs_walk',                #3+1/3yd energy refund on ssk
         'insignia_of_ravenholdt',            #15% damage as shadow on cp generators
-        'zoldyck_family_training_shakles',   #Poisons and Bleeds deal 30% additional damage below 30% health
+        'zoldyck_family_training_shackles',  #Poisons and Bleeds deal 30% additional damage below 30% health
         'greenskins_waterlogged_wristcuffs', #
-        'denial_of_the_half-giants',         # Finishers extend ShB by 0.3 seconds per cp spent
+        'denial_of_the_half_giants',         # Finishers extend ShB by 0.3 seconds per cp spent
         'shivarran_symmetry',                #
         'mantle_of_the_master_assassin',     #100% crit during stealth and for 6 seconds after
 
