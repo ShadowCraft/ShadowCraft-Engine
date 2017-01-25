@@ -44,7 +44,10 @@ test_oh = stats.Weapon(4821.0, 1.8, 'dagger', None)
 test_procs = procs.ProcsList()
 
 # Set up gear buffs.
-test_gear_buffs = stats.GearBuffs('gear_specialization',) #tier buffs located here
+test_gear_buffs = stats.GearBuffs('gear_specialization',
+'the_dreadlords_deceit',
+#'rogue_t19_2pc',
+) #tier buffs located here
 
 # Set up a calcs object..
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
@@ -56,7 +59,7 @@ test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          versatility=4153,)
 
 # Initialize talents..
-test_talents = talents.Talents('2210011', test_spec, test_class, level=test_level)
+test_talents = talents.Talents('2110011', test_spec, test_class, level=test_level)
 
 #initialize artifact traits..
 test_traits = artifact.Artifact(test_spec, test_class, trait_dict={
@@ -97,8 +100,8 @@ total_dps = sum(entry[1] for entry in dps_breakdown.items())
 
 # Compute EP values.
 #ep_values = calculator.get_ep(baseline_dps=total_dps)
-ep_values = calculator.get_ep()
-#tier_ep_values = calculator.get_other_ep(['rogue_t17_2pc', 'rogue_t17_4pc', 'rogue_t17_4pc_lfr'])
+#ep_values = calculator.get_ep()
+tier_ep_values = calculator.get_other_ep(['rogue_t19_2pc', 'rogue_t19_4pc', 'the_dreadlords_deceit'])
 
 #talent_ranks = calculator.get_talents_ranking()
 #trait_ranks = calculator.get_trait_ranking()
@@ -126,8 +129,8 @@ def pretty_print(dict_list):
         print '-' * (max_len + 15)
 
 dicts_for_pretty_print = [
-    ep_values,
-    #tier_ep_values,
+    #ep_values,
+    tier_ep_values,
     #trinkets_ep_value,
     dps_breakdown,
     #trait_ranks
