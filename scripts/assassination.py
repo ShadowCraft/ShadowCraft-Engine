@@ -43,19 +43,25 @@ test_oh = stats.Weapon(4821.0, 1.8, 'dagger', None)
 test_procs = procs.ProcsList()
 
 # Set up gear buffs.
-test_gear_buffs = stats.GearBuffs('gear_specialization', )
+test_gear_buffs = stats.GearBuffs('gear_specialization',
+#'the_dreadlords_deceit',
+#'rogue_t19_2pc',
+#'rogue_t19_4pc',
+#'zoldyck_family_training_shackles',
+#'cinidaria_the_symbiote',
+)
 
 # Set up a calcs object..
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          agi=25583,
                          stam=28368,
-                         crit=11133,
-                         haste=1666,
-                         mastery=2469,
+                         crit=7804,
+                         haste=1521,
+                         mastery=8230,
                          versatility=3085,)
 # Initialize talents..
 #test_talents = talents.Talents('2110031', test_spec, test_class, level=test_level)
-test_talents = talents.Talents('2110011', test_spec, test_class, level=test_level)
+test_talents = talents.Talents('3110011', test_spec, test_class, level=test_level)
 
 #initialize artifact traits..
 test_traits = artifact.Artifact(test_spec, test_class, trait_dict={
@@ -76,7 +82,7 @@ test_traits = artifact.Artifact(test_spec, test_class, trait_dict={
     'fade_into_shadows':         0,
     'from_the_shadows':          1,
     'blood_of_the_assassinated': 1,
-    'slayers_precision':         0,
+    'slayers_precision':         8,
 })
 
 # Set up settings.
@@ -93,7 +99,7 @@ total_dps = sum(entry[1] for entry in dps_breakdown.items())
 
 # Compute EP values.
 #ep_values = calculator.get_ep(baseline_dps=total_dps)
-#tier_ep_values = calculator.get_other_ep(['rogue_t14_4pc', 'rogue_t14_2pc', 'rogue_t15_4pc', 'rogue_t15_2pc', 'rogue_t16_2pc', 'rogue_t16_4pc'])
+tier_ep_values = calculator.get_other_ep(['the_dreadlords_deceit', 'zoldyck_family_training_shackles'])
 
 
 #talent_ranks = calculator.get_talents_ranking()
@@ -124,7 +130,7 @@ def pretty_print(dict_list, total_sum = 1., show_percent=False):
 
 dicts_for_pretty_print = [
     #ep_values,
-    #tier_ep_values,
+    tier_ep_values,
     #talent_ranks,
     #trinkets_ep_value,
     dps_breakdown,
