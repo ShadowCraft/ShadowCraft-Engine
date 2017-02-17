@@ -9,10 +9,10 @@ class Stats(object):
     # rows 1-9 from my WotLK spreadsheets to see how these are typically
     # defined, though the numbers will need to updated for level 85.
 
-    crit_rating_conversion_values        = {60:13.0, 70:14.0,  80:15.0,  85:17.0,  90:23.0,  100:110.0,  110:350.0}
-    haste_rating_conversion_values       = {60:9.00, 70:10.0,  80:12.0,  85:14.0,  90:20.0,  100:100.0,  110:325.0}
-    mastery_rating_conversion_values     = {60:13.0, 70:14.0,  80:15.0,  85:17.0,  90:23.0,  100:110.0,  110:350.0}
-    versatility_rating_conversion_values = {60:13.0, 70:14.0,  80:15.0,  85:17.0,  90:27.0,  100:130.0,  110:400.0}
+    crit_rating_conversion_values        = {60:13.0, 70:14.0,  80:15.0,  85:17.0,  90:23.0,  100:110.0,  110:400.0}
+    haste_rating_conversion_values       = {60:9.00, 70:10.0,  80:12.0,  85:14.0,  90:20.0,  100:100.0,  110:375.0}
+    mastery_rating_conversion_values     = {60:13.0, 70:14.0,  80:15.0,  85:17.0,  90:23.0,  100:110.0,  110:400.0}
+    versatility_rating_conversion_values = {60:13.0, 70:14.0,  80:15.0,  85:17.0,  90:27.0,  100:130.0,  110:475.0}
 
     def __init__(self, mh, oh, procs, gear_buffs, str=0, agi=0, int=0, stam=0, ap=0, crit=0, haste=0, mastery=0,
                 versatility=0, level=None):
