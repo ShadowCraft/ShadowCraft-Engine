@@ -134,6 +134,28 @@ class RogueDamageCalculator(DamageCalculator):
             'shadow_blades':            180.,
         }
 
+    # Vendetta CDR for number of points in trait
+    master_assassin_cdr = {
+            0: 0,
+            1: 10,
+            2: 20,
+            3: 30,
+            4: 38,
+            5: 44,
+            6: 48,
+    }
+
+    # Vendetta CDR for number of points in trait
+    fortunes_boon_cdr = {
+            0: 0,
+            1: 10,
+            2: 18,
+            3: 25,
+            4: 31,
+            5: 37,
+            6: 42,
+    }
+
     def __setattr__(self, name, value):
         object.__setattr__(self, name, value)
         if name == 'level':
@@ -511,14 +533,14 @@ class RogueDamageCalculator(DamageCalculator):
     def get_spell_cd(self, ability):
         cd = self.ability_cds[ability]
         if ability == 'adrenaline_rush':
-            cd -= 10 * self.traits.fortunes_boon
+            cd -= self.fortunes_boon_cdr[self.traits.fortunes_boon]
         elif ability == 'vendetta':
-            cd -= 10 * self.traits.master_assassin
+            cd -= self.master_assassin_cdr[self.traits.master_assassin]
         return cd
 
     def crit_rate(self, crit=None):
-        # all rogues get 10% bonus crit, .05 of base crit for everyone
+        # all rogues have 10% base crit
         # should be coded better?
-        base_crit = .15
+        base_crit = .10
         base_crit += self.stats.get_crit_from_rating(crit)
         return base_crit + self.race.get_racial_crit(is_day=self.settings.is_day) - self.crit_reduction
