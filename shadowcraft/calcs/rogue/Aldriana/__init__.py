@@ -718,6 +718,26 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #damage_breakdown, additional_info = self.get_damage_breakdown(self.determine_stats(attack_counts_function))
         return damage_breakdown, additional_info
 
+    def compute_insignia_of_ravenholdt_damage(self, stats, attacks_per_second, crit_rates):
+        # Insignia of Ravenholdt, 30% (Assassination) / 15% base generator damage with crit chance
+        ap = stats['ap'] + stats['agi'] * self.stat_multipliers['ap']
+        insignia_base_dmg = 0
+        insignia_dmg_factor = 0.3 if self.spec == 'assassination' else 0.15
+        for ability in attacks_per_second:
+            if ability in ['mutilate', 'hemorrhage',
+                'ambush', 'blunderbuss', 'pistol_shot', 'saber_slash',
+                'backstab', 'gloomblade', 'shadowstrike']:
+                both_hands = ability in self.dual_wield_damage_sources
+                insignia_base_dmg += insignia_dmg_factor * self.get_ability_dps(ap, ability, attacks_per_second[ability], 0, 1, 1, both_hands) # base dps wihout modifiers
+        crit_rate = crit_rates['insignia_of_ravenholdt']
+        crit_mod = self.crit_damage_modifiers()
+        insignia_dmg = insignia_base_dmg * (1 - crit_rate) + insignia_base_dmg * crit_rate * crit_mod
+
+        # Also hits adds within 15yd in front
+        if self.settings.num_boss_adds:
+            insignia_dmg *= 1 + self.settings.num_boss_adds
+        return insignia_dmg
+
     ###########################################################################
     # Assassination DPS functions
     ###########################################################################
@@ -882,6 +902,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 self.damage_modifiers.update_modifier_value('t19_4pc', 1.2 + t19_4pc_multiplier)
 
         damage_breakdown, additional_info  = self.compute_damage_from_aps(stats, aps, crits, procs, additional_info)
+
+        if self.stats.gear_buffs.insignia_of_ravenholdt:
+            damage_breakdown['insignia_of_ravenholdt'] = self.compute_insignia_of_ravenholdt_damage(stats, aps, crits)
 
         return damage_breakdown
 
@@ -1204,6 +1227,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         stats, aps, crits, procs, additional_info = self.determine_stats(self.outlaw_attack_counts)
         damage_breakdown, additional_info  = self.compute_damage_from_aps(stats, aps, crits, procs, additional_info)
+
+        if self.stats.gear_buffs.insignia_of_ravenholdt:
+            damage_breakdown['insignia_of_ravenholdt'] = self.compute_insignia_of_ravenholdt_damage(stats, aps, crits)
 
         bf_mod = .35
         if self.settings.cycle.blade_flurry:
@@ -1784,17 +1810,16 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         damage_breakdown, additional_info  = self.compute_damage_from_aps(stats, aps, crits, procs, additional_info)
 
+        if self.stats.gear_buffs.insignia_of_ravenholdt:
+            damage_breakdown['insignia_of_ravenholdt'] = self.compute_insignia_of_ravenholdt_damage(stats, aps, crits)
+
         for key in damage_breakdown:
             damage_breakdown[key] *= infallible_trinket_mod
 
         #add AoE damage sources:
         if self.settings.num_boss_adds:
             for key in damage_breakdown:
-                if key == 'shuriken_toss':
-                    damage_breakdown[key] *= 1 + self.settings.num_boss_adds
-                elif key == 'second_shuriken':
-                    damage_breakdown[key] *= 1 + self.settings.num_boss_adds
-                elif key == 'shadow_nova':
+                if key in ['shuriken_toss', 'second_shuriken', 'shadow_nova']:
                     damage_breakdown[key] *= 1 + self.settings.num_boss_adds
 
         return damage_breakdown

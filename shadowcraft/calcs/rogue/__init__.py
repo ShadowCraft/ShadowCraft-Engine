@@ -22,16 +22,18 @@ class RogueDamageCalculator(DamageCalculator):
                                     'fan_of_knives', 'garrote_ticks', 'hemorrhage',
                                     'kingsbane', 'kingsbane_ticks', 'mutilate',
                                     'poisoned_knife', 'poison_bomb', 'rupture_ticks', 'from_the_shadows',
-                                    't19_2pc']
+                                    't19_2pc', 'insignia_of_ravenholdt']
     outlaw_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
                              'ambush', 'between_the_eyes', 'blunderbuss', 'cannonball_barrage',
                              'ghostly_strike', 'greed', 'killing_spree', 'main_gauche',
-                             'pistol_shot', 'run_through', 'saber_slash']
+                             'pistol_shot', 'run_through', 'saber_slash',
+                             'insignia_of_ravenholdt']
     subtlety_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
                                'backstab', 'eviscerate', 'gloomblade',
                                'goremaws_bite', 'nightblade', 'shadowstrike',
                                'shadow_blades', 'shuriken_storm', 'shuriken_toss',
-                               'nightblade_ticks', 'soul_rip', 'shadow_nova', 'second_shuriken']
+                               'nightblade_ticks', 'soul_rip', 'shadow_nova', 'second_shuriken',
+                               'insignia_of_ravenholdt']
     #All damage sources mitigated by armor
     physical_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
                                 'fan_of_knives', 'hemorrhage', 'mutilate', 'poisoned_knife',
@@ -145,7 +147,7 @@ class RogueDamageCalculator(DamageCalculator):
             6: 48,
     }
 
-    # Vendetta CDR for number of points in trait
+    # Adrenaline Rush CDR for number of points in trait
     fortunes_boon_cdr = {
             0: 0,
             1: 10,
