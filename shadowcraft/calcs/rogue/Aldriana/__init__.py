@@ -779,11 +779,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.damage_modifiers = modifiers.ModifierList(self.assassination_damage_sources + ['autoattacks'])
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('versatility', None, [], blacklist=True))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('armor', self.armor_mitigation_multiplier(), ['death_from_above_pulse',
-            'fan_of_knives', 'hemorrhage', 'mutilate', 'autoattacks', 't19_2pc']))
+            'fan_of_knives', 'hemorrhage', 'mutilate', 'poisoned_knife', 'autoattacks', 't19_2pc']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('potent_poisons', None, ['deadly_poison',
             'deadly_instant_poison', 'envenom', 'poison_bomb',]))
         #Generic tuning aura
-        self.damage_modifiers.register_modifier(modifiers.DamageModifier('assassination_aura', 1.07, [], blacklist=True))
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('assassination_aura', 1.11, [], blacklist=True))
 
         #time averaged vendetta modifier used for most things
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('vendetta_time_average', None, [], blacklist=True))
@@ -1158,8 +1158,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #outlaw specific constants
         self.outlaw_cd_delay = 0 #this is for DFA convergence, mostly
 
-        self.damage_modifier_cache = 1 + (0.005 * self.traits.cursed_steel)
-
         self.ar_duration = 15
         self.ar_cd = self.get_spell_cd('adrenaline_rush')
         self.cotd_cd = self.get_spell_cd('curse_of_the_dreadblades')
@@ -1233,7 +1231,29 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             (6, True, False, False, False, False) : (2.9230175, 1.0230561, [0, 0, 0, 0, 0, 0, 1.0]) ,
         }
 
+        self.damage_modifiers = modifiers.ModifierList(self.outlaw_damage_sources + ['autoattacks'])
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('versatility', None, [], blacklist=True))
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('armor', self.armor_mitigation_multiplier(), ['death_from_above_pulse',
+            'death_from_above_strike', 'ambush', 'between_the_eyes', 'blunderbuss', 'cannonball_barrage',
+            'ghostly_strike', 'greed', 'killing_spree', 'main_gauche',
+            'pistol_shot', 'run_through', 'saber_slash', 'autoattacks']))
+
+        # Generic tuning aura
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('outlaw_aura', 1.16, [], blacklist=True))
+
+        # Talent specific modifiers
+        if self.talents.deeper_strategem:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('deeper_strategem', 1.05, ['between_the_eyes', 'run_through', 'death_from_above_pulse', 'death_from_above_strike']))
+
+        # Trait specific modifiers
+        if self.traits.cursed_steel:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('cursed_steel',
+            1.05 + (0.005 * (self.traits.legionblade - 1)), [], blacklist=True))
+
         stats, aps, crits, procs, additional_info = self.determine_stats(self.outlaw_attack_counts)
+
+        self.damage_modifiers.update_modifier_value('versatility', self.stats.get_versatility_multiplier_from_rating(rating=stats['versatility']))
+
         damage_breakdown, additional_info  = self.compute_damage_from_aps(stats, aps, crits, procs, additional_info)
 
         if self.stats.gear_buffs.insignia_of_ravenholdt:
@@ -1740,17 +1760,15 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.damage_modifiers = modifiers.ModifierList(self.subtlety_damage_sources + ['autoattacks'])
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('versatility', None, [], blacklist=True))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('armor', self.armor_mitigation_multiplier(), ['death_from_above_pulse',
-            'death_from_above_strike', 'shuriken_storm', 'eviscerate', 'backstab', 'shadowstrike', 'autoattacks',]))
+            'death_from_above_strike', 'shuriken_storm', 'eviscerate', 'backstab', 'shadowstrike', 'shuriken_toss', 'autoattacks']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('executioner', None, ['eviscerate', 'nightblade_ticks']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('symbols_of_death', 1.2, [], blacklist=True))
-        self.damage_modifiers.register_modifier(modifiers.DamageModifier('shadow_fangs', 1.04, [], blacklist=True))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('stealth_shuriken_storm', None, ['shuriken_storm', 'second_shuriken']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('backstab_positional', 1 + 0.3 * self.settings.cycle.positional_uptime, ['backstab']))
         #Generic tuning aura
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('subtlety_aura', 1.09, [], blacklist=True))
 
         #talent specific modifiers
-
         if self.talents.nightstalker:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('nightstalker_ssk', None, ['shadowstrike']))
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('nightstalker_shuriken_storm', None, ['shuriken_storm']))
@@ -1769,6 +1787,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
 
         #trait specific modifiers
+        if self.traits.shadow_fangs:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('shadow_fangs', 1.04, [], blacklist=True))
+
         if self.traits.finality:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('finality', None, ['nightblade_ticks', 'eviscerate']))
 

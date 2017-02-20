@@ -37,7 +37,7 @@ class RogueDamageCalculator(DamageCalculator):
     #All damage sources mitigated by armor
     physical_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
                                 'fan_of_knives', 'hemorrhage', 'mutilate', 'poisoned_knife',
-                                'ambush, between_the_eyes', 'blunderbuss', 'cannonball_barrage',
+                                'ambush', 'between_the_eyes', 'blunderbuss', 'cannonball_barrage',
                                 'ghostly_strike', 'greed', 'killing_spree', 'main_gauche',
                                 'pistol_shot', 'run_through', 'saber_slash', 'backstab',
                                 'eviscerate', 'shadowstrike', 'shuriken_storm', 'shuriken_toss']
