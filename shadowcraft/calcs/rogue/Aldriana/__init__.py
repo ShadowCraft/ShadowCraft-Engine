@@ -738,6 +738,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             insignia_dmg *= 1 + self.settings.num_boss_adds
         return insignia_dmg
 
+    def compute_symbiote_strike_damage(self, damage_breakdown):
+        # Cinidaria's Symbiote Strike is plain 30% of all damage we actually do
+        # Assume it's up for 10% of the fight
+        return sum(damage_breakdown.values()) * 0.03
+
     ###########################################################################
     # Assassination DPS functions
     ###########################################################################
@@ -905,6 +910,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         if self.stats.gear_buffs.insignia_of_ravenholdt:
             damage_breakdown['insignia_of_ravenholdt'] = self.compute_insignia_of_ravenholdt_damage(stats, aps, crits)
+
+        if self.stats.gear_buffs.cinidaria_the_symbiote:
+            damage_breakdown['symbiote_strike'] = self.compute_symbiote_strike_damage(damage_breakdown)
 
         return damage_breakdown
 
@@ -1247,6 +1255,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         for ability in damage_breakdown:
             damage_breakdown[ability] *= infallible_trinket_mod
+
+        if self.stats.gear_buffs.cinidaria_the_symbiote:
+            damage_breakdown['symbiote_strike'] = self.compute_symbiote_strike_damage(damage_breakdown)
 
         return damage_breakdown
 
@@ -1821,6 +1832,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             for key in damage_breakdown:
                 if key in ['shuriken_toss', 'second_shuriken', 'shadow_nova']:
                     damage_breakdown[key] *= 1 + self.settings.num_boss_adds
+
+        if self.stats.gear_buffs.cinidaria_the_symbiote:
+            damage_breakdown['symbiote_strike'] = self.compute_symbiote_strike_damage(damage_breakdown)
 
         return damage_breakdown
 
