@@ -1605,9 +1605,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             gcd_budget -= curse_gcds
             energy_budget -= (ss_count * self.saber_slash_energy_cost) + (rt_count * self.run_through_energy_cost)
 
-            #Curse gives 8 cps with anticipation so 3 left over
+            #Curse gives 10 cps with anticipation so 5 left over
             if self.talents.anticipation:
-                bonus_cps += 3 * curse_cd_multiplier
+                bonus_cps += 5 * curse_cd_multiplier
 
         #spend bonus cps for max cp RTs
 
@@ -1752,7 +1752,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.max_spend_cps += 1
         self.max_store_cps = self.max_spend_cps
         if self.talents.anticipation:
-            self.max_store_cps += 3
+            self.max_store_cps += 5
 
         self.set_constants()
 
@@ -2118,7 +2118,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.traits.akarris_soul:
             attacks_per_second['soul_rip'] = attacks_per_second['shadowstrike']
         if self.traits.shadow_nova:
-            attacks_per_second['shadow_nova'] = attacks_per_second['symbols_of_death'] + attacks_per_second['vanish']
+            attacks_per_second['shadow_nova'] = min(attacks_per_second['shadow_dance'], 1./5.)
 
         #FIXME: Kinda hackish, better approach would be to compute a seperate dance rotation
         if self.stats.gear_buffs.the_dreadlords_deceit and (self.cp_builder =='backstab' or self.cp_builder == 'gloomblade'):
