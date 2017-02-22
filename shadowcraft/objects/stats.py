@@ -169,7 +169,7 @@ class GearBuffs(object):
         'denial_of_the_half_giants',         # Finishers extend ShB by 0.3 seconds per cp spent
         'shivarran_symmetry',                #
         'mantle_of_the_master_assassin',     #100% crit during stealth and for 6 seconds after
-
+        'cinidaria_the_symbiote',            #30% additional damage to enemies above 90% health
     ]
 
     allowed_buffs = frozenset(other_gear_buffs)
