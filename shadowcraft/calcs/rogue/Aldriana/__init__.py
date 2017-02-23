@@ -1004,7 +1004,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         #set up garrote:
         base_garrote_duration = 18.
-        garrote_cooldown = 15.
+        garrote_cooldown = self.get_spell_cd('garrote')
         if self.talents.exsanguinate:
             exsang_garrote_duration = base_garrote_duration / 2
             exsang_downtime = garrote_cooldown - exsang_garrote_duration
@@ -1016,6 +1016,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second['garrote'] = 1. / base_garrote_duration
             attacks_per_second['garrote_ticks'] = 1. / 3
 
+        cp_budget = attacks_per_second['garrote'] * self.settings.duration
         garrote_cost_per_second = self.get_spell_cost('garrote') * attacks_per_second['garrote']
 
         #Now that ticks are done, we can compute VW regen
@@ -1027,23 +1028,29 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         #compute cooldowned talents:
         mfd_cps = self.talents.marked_for_death * (self.settings.duration/60. * (5. + self.talents.deeper_strategem) * (1. + self.settings.marked_for_death_resets))
-        cp_budget = mfd_cps
+        cp_budget += mfd_cps
 
         if self.stats.gear_buffs.the_dreadlords_deceit:
             fok_interval = 1./60
             attacks_per_second['fan_of_knives'] = fok_interval
-            cp_budget += self.settings.duration * fok_interval
+            cp_budget += self.settings.duration * fok_interval * (1 + crit_rates['fan_of_knives'])
             net_energy_per_second -= fok_interval * 35
 
         if self.traits.kingsbane:
             attacks_per_second['kingsbane'] = 1./self.kingsbane_cd
             attacks_per_second['kingsbane_ticks'] = 7. / self.kingsbane_cd
+            kb_crit = crit_rates['kingsbane']
+            cpg_cps = {1: (1 - kb_crit) ** 2,
+                       2: 2 * (1 - kb_crit) * kb_crit,
+                       3: kb_crit ** 2}
+            avg_cp_per_kb = sum([cp * cpg_cps[cp] for cp in cpg_cps])
+            cp_budget += avg_cp_per_kb * attacks_per_second['kingsbane'] * self.settings.duration
             net_energy_per_second -= self.get_spell_cost('kingsbane') * attacks_per_second['kingsbane']
 
         if self.talents.hemorrhage:
             hemos_per_second = 1./20
             attacks_per_second['hemorrhage'] = hemos_per_second
-            hemo_cps = (1 + crit_rates['hemorrhage']) * (20. / self.settings.duration)
+            hemo_cps = (1 + crit_rates['hemorrhage']) * (self.settings.duration * hemos_per_second)
             cp_budget += hemo_cps
             net_energy_per_second -= self.get_spell_cost('hemorrhage') * hemos_per_second
 

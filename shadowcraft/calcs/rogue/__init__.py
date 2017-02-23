@@ -110,7 +110,7 @@ class RogueDamageCalculator(DamageCalculator):
             'shadowstrike':        (40., 'strike'),
             'shuriken_storm':      (35., 'strike'),
             'shuriken_toss':       (40., 'strike'),
-            'symbols_of_death':    (20., 'buff'),
+            'symbols_of_death':    (35., 'buff'),
     }
     ability_cds = {
             #general
@@ -123,6 +123,7 @@ class RogueDamageCalculator(DamageCalculator):
             'vanish':                   120.,
             #assassination
             'exsanguinate':              45.,
+            'garrote':                   15.,
             'kingsbane':                 45.,
             'vendetta':                 120.,
             #outlaw
@@ -333,10 +334,10 @@ class RogueDamageCalculator(DamageCalculator):
 
     #assassination
     def deadly_poison_tick_damage(self, ap):
-        return 0.3575 * ap * (1 + (0.05 * self.traits.master_alchemist)) * (1 + (0.4 * self.talents.master_poisoner))
+        return 0.3575 * ap * (1 + (0.05 * self.traits.master_alchemist)) * (1 + (0.3 * self.talents.master_poisoner))
 
     def deadly_instant_poison_damage(self, ap):
-        return 0.221 * ap * (1 + (0.05 * self.traits.master_alchemist)) * (1 + (0.4 * self.talents.master_poisoner))
+        return 0.221 * ap * (1 + (0.05 * self.traits.master_alchemist)) * (1 + (0.3 * self.talents.master_poisoner))
 
     #Maybe add better handling for 'rule of three' for artifact traits
     def envenom_damage(self, ap, cp):
@@ -356,11 +357,11 @@ class RogueDamageCalculator(DamageCalculator):
         return 1 * self.get_weapon_damage('mh', ap)
 
     def mh_kingsbane_damage(self, ap):
-       return 3 * self.get_weapon_damage('mh', ap) * (1 + (0.4 * self.talents.master_poisoner))
+       return 2.4 * self.get_weapon_damage('mh', ap) * (1 + (0.3 * self.talents.master_poisoner))
     def oh_kingsbane_damage(self, ap):
-        return 3 * self.oh_penalty() * self.get_weapon_damage('oh', ap) * (1 + (0.4 * self.talents.master_poisoner))
+        return 2.4 * self.oh_penalty() * self.get_weapon_damage('oh', ap) * (1 + (0.3 * self.talents.master_poisoner))
     def kingsbane_tick_damage(self, ap):
-        return 0.45 * ap * (1 + (0.4 * self.talents.master_poisoner))
+        return 0.36 * ap * (1 + (0.3 * self.talents.master_poisoner))
     def mh_mutilate_damage(self, ap):
         return 3.6 * self.get_weapon_damage('mh', ap) * (1 + (0.15 * self.traits.assassins_blades))
 
