@@ -779,11 +779,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.damage_modifiers = modifiers.ModifierList(self.assassination_damage_sources + ['autoattacks'])
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('versatility', None, [], blacklist=True))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('armor', self.armor_mitigation_multiplier(), ['death_from_above_pulse',
-            'fan_of_knives', 'hemorrhage', 'mutilate', 'autoattacks', 't19_2pc']))
+            'fan_of_knives', 'hemorrhage', 'mutilate', 'poisoned_knife', 'autoattacks', 't19_2pc']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('potent_poisons', None, ['deadly_poison',
             'deadly_instant_poison', 'envenom', 'poison_bomb',]))
         #Generic tuning aura
-        self.damage_modifiers.register_modifier(modifiers.DamageModifier('assassination_aura', 1.07, [], blacklist=True))
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('assassination_aura', 1.11, [], blacklist=True))
 
         #time averaged vendetta modifier used for most things
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('vendetta_time_average', None, [], blacklist=True))
@@ -1004,7 +1004,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         #set up garrote:
         base_garrote_duration = 18.
-        garrote_cooldown = 15.
+        garrote_cooldown = self.get_spell_cd('garrote')
         if self.talents.exsanguinate:
             exsang_garrote_duration = base_garrote_duration / 2
             exsang_downtime = garrote_cooldown - exsang_garrote_duration
@@ -1016,6 +1016,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second['garrote'] = 1. / base_garrote_duration
             attacks_per_second['garrote_ticks'] = 1. / 3
 
+        cp_budget = attacks_per_second['garrote'] * self.settings.duration
         garrote_cost_per_second = self.get_spell_cost('garrote') * attacks_per_second['garrote']
 
         #Now that ticks are done, we can compute VW regen
@@ -1027,23 +1028,29 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         #compute cooldowned talents:
         mfd_cps = self.talents.marked_for_death * (self.settings.duration/60. * (5. + self.talents.deeper_strategem) * (1. + self.settings.marked_for_death_resets))
-        cp_budget = mfd_cps
+        cp_budget += mfd_cps
 
         if self.stats.gear_buffs.the_dreadlords_deceit:
             fok_interval = 1./60
             attacks_per_second['fan_of_knives'] = fok_interval
-            cp_budget += self.settings.duration * fok_interval
+            cp_budget += self.settings.duration * fok_interval * (1 + crit_rates['fan_of_knives'])
             net_energy_per_second -= fok_interval * 35
 
         if self.traits.kingsbane:
             attacks_per_second['kingsbane'] = 1./self.kingsbane_cd
             attacks_per_second['kingsbane_ticks'] = 7. / self.kingsbane_cd
+            kb_crit = crit_rates['kingsbane']
+            cpg_cps = {1: (1 - kb_crit) ** 2,
+                       2: 2 * (1 - kb_crit) * kb_crit,
+                       3: kb_crit ** 2}
+            avg_cp_per_kb = sum([cp * cpg_cps[cp] for cp in cpg_cps])
+            cp_budget += avg_cp_per_kb * attacks_per_second['kingsbane'] * self.settings.duration
             net_energy_per_second -= self.get_spell_cost('kingsbane') * attacks_per_second['kingsbane']
 
         if self.talents.hemorrhage:
             hemos_per_second = 1./20
             attacks_per_second['hemorrhage'] = hemos_per_second
-            hemo_cps = (1 + crit_rates['hemorrhage']) * (20. / self.settings.duration)
+            hemo_cps = (1 + crit_rates['hemorrhage']) * (self.settings.duration * hemos_per_second)
             cp_budget += hemo_cps
             net_energy_per_second -= self.get_spell_cost('hemorrhage') * hemos_per_second
 
@@ -1158,8 +1165,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #outlaw specific constants
         self.outlaw_cd_delay = 0 #this is for DFA convergence, mostly
 
-        self.damage_modifier_cache = 1 + (0.005 * self.traits.cursed_steel)
-
         self.ar_duration = 15
         self.ar_cd = self.get_spell_cd('adrenaline_rush')
         self.cotd_cd = self.get_spell_cd('curse_of_the_dreadblades')
@@ -1233,7 +1238,29 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             (6, True, False, False, False, False) : (2.9230175, 1.0230561, [0, 0, 0, 0, 0, 0, 1.0]) ,
         }
 
+        self.damage_modifiers = modifiers.ModifierList(self.outlaw_damage_sources + ['autoattacks'])
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('versatility', None, [], blacklist=True))
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('armor', self.armor_mitigation_multiplier(), ['death_from_above_pulse',
+            'death_from_above_strike', 'ambush', 'between_the_eyes', 'blunderbuss', 'cannonball_barrage',
+            'ghostly_strike', 'greed', 'killing_spree', 'main_gauche',
+            'pistol_shot', 'run_through', 'saber_slash', 'autoattacks']))
+
+        # Generic tuning aura
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('outlaw_aura', 1.16, [], blacklist=True))
+
+        # Talent specific modifiers
+        if self.talents.deeper_strategem:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('deeper_strategem', 1.05, ['between_the_eyes', 'run_through', 'death_from_above_pulse', 'death_from_above_strike']))
+
+        # Trait specific modifiers
+        if self.traits.cursed_steel:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('cursed_steel',
+            1.05 + (0.005 * (self.traits.legionblade - 1)), [], blacklist=True))
+
         stats, aps, crits, procs, additional_info = self.determine_stats(self.outlaw_attack_counts)
+
+        self.damage_modifiers.update_modifier_value('versatility', self.stats.get_versatility_multiplier_from_rating(rating=stats['versatility']))
+
         damage_breakdown, additional_info  = self.compute_damage_from_aps(stats, aps, crits, procs, additional_info)
 
         if self.stats.gear_buffs.insignia_of_ravenholdt:
@@ -1585,9 +1612,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             gcd_budget -= curse_gcds
             energy_budget -= (ss_count * self.saber_slash_energy_cost) + (rt_count * self.run_through_energy_cost)
 
-            #Curse gives 8 cps with anticipation so 3 left over
+            #Curse gives 10 cps with anticipation so 5 left over
             if self.talents.anticipation:
-                bonus_cps += 3 * curse_cd_multiplier
+                bonus_cps += 5 * curse_cd_multiplier
 
         #spend bonus cps for max cp RTs
 
@@ -1732,7 +1759,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.max_spend_cps += 1
         self.max_store_cps = self.max_spend_cps
         if self.talents.anticipation:
-            self.max_store_cps += 3
+            self.max_store_cps += 5
 
         self.set_constants()
 
@@ -1740,17 +1767,15 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.damage_modifiers = modifiers.ModifierList(self.subtlety_damage_sources + ['autoattacks'])
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('versatility', None, [], blacklist=True))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('armor', self.armor_mitigation_multiplier(), ['death_from_above_pulse',
-            'death_from_above_strike', 'shuriken_storm', 'eviscerate', 'backstab', 'shadowstrike', 'autoattacks',]))
+            'death_from_above_strike', 'shuriken_storm', 'eviscerate', 'backstab', 'shadowstrike', 'shuriken_toss', 'autoattacks']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('executioner', None, ['eviscerate', 'nightblade_ticks']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('symbols_of_death', 1.2, [], blacklist=True))
-        self.damage_modifiers.register_modifier(modifiers.DamageModifier('shadow_fangs', 1.04, [], blacklist=True))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('stealth_shuriken_storm', None, ['shuriken_storm', 'second_shuriken']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('backstab_positional', 1 + 0.3 * self.settings.cycle.positional_uptime, ['backstab']))
         #Generic tuning aura
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('subtlety_aura', 1.09, [], blacklist=True))
 
         #talent specific modifiers
-
         if self.talents.nightstalker:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('nightstalker_ssk', None, ['shadowstrike']))
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('nightstalker_shuriken_storm', None, ['shuriken_storm']))
@@ -1769,6 +1794,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
 
         #trait specific modifiers
+        if self.traits.shadow_fangs:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('shadow_fangs', 1.04, [], blacklist=True))
+
         if self.traits.finality:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('finality', None, ['nightblade_ticks', 'eviscerate']))
 
@@ -2097,7 +2125,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.traits.akarris_soul:
             attacks_per_second['soul_rip'] = attacks_per_second['shadowstrike']
         if self.traits.shadow_nova:
-            attacks_per_second['shadow_nova'] = attacks_per_second['symbols_of_death'] + attacks_per_second['vanish']
+            attacks_per_second['shadow_nova'] = min(attacks_per_second['shadow_dance'], 1./5.)
 
         #FIXME: Kinda hackish, better approach would be to compute a seperate dance rotation
         if self.stats.gear_buffs.the_dreadlords_deceit and (self.cp_builder =='backstab' or self.cp_builder == 'gloomblade'):
