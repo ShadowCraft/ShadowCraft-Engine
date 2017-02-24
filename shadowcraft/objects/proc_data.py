@@ -144,10 +144,13 @@ allowed_procs = {
         'proc_rate': 0.92,
         'trigger': 'all_attacks'
     },
+
     #7.0 neck enchants
-    'mark_of_the_hidden_satyr': { #191259 Deals 41626 to 48375 damage.
+    'mark_of_the_hidden_satyr': {
         'stat':'spell_damage',
-        'value': 45000, #average 41626 to 48375
+        'value': 0, # AP based
+        'ap_coefficient': 2.5, # server-side, not in dbc
+        'dmg_school': 'fire',
         'duration': 0,
         'proc_name': 'Mark of the Hidden Satyr',
         'type': 'rppm',
@@ -158,10 +161,11 @@ allowed_procs = {
         'trigger': 'all_attacks'
    },
 
-    #aoe proc? ranged only?
-    'mark_of_the_distant_army': { #A distant army fires a volley of arrows, dealing 41628 to 48375 damage over 1.5 sec.
+    #TODO: aoe proc
+    'mark_of_the_distant_army': { #A distant army fires a volley of arrows, dealing 3 ticks of damage over 1.5 sec.
         'stat':'physical_damage',
-        'value': 45000, #average 41626 to 48375
+        'value': 0, # AP based
+        'ap_coefficient': 2.5, # server-side, not in dbc, per tick is 2.5 / 3
         'duration': 0,
         'proc_name': 'Mark of the Distant Army',
         'type': 'rppm',
@@ -172,14 +176,14 @@ allowed_procs = {
         'trigger': 'all_attacks'
    },
 
-    'mark_of_the_claw': { #Permanently enchants a necklace to sometimes increase critical strike and haste by 550 for 6 sec.
+    'mark_of_the_claw': { #Permanently enchants a necklace to sometimes increase critical strike and haste by 1000 for 6 sec.
         'stat':'stats',
-        'value': {'haste': 550, 'crit': 550},
+        'value': {'haste': 1000, 'crit': 1000},
         'duration': 6,
         'proc_name': 'Mark of the Claw',
         'source': 'neck',
         'type': 'rppm',
-        'proc_rate': 2.5,
+        'proc_rate': 3,
         'trigger': 'all_attacks',
    },
      #7.0 trinket procs

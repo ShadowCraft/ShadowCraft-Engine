@@ -11,7 +11,8 @@ class InvalidProcException(exceptions.InvalidInputException):
 class Proc(object):
     def __init__(self, stat, value, duration, proc_name, max_stacks=1, can_crit=True, stats=None, upgradable=False, scaling=None,
                  buffs=None, base_value=0, type='rppm', icd=0, proc_rate=1.0, trigger='all_attacks', haste_scales=False, item_level=1,
-                 on_crit=False, on_procced_strikes=True, proc_rate_modifier=1., source='generic', att_spd_scales=False,):
+                 on_crit=False, on_procced_strikes=True, proc_rate_modifier=1., source='generic', att_spd_scales=False,
+                 ap_coefficient=0., dmg_school=None):
         self.stat = stat
         if stats is not None:
             self.stats = set(stats)
@@ -36,6 +37,11 @@ class Proc(object):
         self.on_crit = on_crit
         self.on_procced_strikes = on_procced_strikes
         self.proc_rate_modifier = proc_rate_modifier
+        self.ap_coefficient = ap_coefficient
+        self.dmg_school = dmg_school
+
+        if self.dmg_school is None and stat in ['physical_damage', 'physical_dot']:
+            self.dmg_school = 'physical'
 
         #separate method just to keep the constructor clean
         self.update_proc_value()

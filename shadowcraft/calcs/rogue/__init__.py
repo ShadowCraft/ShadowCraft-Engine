@@ -22,18 +22,16 @@ class RogueDamageCalculator(DamageCalculator):
                                     'fan_of_knives', 'garrote_ticks', 'hemorrhage',
                                     'kingsbane', 'kingsbane_ticks', 'mutilate',
                                     'poisoned_knife', 'poison_bomb', 'rupture_ticks', 'from_the_shadows',
-                                    't19_2pc', 'insignia_of_ravenholdt']
+                                    't19_2pc']
     outlaw_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
                              'ambush', 'between_the_eyes', 'blunderbuss', 'cannonball_barrage',
                              'ghostly_strike', 'greed', 'killing_spree', 'main_gauche',
-                             'pistol_shot', 'run_through', 'saber_slash',
-                             'insignia_of_ravenholdt']
+                             'pistol_shot', 'run_through', 'saber_slash']
     subtlety_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
                                'backstab', 'eviscerate', 'gloomblade',
                                'goremaws_bite', 'nightblade', 'shadowstrike',
                                'shadow_blades', 'shuriken_storm', 'shuriken_toss',
-                               'nightblade_ticks', 'soul_rip', 'shadow_nova', 'second_shuriken',
-                               'insignia_of_ravenholdt']
+                               'nightblade_ticks', 'soul_rip', 'shadow_nova', 'second_shuriken']
     #All damage sources mitigated by armor
     physical_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
                                 'fan_of_knives', 'hemorrhage', 'mutilate', 'poisoned_knife',
@@ -41,9 +39,6 @@ class RogueDamageCalculator(DamageCalculator):
                                 'ghostly_strike', 'greed', 'killing_spree', 'main_gauche',
                                 'pistol_shot', 'run_through', 'saber_slash', 'backstab',
                                 'eviscerate', 'shadowstrike', 'shuriken_storm', 'shuriken_toss']
-    #All damage sources the scale with mastery (assn or sub)
-    mastery_scaling_damage_sources = ['deadly_poison', 'deadly_instant_poison', 'evenom',
-                                      'eviscerate', 'nightblade_ticks', 'poison_bomb']
     #All damage sources that deal damage with both hands
     dual_wield_damage_sources = ['kingsbane', 'mutilate', 'greed', 'killing_spree',
                                  'goremaws_bite', 'shadow_blades']
@@ -250,7 +245,7 @@ class RogueDamageCalculator(DamageCalculator):
             if proc.proc_name not in damage_breakdown:
                 # Toss multiple damage procs with the same name (Avalanche):
                 # attacks_per_second is already being updated with that key.
-                damage_breakdown[proc.proc_name] = self.get_proc_damage_contribution(proc, attacks_per_second[proc.proc_name], current_stats, average_ap, damage_breakdown)
+                damage_breakdown[proc.proc_name] = self.get_proc_damage_contribution(proc, attacks_per_second[proc.proc_name], current_stats, average_ap, modifier_dict)
 
         #compute damage breakdown for each spec
         if self.spec == 'assassination':
