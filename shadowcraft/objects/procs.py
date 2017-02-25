@@ -121,21 +121,36 @@ class Proc(object):
         else:
             return False
 
-    def get_rppm_proc_rate(self, haste=1.):
+    def get_base_proc_rate_for_spec(self, spec):
+        proc_rate = self.proc_rate
+        if hasattr(self.proc_rate,'__iter__'): # list of proc rates by spec
+            if not spec:
+                raise InvalidProcException(_('Spec expected for the proc rate of {proc}').format(proc=self.proc_name))
+            if not spec in self.proc_rate:
+                if 'other' in self.proc_rate:
+                    spec = 'other'
+                else:
+                    raise InvalidProcException(_('Proc rate of {proc} not found for current spec').format(proc=self.proc_name))
+            proc_rate = self.proc_rate[spec]
+        return proc_rate
+
+    def get_rppm_proc_rate(self, haste=1., spec=None):
         if self.is_real_ppm():
-            return haste * self.proc_rate * self.proc_rate_modifier
+            proc_rate = self.get_base_proc_rate_for_spec(spec)
+            return haste * proc_rate * self.proc_rate_modifier
         raise InvalidProcException(_('Invalid proc handling for proc {proc}').format(proc=self.proc_name))
 
-    def get_proc_rate(self, speed=None, haste=1.0):
+    def get_proc_rate(self, speed=None, haste=1.0, spec=None):
+        proc_rate = self.get_base_proc_rate_for_spec(spec)
         if self.is_ppm():
             if speed is None:
                 raise InvalidProcException(_('Weapon speed needed to calculate the proc rate of {proc}').format(proc=self.proc_name))
             else:
-                return self.proc_rate * speed / 60.
+                return proc_rate * speed / 60.
         elif self.is_real_ppm():
-            return haste * self.proc_rate / 60.
+            return haste * proc_rate / 60.
         else:
-            return self.proc_rate
+            return proc_rate
 
     def is_ppm(self):
         if self.type == 'ppm':

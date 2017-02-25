@@ -369,7 +369,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 triggers_per_second += attacks_per_second['garrote']
             if 'hemorrhage_ticks' in attacks_per_second:
                 triggers_per_second += attacks_per_second['hemorrhage']
-        return triggers_per_second * proc.get_proc_rate(self.stats.mh.speed)
+        return triggers_per_second * proc.get_proc_rate(self.stats.mh.speed, spec=self.spec)
 
     def get_oh_procs_per_second(self, proc, attacks_per_second, crit_rates):
         triggers_per_second = 0
@@ -387,7 +387,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                         triggers_per_second += attacks_per_second[ability] * crit_rates[ability]
                     else:
                         triggers_per_second += attacks_per_second[ability]
-        return triggers_per_second * proc.get_proc_rate(self.stats.oh.speed)
+        return triggers_per_second * proc.get_proc_rate(self.stats.oh.speed, spec=self.spec)
 
     def get_other_procs_per_second(self, proc, attacks_per_second, crit_rates):
         triggers_per_second = 0
@@ -423,7 +423,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             else:
                 raise InputNotModeledException(_('PPMs that also proc off spells are not yet modeled.'))
         else:
-            return triggers_per_second * proc.get_proc_rate()
+            return triggers_per_second * proc.get_proc_rate(spec=self.spec)
 
     def get_procs_per_second(self, proc, attacks_per_second, crit_rates):
         # TODO: Include damaging proc hits in figuring out how often everything else procs.
@@ -474,9 +474,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 haste *= 1.4
             #The 1.1307 is a value that increases the proc rate due to bad luck prevention. It /should/ be constant among all rppm proc styles
             if not proc.icd:
-                frequency = haste * 1.1307 * proc.get_rppm_proc_rate() / 60
+                frequency = haste * 1.1307 * proc.get_rppm_proc_rate(spec=self.spec) / 60
             else:
-                mean_proc_time = 60. / (haste * proc.get_rppm_proc_rate()) + proc.icd - min(proc.icd, 10)
+                mean_proc_time = 60. / (haste * proc.get_rppm_proc_rate(spec=self.spec)) + proc.icd - min(proc.icd, 10)
                 if proc.max_stacks > 1: # just correct if you only do damage on max_stacks, e.g. legendary_capacitive_meta
                     mean_proc_time *= proc.max_stacks
                 frequency = 1.1307 / mean_proc_time
