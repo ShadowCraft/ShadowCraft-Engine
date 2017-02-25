@@ -21,41 +21,41 @@ class ModifierList(object):
 
 	def compile_modifier_dict(self):
 		lumped_modifier = {s:1 for s in self.sources}
-		for mod in self.modifiers.values():
-			# for key in lumped_modifier:
-			# 	print key, lumped_modifier[key]
-			# print "-----"
-			# print mod.name, mod.value, mod.ability_list, mod.blacklist
-			if mod.value is None:
-				raise exceptions.InvalidInputException(_('Modifier {mod} is uninitialized').format(mod=mod.name))
-			if not mod.blacklist:
-				for ability in mod.ability_list:
-					lumped_modifier[ability] *= mod.value
-			else:
-				for ability in self.sources:
-					if not ability in mod.ability_list:
-						lumped_modifier[ability] *= mod.value
-		return lumped_modifier
 
-	# modifiers marked as all_damage count for EVERYTHING including stuff not in the ability_list
-	def get_all_damage_modifier(self):
-		all_damage_mod = 1
+		# mods for all damage
+		lumped_modifier['all_damage'] = 1
 		for mod in self.modifiers.values():
 			if mod.value is None:
 				raise exceptions.InvalidInputException(_('Modifier {mod} is uninitialized').format(mod=mod.name))
 			if mod.all_damage:
-				all_damage_mod *= mod.value
-		return all_damage_mod
+				lumped_modifier['all_damage'] *= mod.value
 
-	# returns the total modifier for the specified damage school
-	def get_damage_school_modifier(self, school):
-		school_mod = 1
+		# mods for damage schools
 		for mod in self.modifiers.values():
 			if mod.value is None:
 				raise exceptions.InvalidInputException(_('Modifier {mod} is uninitialized').format(mod=mod.name))
-			if mod.all_damage or (mod.dmg_schools is not None and school in mod.dmg_schools):
-				school_mod *= mod.value
-		return school_mod
+			if mod.dmg_schools:
+				for school in mod.dmg_schools:
+					modname = 'school_' + school
+					if modname in lumped_modifier:
+						lumped_modifier[modname] *= mod.value
+					else:
+						lumped_modifier[modname] = lumped_modifier['all_damage'] * mod.value
+
+		# mods for source abilities
+		for mod in self.modifiers.values():
+			if mod.value is None:
+				raise exceptions.InvalidInputException(_('Modifier {mod} is uninitialized').format(mod=mod.name))
+			for ability in self.sources:
+				if mod.blacklist:
+					if ability in mod.ability_list:
+						continue
+					else:
+						lumped_modifier[ability] *= mod.value
+				elif mod.all_damage or ability in mod.ability_list:
+					lumped_modifier[ability] *= mod.value
+
+		return lumped_modifier
 
 #DamageModifier specifies any type of modifier applied to ability damage.
 #Each modifier is specified as a value applied to either a whitelist or blacklist of abilities.
@@ -69,4 +69,7 @@ class DamageModifier(object):
 		self.blacklist = blacklist
 		self.all_damage = all_damage
 		self.dmg_schools = dmg_schools
+
+		if self.all_damage and self.dmg_schools is not None:
+			raise exceptions.InvalidInputException(_('Modifier {mod} should only specify either all_damage or dmg_schools').format(mod=mod.name))
 

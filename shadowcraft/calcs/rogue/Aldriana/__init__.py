@@ -267,10 +267,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         if proc.proc_name in modifier_dict:
             multiplier = modifier_dict[proc.proc_name]
-        elif proc.dmg_school is not None:
-            multiplier = self.damage_modifiers.get_damage_school_modifier(proc.dmg_school)
+        elif proc.dmg_school is not None and 'school_' + proc.dmg_school in modifier_dict:
+            multiplier = modifier_dict['school_' + proc.dmg_school]
         else:
-            multiplier = self.damage_modifiers.get_all_damage_modifier()
+            multiplier = modifier_dict['all_damage']
 
         if proc.can_crit == False:
             crit_rate = 0
