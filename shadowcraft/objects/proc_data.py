@@ -186,29 +186,47 @@ allowed_procs = {
         'proc_rate': 3,
         'trigger': 'all_attacks',
    },
-     #7.0 trinket procs
-    'arcanogolem_digit': { #Equip: Your attacks have a chance to rake all enemies in front of you for 37356 Arcane damage.
+
+     #Legion trinket procs
+    'arcanogolem_digit': { #Equip: Your attacks have a chance to rake all enemies in front of you for X Arcane damage.
         'stat':'spell_damage',
-        'value': 37356, #multiple targets not modeled
+        'value': 0, #rpp-scaled, TODO: multiple targets not modeled
         'duration': 0,
         'proc_name': 'Arcane Swipe',
-        'scaling': 12,
-        'item_level': 875,
+        'dmg_school': 'arcane',
+        'scaling': 14.21082, #hotfixed value
+        'item_level': 870,
         'type': 'rppm',
         'source': 'trinket',
-        'proc_rate': 1,
+        'proc_rate': 5,
         'icd': 1,
         'haste_scales': True,
         'can_crit': True,
         'trigger': 'all_attacks'
    },
 
-    'bloodthirsty_instinct': { #Equip: Your melee attacks have a chance to increase your Haste by 3399 for 10 sec.  This effect occurs more often against targets at low health.
+    'bloodstained_handkerchief': { #Use: Garrote your target from behind, causing them to bleed for X Physical damage every 3 sec until they die. (1 Min Cooldown)
+        'stat':'physical_damage',
+        'value': 0, #rpp-scaled, TODO: could be applied to adds as well, after CD
+        'duration': 0,
+        'proc_name': 'Cruel Garrote',
+        'scaling': 3.474452,
+        'item_level': 855,
+        'type': 'icd',
+        'source': 'trinket',
+        'proc_rate': 1,
+        'icd': 3,
+        'can_crit': True,
+        'trigger': 'all_attacks'
+   },
+
+    'bloodthirsty_instinct': { #Equip: Your melee attacks have a chance to increase your Haste by X for 10 sec.  This effect occurs more often against targets at low health.
         'stat':'stats',
-        'value': {'haste': 3399},
+        'value': {'haste': 0}, #rpp-scaled
         'duration': 10,
         'proc_name': 'Bloodthirsty Instinct',
-        'scaling': 1.378349,
+        'scaling': 1.470561,
+        'crm_scales': True,
         'item_level': 850,
         'source': 'trinket',
         'type': 'rppm',
@@ -216,32 +234,32 @@ allowed_procs = {
         'trigger': 'all_attacks',
    },
 
-    'chaos_talisman': { #Equip: Your melee autoattacks grant you Chaotic Energy, increasing your Strength or Agility by 55, stacking up to 20 times.  If you do not autoattack an enemy for 4 sec, this effect will decrease by 1 stack every sec.
+    'chaos_talisman': { #Equip: Your melee autoattacks grant you Chaotic Energy, increasing your Strength or Agility by X, stacking up to 20 times. If you do not autoattack an enemy for 4 sec, this effect will decrease by 1 stack every sec.
         'stat':'stats',
-        'value': {'agi': 42},
-        'duration': 24, #decays 1/s after 4s
+        'value': {'agi': 0}, #rpp-scaled
+        'duration': 23, #decays by 1 stack after 4s without autoattacks (assume we can ignore decay)
         'max_stacks': 20,
         'proc_name': 'Chaotic Energy',
         'scaling': 0.029595,
-        'item_level': 790,
+        'item_level': 805,
         'source': 'trinket',
         'type': 'icd',
         'icd': 1,
-        'proc_rate': 1000000, #idk how to force a stack every autoattack, and messing with icd gives wonky behavior
-        'trigger': 'all_attacks',
+        'proc_rate': 1,
+        'trigger': 'auto_attacks',
    },
 
-    'chrono_shard': { #Equip: Your spells and abilities have a chance to grant you 5112 Haste and 15% movement speed for 10 sec.
+    'chrono_shard': { #Equip: Your spells and abilities have a chance to grant you X Haste and 15% movement speed for 10 sec.
         'stat':'stats',
-        'value': {'haste': 5112},
+        'value': {'haste': 0}, #rpp-scaled, TODO: set bonus?
         'duration': 10,
         'proc_name': 'Acceleration',
         'scaling': 2.741159,
-        'item_level': 820,
+        'crm_scales': True,
+        'item_level': 805,
         'source': 'trinket',
         'type': 'rppm',
         'proc_rate': 1,
-        'haste_scales': True,
         'trigger': 'all_attacks',
    },
 
@@ -254,58 +272,78 @@ allowed_procs = {
         'item_level': 875,
         'source': 'trinket',
         'type': 'rppm',
-        'proc_rate': 3,
+        'proc_rate': {'assassination': 3.51, 'outlaw': 8.4, 'subtlety': 9},
         'trigger': 'all_attacks',
    },
 
     #removed the ":" not sure which way it should be
-    'darkmoon_deck_dominion': { #Equip: Increase critical strike by 668-1336. The amount of critical strike depends on the topmost card in the deck. Equip: Periodically shuffle the deck while in combat.
+    'darkmoon_deck_dominion': { #Equip: Increase critical strike by X-Y. The amount of critical strike depends on the topmost card in the deck. Equip: Periodically shuffle the deck while in combat.
         'stat': 'stats',
-        'value': {'crit':1336}, #not accurate, it should be shuffled every proc, may also stack
+        'value': {'crit':0}, #rpp-scaled, TODO: not accurate, it should be shuffled every 20s
         'duration': 20,
         'proc_name': 'Dominion Deck', #this does some wierd shuffling crit values /wrists
-        'scaling': 0.750315, #only valid for the 1336 draw
+        'scaling': 0.5627245, #use average for now, min 0.375134, max 0.750315
         'item_level': 815,
-        'type': 'rppm',
+        'type': 'icd',
+        'icd': 20, #slight loss? should change value instantly, not on attack trigger
         'source': 'trinket',
         'proc_rate': 1,
         'trigger': 'all_attacks'
     },
 
-    'draught_of_souls': { #Use: Enter a fel-crazed rage, dealing 124520 damage to a random nearby enemy every second for 8 sec.  You cannot use abilities during your rage, and your movement speed is slowed by 30%.  (2 Min Cooldown)
+    'draught_of_souls': { #Use: Enter a fel-crazed rage, dealing X damage to a random nearby enemy every 0.25sec for 3 sec.  You cannot move or use abilities during your rage. (1 Min, 20 Sec Cooldown)
         'stat':'spell_damage',
-        'value': 996160, #124520 * 8
-        'duration': 0,
+        'value': 0, #rpp-scaled
+        'duration': 3, #TODO: 3sec ability downtime
         'proc_name': 'Fel-Crazed Rage',
-        'scaling': 40,
-        'item_level': 875,
+        'dmg_school': 'shadow',
+        'scaling': 33. * 13., #13 hits total
+        'item_level': 880,
         'source': 'trinket',
         'type': 'icd',
-        'icd': 120,
+        'icd': 80,
         'proc_rate': 1,
+        'can_crit': True,
         'trigger': 'all_attacks',
    },
 
-    'entwined_elemental_foci': { #Equip: Your attacks have a chance to grant Fiery, Frost, or Arcane enchants for 8 sec.
+    'entwined_elemental_foci': { #Equip: Your attacks have a chance to grant you a Fiery, Frost, or Arcane enchants for 20 sec.
         'stat':'stats',
-        'value': {'haste': 0}, #needs special modeling
-        'duration': 8,
+        'value': {'haste': 0, 'crit': 0, 'mastery': 0}, #TODO: needs special modeling, you get only one stat per proc, but can have multiple at the same time
+        'duration': 20,
         'proc_name': 'Triumvirate',
-        'scaling': 1.5,
+        'scaling': 2.069368 / 3., #for now, assume we get all 3 for 1/3 each
+        'crm_scales': True,
         'item_level': 875,
         'source': 'trinket',
         'type': 'rppm',
-        'proc_rate': 1,
+        'proc_rate': 0.7,
         'trigger': 'all_attacks',
    },
 
-    'faulty_countermeasure': { #Use: Sheathe your weapons in ice for 30 sec, giving your attacks a chance to cause 54933 additional Frost damage and slow the target's movement speed by 30% for 8 sec.  (2 Min Cooldown)
-        'stat':'spell_damage',
-        'value': 0,
-        'duration': 15,
-        'proc_name': 'Sheathed in Frost', #need special handling
-        'scaling': 29.454582,
-        'item_level': 820,
+    'eye_of_command': { #Equip: Your melee auto attacks increase your Critical Strike by 148 for 10 sec, stacking up to 10 times. This effect is reset if you auto attack a different target.
+        'stat':'stats',
+        'value': {'crit': 0}, #rpp-scaled
+        'duration': 10, #decays when autoattacking different target, assume we can ignore
+        'max_stacks': 10,
+        'proc_name': "Legion's Gaze",
+        'scaling': 0.072857,
+        'crm_scales': True,
+        'item_level': 860,
+        'source': 'trinket',
+        'type': 'icd',
+        'icd': 1,
+        'proc_rate': 1,
+        'trigger': 'auto_attacks',
+   },
+
+    'faulty_countermeasure': { #Use: Sheathe your weapons in ice for 30 sec, giving your attacks a chance to cause X additional Frost damage and slow the target's movement speed by 30% for 8 sec.  (2 Min Cooldown)
+        'stat':'ability_modifier',
+        'value': 0, #rpp-scaled
+        'duration': 30,
+        'proc_name': 'Sheathed in Frost', #TODO: need special handling, rppm during uptime is 20 and scales with haste
+        'scaling': 17.47413,
+        'item_level': 805,
         'type': 'icd',
         'source': 'trinket',
         'proc_rate': 1,
@@ -314,13 +352,15 @@ allowed_procs = {
         'trigger': 'all_attacks'
    },
 
-    'giant_ornamental_pearl': { #Use: Become enveloped by a Gaseous Bubble that absorbs up to 233125 damage for 8 sec.  When the bubble is consumed or expires, it explodes and deals 111900 Frost damage to all nearby enemies within 10 yards.  (1 Min Cooldown)
+    'giant_ornamental_pearl': { #Use: Become enveloped by a Gaseous Bubble that absorbs up to X damage for 8 sec.  When the bubble is consumed or expires, it explodes and deals Y Frost damage to all nearby enemies within 10 yards.  (1 Min Cooldown)
         'stat':'spell_damage',
-        'value': 111900, #multiple targets not modeled
+        'dmg_school': 'frost',
+        'value': 0, #rpp-scaled, TODO: multiple targets not modeled
         'duration': 0,
         'proc_name': 'Gaseous Bubble',
-        'scaling': 60,
-        'item_level': 820,
+        'dmg_school': 'frost',
+        'scaling': 55.83131,
+        'item_level': 805,
         'type': 'icd',
         'source': 'trinket',
         'icd': 60,
@@ -329,13 +369,13 @@ allowed_procs = {
         'trigger': 'all_attacks',
    },
 
-    'horn_of_valor': { #Use: Sound the horn, increasing your primary stat by 2798 for 30 sec.  (2 Min Cooldown)
+    'horn_of_valor': { #Use: Sound the horn, increasing your primary stat by X for 30 sec. (2 Min Cooldown)
         'stat':'stats',
-        'value': {'agi': 2798},
+        'value': {'agi': 0}, #rpp-scaled
         'duration': 30,
         'proc_name': "Valarjar's Path",
         'scaling': 1.2,
-        'item_level': 820,
+        'item_level': 805,
         'type': 'icd',
         'source': 'trinket',
         'icd': 120,
@@ -343,9 +383,9 @@ allowed_procs = {
         'trigger': 'all_attacks',
    },
 
-    'infernal_alchemist_stone': { #Equip: When you heal or deal damage you have a chance to increase your Strength, Agility, or Intellect by 3275 for 15 sec.  Your highest stat is always chosen.
+    'infernal_alchemist_stone': { #Equip: When you heal or deal damage you have a chance to increase your Strength, Agility, or Intellect by X for 15 sec.  Your highest stat is always chosen.
         'stat': 'stats',
-        'value': {'agi':3275},
+        'value': {'agi': 0}, #rpp-scaled
         'duration': 15,
         'proc_name': 'Infernal Alchemist Stone',
         'scaling': 1.839772,
@@ -356,17 +396,32 @@ allowed_procs = {
         'trigger': 'all_attacks'
     },
 
-    'mark_of_dargrul': { #Equip: Your melee attacks have a chance to trigger a Landslide, dealing 43597 Physical damage to all enemies directly in front of you.
+    'kiljaedens_burning_wish': { #Use: Launch a vortex of destruction that seeks your current enemy. When it reaches the target, it explodes, dealing a critical strike to all enemies within 10 yds for X Fire damage. (1 Min, 15 Sec Cooldown)
         'stat':'spell_damage',
-        'value': 43597, #multiple targets not modeled
+        'dmg_school': 'fire',
+        'value': 0, #rpp-scaled, TODO: multiple targets not modeled
+        'duration': 0,
+        'proc_name': "Kil'jaeden's Burning Wish",
+        'scaling': 70 * 2, #always crits, hotfixed value
+        'item_level': 910,
+        'type': 'icd',
+        'source': 'trinket',
+        'proc_rate': 1,
+        'icd': 75,
+        'trigger': 'all_attacks'
+   },
+
+    'mark_of_dargrul': { #Equip: Your melee attacks have a chance to trigger a Landslide, dealing X Physical damage to all enemies directly in front of you.
+        'stat':'physical_damage',
+        'value': 0, #rpp-scaled, TODO: multiple targets not modeled
         'duration': 0,
         'proc_name': 'Landslide',
-        'scaling': 23.376637,
-        'item_level': 820,
+        'scaling': 21.66943,
+        'item_level': 805,
         'type': 'rppm',
         'source': 'trinket',
         'proc_rate': 4,
-        'icd': 1,
+        'icd': 2,
         'haste_scales': True,
         'can_crit': True,
         'trigger': 'all_attacks'
@@ -374,23 +429,25 @@ allowed_procs = {
 
     'memento_of_angerboda': { #Equip: Your melee attacks have a chance to activate Screams of the Dead, granting you a random combat enhancement for 8 sec.
         'stat':'stats',
-        'value': {'mastery': 1189}, # actually 1-3 stat buffs each time, only modeled one
+        'value': {'mastery': 0, 'crit': 0, 'haste': 0}, #TODO: actually 1-3 stat buffs each time
         'duration': 8,
         'proc_name': 'Memento of Angerboda',
-        'scaling': 0.637533, #only one data point 1189stat@ilvl820
-        'item_level': 820,
+        'scaling': 2.297781, #FIXME: for now using 1/3 for each stat, similar to entwined elemental foci
+        'crm_scales': True,
+        'item_level': 805,
         'source': 'trinket',
         'type': 'rppm',
         'proc_rate': 1.5,
         'trigger': 'all_attacks',
    },
 
-    'natures_call': { #Equip: Your melee attacks have a chance to grant you a blessing of one of the Allies of Nature for 8 sec.
+    'natures_call': { #Equip: Your melee attacks have a chance to grant you a blessing of one of the Allies of Nature for 10 sec.
         'stat':'stats',
-        'value': {'haste': 0}, #needs special modeling
-        'duration': 8,
+        'value': {'haste': 0}, #rpp-scaled, TODO: check other possible effects and if this needs special modeling
+        'duration': 10,
         'proc_name': 'Allies of Nature',
-        'scaling': 1.98186,
+        'scaling': 1.378778,
+        'crm_scales': True, #TODO: also verify this and to which effects the mod applies
         'item_level': 850,
         'source': 'trinket',
         'type': 'rppm',
@@ -398,38 +455,41 @@ allowed_procs = {
         'trigger': 'all_attacks',
    },
 
-    'nightblooming_frond': { #Equip: Your attacks have a chance to grant Recursive Strikes for 15 sec,causing your auto attacks to deal an additional 1557 damage and increase the intensity of Recursive Strikes.
-        'stat':'physical_damage',
-        'value': 1557, #needs special modeling
+    'nightblooming_frond': { #Equip: Your attacks have a chance to grant Recursive Strikes for 15 sec, causing your auto attacks to deal an additional X damage and increase the intensity of Recursive Strikes.
+        'stat':'ability_modifier',
+        'value': 0, #rpp-scaled, TODO: needs special modeling
         'duration': 15,
         'proc_name': 'Recursive Strikes',
-        'scaling': 0.5001606,
+        'scaling': 2.12,
         'item_level': 875,
         'source': 'trinket',
         'type': 'rppm',
         'proc_rate': 1,
+        'can_crit': True,
         'trigger': 'all_attacks',
    },
 
-    'nightmare_egg_shell': { #Equip: Your melee attacks have a chance to grant you 184 Haste every 1 sec for 20 sec.
+    'nightmare_egg_shell': { #Equip: Your melee attacks have a chance to grant you X Haste every 1 sec for 20 sec.
         'stat':'stats',
-        'value': {'haste': 184},
-        'duration': 8,
+        'value': {'haste': 0}, #rpp-scaled
+        'duration': 20,
         'proc_name': 'Down Draft',
-        'scaling': 0.098396,
-        'item_level': 820,
+        'scaling': 0.187677 * 10.5, # avg should be 10.5 stacks for 20 sec, melee attacks only needed to proc, not for stacks
+        'item_level': 805,
         'source': 'trinket',
         'type': 'rppm',
+        'icd': 20,
         'proc_rate': .7,
         'trigger': 'all_attacks',
    },
 
-    'ravaged_seed_pod': { #Use: Contaminate the ground beneath your feet for 10 sec, dealing 18798 Shadow damage to enemies in the area each second.  While you remain in this area, you gain 1540 Leech.  (1 Min Cooldown)
+    'ravaged_seed_pod': { #Use: Contaminate the ground beneath your feet for 10 sec, dealing X Shadow damage to enemies in the area each second.  While you remain in this area, you gain Y Leech.  (1 Min Cooldown)
         'stat':'spell_damage',
-        'value': 18798, #multiple targets not modeled
+        'value': 0, #rpp-scaled, TODO: multiple targets not modeled
+        'dmg_school': 'shadow',
         'duration': 10,
         'proc_name': 'Infested Ground',
-        'scaling': 7.622871,
+        'scaling': 6.624573,
         'item_level': 850,
         'type': 'icd',
         'icd': 60,
@@ -437,80 +497,103 @@ allowed_procs = {
         'proc_rate': 1,
    },
 
-    'spiked_counterweight': { #Your melee attacks have a chance to deal 90047 Physical damage and increase all damage the target takes from you by 15% for 15 sec, up to 271840 extra damage dealt.
+    'six_feather_fan': { #Equip: Your attacks have a chance to launch a volley of 6 Wind Bolts, each dealing X Nature damage and slowing your target by 30% for 6 sec.
+        'stat':'spell_damage',
+        'dmg_school': 'nature',
+        'value': 0, #rpp-scaled
+        'duration': 0,
+        'proc_name': 'Wind Bolt',
+        'scaling': 19.01865 * 6., #6 bolts, one every second
+        'item_level': 810,
+        'type': 'rppm',
+        'source': 'trinket',
+        'proc_rate': 1,
+        'haste_scales': True,
+        'can_crit': True
+   },
+
+    'spiked_counterweight': { #Your melee attacks have a chance to deal X Physical damage and increase all damage the target takes from you by 15% for 15 sec, up to Y extra damage dealt.
         'stat':'physical_damage',
-        'value': 103562, #initial hit portion
+        'value': 0, #rpp-scaled
         'duration': 0,
         'proc_name': 'Brutal Haymaker',
-        'scaling': 53,
-        'item_level': 825,
+        'scaling': 49.4631 + 185.487, #scaling for initial + extra damage. can we just add full extra dmg? what about crits?
+        'item_level': 805,
         'type': 'rppm',
         'source': 'trinket',
         'proc_rate': .92,
    },
 
-    'spiked_counterweight': { #Your melee attacks have a chance to deal 90047 Physical damage and increase all damage the target takes from you by 15% for 15 sec, up to 271840 extra damage dealt.
+    'spontaneous_appendages': { #Equip: Your melee attacks have a chance to generate extra appendages for 12 sec that attack nearby enemies for X Physical damage every 0.75 sec.
         'stat':'physical_damage',
-        'value': 312640, #modeled as all direct damage since bonus has a cap
-        'duration': 0,
-        'proc_name': 'Brutal Haymaker',
-        'scaling': 160,
-        'item_level': 825,
-        'type': 'rppm',
-        'source': 'trinket',
-        'proc_rate': .92,
-   },
-
-    'spontaneous_appendages': { #Equip: Your melee attacks have a chance to generate extra appendages for 12 sec that attack nearby enemies for 15132 Physical damage every 0.75 sec.
-        'stat':'physical_damage',
-        'value': 0, #needs special handling
-        'duration': 12,
-        'proc_name': 'Horrific Appendages',
-        'scaling': 6.136254,
+        'value': 0, #rpp-scaled, TODO: aoe damage
+        'duration': 0, #accumulate all dmg
+        'proc_name': 'Horrific Slam', #not the proc name but the dmg
+        'can_crit': True,
+        'scaling': 10.1246 * 16., # 16 hits overall, hotfixed value
         'item_level': 850,
         'type': 'rppm',
         'source': 'trinket',
         'proc_rate': .7,
+        'haste_scales': True,
    },
 
     'tempered_egg_of_serpentrix': { #Equip: Your attacks have a chance to summon a Spawn of Serpentrix to assist you.
-        'stat':'physical_damage',
-        'value': 0, #unmodeled
-        'duration': 0,
-        'proc_name': 'Spawn of Serpentrix',
-        'scaling': 0,
-        'item_level': 820,
+        'stat':'spell_damage',
+        'dmg_school': 'fire',
+        'value': 0, #rpp-scaled
+        'duration': 15,
+        'proc_name': 'Magma Spit', #not the proc name but the dmg of the add
+        'scaling': 8.235604 * 8., # pet might be scaling with haste, but most logs have 8 magma spits, assume that for now
+        'item_level': 805,
         'source': 'trinket',
         'type': 'rppm',
         'proc_rate': 1,
+        'can_crit': True,
         'haste_scales': True,
         'trigger': 'all_attacks',
    },
 
-      'terrorbound_nexus': { #Equip: Your melee attacks have a chance to unleash 4 Shadow Waves that deal 86952 Shadow damage to enemies in their path.  The waves travel 15 yards away from you, and then return.
+      'terrorbound_nexus': { #Equip: Your melee attacks have a chance to unleash 4 Shadow Waves that deal X Shadow damage to enemies in their path.  The waves travel 15 yards away from you, and then return.
         'stat':'spell_damage',
-        'value': 695616, #multiple targets not modeled, assuming 4 hits out and 4 in
+        'dmg_school': 'shadow',
+        'value': 0, #rpp-scaled, TODO: multiple targets not modeled, assuming 4 hits out and 4 in
         'duration': 0,
         'proc_name': 'Shadow Wave',
-        'scaling': 372.986208, #46.623276 * 8
-        'item_level': 820,
+        'scaling': 46.22871 * 8., #assume 8 hits
+        'item_level': 805,
         'type': 'rppm',
         'source': 'trinket',
         'proc_rate': 1,
-        'icd': 1,
+        'icd': 10,
         'haste_scales': True,
         'can_crit': True,
         'trigger': 'all_attacks'
    },
 
-    'tiny_oozeling_in_a_jar': { #Equip: Your melee attacks have a chance to grant you Congealing Goo, stacking up to 6 times.  Use: Consume all Congealing Goo to vomit on enemies in front of you for 3 sec, inflicting [6228 * (1 + $versadmg)] Nature damage per Goo consumed.  (20 Sec Cooldown)
+    'the_devilsaurs_bite': { #Equip: Your attacks have a chance to inflict X Physical damage and stun the target for 1 sec.
+        'stat':'physical_damage',
+        'value': 0, #rpp-scaled
+        'duration': 0,
+        'proc_name': "Devilsaur's Bite",
+        'scaling': 65.,
+        'item_level': 805,
+        'type': 'rppm',
+        'source': 'trinket',
+        'proc_rate': 2,
+        'haste_scales': True,
+        'can_crit': True
+   },
+
+    'tiny_oozeling_in_a_jar': { #Equip: Your melee attacks have a chance to grant you Congealing Goo, stacking up to 6 times.  Use: Consume all Congealing Goo to vomit on enemies in front of you for 3 sec, inflicting X Nature damage per Goo consumed.  (20 Sec Cooldown)
         'stat':'spell_damage',
-        'value': 37368, #4709 per stack * 6 stacks
+        'dmg_school': 'nature',
+        'value': 0, #rpp-scaled, TODO: aoe
         'duration': 0,
         #'max_stacks': 6,
         'proc_name': 'Fetid Regurgitation',
-        'scaling': 3.339412,
-        'item_level': 620,
+        'scaling': 17.123 * 6., #assume 6 stacks, scaling value not found in DBC, server-side/hotfixed? calculated by hand
+        'item_level': 805,
         'type': 'icd', #actually rppm
         'source': 'trinket',
         #'proc_rate': 3,
@@ -521,12 +604,12 @@ allowed_procs = {
    },
 
     'tirathons_betrayal': { #Use: Empower yourself with dark energy, causing your attacks to have a chance to inflict 38847 additional Shadow damage and grant you a shield for 38847. Lasts 15 sec.  (1 Min, 15 Sec Cooldown)
-        'stat':'spell_damage',
+        'stat':'ability_modifier',
         'value': 0,
         'duration': 15,
-        'proc_name': 'Darkstrikes', #need special handling
-        'scaling': 20.829683,
-        'item_level': 820,
+        'proc_name': 'Darkstrikes', #TODO: need special handling
+        'scaling': 16.11315,
+        'item_level': 805,
         'type': 'icd',
         'source': 'trinket',
         'proc_rate': 1,
@@ -535,13 +618,29 @@ allowed_procs = {
         'trigger': 'all_attacks'
    },
 
-    'windscar_whetstone': { #Use: A Slicing Maelstrom surrounds you, inflicting (7 * 40619) Physical damage to nearby enemies over 6 sec.  (2 Min Cooldown)
+    'toe_knees_promise': { #Use: Create a Flame Gale at an enemy's location, dealing X Fire damage over 8 sec. If Flame Gale strikes an enemy affected by Thunder Ritual, Flame Gale's damage is increased by 30%, and its radius by 50%. (1 Min Cooldown)
         'stat':'spell_damage',
-        'value': 284333, #multiple targets not modeled
+        'dmg_school': 'fire',
+        'value': 0, #rpp-scaled, TODO: only modeled base damage without Thunder Ritual
+        'duration': 0,
+        'proc_name': 'Flame Gale',
+        'scaling': 9.768856 * 8.,
+        'item_level': 855,
+        'source': 'trinket',
+        'type': 'icd',
+        'icd': 60,
+        'proc_rate': 1,
+        'can_crit': True,
+        'trigger': 'all_attacks',
+   },
+
+    'windscar_whetstone': { #Use: A Slicing Maelstrom surrounds you, inflicting X Physical damage to nearby enemies over 6 sec.  (2 Min Cooldown)
+        'stat':'physical_damage',
+        'value': 0, #rpp-scaled, TODO: multiple targets not modeled
         'duration': 0,
         'proc_name': 'Slicing Maelstrom',
-        'scaling': 152.455464,
-        'item_level': 790,
+        'scaling': 19.93953 * 7., # 7 hits
+        'item_level': 805,
         'type': 'icd',
         'source': 'trinket',
         'icd': 120,
@@ -550,6 +649,7 @@ allowed_procs = {
         'trigger': 'all_attacks'
    },
 
+   #Other Legion procs
    'jacins_ruse_2pc': { #Equip:  Your spells and attacks have a chance to increase your Mastery by 3000 for 15 sec.
     	'stat':'stats',
     	'value':{'mastery':3000},
