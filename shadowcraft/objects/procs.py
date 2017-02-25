@@ -12,7 +12,7 @@ class Proc(object):
     def __init__(self, stat, value, duration, proc_name, max_stacks=1, can_crit=True, stats=None, upgradable=False, scaling=None,
                  buffs=None, base_value=0, type='rppm', icd=0, proc_rate=1.0, trigger='all_attacks', haste_scales=False, item_level=1,
                  on_crit=False, on_procced_strikes=True, proc_rate_modifier=1., source='generic', att_spd_scales=False,
-                 ap_coefficient=0., dmg_school=None):
+                 ap_coefficient=0., dmg_school=None, crm_scales=False):
         self.stat = stat
         if stats is not None:
             self.stats = set(stats)
@@ -39,6 +39,7 @@ class Proc(object):
         self.proc_rate_modifier = proc_rate_modifier
         self.ap_coefficient = ap_coefficient
         self.dmg_school = dmg_school
+        self.crm_scales = crm_scales
 
         if self.dmg_school is None and stat in ['physical_damage', 'physical_dot']:
             self.dmg_school = 'physical'
@@ -53,13 +54,14 @@ class Proc(object):
         #not sure if this is the correct way to handle damage procs. Most seem to have both disabled scaling and raw value or both enabled scaling and an {object:value},
         #they should probably all use the same notation either way. If we want both, the scaling property should probably be set by value property instead of manually configured.
         #the other option is to always handle it deeper into the calc module, but that is coupling object responsibilities and not ideal.
-        if self.scaling:
-            if self.source in ('trinket',):
-                if hasattr(self.value,'__iter__'): #handle object value
-                    for e in self.value:
-                        self.value[e] = round(self.scaling * tools.get_random_prop_point(self.item_level))
-                else: #handle raw value
-                    self.value = round(self.scaling * tools.get_random_prop_point(self.item_level))
+        if self.scaling and self.source in ('trinket',):
+            crm = tools.get_combat_rating_multiplier(self.item_level) if self.crm_scales else 1. # apply combat rating modifier
+            scaled_value = round(self.scaling * tools.get_random_prop_point(self.item_level) * crm)
+            if hasattr(self.value,'__iter__'): #handle object value
+                for e in self.value:
+                    self.value[e] = scaled_value
+            else: #handle raw value
+                self.value = scaled_value
 
     def procs_off_auto_attacks(self):
         if self.trigger in ('all_attacks', 'auto_attacks', 'all_spells_and_attacks', 'all_melee_attacks'):
