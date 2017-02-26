@@ -2126,7 +2126,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attacks_per_second['mh_autoattacks'] -= attacks_per_second['shadow_blades']
         attacks_per_second['oh_autoattacks'] -= attacks_per_second['shadow_blades']
 
-        if self.traits.akarris_soul:
+        if self.traits.akarris_soul and 'shadowstrike' in attacks_per_second:
             attacks_per_second['soul_rip'] = attacks_per_second['shadowstrike']
         if self.traits.shadow_nova:
             attacks_per_second['shadow_nova'] = min(attacks_per_second['shadow_dance'], 1./5.)
