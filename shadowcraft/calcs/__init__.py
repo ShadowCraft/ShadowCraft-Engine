@@ -51,7 +51,7 @@ class DamageCalculator(object):
         self.base_parry_chance = .01 * self.level_difference
         self.base_dodge_chance = 0
 
-        self.dw_miss_penalty = .17
+        self.dw_miss_penalty = .19
         self._set_constants_for_class()
         self.level = level
 

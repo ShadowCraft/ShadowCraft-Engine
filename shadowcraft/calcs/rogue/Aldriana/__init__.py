@@ -352,6 +352,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             else:
                 if 'mh_autoattack_hits' in attacks_per_second:
                     triggers_per_second += attacks_per_second['mh_autoattack_hits']
+                elif 'mh_autoattacks' in attacks_per_second:
+                    triggers_per_second += attacks_per_second['mh_autoattacks'] * self.dw_mh_hit_chance
         if proc.procs_off_strikes():
             for ability in ('mutilate', 'dispatch', 'backstab', 'pistol_shot', 'saber_slash', 'ambush', 'hemorrhage', 'mh_killing_spree', 'shuriken_toss'):
                 if ability in attacks_per_second:
@@ -383,6 +385,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             else:
                 if 'oh_autoattack_hits' in attacks_per_second:
                     triggers_per_second += attacks_per_second['oh_autoattack_hits']
+                elif 'oh_autoattacks' in attacks_per_second:
+                    triggers_per_second += attacks_per_second['oh_autoattacks'] * self.dw_oh_hit_chance
         if proc.procs_off_strikes():
             for ability in ('mutilate', 'oh_killing_spree'):
                 if ability in attacks_per_second:
