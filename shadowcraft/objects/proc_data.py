@@ -161,10 +161,10 @@ allowed_procs = {
         'trigger': 'all_attacks'
    },
 
-    #TODO: aoe proc
     'mark_of_the_distant_army': { #A distant army fires a volley of arrows, dealing 3 ticks of damage over 1.5 sec.
         'stat':'physical_damage',
         'value': 0, # AP based
+        'aoe': True,
         'ap_coefficient': 2.5, # server-side, not in dbc, per tick is 2.5 / 3
         'duration': 0,
         'proc_name': 'Mark of the Distant Army',
@@ -190,7 +190,8 @@ allowed_procs = {
      #Legion trinket procs
     'arcanogolem_digit': { #Equip: Your attacks have a chance to rake all enemies in front of you for X Arcane damage.
         'stat':'spell_damage',
-        'value': 0, #rpp-scaled, TODO: multiple targets not modeled
+        'value': 0, #rpp-scaled
+        'aoe': True,
         'duration': 0,
         'proc_name': 'Arcane Swipe',
         'dmg_school': 'arcane',
@@ -355,7 +356,8 @@ allowed_procs = {
     'giant_ornamental_pearl': { #Use: Become enveloped by a Gaseous Bubble that absorbs up to X damage for 8 sec.  When the bubble is consumed or expires, it explodes and deals Y Frost damage to all nearby enemies within 10 yards.  (1 Min Cooldown)
         'stat':'spell_damage',
         'dmg_school': 'frost',
-        'value': 0, #rpp-scaled, TODO: multiple targets not modeled
+        'value': 0, #rpp-scaled
+        'aoe': True,
         'duration': 0,
         'proc_name': 'Gaseous Bubble',
         'dmg_school': 'frost',
@@ -399,7 +401,8 @@ allowed_procs = {
     'kiljaedens_burning_wish': { #Use: Launch a vortex of destruction that seeks your current enemy. When it reaches the target, it explodes, dealing a critical strike to all enemies within 10 yds for X Fire damage. (1 Min, 15 Sec Cooldown)
         'stat':'spell_damage',
         'dmg_school': 'fire',
-        'value': 0, #rpp-scaled, TODO: multiple targets not modeled
+        'value': 0, #rpp-scaled
+        'aoe': True,
         'duration': 0,
         'proc_name': "Kil'jaeden's Burning Wish",
         'scaling': 70 * 2, #always crits, hotfixed value
@@ -413,7 +416,8 @@ allowed_procs = {
 
     'mark_of_dargrul': { #Equip: Your melee attacks have a chance to trigger a Landslide, dealing X Physical damage to all enemies directly in front of you.
         'stat':'physical_damage',
-        'value': 0, #rpp-scaled, TODO: multiple targets not modeled
+        'value': 0, #rpp-scaled
+        'aoe': True,
         'duration': 0,
         'proc_name': 'Landslide',
         'scaling': 21.66943,
@@ -485,7 +489,8 @@ allowed_procs = {
 
     'ravaged_seed_pod': { #Use: Contaminate the ground beneath your feet for 10 sec, dealing X Shadow damage to enemies in the area each second.  While you remain in this area, you gain Y Leech.  (1 Min Cooldown)
         'stat':'spell_damage',
-        'value': 0, #rpp-scaled, TODO: multiple targets not modeled
+        'value': 0, #rpp-scaled
+        'aoe': True,
         'dmg_school': 'shadow',
         'duration': 10,
         'proc_name': 'Infested Ground',
@@ -526,7 +531,8 @@ allowed_procs = {
 
     'spontaneous_appendages': { #Equip: Your melee attacks have a chance to generate extra appendages for 12 sec that attack nearby enemies for X Physical damage every 0.75 sec.
         'stat':'physical_damage',
-        'value': 0, #rpp-scaled, TODO: aoe damage
+        'value': 0, #rpp-scaled
+        'aoe': True,
         'duration': 0, #accumulate all dmg
         'proc_name': 'Horrific Slam', #not the proc name but the dmg
         'can_crit': True,
@@ -557,10 +563,11 @@ allowed_procs = {
       'terrorbound_nexus': { #Equip: Your melee attacks have a chance to unleash 4 Shadow Waves that deal X Shadow damage to enemies in their path.  The waves travel 15 yards away from you, and then return.
         'stat':'spell_damage',
         'dmg_school': 'shadow',
-        'value': 0, #rpp-scaled, TODO: multiple targets not modeled, assuming 4 hits out and 4 in
+        'value': 0, #rpp-scaled
+        'aoe': True,
         'duration': 0,
         'proc_name': 'Shadow Wave',
-        'scaling': 46.22871 * 8., #assume 8 hits
+        'scaling': 46.22871 * 8., #assuming 4 hits out and 4 in
         'item_level': 805,
         'type': 'rppm',
         'source': 'trinket',
@@ -588,7 +595,8 @@ allowed_procs = {
     'tiny_oozeling_in_a_jar': { #Equip: Your melee attacks have a chance to grant you Congealing Goo, stacking up to 6 times.  Use: Consume all Congealing Goo to vomit on enemies in front of you for 3 sec, inflicting X Nature damage per Goo consumed.  (20 Sec Cooldown)
         'stat':'spell_damage',
         'dmg_school': 'nature',
-        'value': 0, #rpp-scaled, TODO: aoe
+        'value': 0, #rpp-scaled
+        'aoe': True,
         'duration': 0,
         #'max_stacks': 6,
         'proc_name': 'Fetid Regurgitation',
@@ -636,7 +644,8 @@ allowed_procs = {
 
     'windscar_whetstone': { #Use: A Slicing Maelstrom surrounds you, inflicting X Physical damage to nearby enemies over 6 sec.  (2 Min Cooldown)
         'stat':'physical_damage',
-        'value': 0, #rpp-scaled, TODO: multiple targets not modeled
+        'value': 0, #rpp-scaled
+        'aoe': True,
         'duration': 0,
         'proc_name': 'Slicing Maelstrom',
         'scaling': 19.93953 * 7., # 7 hits

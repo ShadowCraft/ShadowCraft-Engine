@@ -305,6 +305,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if proc.stat == 'physical_dot':
             average_damage *= proc.uptime / proc_count
 
+        if proc.aoe:
+            average_damage *= 1 + self.settings.num_boss_adds
+
         return average_damage
 
     def set_openers(self):
