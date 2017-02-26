@@ -534,6 +534,14 @@ class RogueDamageCalculator(DamageCalculator):
             cd -= self.fortunes_boon_cdr[self.traits.fortunes_boon]
         elif ability == 'vendetta':
             cd -= self.master_assassin_cdr[self.traits.master_assassin]
+
+        #Convergence of Fates Trinket
+        cof = self.stats.procs.convergence_of_fates
+        if cof and ability in ['vendetta', 'adrenaline_rush', 'shadow_blades']:
+            #We want time t in sec when CD is ready. CD goes down by 1 every sec plus 5 * proc_chance.
+            #That gives us: 0 = cd - t(1 + 5 * proc_chance) <=> t = cd / (1 + 5 * proc_chance)
+            cd /= 1 + 5 * cof.get_proc_rate(spec=self.spec)
+
         return cd
 
     def crit_rate(self, crit=None):

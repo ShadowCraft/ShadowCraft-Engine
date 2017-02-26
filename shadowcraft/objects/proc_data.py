@@ -266,7 +266,7 @@ allowed_procs = {
 
     'convergence_of_fates': { #Equip: Your attacks have a chance to reduce the remaining cooldown on one of your powerful abilities by 5 sec.
         'stat':'ability_modifier',
-        'value': 0, #needs special modeling
+        'value': 0,
         'duration': 0,
         'proc_name': 'Prescience', # reduce cd of shadow blades, vendetta, adrenaline rush
         'scaling': 0, #no values appear to scale
