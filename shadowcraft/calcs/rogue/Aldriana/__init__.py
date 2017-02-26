@@ -780,7 +780,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.damage_modifiers = modifiers.ModifierList(self.assassination_damage_sources + ['autoattacks'])
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('versatility', None, [], all_damage=True))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('armor', self.armor_mitigation_multiplier(), ['death_from_above_pulse',
-            'fan_of_knives', 'hemorrhage', 'mutilate', 'poisoned_knife', 'autoattacks', 't19_2pc']))
+            'fan_of_knives', 'hemorrhage', 'mutilate', 'poisoned_knife', 'autoattacks', 't19_2pc'], dmg_schools=['physical']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('potent_poisons', None, ['deadly_poison',
             'deadly_instant_poison', 'envenom', 'poison_bomb']))
 
@@ -1247,7 +1247,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('armor', self.armor_mitigation_multiplier(), ['death_from_above_pulse',
             'death_from_above_strike', 'ambush', 'between_the_eyes', 'blunderbuss', 'cannonball_barrage',
             'ghostly_strike', 'greed', 'killing_spree', 'main_gauche',
-            'pistol_shot', 'run_through', 'saber_slash', 'autoattacks']))
+            'pistol_shot', 'run_through', 'saber_slash', 'autoattacks'], dmg_schools=['physical']))
 
         # Generic tuning aura
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('outlaw_aura', 1.16, ['death_from_above_pulse', 'death_from_above_strike',

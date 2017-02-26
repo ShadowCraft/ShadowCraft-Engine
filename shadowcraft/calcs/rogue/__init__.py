@@ -247,6 +247,8 @@ class RogueDamageCalculator(DamageCalculator):
                 # attacks_per_second is already being updated with that key.
                 damage_breakdown[proc.proc_name] = self.get_proc_damage_contribution(proc, attacks_per_second[proc.proc_name], current_stats, average_ap, modifier_dict)
 
+        self.add_special_procs_damage(current_stats, attacks_per_second, crit_rates, modifier_dict, damage_breakdown)
+
         #compute damage breakdown for each spec
         if self.spec == 'assassination':
 
@@ -550,3 +552,25 @@ class RogueDamageCalculator(DamageCalculator):
         base_crit = .10
         base_crit += self.stats.get_crit_from_rating(crit)
         return base_crit + self.race.get_racial_crit(is_day=self.settings.is_day) - self.crit_reduction
+
+    def add_special_procs_damage(self, current_stats, attacks_per_second, crit_rates, modifier_dict, damage_breakdown):
+        ap = current_stats['ap'] + current_stats['agi'] * self.stat_multipliers['ap']
+
+        # Nightblooming Frond
+        frond = self.stats.procs.nightblooming_frond
+        if frond:
+            autoattacks_per_second = attacks_per_second['mh_autoattacks'] * self.dual_wield_mh_hit_chance()
+            autoattacks_per_second += attacks_per_second['oh_autoattacks'] * self.dual_wield_oh_hit_chance()
+            if 'shadow_blades' in attacks_per_second:
+                autoattacks_per_second += attacks_per_second['shadow_blades'] * 2 #both hands
+
+            # calculate stacks for each second and accumulate bonus damage per proc
+            stack_list = []
+            for second in range(1, frond.duration + 1):
+                stack_list.append(min(second * autoattacks_per_second, frond.max_stacks))
+            stack_damage = self.get_proc_damage_contribution(frond, 1, current_stats, ap, modifier_dict)
+            proc_damage = 0
+            for stack_count in stack_list:
+                proc_damage += stack_count * stack_damage * autoattacks_per_second
+
+            damage_breakdown[frond.proc_name] = proc_damage * frond.get_proc_rate(spec=self.spec)

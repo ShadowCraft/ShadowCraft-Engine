@@ -461,8 +461,10 @@ allowed_procs = {
 
     'nightblooming_frond': { #Equip: Your attacks have a chance to grant Recursive Strikes for 15 sec, causing your auto attacks to deal an additional X damage and increase the intensity of Recursive Strikes.
         'stat':'ability_modifier',
-        'value': 0, #rpp-scaled, TODO: needs special modeling
+        'value': 0, #rpp-scaled
         'duration': 15,
+        'max_stacks': 15,
+        'dmg_school': 'physical',
         'proc_name': 'Recursive Strikes',
         'scaling': 2.12,
         'item_level': 875,
