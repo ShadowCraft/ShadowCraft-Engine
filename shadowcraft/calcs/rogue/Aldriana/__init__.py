@@ -641,6 +641,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             current_stats[k] +=  static_proc_stats[ k ]
 
         attacks_per_second, crit_rates, additional_info = attack_counts_function(current_stats)
+        self.add_special_aps_penalties(attacks_per_second)
         recalculate_crit = False
 
         #check need to converge
@@ -680,6 +681,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 crit_rates = None
                 recalculate_crit = False
             attacks_per_second, crit_rates, additional_info = attack_counts_function(current_stats, crit_rates=crit_rates)
+            self.add_special_aps_penalties(attacks_per_second)
 
             if self.are_close_enough(old_attacks_per_second, attacks_per_second):
                 break
@@ -696,6 +698,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if recalculate_crit:
                 crit_rates = None
             attacks_per_second, crit_rates, additional_info = attack_counts_function(current_stats, crit_rates=crit_rates)
+            self.add_special_aps_penalties(attacks_per_second)
 
         #some procs need specific prep, think RoRO/VoS
         self.setup_unique_procs(current_stats, current_stats['agi']+current_stats['ap'])
@@ -706,6 +709,21 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         for proc in weapon_damage_procs:
             self.set_uptime(proc, attacks_per_second, crit_rates)
         return current_stats, attacks_per_second, crit_rates, damage_procs, additional_info
+
+    def add_special_aps_penalties(self, attacks_per_second):
+        #Draught of Souls Trinket, 3s ability downtime per use
+        dos = self.stats.procs.draught_of_souls
+        if dos:
+            lost_seconds = self.settings.duration * float(dos.duration) / float(dos.icd)
+            loss_ratio = (self.settings.duration - lost_seconds) / self.settings.duration
+            for attack in attacks_per_second:
+                if attack not in ['mh_autoattacks', 'oh_autoattacks', 'shadow_blades', 'nightblade_ticks',
+                    'rupture_ticks', 'from_the_shadows', 'kingsbane_ticks', 'garrote_ticks', 'deadly_poison']:
+                    if isinstance(attacks_per_second[attack], list):
+                        for i in range(len(attacks_per_second[attack])):
+                            attacks_per_second[attack][i] *= loss_ratio
+                    else:
+                        attacks_per_second[attack] *= loss_ratio
 
     def compute_damage_from_aps(self, current_stats, attacks_per_second, crit_rates, damage_procs, additional_info):
         # this method exists solely to let us use cached values you would get from determine stats

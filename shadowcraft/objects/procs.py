@@ -138,6 +138,8 @@ class Proc(object):
         return proc_rate
 
     def get_rppm_proc_rate(self, haste=1., spec=None):
+        if not self.haste_scales: #Failsafe to allow passing haste for non-scling procs
+            haste = 1.
         if self.is_real_ppm():
             proc_rate = self.get_base_proc_rate_for_spec(spec)
             return haste * proc_rate * self.proc_rate_modifier

@@ -540,9 +540,9 @@ class RogueDamageCalculator(DamageCalculator):
         #Convergence of Fates Trinket
         cof = self.stats.procs.convergence_of_fates
         if cof and ability in ['vendetta', 'adrenaline_rush', 'shadow_blades']:
-            #We want time t in sec when CD is ready. CD goes down by 1 every sec plus 5 * proc_chance.
-            #That gives us: 0 = cd - t(1 + 5 * proc_chance) <=> t = cd / (1 + 5 * proc_chance)
-            cd /= 1 + 5 * cof.get_proc_rate(spec=self.spec)
+            #We want time t in sec when CD is ready. CD goes down by 1 every sec plus value * proc_chance.
+            #That gives us: 0 = cd - t(1 + value * proc_chance) <=> t = cd / (1 + value * proc_chance)
+            cd /= 1 + cof.value * cof.get_proc_rate(spec=self.spec)
 
         return cd
 

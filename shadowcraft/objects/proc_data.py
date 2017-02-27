@@ -266,10 +266,9 @@ allowed_procs = {
 
     'convergence_of_fates': { #Equip: Your attacks have a chance to reduce the remaining cooldown on one of your powerful abilities by 5 sec.
         'stat':'ability_modifier',
-        'value': 0,
+        'value': 5, #5 sec decrease, modeled in get_spell_cd
         'duration': 0,
         'proc_name': 'Prescience', # reduce cd of shadow blades, vendetta, adrenaline rush
-        'scaling': 0, #no values appear to scale
         'item_level': 875,
         'source': 'trinket',
         'type': 'rppm',
@@ -295,7 +294,7 @@ allowed_procs = {
     'draught_of_souls': { #Use: Enter a fel-crazed rage, dealing X damage to a random nearby enemy every 0.25sec for 3 sec.  You cannot move or use abilities during your rage. (1 Min, 20 Sec Cooldown)
         'stat':'spell_damage',
         'value': 0, #rpp-scaled
-        'duration': 3, #TODO: 3sec ability downtime
+        'duration': 3, #3sec ability downtime modeled in add_special_aps_penalties
         'proc_name': 'Fel-Crazed Rage',
         'dmg_school': 'shadow',
         'scaling': 33. * 13., #13 hits total
@@ -461,7 +460,7 @@ allowed_procs = {
 
     'nightblooming_frond': { #Equip: Your attacks have a chance to grant Recursive Strikes for 15 sec, causing your auto attacks to deal an additional X damage and increase the intensity of Recursive Strikes.
         'stat':'ability_modifier',
-        'value': 0, #rpp-scaled
+        'value': 0, #rpp-scaled, modeled in add_special_procs_damage
         'duration': 15,
         'max_stacks': 15,
         'dmg_school': 'physical',
