@@ -245,6 +245,8 @@ class RogueDamageCalculator(DamageCalculator):
             if proc.proc_name not in damage_breakdown:
                 # Toss multiple damage procs with the same name (Avalanche):
                 # attacks_per_second is already being updated with that key.
+                if proc.stat in ['physical_dot', 'spell_dot']:
+                    self.set_uptime(proc, attacks_per_second, crit_rates)
                 damage_breakdown[proc.proc_name] = self.get_proc_damage_contribution(proc, attacks_per_second[proc.proc_name], current_stats, average_ap, modifier_dict)
 
         self.add_special_procs_damage(current_stats, attacks_per_second, crit_rates, modifier_dict, damage_breakdown)

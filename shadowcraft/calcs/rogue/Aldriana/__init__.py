@@ -301,8 +301,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         average_hit = proc_value + proc.ap_coefficient * average_ap
         average_damage = average_hit * (1 + crit_rate * (crit_multiplier - 1)) * proc_count * multiplier
 
-        if proc.stat == 'physical_dot':
-            average_damage *= proc.uptime / proc_count
+        if proc.stat in ['physical_dot', 'spell_dot']:
+            initial_tick = 1. if proc.dot_initial_tick else 0.
+            ticks_per_second = float(proc.dot_ticks - initial_tick) / float(proc.duration)
+            average_damage *= initial_tick + ticks_per_second * proc.uptime / proc_count
 
         if proc.aoe:
             average_damage *= 1 + self.settings.num_boss_adds
@@ -590,7 +592,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                         active_procs_no_icd.append(proc)
             elif proc.stat == 'stats_modifier':
                 active_procs_rppm_stat_mods.append(proc)
-            elif proc.stat in ('spell_damage', 'physical_damage', 'physical_dot'):
+            elif proc.stat in ('spell_damage', 'physical_damage', 'physical_dot', 'spell_dot'):
                 damage_procs.append(proc)
             elif proc.stat == 'extra_weapon_damage':
                 weapon_damage_procs.append(proc)

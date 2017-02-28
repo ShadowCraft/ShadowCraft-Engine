@@ -162,11 +162,12 @@ allowed_procs = {
    },
 
     'mark_of_the_distant_army': { #A distant army fires a volley of arrows, dealing 3 ticks of damage over 1.5 sec.
-        'stat':'physical_damage',
+        'stat':'physical_dot',
         'value': 0, # AP based
         'aoe': True,
-        'ap_coefficient': 2.5, # server-side, not in dbc, per tick is 2.5 / 3
-        'duration': 0,
+        'ap_coefficient': 2.5 / 3., # server-side, not in dbc, per tick is 2.5 / 3
+        'duration': 1.5,
+        'dot_ticks': 3,
         'proc_name': 'Mark of the Distant Army',
         'type': 'rppm',
         'source': 'neck',
@@ -207,7 +208,7 @@ allowed_procs = {
    },
 
     'bloodstained_handkerchief': { #Use: Garrote your target from behind, causing them to bleed for X Physical damage every 3 sec until they die. (1 Min Cooldown)
-        'stat':'physical_damage',
+        'stat':'physical_damage', #modeled as icd because it's active FOREVER
         'value': 0, #rpp-scaled, TODO: could be applied to adds as well, after CD
         'duration': 0,
         'proc_name': 'Cruel Garrote',
@@ -505,12 +506,14 @@ allowed_procs = {
    },
 
     'six_feather_fan': { #Equip: Your attacks have a chance to launch a volley of 6 Wind Bolts, each dealing X Nature damage and slowing your target by 30% for 6 sec.
-        'stat':'spell_damage',
+        'stat':'spell_dot',
         'dmg_school': 'nature',
         'value': 0, #rpp-scaled
-        'duration': 0,
+        'duration': 5,
+        'dot_ticks': 6,
+        'dot_initial_tick': True,
         'proc_name': 'Wind Bolt',
-        'scaling': 19.01865 * 6., #6 bolts, one every second
+        'scaling': 19.01865, #6 bolts, one every second
         'item_level': 810,
         'type': 'rppm',
         'source': 'trinket',
@@ -532,13 +535,14 @@ allowed_procs = {
    },
 
     'spontaneous_appendages': { #Equip: Your melee attacks have a chance to generate extra appendages for 12 sec that attack nearby enemies for X Physical damage every 0.75 sec.
-        'stat':'physical_damage',
+        'stat':'physical_dot',
         'value': 0, #rpp-scaled
         'aoe': True,
-        'duration': 0, #accumulate all dmg
+        'duration': 12,
         'proc_name': 'Horrific Slam', #not the proc name but the dmg
         'can_crit': True,
-        'scaling': 10.1246 * 16., # 16 hits overall, hotfixed value
+        'scaling': 10.1246, #hotfixed value
+        'dot_ticks': 16,
         'item_level': 850,
         'type': 'rppm',
         'source': 'trinket',
@@ -547,12 +551,13 @@ allowed_procs = {
    },
 
     'tempered_egg_of_serpentrix': { #Equip: Your attacks have a chance to summon a Spawn of Serpentrix to assist you.
-        'stat':'spell_damage',
+        'stat':'spell_dot',
         'dmg_school': 'fire',
         'value': 0, #rpp-scaled
         'duration': 15,
+        'dot_ticks': 8, #pet might be scaling with haste, but most logs have 8 magma spits, assume that for now
         'proc_name': 'Magma Spit', #not the proc name but the dmg of the add
-        'scaling': 8.235604 * 8., # pet might be scaling with haste, but most logs have 8 magma spits, assume that for now
+        'scaling': 8.235604,
         'item_level': 805,
         'source': 'trinket',
         'type': 'rppm',

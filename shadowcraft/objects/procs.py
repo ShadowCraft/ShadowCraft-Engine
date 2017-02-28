@@ -12,7 +12,7 @@ class Proc(object):
     def __init__(self, stat, value, duration, proc_name, max_stacks=1, can_crit=True, stats=None, upgradable=False, scaling=None,
                  buffs=None, base_value=0, type='rppm', icd=0, proc_rate=1.0, trigger='all_attacks', haste_scales=False, item_level=1,
                  on_crit=False, on_procced_strikes=True, proc_rate_modifier=1., source='generic', att_spd_scales=False,
-                 ap_coefficient=0., dmg_school=None, crm_scales=False, aoe=False):
+                 ap_coefficient=0., dmg_school=None, crm_scales=False, aoe=False, dot_ticks=1, dot_initial_tick=False):
         self.stat = stat
         if stats is not None:
             self.stats = set(stats)
@@ -41,6 +41,8 @@ class Proc(object):
         self.dmg_school = dmg_school
         self.crm_scales = crm_scales
         self.aoe = aoe
+        self.dot_ticks = dot_ticks
+        self.dot_initial_tick = dot_initial_tick
 
         if self.dmg_school is None and stat in ['physical_damage', 'physical_dot']:
             self.dmg_school = 'physical'
@@ -218,7 +220,7 @@ class ProcsList(object):
         for proc_name in self.allowed_procs:
             proc = getattr(self, proc_name)
             if proc:
-                if proc.stat in ('spell_damage', 'physical_damage'):
+                if proc.stat in ('spell_damage', 'physical_damage', 'physical_dot', 'spell_dot'):
                     procs.append(proc)
 
         return procs
