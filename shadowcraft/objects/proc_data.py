@@ -253,7 +253,7 @@ allowed_procs = {
 
     'chrono_shard': { #Equip: Your spells and abilities have a chance to grant you X Haste and 15% movement speed for 10 sec.
         'stat':'stats',
-        'value': {'haste': 0}, #rpp-scaled, TODO: set bonus?
+        'value': {'haste': 0}, #rpp-scaled
         'duration': 10,
         'proc_name': 'Acceleration',
         'scaling': 2.741159,
@@ -693,6 +693,17 @@ allowed_procs = {
         'haste_scales': True,
         'can_crit': True,
         'trigger': 'all_attacks'
+    },
+
+    'rogue_orderhall_8pc': { #Your finishing moves have a chance to increase your Haste by 2000 for 12 sec.
+        'stat': 'stats',
+        'value': {'haste': 2000},
+        'duration': 12,
+        'proc_name': "Jacin's Ruse",
+        'type': 'rppm',
+        'source': 'unique',
+        'proc_rate': 2,
+        'trigger': 'all_attacks' #should be only finishing moves, but since it's rppm that doesn't matter
     },
 
     #6.2.3 procs

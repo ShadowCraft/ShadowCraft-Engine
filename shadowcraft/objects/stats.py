@@ -158,6 +158,10 @@ class GearBuffs(object):
         'rogue_t19_4pc',                # 10% envenom damage per bleed, 30% SSk generates additional CP if nightblade up
         'jacins_ruse_2pc',              # Proc 3000 mastery for 15s, 1 rppm
         'march_of_the_legion_2pc',      # Proc 35K damage when fighting demons, 6+Haste RPPM
+        'journey_through_time_2pc',     # The effect from Chrono Shard now increases your movement speed by 30%, and grants an additional 1000 Haste.
+        'kara_empowered_2pc',           # 30% increase to paired trinkets
+        'rogue_orderhall_6pc',          # Agility increased by 500
+        'rogue_orderhall_8pc',          # Your finishing moves have a chance to increase your Haste by 2000 for 12 sec.
         #Legendaries
         'the_dreadlords_deceit',             #fok/ssk damage increased by 35% per 2 seconds up to 1 minute
         'duskwalker_footpads',               #Vendetta CD reduced by 1 second for each 50 energy spent

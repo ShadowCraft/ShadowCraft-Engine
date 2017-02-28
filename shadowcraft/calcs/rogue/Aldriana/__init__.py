@@ -221,6 +221,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             'versatility': 1. + (0.02 * self.race.human_spirit),
         }
 
+        if self.stats.gear_buffs.rogue_orderhall_6pc:
+            self.base_stats['agi'] += 500
+
         for boost in self.race.get_racial_stat_boosts():
             if boost['stat'] in self.base_stats:
                 self.base_stats[boost['stat']] += boost['value'] * boost['duration'] * 1.0 / (boost['cooldown'] + self.settings.response_time)
@@ -579,6 +582,21 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.stats.procs.set_proc('jacins_ruse_2pc')
         if self.stats.gear_buffs.march_of_the_legion_2pc and self.settings.is_demon:
             self.stats.procs.set_proc('march_of_the_legion_2pc')
+        if self.stats.gear_buffs.rogue_orderhall_8pc:
+            self.stats.procs.set_proc('rogue_orderhall_8pc')
+        if self.stats.gear_buffs.journey_through_time_2pc and self.stats.procs.chrono_shard:
+            self.stats.procs.chrono_shard.update_proc_value()
+            self.stats.procs.chrono_shard.value['haste'] += 1000
+        if self.stats.gear_buffs.kara_empowered_2pc:
+            if self.stats.procs.bloodstained_handkerchief:
+                self.stats.procs.bloodstained_handkerchief.update_proc_value()
+                self.stats.procs.bloodstained_handkerchief.value *= 1.3
+            if self.stats.procs.eye_of_command:
+                self.stats.procs.eye_of_command.update_proc_value()
+                self.stats.procs.eye_of_command.value['crit'] *= 1.3
+            if self.stats.procs.toe_knees_promise:
+                self.stats.procs.toe_knees_promise.update_proc_value()
+                self.stats.procs.toe_knees_promise.value *= 1.3
 
         #sort the procs into groups
         for proc in self.stats.procs.get_all_procs_for_stat():
