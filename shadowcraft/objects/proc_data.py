@@ -312,7 +312,7 @@ allowed_procs = {
         'value': {'haste': 0, 'crit': 0, 'mastery': 0}, #TODO: needs special modeling, you get only one stat per proc, but can have multiple at the same time
         'duration': 20,
         'proc_name': 'Triumvirate',
-        'scaling': 2.069368 / 3., #for now, assume we get all 3 for 1/3 each
+        'scaling': 2.069368 / 3., #FIXME: for now using 1/3 for each stat / assume we get all 3 for 1/3 each
         'crm_scales': True,
         'item_level': 875,
         'source': 'trinket',
@@ -434,8 +434,8 @@ allowed_procs = {
         'stat':'stats',
         'value': {'mastery': 0, 'crit': 0, 'haste': 0}, #TODO: actually 1-3 stat buffs each time
         'duration': 8,
-        'proc_name': 'Memento of Angerboda',
-        'scaling': 2.297781, #FIXME: for now using 1/3 for each stat, similar to entwined elemental foci
+        'proc_name': 'Screams of the Dead',
+        'scaling': 2.297781 / 3., #FIXME: for now using 1/3 for each stat, similar to entwined elemental foci
         'crm_scales': True,
         'item_level': 805,
         'source': 'trinket',
@@ -446,15 +446,16 @@ allowed_procs = {
 
     'natures_call': { #Equip: Your melee attacks have a chance to grant you a blessing of one of the Allies of Nature for 10 sec.
         'stat':'stats',
-        'value': {'haste': 0}, #rpp-scaled, TODO: check other possible effects and if this needs special modeling
+        'value': {'mastery': 0, 'crit': 0, 'haste': 0}, #rpp-scaled, TODO: needs special modeling, you get only one stat per proc, but can have multiple at the same time
         'duration': 10,
         'proc_name': 'Allies of Nature',
-        'scaling': 1.378778,
-        'crm_scales': True, #TODO: also verify this and to which effects the mod applies
+        'scaling': 1.378778 / 3., #FIXME: for now using 1/3 for each stat, similar to entwined elemental foci
+        'crm_scales': True,
         'item_level': 850,
         'source': 'trinket',
         'type': 'rppm',
         'proc_rate': 2,
+        'can_crit': True, #TODO: according to wowhead this can also proc Cleansed Drake's Breath for (scale factor 48.72993) damage
         'trigger': 'all_attacks',
    },
 
