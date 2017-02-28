@@ -110,7 +110,7 @@ class DamageCalculator(object):
         #http://iam.yellingontheinternet.com/2013/04/12/theorycraft-201-advanced-rppm/
         haste = 1.
         if proc.haste_scales:
-            haste *= self.stats.get_haste_multiplier_from_rating(self.base_stats['haste']) * self.true_haste_mod
+            haste *= self.stats.get_haste_multiplier_from_rating(self.base_stats['haste'] * self.stat_multipliers['haste']) * self.true_haste_mod
         if proc.att_spd_scales:
             haste *= 1.4
         #The 1.1307 is a value that increases the proc rate due to bad luck prevention. It /should/ be constant among all rppm proc styles

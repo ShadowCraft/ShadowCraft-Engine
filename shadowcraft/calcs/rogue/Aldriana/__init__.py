@@ -254,6 +254,17 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.dw_oh_hit_chance = self.dual_wield_oh_hit_chance()
         return self
 
+    # returns stats used for calculation, including all static gear and buff bonuses that are also displayed in the character panel
+    def get_character_stats(self):
+        stats = { }
+        try: #need to do it this way for now because object.__getattribute__ in calcs __getattr__ will throw up :/
+            noop = self.base_stats
+        except:
+            self.set_constants() #make this function work before dps calculation if needed
+        for stat in self.base_stats:
+            stats[stat] = self.base_stats[stat] * self.stat_multipliers[stat]
+        return stats
+
     def load_from_advanced_parameters(self):
         self.true_haste_mod = self.get_adv_param('haste_buff', 1., min_bound=.1, max_bound=3.)
 
@@ -480,7 +491,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             #http://us.battle.net/wow/en/forum/topic/8197741003?page=4#79
             haste = 1.
             if proc.haste_scales:
-                haste *= self.true_haste_mod * self.stats.get_haste_multiplier_from_rating(self.base_stats['haste'])
+                haste *= self.true_haste_mod * self.stats.get_haste_multiplier_from_rating(self.base_stats['haste'] * self.stat_multipliers['haste'])
             if proc.att_spd_scales:
                 haste *= 1.4
             #The 1.1307 is a value that increases the proc rate due to bad luck prevention. It /should/ be constant among all rppm proc styles
