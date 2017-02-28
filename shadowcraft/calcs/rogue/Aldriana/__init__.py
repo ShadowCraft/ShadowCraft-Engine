@@ -213,8 +213,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         }
         self.stat_multipliers = {
             'str': 1.,
-            #UI handling gear specialization for now
-            'agi': 1,
+            'agi': self.stats.gear_buffs.gear_specialization_multiplier(),
             'ap': 1,
             'crit': 1. + (0.02 * self.race.human_spirit),
             'haste': 1. + (0.02 * self.race.human_spirit),
@@ -574,7 +573,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         if self.buffs.felmouth_food():
             self.stats.procs.set_proc('felmouth_frenzy')
-        if self.stats.gear_buffs.jacins_ruse_2pc_bonus():
+        if self.stats.gear_buffs.jacins_ruse_2pc:
             self.stats.procs.set_proc('jacins_ruse_2pc')
         if self.stats.gear_buffs.march_of_the_legion_2pc and self.settings.is_demon:
             self.stats.procs.set_proc('march_of_the_legion_2pc')

@@ -235,41 +235,6 @@ class GearBuffs(object):
             return .85 # 1 - .15
         return 1.
 
-    def rogue_t16_2pc_bonus(self):
-        if self.rogue_t16_2pc:
-            return True
-        return False
-
-    def rogue_t16_4pc_bonus(self):
-        if self.rogue_t16_4pc:
-            return True
-        return False
-
-    def rogue_t17_2pc_bonus(self):
-        if self.rogue_t17_2pc:
-            return True
-        return False
-
-    def rogue_t17_4pc_bonus(self):
-        if self.rogue_t17_4pc:
-            return True
-        return False
-
-    def rogue_t18_2pc_bonus(self):
-        if self.rogue_t18_2pc:
-            return True
-        return False
-
-    def rogue_t18_4pc_bonus(self):
-        if self.rogue_T18_4pc:
-            return True
-        return False
-
-    def jacins_ruse_2pc_bonus(self):
-        if self.jacins_ruse_2pc:
-            return True
-        return False
-
     def gear_specialization_multiplier(self):
         if self.gear_specialization:
             return 1.05
