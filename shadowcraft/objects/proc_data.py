@@ -574,7 +574,7 @@ allowed_procs = {
         'aoe': True,
         'duration': 0,
         'proc_name': 'Shadow Wave',
-        'scaling': 46.22871 * 8., #assuming 4 hits out and 4 in
+        'scaling': 46.22871 * 2., #judging from logs wave damage only occurs twice (forth and back), 4 waves seem to be visual
         'item_level': 805,
         'type': 'rppm',
         'source': 'trinket',
