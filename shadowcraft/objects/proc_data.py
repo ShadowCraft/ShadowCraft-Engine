@@ -600,20 +600,18 @@ allowed_procs = {
    },
 
     'tiny_oozeling_in_a_jar': { #Equip: Your melee attacks have a chance to grant you Congealing Goo, stacking up to 6 times.  Use: Consume all Congealing Goo to vomit on enemies in front of you for 3 sec, inflicting X Nature damage per Goo consumed.  (20 Sec Cooldown)
-        'stat':'spell_damage',
+        'stat':'special_model',
         'dmg_school': 'nature',
-        'value': 0, #rpp-scaled
+        'value': 0, #rpp-scaled, trinket damage modeled in add_special_procs_damage
         'aoe': True,
         'duration': 0,
-        #'max_stacks': 6,
         'proc_name': 'Fetid Regurgitation',
-        'scaling': 17.123 * 6., #assume 6 stacks, scaling value not found in DBC, server-side/hotfixed? calculated by hand
+        'scaling': 2.853606 * 6, #hit per stack, hitting for scaled value every 0.5 for 3 seconds = 6 ticks
         'item_level': 805,
-        'type': 'icd', #actually rppm
+        'type': 'icd',
         'source': 'trinket',
-        #'proc_rate': 3,
-        'icd': 20, #modeled as used on cooldown with max stacks every time
-        #'haste_scales': True,
+        'proc_rate': 1, #for on use, rppm for stacks is 3 (w/ haste), max is 6 stacks
+        'icd': 20,
         'can_crit': True,
         'trigger': 'all_attacks'
    },

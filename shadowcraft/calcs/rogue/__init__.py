@@ -576,3 +576,11 @@ class RogueDamageCalculator(DamageCalculator):
                 proc_damage += stack_count * stack_damage * autoattacks_per_second
 
             damage_breakdown[frond.proc_name] = proc_damage * frond.get_proc_rate(spec=self.spec)
+
+        # Tiny Oozeling in a Jar
+        oozeling = self.stats.procs.tiny_oozeling_in_a_jar
+        if oozeling:
+            haste = self.get_haste_multiplier(current_stats)
+            stacks_per_use = min(oozeling.icd * haste * 3 / 60, 6) #3 rppm, capped at 6 stacks
+            damage_per_use = stacks_per_use * self.get_proc_damage_contribution(oozeling, 1, current_stats, ap, modifier_dict)
+            damage_breakdown[oozeling.proc_name] = damage_per_use / oozeling.icd
