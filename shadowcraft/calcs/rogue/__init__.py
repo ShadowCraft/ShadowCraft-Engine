@@ -575,12 +575,20 @@ class RogueDamageCalculator(DamageCalculator):
             for stack_count in stack_list:
                 proc_damage += stack_count * stack_damage * autoattacks_per_second
 
-            damage_breakdown[frond.proc_name] = proc_damage * frond.get_proc_rate(spec=self.spec)
+            damage_breakdown[frond.proc_name] = proc_damage * frond.get_proc_rate(spec=self.spec) * 1.1307 #BLP
 
         # Tiny Oozeling in a Jar
         oozeling = self.stats.procs.tiny_oozeling_in_a_jar
         if oozeling:
             haste = self.get_haste_multiplier(current_stats)
-            stacks_per_use = min(oozeling.icd * haste * 3 / 60, 6) #3 rppm, capped at 6 stacks
-            damage_per_use = stacks_per_use * self.get_proc_damage_contribution(oozeling, 1, current_stats, ap, modifier_dict)
+            stacks_per_use = min(oozeling.icd * haste * 1.1307 * 3 / 60, 6) #3 rppm, capped at 6 stacks, 1.1307 bad luck protection
+            damage_per_use = self.get_proc_damage_contribution(oozeling, stacks_per_use, current_stats, ap, modifier_dict)
             damage_breakdown[oozeling.proc_name] = damage_per_use / oozeling.icd
+
+        # Tirathon's Betrayal and Faulty Countermeasure
+        for proc in [self.stats.procs.tirathons_betrayal, self.stats.procs.faulty_countermeasure]:
+            if proc:
+                # both 20 RPPM with haste mod
+                procs_per_use = proc.duration * 20 * 1.1307 * self.get_haste_multiplier(current_stats) / 60
+                damage_per_use = self.get_proc_damage_contribution(proc, procs_per_use, current_stats, ap, modifier_dict)
+                damage_breakdown[proc.proc_name] = damage_per_use / proc.icd

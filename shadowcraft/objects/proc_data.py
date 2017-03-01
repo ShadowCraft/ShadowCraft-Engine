@@ -339,10 +339,11 @@ allowed_procs = {
    },
 
     'faulty_countermeasure': { #Use: Sheathe your weapons in ice for 30 sec, giving your attacks a chance to cause X additional Frost damage and slow the target's movement speed by 30% for 8 sec.  (2 Min Cooldown)
-        'stat':'ability_modifier',
+        'stat':'ability_modifier', #modeled in add_special_procs_damage
         'value': 0, #rpp-scaled
         'duration': 30,
-        'proc_name': 'Sheathed in Frost', #TODO: need special handling, rppm during uptime is 20 and scales with haste
+        'proc_name': 'Sheathed in Frost',
+        'dmg_school': 'frost',
         'scaling': 17.47413,
         'item_level': 805,
         'type': 'icd',
@@ -617,10 +618,11 @@ allowed_procs = {
    },
 
     'tirathons_betrayal': { #Use: Empower yourself with dark energy, causing your attacks to have a chance to inflict 38847 additional Shadow damage and grant you a shield for 38847. Lasts 15 sec.  (1 Min, 15 Sec Cooldown)
-        'stat':'ability_modifier',
+        'stat':'ability_modifier', #modeled in add_special_procs_damage
         'value': 0,
         'duration': 15,
-        'proc_name': 'Darkstrikes', #TODO: need special handling
+        'proc_name': 'Darkstrikes',
+        'dmg_school': 'shadow',
         'scaling': 16.11315,
         'item_level': 805,
         'type': 'icd',
