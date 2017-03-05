@@ -203,26 +203,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         #only include if general multiplier applies to spec calculations
         self.true_haste_mod *= self.get_heroism_haste_multiplier()
-        self.base_stats = {
-            'agi': (self.stats.agi + self.buffs.buff_agi(race=self.race.epicurean) + self.race.racial_agi),
-            'ap': (self.stats.ap),
-            'crit': (self.stats.crit + self.buffs.buff_crit(race=self.race.epicurean)),
-            'haste': (self.stats.haste + self.buffs.buff_haste(race=self.race.epicurean)),
-            'mastery': (self.stats.mastery + self.buffs.buff_mast(race=self.race.epicurean)),
-            'versatility': (self.stats.versatility + self.buffs.buff_versatility(race=self.race.epicurean)),
-        }
-        self.stat_multipliers = {
-            'str': 1.,
-            'agi': self.stats.gear_buffs.gear_specialization_multiplier(),
-            'ap': 1,
-            'crit': 1. + (0.02 * self.race.human_spirit),
-            'haste': 1. + (0.02 * self.race.human_spirit),
-            'mastery': 1. + (0.02 * self.race.human_spirit),
-            'versatility': 1. + (0.02 * self.race.human_spirit),
-        }
-
-        if self.stats.gear_buffs.rogue_orderhall_6pc:
-            self.base_stats['agi'] += 500
+        self.base_stats = self.stats.get_character_base_stats(self.race, self.buffs)
+        self.stat_multipliers = self.stats.get_character_stat_multipliers(self.race)
 
         for boost in self.race.get_racial_stat_boosts():
             if boost['stat'] in self.base_stats:
@@ -237,9 +219,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.stats.procs.draenic_agi_prepot:
             getattr(self.stats.procs, 'draenic_agi_prepot').icd = self.settings.duration
 
-        self.base_strength = self.stats.str + self.race.racial_str
-        self.base_intellect = self.stats.int + self.race.racial_int
-
         self.relentless_strikes_energy_return_per_cp = 5 #.20 * 25
 
         #should only include bloodlust if the spec can average it in, deal with this later
@@ -253,17 +232,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.dw_mh_hit_chance = self.dual_wield_mh_hit_chance()
         self.dw_oh_hit_chance = self.dual_wield_oh_hit_chance()
         return self
-
-    # returns stats used for calculation, including all static gear and buff bonuses that are also displayed in the character panel
-    def get_character_stats(self):
-        stats = { }
-        try: #need to do it this way for now because object.__getattribute__ in calcs __getattr__ will throw up :/
-            noop = self.base_stats
-        except:
-            self.set_constants() #make this function work before dps calculation if needed
-        for stat in self.base_stats:
-            stats[stat] = self.base_stats[stat] * self.stat_multipliers[stat]
-        return stats
 
     def load_from_advanced_parameters(self):
         self.true_haste_mod = self.get_adv_param('haste_buff', 1., min_bound=.1, max_bound=3.)
@@ -569,7 +537,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     def determine_stats(self, attack_counts_function):
         current_stats = {
-            'str': self.base_strength,
+            'str': self.base_stats['str'] * self.stat_multipliers['str'],
             'agi': self.base_stats['agi'] * self.stat_multipliers['agi'],
             'ap': self.base_stats['ap'] * self.stat_multipliers['ap'],
             'crit': self.base_stats['crit'] * self.stat_multipliers['crit'],
@@ -681,7 +649,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             need_converge = True
         while (need_converge or self.spec_needs_converge):
             current_stats = {
-                'str': self.base_strength,
+                'str': self.base_stats['str'] * self.stat_multipliers['str'],
                 'agi': self.base_stats['agi'] * self.stat_multipliers['agi'],
                 'ap': self.base_stats['ap'] * self.stat_multipliers['ap'],
                 'crit': self.base_stats['crit'] * self.stat_multipliers['crit'],
