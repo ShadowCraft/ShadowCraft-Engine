@@ -1,5 +1,7 @@
+from shadowcraft.objects import buffs
 from shadowcraft.objects import procs
 from shadowcraft.objects import proc_data
+from shadowcraft.objects import race
 from shadowcraft.core import exceptions
 
 class Stats(object):
@@ -47,6 +49,50 @@ class Stats(object):
         object.__setattr__(self, name, value)
         if name == 'level' and value is not None:
             self._set_constants_for_level()
+
+    def get_character_base_stats(self, race, buffs=None):
+        base_stats = {
+            'str': self.str + race.racial_str,
+            'int': self.int + race.racial_int,
+            'agi': self.agi + race.racial_agi,
+            'ap': self.ap,
+            'crit': self.crit,
+            'haste': self.haste,
+            'mastery': self.mastery,
+            'versatility': self.versatility,
+        }
+        if buffs:
+            buff_bonuses = buffs.get_stat_bonuses(race.epicurean)
+            for bonus in buff_bonuses:
+                base_stats[bonus] += buff_bonuses[bonus]
+
+        # Other bonuses
+        if self.gear_buffs.rogue_orderhall_6pc:
+            base_stats['agi'] += 500
+
+        return base_stats
+
+    def get_character_stat_multipliers(self, race):
+        # assume rogue for gear spec
+        stat_multipliers = {
+            'str': 1.,
+            'int': 1.,
+            'agi': self.gear_buffs.gear_specialization_multiplier(),
+            'ap': 1,
+            'crit': 1. + (0.02 * race.human_spirit),
+            'haste': 1. + (0.02 * race.human_spirit),
+            'mastery': 1. + (0.02 * race.human_spirit),
+            'versatility': 1. + (0.02 * race.human_spirit),
+        }
+        return stat_multipliers
+
+    def get_character_stats(self, race, buffs=None):
+        base = self.get_character_base_stats(race, buffs)
+        mult = self.get_character_stat_multipliers(race)
+        stats = { }
+        for stat in base:
+            stats[stat] = base[stat] * mult[stat]
+        return stats
 
     def get_mastery_from_rating(self, rating=None):
         if rating is None:
@@ -158,6 +204,10 @@ class GearBuffs(object):
         'rogue_t19_4pc',                # 10% envenom damage per bleed, 30% SSk generates additional CP if nightblade up
         'jacins_ruse_2pc',              # Proc 3000 mastery for 15s, 1 rppm
         'march_of_the_legion_2pc',      # Proc 35K damage when fighting demons, 6+Haste RPPM
+        'journey_through_time_2pc',     # The effect from Chrono Shard now increases your movement speed by 30%, and grants an additional 1000 Haste.
+        'kara_empowered_2pc',           # 30% increase to paired trinkets
+        'rogue_orderhall_6pc',          # Agility increased by 500
+        'rogue_orderhall_8pc',          # Your finishing moves have a chance to increase your Haste by 2000 for 12 sec.
         #Legendaries
         'the_dreadlords_deceit',             #fok/ssk damage increased by 35% per 2 seconds up to 1 minute
         'duskwalker_footpads',               #Vendetta CD reduced by 1 second for each 50 energy spent
@@ -234,41 +284,6 @@ class GearBuffs(object):
         if self.rogue_t15_4pc and is_sb:
             return .85 # 1 - .15
         return 1.
-
-    def rogue_t16_2pc_bonus(self):
-        if self.rogue_t16_2pc:
-            return True
-        return False
-
-    def rogue_t16_4pc_bonus(self):
-        if self.rogue_t16_4pc:
-            return True
-        return False
-
-    def rogue_t17_2pc_bonus(self):
-        if self.rogue_t17_2pc:
-            return True
-        return False
-
-    def rogue_t17_4pc_bonus(self):
-        if self.rogue_t17_4pc:
-            return True
-        return False
-
-    def rogue_t18_2pc_bonus(self):
-        if self.rogue_t18_2pc:
-            return True
-        return False
-
-    def rogue_t18_4pc_bonus(self):
-        if self.rogue_T18_4pc:
-            return True
-        return False
-
-    def jacins_ruse_2pc_bonus(self):
-        if self.jacins_ruse_2pc:
-            return True
-        return False
 
     def gear_specialization_multiplier(self):
         if self.gear_specialization:

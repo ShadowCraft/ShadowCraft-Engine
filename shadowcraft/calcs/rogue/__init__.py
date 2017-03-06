@@ -22,18 +22,16 @@ class RogueDamageCalculator(DamageCalculator):
                                     'fan_of_knives', 'garrote_ticks', 'hemorrhage',
                                     'kingsbane', 'kingsbane_ticks', 'mutilate',
                                     'poisoned_knife', 'poison_bomb', 'rupture_ticks', 'from_the_shadows',
-                                    't19_2pc', 'insignia_of_ravenholdt']
+                                    't19_2pc']
     outlaw_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
                              'ambush', 'between_the_eyes', 'blunderbuss', 'cannonball_barrage',
                              'ghostly_strike', 'greed', 'killing_spree', 'main_gauche',
-                             'pistol_shot', 'run_through', 'saber_slash',
-                             'insignia_of_ravenholdt']
+                             'pistol_shot', 'run_through', 'saber_slash']
     subtlety_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
                                'backstab', 'eviscerate', 'gloomblade',
                                'goremaws_bite', 'nightblade', 'shadowstrike',
                                'shadow_blades', 'shuriken_storm', 'shuriken_toss',
-                               'nightblade_ticks', 'soul_rip', 'shadow_nova', 'second_shuriken',
-                               'insignia_of_ravenholdt']
+                               'nightblade_ticks', 'soul_rip', 'shadow_nova', 'second_shuriken']
     #All damage sources mitigated by armor
     physical_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
                                 'fan_of_knives', 'hemorrhage', 'mutilate', 'poisoned_knife',
@@ -41,9 +39,6 @@ class RogueDamageCalculator(DamageCalculator):
                                 'ghostly_strike', 'greed', 'killing_spree', 'main_gauche',
                                 'pistol_shot', 'run_through', 'saber_slash', 'backstab',
                                 'eviscerate', 'shadowstrike', 'shuriken_storm', 'shuriken_toss']
-    #All damage sources the scale with mastery (assn or sub)
-    mastery_scaling_damage_sources = ['deadly_poison', 'deadly_instant_poison', 'evenom',
-                                      'eviscerate', 'nightblade_ticks', 'poison_bomb']
     #All damage sources that deal damage with both hands
     dual_wield_damage_sources = ['kingsbane', 'mutilate', 'greed', 'killing_spree',
                                  'goremaws_bite', 'shadow_blades']
@@ -250,7 +245,11 @@ class RogueDamageCalculator(DamageCalculator):
             if proc.proc_name not in damage_breakdown:
                 # Toss multiple damage procs with the same name (Avalanche):
                 # attacks_per_second is already being updated with that key.
-                damage_breakdown[proc.proc_name] = self.get_proc_damage_contribution(proc, attacks_per_second[proc.proc_name], current_stats, average_ap, damage_breakdown)
+                if proc.stat in ['physical_dot', 'spell_dot']:
+                    self.set_uptime(proc, attacks_per_second, crit_rates)
+                damage_breakdown[proc.proc_name] = self.get_proc_damage_contribution(proc, attacks_per_second[proc.proc_name], current_stats, average_ap, modifier_dict)
+
+        self.add_special_procs_damage(current_stats, attacks_per_second, crit_rates, modifier_dict, damage_breakdown)
 
         #compute damage breakdown for each spec
         if self.spec == 'assassination':
@@ -539,6 +538,14 @@ class RogueDamageCalculator(DamageCalculator):
             cd -= self.fortunes_boon_cdr[self.traits.fortunes_boon]
         elif ability == 'vendetta':
             cd -= self.master_assassin_cdr[self.traits.master_assassin]
+
+        #Convergence of Fates Trinket
+        cof = self.stats.procs.convergence_of_fates
+        if cof and ability in ['vendetta', 'adrenaline_rush', 'shadow_blades']:
+            #We want time t in sec when CD is ready. CD goes down by 1 every sec plus value * proc_chance.
+            #That gives us: 0 = cd - t(1 + value * proc_chance) <=> t = cd / (1 + value * proc_chance)
+            cd /= 1 + cof.value * cof.get_proc_rate(spec=self.spec)
+
         return cd
 
     def crit_rate(self, crit=None):
@@ -547,3 +554,41 @@ class RogueDamageCalculator(DamageCalculator):
         base_crit = .10
         base_crit += self.stats.get_crit_from_rating(crit)
         return base_crit + self.race.get_racial_crit(is_day=self.settings.is_day) - self.crit_reduction
+
+    def add_special_procs_damage(self, current_stats, attacks_per_second, crit_rates, modifier_dict, damage_breakdown):
+        ap = current_stats['ap'] + current_stats['agi'] * self.stat_multipliers['ap']
+
+        # Nightblooming Frond
+        frond = self.stats.procs.nightblooming_frond
+        if frond:
+            autoattacks_per_second = attacks_per_second['mh_autoattacks'] * self.dual_wield_mh_hit_chance()
+            autoattacks_per_second += attacks_per_second['oh_autoattacks'] * self.dual_wield_oh_hit_chance()
+            if 'shadow_blades' in attacks_per_second:
+                autoattacks_per_second += attacks_per_second['shadow_blades'] * 2 #both hands
+
+            # calculate stacks for each second and accumulate bonus damage per proc
+            stack_list = []
+            for second in range(1, frond.duration + 1):
+                stack_list.append(min(second * autoattacks_per_second, frond.max_stacks))
+            stack_damage = self.get_proc_damage_contribution(frond, 1, current_stats, ap, modifier_dict)
+            proc_damage = 0
+            for stack_count in stack_list:
+                proc_damage += stack_count * stack_damage * autoattacks_per_second
+
+            damage_breakdown[frond.proc_name] = proc_damage * frond.get_proc_rate(spec=self.spec) * 1.1307 #BLP
+
+        # Tiny Oozeling in a Jar
+        oozeling = self.stats.procs.tiny_oozeling_in_a_jar
+        if oozeling:
+            haste = self.get_haste_multiplier(current_stats)
+            stacks_per_use = min(oozeling.icd * haste * 1.1307 * 3 / 60, 6) #3 rppm, capped at 6 stacks, 1.1307 bad luck protection
+            damage_per_use = self.get_proc_damage_contribution(oozeling, stacks_per_use, current_stats, ap, modifier_dict)
+            damage_breakdown[oozeling.proc_name] = damage_per_use / oozeling.icd
+
+        # Tirathon's Betrayal and Faulty Countermeasure
+        for proc in [self.stats.procs.tirathons_betrayal, self.stats.procs.faulty_countermeasure]:
+            if proc:
+                # both 20 RPPM with haste mod
+                procs_per_use = proc.duration * 20 * 1.1307 * self.get_haste_multiplier(current_stats) / 60
+                damage_per_use = self.get_proc_damage_contribution(proc, procs_per_use, current_stats, ap, modifier_dict)
+                damage_breakdown[proc.proc_name] = damage_per_use / proc.icd

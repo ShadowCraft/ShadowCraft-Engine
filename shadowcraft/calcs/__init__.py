@@ -51,7 +51,7 @@ class DamageCalculator(object):
         self.base_parry_chance = .01 * self.level_difference
         self.base_dodge_chance = 0
 
-        self.dw_miss_penalty = .17
+        self.dw_miss_penalty = .19
         self._set_constants_for_class()
         self.level = level
 
@@ -110,20 +110,20 @@ class DamageCalculator(object):
         #http://iam.yellingontheinternet.com/2013/04/12/theorycraft-201-advanced-rppm/
         haste = 1.
         if proc.haste_scales:
-            haste *= self.stats.get_haste_multiplier_from_rating(self.base_stats['haste']) * self.true_haste_mod
+            haste *= self.stats.get_haste_multiplier_from_rating(self.base_stats['haste'] * self.stat_multipliers['haste']) * self.true_haste_mod
         if proc.att_spd_scales:
             haste *= 1.4
         #The 1.1307 is a value that increases the proc rate due to bad luck prevention. It /should/ be constant among all rppm proc styles
         if not proc.icd:
             if proc.max_stacks <= 1:
-                proc.uptime = 1.1307 * (1 - math.e ** (-1 * haste * proc.get_rppm_proc_rate() * proc.duration / 60))
+                proc.uptime = 1.1307 * (1 - math.e ** (-1 * haste * proc.get_rppm_proc_rate(spec=self.spec) * proc.duration / 60))
             else:
-                lambd = haste * proc.get_rppm_proc_rate() * proc.duration / 60
+                lambd = haste * proc.get_rppm_proc_rate(spec=self.spec) * proc.duration / 60
                 e_lambda = math.e ** lambd
                 e_minus_lambda = math.e ** (-1 * lambd)
                 proc.uptime = 1.1307 * (e_lambda - 1) * (1 - ((1 - e_minus_lambda) ** proc.max_stacks))
         else:
-            mean_proc_time = 60. / (haste * proc.get_rppm_proc_rate()) + proc.icd - min(proc.icd, 10)
+            mean_proc_time = 60. / (haste * proc.get_rppm_proc_rate(spec=self.spec)) + proc.icd - min(proc.icd, 10)
             proc.uptime = 1.1307 * proc.duration / mean_proc_time
 
     def set_uptime(self, proc, attacks_per_second, crit_rates):

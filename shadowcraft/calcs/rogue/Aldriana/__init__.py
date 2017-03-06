@@ -203,24 +203,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         #only include if general multiplier applies to spec calculations
         self.true_haste_mod *= self.get_heroism_haste_multiplier()
-        self.base_stats = {
-            'agi': (self.stats.agi + self.buffs.buff_agi(race=self.race.epicurean) + self.race.racial_agi),
-            'ap': (self.stats.ap),
-            'crit': (self.stats.crit + self.buffs.buff_crit(race=self.race.epicurean)),
-            'haste': (self.stats.haste + self.buffs.buff_haste(race=self.race.epicurean)),
-            'mastery': (self.stats.mastery + self.buffs.buff_mast(race=self.race.epicurean)),
-            'versatility': (self.stats.versatility + self.buffs.buff_versatility(race=self.race.epicurean)),
-        }
-        self.stat_multipliers = {
-            'str': 1.,
-            #UI handling gear specialization for now
-            'agi': 1,
-            'ap': 1,
-            'crit': 1. + (0.02 * self.race.human_spirit),
-            'haste': 1. + (0.02 * self.race.human_spirit),
-            'mastery': 1. + (0.02 * self.race.human_spirit),
-            'versatility': 1. + (0.02 * self.race.human_spirit),
-        }
+        self.base_stats = self.stats.get_character_base_stats(self.race, self.buffs)
+        self.stat_multipliers = self.stats.get_character_stat_multipliers(self.race)
 
         for boost in self.race.get_racial_stat_boosts():
             if boost['stat'] in self.base_stats:
@@ -234,9 +218,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             getattr(self.stats.procs, 'draenic_agi_pot').icd = self.settings.duration
         if self.stats.procs.draenic_agi_prepot:
             getattr(self.stats.procs, 'draenic_agi_prepot').icd = self.settings.duration
-
-        self.base_strength = self.stats.str + self.race.racial_str
-        self.base_intellect = self.stats.int + self.race.racial_int
 
         self.relentless_strikes_energy_return_per_cp = 5 #.20 * 25
 
@@ -261,22 +242,16 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.settings.is_day = self.get_adv_param('is_day', self.settings.is_day, ignore_bounds=True)
         self.get_version_number = self.get_adv_param('print_version', False, ignore_bounds=True)
 
-    def get_proc_damage_contribution(self, proc, proc_count, current_stats, average_ap, damage_breakdown):
+    def get_proc_damage_contribution(self, proc, proc_count, current_stats, average_ap, modifier_dict):
         crit_multiplier = self.crit_damage_modifiers()
         crit_rate = self.crit_rate(crit=current_stats['crit'])
 
-        #TODO Re-add multipliers here
-        multiplier = 1
-        '''if proc.stat == 'spell_damage':
-            multiplier = self.get_modifiers(current_stats, damage_type='spell')
-        elif proc.stat == 'physical_damage':
-            multiplier = self.get_modifiers(current_stats, damage_type='physical')
-        elif proc.stat == 'physical_dot':
-            multiplier = self.get_modifiers(current_stats, damage_type='bleed')
-        elif proc.stat == 'bleed_damage':
-            multiplier = self.get_modifiers(current_stats, damage_type='bleed')
+        if proc.proc_name in modifier_dict:
+            multiplier = modifier_dict[proc.proc_name]
+        elif proc.dmg_school is not None and 'school_' + proc.dmg_school in modifier_dict:
+            multiplier = modifier_dict['school_' + proc.dmg_school]
         else:
-            return 0'''
+            multiplier = modifier_dict['all_damage']
 
         if proc.can_crit == False:
             crit_rate = 0
@@ -305,11 +280,16 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if proc is getattr(self.stats.procs, 'felmouth_frenzy'):
             proc_value = average_ap * 0.424 * 5
 
-        average_hit = proc_value * multiplier
-        average_damage = average_hit * (1 + crit_rate * (crit_multiplier - 1)) * proc_count
+        average_hit = proc_value + proc.ap_coefficient * average_ap
+        average_damage = average_hit * (1 + crit_rate * (crit_multiplier - 1)) * proc_count * multiplier
 
-        if proc.stat == 'physical_dot':
-            average_damage *= proc.uptime / proc_count
+        if proc.stat in ['physical_dot', 'spell_dot']:
+            initial_tick = 1. if proc.dot_initial_tick else 0.
+            ticks_per_second = float(proc.dot_ticks - initial_tick) / float(proc.duration)
+            average_damage *= initial_tick + ticks_per_second * proc.uptime / proc_count
+
+        if proc.aoe:
+            average_damage *= 1 + self.settings.num_boss_adds
 
         return average_damage
 
@@ -355,6 +335,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             else:
                 if 'mh_autoattack_hits' in attacks_per_second:
                     triggers_per_second += attacks_per_second['mh_autoattack_hits']
+                elif 'mh_autoattacks' in attacks_per_second:
+                    triggers_per_second += attacks_per_second['mh_autoattacks'] * self.dw_mh_hit_chance
         if proc.procs_off_strikes():
             for ability in ('mutilate', 'dispatch', 'backstab', 'pistol_shot', 'saber_slash', 'ambush', 'hemorrhage', 'mh_killing_spree', 'shuriken_toss'):
                 if ability in attacks_per_second:
@@ -375,7 +357,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 triggers_per_second += attacks_per_second['garrote']
             if 'hemorrhage_ticks' in attacks_per_second:
                 triggers_per_second += attacks_per_second['hemorrhage']
-        return triggers_per_second * proc.get_proc_rate(self.stats.mh.speed)
+        return triggers_per_second * proc.get_proc_rate(self.stats.mh.speed, spec=self.spec)
 
     def get_oh_procs_per_second(self, proc, attacks_per_second, crit_rates):
         triggers_per_second = 0
@@ -386,6 +368,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             else:
                 if 'oh_autoattack_hits' in attacks_per_second:
                     triggers_per_second += attacks_per_second['oh_autoattack_hits']
+                elif 'oh_autoattacks' in attacks_per_second:
+                    triggers_per_second += attacks_per_second['oh_autoattacks'] * self.dw_oh_hit_chance
         if proc.procs_off_strikes():
             for ability in ('mutilate', 'oh_killing_spree'):
                 if ability in attacks_per_second:
@@ -393,7 +377,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                         triggers_per_second += attacks_per_second[ability] * crit_rates[ability]
                     else:
                         triggers_per_second += attacks_per_second[ability]
-        return triggers_per_second * proc.get_proc_rate(self.stats.oh.speed)
+        return triggers_per_second * proc.get_proc_rate(self.stats.oh.speed, spec=self.spec)
 
     def get_other_procs_per_second(self, proc, attacks_per_second, crit_rates):
         triggers_per_second = 0
@@ -429,7 +413,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             else:
                 raise InputNotModeledException(_('PPMs that also proc off spells are not yet modeled.'))
         else:
-            return triggers_per_second * proc.get_proc_rate()
+            return triggers_per_second * proc.get_proc_rate(spec=self.spec)
 
     def get_procs_per_second(self, proc, attacks_per_second, crit_rates):
         # TODO: Include damaging proc hits in figuring out how often everything else procs.
@@ -475,14 +459,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             #http://us.battle.net/wow/en/forum/topic/8197741003?page=4#79
             haste = 1.
             if proc.haste_scales:
-                haste *= self.true_haste_mod * self.stats.get_haste_multiplier_from_rating(self.base_stats['haste'])
+                haste *= self.true_haste_mod * self.stats.get_haste_multiplier_from_rating(self.base_stats['haste'] * self.stat_multipliers['haste'])
             if proc.att_spd_scales:
                 haste *= 1.4
             #The 1.1307 is a value that increases the proc rate due to bad luck prevention. It /should/ be constant among all rppm proc styles
             if not proc.icd:
-                frequency = haste * 1.1307 * proc.get_rppm_proc_rate() / 60
+                frequency = haste * 1.1307 * proc.get_rppm_proc_rate(spec=self.spec) / 60
             else:
-                mean_proc_time = 60. / (haste * proc.get_rppm_proc_rate()) + proc.icd - min(proc.icd, 10)
+                mean_proc_time = 60. / (haste * proc.get_rppm_proc_rate(spec=self.spec)) + proc.icd - min(proc.icd, 10)
                 if proc.max_stacks > 1: # just correct if you only do damage on max_stacks, e.g. legendary_capacitive_meta
                     mean_proc_time *= proc.max_stacks
                 frequency = 1.1307 / mean_proc_time
@@ -553,7 +537,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     def determine_stats(self, attack_counts_function):
         current_stats = {
-            'str': self.base_strength,
+            'str': self.base_stats['str'] * self.stat_multipliers['str'],
             'agi': self.base_stats['agi'] * self.stat_multipliers['agi'],
             'ap': self.base_stats['ap'] * self.stat_multipliers['ap'],
             'crit': self.base_stats['crit'] * self.stat_multipliers['crit'],
@@ -573,10 +557,25 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         if self.buffs.felmouth_food():
             self.stats.procs.set_proc('felmouth_frenzy')
-        if self.stats.gear_buffs.jacins_ruse_2pc_bonus():
+        if self.stats.gear_buffs.jacins_ruse_2pc:
             self.stats.procs.set_proc('jacins_ruse_2pc')
         if self.stats.gear_buffs.march_of_the_legion_2pc and self.settings.is_demon:
             self.stats.procs.set_proc('march_of_the_legion_2pc')
+        if self.stats.gear_buffs.rogue_orderhall_8pc:
+            self.stats.procs.set_proc('rogue_orderhall_8pc')
+        if self.stats.gear_buffs.journey_through_time_2pc and self.stats.procs.chrono_shard:
+            self.stats.procs.chrono_shard.update_proc_value()
+            self.stats.procs.chrono_shard.value['haste'] += 1000
+        if self.stats.gear_buffs.kara_empowered_2pc:
+            if self.stats.procs.bloodstained_handkerchief:
+                self.stats.procs.bloodstained_handkerchief.update_proc_value()
+                self.stats.procs.bloodstained_handkerchief.value *= 1.3
+            if self.stats.procs.eye_of_command:
+                self.stats.procs.eye_of_command.update_proc_value()
+                self.stats.procs.eye_of_command.value['crit'] *= 1.3
+            if self.stats.procs.toe_knees_promise:
+                self.stats.procs.toe_knees_promise.update_proc_value()
+                self.stats.procs.toe_knees_promise.value *= 1.3
 
         #sort the procs into groups
         for proc in self.stats.procs.get_all_procs_for_stat():
@@ -590,7 +589,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                         active_procs_no_icd.append(proc)
             elif proc.stat == 'stats_modifier':
                 active_procs_rppm_stat_mods.append(proc)
-            elif proc.stat in ('spell_damage', 'physical_damage', 'physical_dot'):
+            elif proc.stat in ('spell_damage', 'physical_damage', 'physical_dot', 'spell_dot'):
                 damage_procs.append(proc)
             elif proc.stat == 'extra_weapon_damage':
                 weapon_damage_procs.append(proc)
@@ -640,6 +639,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             current_stats[k] +=  static_proc_stats[ k ]
 
         attacks_per_second, crit_rates, additional_info = attack_counts_function(current_stats)
+        self.add_special_aps_penalties(attacks_per_second)
         recalculate_crit = False
 
         #check need to converge
@@ -649,7 +649,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             need_converge = True
         while (need_converge or self.spec_needs_converge):
             current_stats = {
-                'str': self.base_strength,
+                'str': self.base_stats['str'] * self.stat_multipliers['str'],
                 'agi': self.base_stats['agi'] * self.stat_multipliers['agi'],
                 'ap': self.base_stats['ap'] * self.stat_multipliers['ap'],
                 'crit': self.base_stats['crit'] * self.stat_multipliers['crit'],
@@ -679,6 +679,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 crit_rates = None
                 recalculate_crit = False
             attacks_per_second, crit_rates, additional_info = attack_counts_function(current_stats, crit_rates=crit_rates)
+            self.add_special_aps_penalties(attacks_per_second)
 
             if self.are_close_enough(old_attacks_per_second, attacks_per_second):
                 break
@@ -695,6 +696,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if recalculate_crit:
                 crit_rates = None
             attacks_per_second, crit_rates, additional_info = attack_counts_function(current_stats, crit_rates=crit_rates)
+            self.add_special_aps_penalties(attacks_per_second)
 
         #some procs need specific prep, think RoRO/VoS
         self.setup_unique_procs(current_stats, current_stats['agi']+current_stats['ap'])
@@ -705,6 +707,21 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         for proc in weapon_damage_procs:
             self.set_uptime(proc, attacks_per_second, crit_rates)
         return current_stats, attacks_per_second, crit_rates, damage_procs, additional_info
+
+    def add_special_aps_penalties(self, attacks_per_second):
+        #Draught of Souls Trinket, 3s ability downtime per use
+        dos = self.stats.procs.draught_of_souls
+        if dos:
+            lost_seconds = self.settings.duration * float(dos.duration) / float(dos.icd)
+            loss_ratio = (self.settings.duration - lost_seconds) / self.settings.duration
+            for attack in attacks_per_second:
+                if attack not in ['mh_autoattacks', 'oh_autoattacks', 'shadow_blades', 'nightblade_ticks',
+                    'rupture_ticks', 'from_the_shadows', 'kingsbane_ticks', 'garrote_ticks', 'deadly_poison']:
+                    if isinstance(attacks_per_second[attack], list):
+                        for i in range(len(attacks_per_second[attack])):
+                            attacks_per_second[attack][i] *= loss_ratio
+                    else:
+                        attacks_per_second[attack] *= loss_ratio
 
     def compute_damage_from_aps(self, current_stats, attacks_per_second, crit_rates, damage_procs, additional_info):
         # this method exists solely to let us use cached values you would get from determine stats
@@ -718,7 +735,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #damage_breakdown, additional_info = self.get_damage_breakdown(self.determine_stats(attack_counts_function))
         return damage_breakdown, additional_info
 
-    def compute_insignia_of_ravenholdt_damage(self, stats, attacks_per_second, crit_rates):
+    def compute_insignia_of_ravenholdt_damage(self, stats, attacks_per_second):
         # Insignia of Ravenholdt, 30% (Assassination) / 15% base generator damage with crit chance
         ap = stats['ap'] + stats['agi'] * self.stat_multipliers['ap']
         insignia_base_dmg = 0
@@ -729,7 +746,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 'backstab', 'gloomblade', 'shadowstrike']:
                 both_hands = ability in self.dual_wield_damage_sources
                 insignia_base_dmg += insignia_dmg_factor * self.get_ability_dps(ap, ability, attacks_per_second[ability], 0, 1, 1, both_hands) # base dps wihout modifiers
-        crit_rate = crit_rates['insignia_of_ravenholdt']
+        crit_rate = self.crit_rate(crit=stats['crit'])
         crit_mod = self.crit_damage_modifiers()
         insignia_dmg = insignia_base_dmg * (1 - crit_rate) + insignia_base_dmg * crit_rate * crit_mod
 
@@ -777,27 +794,30 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #assassination specific constants
         #set up damage modifier list and all relevant modifiers, use None for placeholder values
         self.damage_modifiers = modifiers.ModifierList(self.assassination_damage_sources + ['autoattacks'])
-        self.damage_modifiers.register_modifier(modifiers.DamageModifier('versatility', None, [], blacklist=True))
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('versatility', None, [], all_damage=True))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('armor', self.armor_mitigation_multiplier(), ['death_from_above_pulse',
-            'fan_of_knives', 'hemorrhage', 'mutilate', 'poisoned_knife', 'autoattacks', 't19_2pc']))
+            'fan_of_knives', 'hemorrhage', 'mutilate', 'poisoned_knife', 'autoattacks', 't19_2pc'], dmg_schools=['physical']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('potent_poisons', None, ['deadly_poison',
-            'deadly_instant_poison', 'envenom', 'poison_bomb',]))
+            'deadly_instant_poison', 'envenom', 'poison_bomb']))
+
         #Generic tuning aura
-        self.damage_modifiers.register_modifier(modifiers.DamageModifier('assassination_aura', 1.11, [], blacklist=True))
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('assassination_aura', 1.11, ['death_from_above_pulse', 'death_from_above_strike',
+            'deadly_poison', 'deadly_instant_poison', 'envenom', 'fan_of_knives', 'garrote_ticks', 'hemorrhage',
+            'kingsbane', 'kingsbane_ticks', 'mutilate', 'poisoned_knife', 'rupture_ticks']))
 
         #time averaged vendetta modifier used for most things
-        self.damage_modifiers.register_modifier(modifiers.DamageModifier('vendetta_time_average', None, [], blacklist=True))
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('vendetta_time_average', None, [], all_damage=True))
 
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('vendetta_exsang', None, ['rupture_ticks']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('vendetta_kb', None, ['kingsbane', 'kingsbane_ticks']))
 
         #talent specific modifiers
         if self.talents.elaborate_planning:
-            self.damage_modifiers.register_modifier(modifiers.DamageModifier('elaborate_planning', None, [], blacklist=True))
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('elaborate_planning', None, [], all_damage=True))
         if self.talents.hemorrhage:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('hemorrhage', 1.25, ['rupture_ticks', 'garrote_ticks', 't19_2pc']))
         if self.talents.agonizing_poison:
-            self.damage_modifiers.register_modifier(modifiers.DamageModifier('agonizing_poison', None, [], blacklist=True))
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('agonizing_poison', None, [], all_damage=True))
         if self.talents.deeper_strategem:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('deeper_strategem', 1.05, ['rupture_ticks', 'envenom', 'death_from_above_pulse', 'death_from_above_strike']))
 
@@ -806,11 +826,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('blood_of_the_assassinated', None, ['rupture_ticks']))
         if self.traits.surge_of_toxins:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('surge_of_toxins', None, ['deadly_poison',
-            'deadly_instant_poison', 'envenom', 'poison_bomb',]))
+            'deadly_instant_poison', 'envenom', 'poison_bomb'], dmg_schools=['poison']))
 
         if self.traits.slayers_precision:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('slayers_precision',
-            1.05 + (0.005 * (self.traits.slayers_precision - 1)), [], blacklist=True))
+            1.05 + (0.005 * (self.traits.slayers_precision - 1)), [], all_damage=True))
 
         #gear specific modifiers
         if self.stats.gear_buffs.the_dreadlords_deceit:
@@ -819,7 +839,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.stats.gear_buffs.zoldyck_family_training_shackles:
             #Assume spend 30% of the time sub 30% health, imperfect but good enough
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('zoldyck_family_training_shackles', 1.09, ['deadly_poison', 'deadly_instant_poison',
-                'garrote_ticks', 'kingsbane_ticks', 'rupture_ticks']))
+                'garrote_ticks', 'kingsbane_ticks', 'rupture_ticks'], dmg_schools=['poison', 'bleed']))
         if self.stats.gear_buffs.rogue_t19_4pc:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('t19_4pc', 1.2, ['envenom']))
 
@@ -909,7 +929,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         damage_breakdown, additional_info  = self.compute_damage_from_aps(stats, aps, crits, procs, additional_info)
 
         if self.stats.gear_buffs.insignia_of_ravenholdt:
-            damage_breakdown['insignia_of_ravenholdt'] = self.compute_insignia_of_ravenholdt_damage(stats, aps, crits)
+            damage_breakdown['insignia_of_ravenholdt'] = self.compute_insignia_of_ravenholdt_damage(stats, aps)
 
         if self.stats.gear_buffs.cinidaria_the_symbiote:
             damage_breakdown['symbiote_strike'] = self.compute_symbiote_strike_damage(damage_breakdown)
@@ -1239,14 +1259,16 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         }
 
         self.damage_modifiers = modifiers.ModifierList(self.outlaw_damage_sources + ['autoattacks'])
-        self.damage_modifiers.register_modifier(modifiers.DamageModifier('versatility', None, [], blacklist=True))
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('versatility', None, [], all_damage=True))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('armor', self.armor_mitigation_multiplier(), ['death_from_above_pulse',
             'death_from_above_strike', 'ambush', 'between_the_eyes', 'blunderbuss', 'cannonball_barrage',
             'ghostly_strike', 'greed', 'killing_spree', 'main_gauche',
-            'pistol_shot', 'run_through', 'saber_slash', 'autoattacks']))
+            'pistol_shot', 'run_through', 'saber_slash', 'autoattacks'], dmg_schools=['physical']))
 
         # Generic tuning aura
-        self.damage_modifiers.register_modifier(modifiers.DamageModifier('outlaw_aura', 1.16, [], blacklist=True))
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('outlaw_aura', 1.16, ['death_from_above_pulse', 'death_from_above_strike',
+            'ambush', 'between_the_eyes', 'blunderbuss', 'cannonball_barrage', 'ghostly_strike', 'killing_spree',
+            'pistol_shot', 'run_through', 'saber_slash']))
 
         # Talent specific modifiers
         if self.talents.deeper_strategem:
@@ -1255,7 +1277,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         # Trait specific modifiers
         if self.traits.cursed_steel:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('cursed_steel',
-            1.05 + (0.005 * (self.traits.legionblade - 1)), [], blacklist=True))
+            1.05 + (0.005 * (self.traits.legionblade - 1)), [], all_damage=True))
 
         stats, aps, crits, procs, additional_info = self.determine_stats(self.outlaw_attack_counts)
 
@@ -1264,7 +1286,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         damage_breakdown, additional_info  = self.compute_damage_from_aps(stats, aps, crits, procs, additional_info)
 
         if self.stats.gear_buffs.insignia_of_ravenholdt:
-            damage_breakdown['insignia_of_ravenholdt'] = self.compute_insignia_of_ravenholdt_damage(stats, aps, crits)
+            damage_breakdown['insignia_of_ravenholdt'] = self.compute_insignia_of_ravenholdt_damage(stats, aps)
 
         bf_mod = .35
         if self.settings.cycle.blade_flurry:
@@ -1765,15 +1787,17 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         #set up damage modifier list and all relevant modifiers, use None for placeholder values
         self.damage_modifiers = modifiers.ModifierList(self.subtlety_damage_sources + ['autoattacks'])
-        self.damage_modifiers.register_modifier(modifiers.DamageModifier('versatility', None, [], blacklist=True))
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('versatility', None, [], all_damage=True))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('armor', self.armor_mitigation_multiplier(), ['death_from_above_pulse',
-            'death_from_above_strike', 'shuriken_storm', 'eviscerate', 'backstab', 'shadowstrike', 'shuriken_toss', 'autoattacks']))
+            'death_from_above_strike', 'shuriken_storm', 'eviscerate', 'backstab', 'shadowstrike', 'shuriken_toss', 'autoattacks'], dmg_schools=['physical']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('executioner', None, ['eviscerate', 'nightblade_ticks']))
-        self.damage_modifiers.register_modifier(modifiers.DamageModifier('symbols_of_death', 1.2, [], blacklist=True))
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('symbols_of_death', 1.2, [], all_damage=True))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('stealth_shuriken_storm', None, ['shuriken_storm', 'second_shuriken']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('backstab_positional', 1 + 0.3 * self.settings.cycle.positional_uptime, ['backstab']))
+
         #Generic tuning aura
-        self.damage_modifiers.register_modifier(modifiers.DamageModifier('subtlety_aura', 1.09, [], blacklist=True))
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('subtlety_aura', 1.09, ['death_from_above_pulse', 'death_from_above_strike',
+            'backstab', 'eviscerate', 'gloomblade', 'nightblade', 'shadowstrike', 'shuriken_storm', 'shuriken_toss', 'nightblade_ticks']))
 
         #talent specific modifiers
         if self.talents.nightstalker:
@@ -1786,7 +1810,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('mos_ssk', None, ['shadowstrike']))
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('mos_shuriken_storm', None, ['shuriken_storm']))
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('mos_evis', None, ['eviscerate']))
-            self.damage_modifiers.register_modifier(modifiers.DamageModifier('mos_other', None, ['shadowstrike', 'eviscerate'], blacklist=True))
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('mos_other', None, ['shadowstrike', 'eviscerate'], blacklist=True, all_damage=True))
 
 
         if self.talents.deeper_strategem:
@@ -1795,14 +1819,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         #trait specific modifiers
         if self.traits.shadow_fangs:
-            self.damage_modifiers.register_modifier(modifiers.DamageModifier('shadow_fangs', 1.04, [], blacklist=True))
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('shadow_fangs', 1.04, [], blacklist=True, dmg_schools=['physical', 'shadow']))
 
         if self.traits.finality:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('finality', None, ['nightblade_ticks', 'eviscerate']))
 
         if self.traits.legionblade:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('legionblade',
-            1.05 + (0.005 * (self.traits.legionblade - 1)), [], blacklist=True))
+            1.05 + (0.005 * (self.traits.legionblade - 1)), [], all_damage=True))
 
         #gear specific modifiers
         if self.stats.gear_buffs.the_dreadlords_deceit:
@@ -1850,7 +1874,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         damage_breakdown, additional_info  = self.compute_damage_from_aps(stats, aps, crits, procs, additional_info)
 
         if self.stats.gear_buffs.insignia_of_ravenholdt:
-            damage_breakdown['insignia_of_ravenholdt'] = self.compute_insignia_of_ravenholdt_damage(stats, aps, crits)
+            damage_breakdown['insignia_of_ravenholdt'] = self.compute_insignia_of_ravenholdt_damage(stats, aps)
 
         for key in damage_breakdown:
             damage_breakdown[key] *= infallible_trinket_mod
@@ -2122,7 +2146,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attacks_per_second['mh_autoattacks'] -= attacks_per_second['shadow_blades']
         attacks_per_second['oh_autoattacks'] -= attacks_per_second['shadow_blades']
 
-        if self.traits.akarris_soul:
+        if self.traits.akarris_soul and 'shadowstrike' in attacks_per_second:
             attacks_per_second['soul_rip'] = attacks_per_second['shadowstrike']
         if self.traits.shadow_nova:
             attacks_per_second['shadow_nova'] = min(attacks_per_second['shadow_dance'], 1./5.)

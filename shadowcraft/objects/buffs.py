@@ -89,6 +89,16 @@ class Buffs(object):
     def __setattr__(self, name, value):
         object.__setattr__(self, name, value)
 
+    def get_stat_bonuses(self, epicurean=False):
+        bonuses = {
+            'agi': self.buff_agi(epicurean),
+            'crit': self.buff_crit(epicurean),
+            'haste': self.buff_haste(epicurean),
+            'mastery': self.buff_mast(epicurean),
+            'versatility': self.buff_versatility(epicurean),
+        }
+        return bonuses
+
     def buff_agi(self, race=False):
         bonus_agi = 0
         bonus_agi += 200 * self.flask_wod_agi_200
