@@ -663,8 +663,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             for proc in active_procs_no_icd:
                 self.set_uptime(proc, attacks_per_second, crit_rates)
                 for e in proc.value:
-                    if e in self.spec_convergence_stats:
-                        convergence_stats = True
+                    convergence_stats = True
                     if e == 'crit':
                         recalculate_crit = True
                     current_stats[ e ] += proc.uptime * proc.value[e] * self.stat_multipliers[e]

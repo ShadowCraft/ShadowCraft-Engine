@@ -246,7 +246,7 @@ allowed_procs = {
         'item_level': 805,
         'source': 'trinket',
         'type': 'icd',
-        'icd': 1,
+        'icd': 0, # stacks with every autohit
         'proc_rate': 1,
         'trigger': 'auto_attacks',
    },
@@ -333,7 +333,7 @@ allowed_procs = {
         'item_level': 860,
         'source': 'trinket',
         'type': 'icd',
-        'icd': 1,
+        'icd': 0, # stacks with every autohit
         'proc_rate': 1,
         'trigger': 'auto_attacks',
    },
