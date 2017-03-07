@@ -5,11 +5,10 @@ from shadowcraft.objects import race
 from shadowcraft.core import exceptions
 
 class Stats(object):
-    # For the moment, lets define this as raw stats from gear + race; AP is
-    # only AP bonuses from gear and level.  Do not include multipliers like
-    # Vitality and Sinister Calling; this is just raw stats.  See calcs page
-    # rows 1-9 from my WotLK spreadsheets to see how these are typically
-    # defined, though the numbers will need to updated for level 85.
+    # For the moment, lets define this as raw stats from gear
+    # AP is only AP bonuses from gear (as of Legion usually 0)
+    # Other base stat bonuses are added in get_character_base_stats
+    # Multipliers are added in get_character_stat_multipliers
 
     crit_rating_conversion_values        = {60:13.0, 70:14.0,  80:15.0,  85:17.0,  90:23.0,  100:110.0,  110:400.0}
     haste_rating_conversion_values       = {60:9.00, 70:10.0,  80:12.0,  85:14.0,  90:20.0,  100:100.0,  110:375.0}
