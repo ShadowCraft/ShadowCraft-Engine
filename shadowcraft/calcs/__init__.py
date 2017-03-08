@@ -1,6 +1,8 @@
 import gettext
 import __builtin__
 import math
+import os
+import subprocess
 
 __builtin__._ = gettext.gettext
 
@@ -28,7 +30,7 @@ class DamageCalculator(object):
 
     def __init__(self, stats, talents, traits, buffs, race, spec, settings=None, level=110, target_level=None, char_class='rogue'):
         self.WOW_BUILD_TARGET = '7.1.5' # should reflect the game patch being targetted
-        self.SHADOWCRAFT_BUILD = '0.02' # <1 for beta builds, 1.00 is GM, >1 for any bug fixes, reset for each warcraft patch
+        self.SHADOWCRAFT_BUILD = self.get_version_string()
         self.tools = class_data.Util()
         self.stats = stats
         self.talents = talents
@@ -88,6 +90,14 @@ class DamageCalculator(object):
         # unless it's basic stuff like combat ratings or base stats that we can
         # datamine for all classes/specs at once.
         self.game_class = self.talents.game_class
+
+    def get_version_string(self):
+        thisdir = os.path.dirname(os.path.abspath(__file__))
+        build = subprocess.check_output('git rev-list --count HEAD', cwd=thisdir).strip()
+        commit = subprocess.check_output('git rev-parse --short HEAD', cwd=thisdir).strip()
+        if build and commit:
+            return '{0} ({1})'.format(build, commit)
+        return 'UNKNOWN'
 
     def recalculate_hit_constants(self):
         self.base_dw_miss_rate = self.base_one_hand_miss_rate + self.dw_miss_penalty

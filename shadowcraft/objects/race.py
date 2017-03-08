@@ -139,6 +139,7 @@ class Race(object):
             self.activated_racial_data["blood_fury_spell"]["value"] = self.blood_fury_bonuses[self.level]["sp"]
             # this merges racial stats with class stats (ie, racial_stat_offset and rogue_base_stats)
             self.stats = map(sum, zip(self.stats, Race.racial_stat_offset[self.race_name]))
+            self.set_racials()
         except KeyError as e:
             raise InvalidRaceException(_('Unsupported class/level combination {character_class}/{level}').format(character_class=self.character_class, level=self.level))
 
@@ -148,17 +149,6 @@ class Race(object):
             return False
         else:
             object.__getattribute__(self, name)
-
-    def get_stats_from_race(self, level, secondaries=False):
-        str = Race.rogue_base_stats[level][0] + Race.racial_stat_offset[self.race_name][0]
-        agi = Race.rogue_base_stats[level][1] + Race.racial_stat_offset[self.race_name][1]
-        sta = Race.rogue_base_stats[level][2] + Race.racial_stat_offset[self.race_name][2]
-        int = Race.rogue_base_stats[level][3] + Race.racial_stat_offset[self.race_name][3]
-        spi = Race.rogue_base_stats[level][4] + Race.racial_stat_offset[self.race_name][4]
-        if secondaries:
-            return {'agi':agi, 'str':str, 'sta':sta, 'int':int, 'spi':spi,
-                    'readiness':0, 'multistrike':0, 'versatility':0, 'haste':0, 'crit':0, 'mastery':0}
-        return {'agi':agi, 'str':str, 'sta':sta, 'int':int, 'spi':spi}
 
     def get_racial_crit(self, is_day=False):
         crit_bonus = 0
