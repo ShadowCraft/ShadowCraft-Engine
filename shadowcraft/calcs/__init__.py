@@ -92,11 +92,14 @@ class DamageCalculator(object):
         self.game_class = self.talents.game_class
 
     def get_version_string(self):
-        thisdir = os.path.dirname(os.path.abspath(__file__))
-        build = subprocess.check_output('git rev-list --count HEAD', cwd=thisdir).strip()
-        commit = subprocess.check_output('git rev-parse --short HEAD', cwd=thisdir).strip()
-        if build and commit:
-            return '{0} ({1})'.format(build, commit)
+        try:
+            thisdir = os.path.dirname(os.path.abspath(__file__))
+            build = subprocess.check_output(['git', 'rev-list', '--count', 'HEAD'], cwd=thisdir).strip()
+            commit = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD'], cwd=thisdir).strip()
+            if build.isdigit() and commit:
+                return '{0} ({1})'.format(build, commit)
+        except:
+            pass
         return 'UNKNOWN'
 
     def recalculate_hit_constants(self):
