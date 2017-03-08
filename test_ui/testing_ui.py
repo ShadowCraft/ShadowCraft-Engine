@@ -1,5 +1,8 @@
+from __future__ import print_function
 # All the imports here are either base python or shadowcraft files with the exception of wx,
 # which can be downloaded from http://www.wxpython.org/download.php (I worked with windows 2.6/64)
+from builtins import str
+from builtins import range
 from os import path
 import sys
 sys.path.append(path.abspath(path.join(path.dirname(__file__), '..')))
@@ -134,7 +137,7 @@ class GearPage(wx.Panel):
                 color_block.SetBackgroundColour(color.upper())
             cb = wx.ComboBox(panel, -1, style = wx.CB_READONLY)
             cb.Bind(wx.EVT_COMBOBOX, self.on_gem_selected)
-            cb.SetItems([''] + ui_data.gems.keys())
+            cb.SetItems([''] + list(ui_data.gems.keys()))
             cb.SetSelection(0)
             panel.Hide()
 
@@ -145,7 +148,7 @@ class GearPage(wx.Panel):
 
     def create_enchant_ui_for_slot(self, master, slot):
         cb = None
-        enchants = [''] + self.get_enchants_for_slot(slot).keys()
+        enchants = [''] + list(self.get_enchants_for_slot(slot).keys())
         cb = wx.ComboBox(master, -1, style = wx.CB_READONLY)
         cb.SetItems(enchants)
         cb.Bind(wx.EVT_COMBOBOX, self.on_enchant_selected)
@@ -181,11 +184,11 @@ class GearPage(wx.Panel):
     def get_items_for_slot(self, slot):
         item_names = []
         items_dict = getattr(ui_data, slot)
-        item_names = items_dict.keys()
+        item_names = list(items_dict.keys())
         return item_names
 
     def get_gems(self):
-        return ui_data.gems.keys()
+        return list(ui_data.gems.keys())
 
     def get_enchants_for_slot(self, slot):
         enchants = []
@@ -198,7 +201,7 @@ class GearPage(wx.Panel):
         return enchants
 
     def update_gems_for_slot(self, slot):
-        for color in self.gems[slot].keys():
+        for color in list(self.gems[slot].keys()):
             self.gems[slot][color].SetSelection(0)
             self.gems[slot][color].GetParent().Hide()
         item = self.current_gear[slot]
@@ -236,7 +239,7 @@ class GearPage(wx.Panel):
 
     def on_restore(self, e, slot):
         #Restoring the item to its dictionary definition
-        print self.current_gear[slot].name
+        print(self.current_gear[slot].name)
         self.update_item_for_slot(self.current_gear[slot].name, slot)
         self.reset_reforging_ui_for_slot(slot)
         self.calculator.calculate()
@@ -263,7 +266,7 @@ class GearPage(wx.Panel):
         current_stats = {'str': 0, 'agi': 0, 'ap': 0, 'crit': 0, 'hit': 0, 'exp': 0, 'haste': 0, 'mastery': 0, 'procs': [], 'gear_buffs': []}
         current_stats['procs'] = []
         current_stats['gear_buffs'] = ['leather_specialization'] #Assuming this rather than give equipment an armor type
-        enchant_slots = self.enchants.keys()
+        enchant_slots = list(self.enchants.keys())
 
         tier11_count = 0
         tier12_count = 0
@@ -303,7 +306,7 @@ class GearPage(wx.Panel):
                 enchant_name = self.enchants[slot].GetValue()
                 if len(enchant_name) > 0:
                     enchant_data = ui_data.enchants[slot][enchant_name]
-                    for stat in enchant_data.keys():
+                    for stat in list(enchant_data.keys()):
                         current_stats[stat] += enchant_data[stat]
         if tier11_count >= 2:
             current_stats['gear_buffs'].append('rogue_t11_2pc')
@@ -425,7 +428,7 @@ class TalentsPage(wx.Panel):
             talents_this_tier += 1
             spec_box.Add(wx.StaticText(self, -1, label = talent), flag = wx.ALIGN_RIGHT)
             combo = self.create_combo_with_max(talent_data[talent][0])
-            if ui_data.default_talents.has_key(talent):
+            if talent in ui_data.default_talents:
                 combo.SetSelection(ui_data.default_talents[talent])
             self.talents[talent] = combo
             spec_box.Add(combo)
@@ -533,7 +536,7 @@ class SettingsPage(wx.Panel):
         self.SetSizer(sizer)
 
     def create_race_selector(self):
-        races = race.Race.racial_stat_offset.keys()
+        races = list(race.Race.racial_stat_offset.keys())
         cb = self.create_combobox_with_options(races)
         self.race = cb
         return cb
@@ -694,8 +697,8 @@ class TestGUI(wx.Frame):
                 
     def pretty_print(self, my_dict):
         ret_str = ''
-        max_len = max(len(entry[0]) for entry in my_dict.items())
-        dict_values = my_dict.items()
+        max_len = max(len(entry[0]) for entry in list(my_dict.items()))
+        dict_values = list(my_dict.items())
         dict_values.sort(key=lambda entry: entry[1], reverse=True)
         for value in dict_values:
             ret_str += value[0] + ':' + ' ' * (max_len - len(value[0])) + str(value[1]) + os.linesep

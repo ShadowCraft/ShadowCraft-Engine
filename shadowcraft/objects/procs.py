@@ -1,3 +1,4 @@
+from builtins import object
 from shadowcraft.core import exceptions
 from shadowcraft.objects import proc_data
 from shadowcraft.objects import class_data

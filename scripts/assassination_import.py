@@ -1,4 +1,6 @@
+from __future__ import print_function
 # Simple test program to debug + play with assassination models.
+from builtins import str
 from os import path
 import sys
 from import_character import CharacterData
@@ -31,7 +33,7 @@ while key < len(sys.argv):
     charInfo[ terms[0] ] = terms[1]
     key += 1
 
-print "Loading " + charInfo['name'] + " of " + charInfo['region'] + "-" + charInfo['realm'] + "\n"
+print("Loading " + charInfo['name'] + " of " + charInfo['region'] + "-" + charInfo['realm'] + "\n")
 character_data = CharacterData(charInfo['region'], charInfo['realm'], charInfo['name'], verbose=charInfo['verbose'])
 character_data.do_import()
 
@@ -62,7 +64,7 @@ test_oh = stats.Weapon(*character_data.get_oh())
 
 # Set up procs.
 character_procs = character_data.get_procs()
-character_procs_allowed = filter(lambda p: p in proc_data.allowed_procs, character_procs)
+character_procs_allowed = [p for p in character_procs if p in proc_data.allowed_procs]
 
 #not_allowed_procs = set(character_procs) - set(character_procs_allowed)
 #print not_allowed_procs
@@ -105,15 +107,15 @@ ep_values = calculator.get_ep()
 # Compute DPS Breakdown.
 dps_breakdown = calculator.get_dps_breakdown()
 non_execute_breakdown = calculator.assassination_dps_breakdown_non_execute()
-total_dps = sum(entry[1] for entry in dps_breakdown.items())
-non_execute_total = sum(entry[1] for entry in non_execute_breakdown.items())
+total_dps = sum(entry[1] for entry in list(dps_breakdown.items()))
+non_execute_total = sum(entry[1] for entry in list(non_execute_breakdown.items()))
 talent_ranks = calculator.get_talents_ranking()
 heal_sum, heal_table = calculator.get_self_healing(dps_breakdown=dps_breakdown)
 
 def max_length(dict_list):
     max_len = 0
     for i in dict_list:
-        dict_values = i.items()
+        dict_values = list(i.items())
         if max_len < max(len(entry[0]) for entry in dict_values):
             max_len = max(len(entry[0]) for entry in dict_values)
 
@@ -123,15 +125,15 @@ def pretty_print(dict_list, total_sum = 1.):
     max_len = max_length(dict_list)
 
     for i in dict_list:
-        dict_values = i.items()
+        dict_values = list(i.items())
         dict_values.sort(key=lambda entry: entry[1], reverse=True)
         for value in dict_values:
             #print value[0] + ':' + ' ' * (max_len - len(value[0])), str(value[1])
             if ("{0:.2f}".format(10*float(value[1])/total_dps)) != '0.00':
-                print value[0] + ':' + ' ' * (max_len - len(value[0])), str(value[1]) + ' ('+str( "{0:.2f}".format(100*float(value[1])/total_sum) )+'%)'
+                print(value[0] + ':' + ' ' * (max_len - len(value[0])), str(value[1]) + ' ('+str( "{0:.2f}".format(100*float(value[1])/total_sum) )+'%)')
             else:
-                print value[0] + ':' + ' ' * (max_len - len(value[0])), str(value[1])
-        print '-' * (max_len + 15)
+                print(value[0] + ':' + ' ' * (max_len - len(value[0])), str(value[1]))
+        print('-' * (max_len + 15))
 
 dicts_for_pretty_print = [
     ep_values,
@@ -140,8 +142,8 @@ dicts_for_pretty_print = [
     dps_breakdown
 ]
 pretty_print(dicts_for_pretty_print, total_sum=total_dps)
-print ' ' * (max_length(dicts_for_pretty_print) + 1), total_dps, _("total damage per second.")
-print ''
-print 'non-execute breakdown: '
+print(' ' * (max_length(dicts_for_pretty_print) + 1), total_dps, _("total damage per second."))
+print('')
+print('non-execute breakdown: ')
 pretty_print([non_execute_breakdown], total_sum=non_execute_total)
-print ' ' * (max_length([non_execute_breakdown]) + 1), non_execute_total, _("total damage per second.")
+print(' ' * (max_length([non_execute_breakdown]) + 1), non_execute_total, _("total damage per second."))

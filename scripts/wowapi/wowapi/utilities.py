@@ -1,3 +1,5 @@
+from __future__ import division
+from past.utils import old_div
 def http_datetime( dt=None ):
 
     if not dt:
@@ -42,7 +44,7 @@ def parse_http_datetime( datestring, utc_tzinfo=None, strict=False ):
         raise ValueError('HTTP date has an unrecognizable month')
     y = int(m.group('Y'))
     if y < 100:
-        century = datetime.datetime.utcnow().year / 100
+        century = old_div(datetime.datetime.utcnow().year, 100)
         if y < 50:
             y = century * 100 + y
         else:

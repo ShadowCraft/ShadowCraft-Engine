@@ -1,3 +1,6 @@
+from builtins import str
+from builtins import range
+from builtins import object
 from shadowcraft.core import exceptions
 from shadowcraft.objects import talents_data
 
@@ -29,7 +32,7 @@ class Talents(object):
 
     def get_allowed_talents_for_level(self):
         allowed_talents_for_level = []
-        for i in xrange(self.get_top_tier()):
+        for i in range(self.get_top_tier()):
             for talent in self.class_talents[i]:
                 allowed_talents_for_level.append(talent)
         return allowed_talents_for_level
@@ -54,7 +57,7 @@ class Talents(object):
         j = 0
         self.reset_talents()
         for i in talent_string:
-            if int(i) not in range(4):
+            if int(i) not in list(range(4)):
                 raise InvalidTalentException(_('Values in the talent string must be 0, 1, 2, 3, or sometimes 4'))
             if int(i) == 0 or i == '.':
                 pass
@@ -84,7 +87,7 @@ class Talents(object):
         if name not in self.allowed_talents:
             return None
         tier = 0
-        for i in xrange(self.max_rows):
+        for i in range(self.max_rows):
             if name in self.class_talents[i]:
                 return i
 

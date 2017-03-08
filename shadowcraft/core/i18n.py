@@ -1,9 +1,13 @@
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
 import gettext
 import os.path
 import locale
-import __builtin__
+import builtins
+import sys
 
-__builtin__._ = gettext.gettext
+builtins._ = gettext.gettext
 
 # Domain: this needs to be the name of our .mo files
 TRANSLATION_DOMAIN = 'SCE'
@@ -14,6 +18,9 @@ def set_language(language):
     # language specified. It will fall back to code strings if given a not supported
     # language. Note that the 'local' value only makes sense when not running from
     # the hosted online version.
+    install_args = { }
+    if sys.api_version < 3:
+        install_args['str'] = True
     if language == 'local':
         # Setting up a list of locales in your machine and asign them to the _() function
         languages_list = []
@@ -26,7 +33,7 @@ def set_language(language):
         if (gnu_lang):
             languages_list += gnu_lang.split(":")
 
-        gettext.translation(TRANSLATION_DOMAIN, LOCALE_DIR, fallback=True, languages=languages_list).install(unicode=True)
+        gettext.translation(TRANSLATION_DOMAIN, LOCALE_DIR, fallback=True, languages=languages_list).install(**install_args)
 
     else:
-        gettext.translation(TRANSLATION_DOMAIN, LOCALE_DIR, fallback=True, languages=[language]).install(unicode=True)
+        gettext.translation(TRANSLATION_DOMAIN, LOCALE_DIR, fallback=True, languages=[language]).install(**install_args)

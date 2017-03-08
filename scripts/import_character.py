@@ -1,5 +1,11 @@
+from __future__ import division
+from __future__ import print_function
 # Original Code by by Ayliex @ EJ ( https://github.com/postrov/sc-character-import )
 # -*- coding: utf-8 -*-
+from builtins import str
+from builtins import range
+from past.utils import old_div
+from builtins import object
 from os import path
 from types import *
 import sys
@@ -15,7 +21,7 @@ wowapi = WoWApi()
 pp = pprint.PrettyPrinter(indent=4)
 
 
-class ItemDB:
+class ItemDB(object):
     def __init__(self):
         pass
 
@@ -66,7 +72,7 @@ def get_item_cached(region, id):
         item_db.add_item(id, item)
         return item
 
-class CharacterData:
+class CharacterData(object):
     races = {1 : 'human',
              2 : 'orc',
              3 : 'dwarf',
@@ -257,7 +263,7 @@ class CharacterData:
                      20:'fishing_pole'}
         tmpItem = get_item_cached(self.region, item_data[u'id'])
         damage_info = weapon_info[u'damage']
-        damage = (damage_info[u'max'] + damage_info[u'min']) / 2
+        damage = old_div((damage_info[u'max'] + damage_info[u'min']), 2)
         speed = weapon_info[u'weaponSpeed']
         type = weaponMap[ tmpItem['data'][u'itemSubClass'] ]
         enchant = CharacterData.enchants[item_data[u'tooltipParams'][u'enchant']]
@@ -349,7 +355,7 @@ class CharacterData:
                     if u'reforge' in self.raw_data['data'][u'items'][p][u'tooltipParams']:
                         reforgeID = self.raw_data['data'][u'items'][p][u'tooltipParams'][u'reforge']
                     #if we have data on the reforge
-                    if reforgeID in CharacterData.reforgeMap.keys():
+                    if reforgeID in list(CharacterData.reforgeMap.keys()):
                         reforge = CharacterData.reforgeMap[reforgeID]
                     #for each stat on the gear
                     for key in tmpItem[u'data'][u'bonusStats']:
@@ -375,7 +381,7 @@ class CharacterData:
                     gemCount = 0
                     for gemNumber in range(3):
                         gemId = 'gem' + str(gemNumber)
-                        if gemId in params.keys():
+                        if gemId in list(params.keys()):
                             gemCount += 1
                             tmpGem = get_item_cached(self.region, params[gemId])
                             if not socketInfo == None:
@@ -404,7 +410,7 @@ class CharacterData:
                                 lst[ tmpStat ] += tmpVal
                                 self.verbose_print('Socket bonus +' + str(tmpVal) + ' ' + tmpStat)
                     #add stats from enchants
-                    if u'enchant' in params.keys():
+                    if u'enchant' in list(params.keys()):
                         if not type( CharacterData.enchants[ params[u'enchant'] ] ) == type(''):
                             for key in CharacterData.enchants[ params[u'enchant'] ]:
                                 lst[ key['stat'] ] += key['value']
@@ -415,9 +421,9 @@ class CharacterData:
                         self.verbose_print('Unenchanted')
             except Exception as inst:
                 #it's okay, we can keep going, just so long as we pretend to handle the exception
-                print "\n"
-                print "Error at slot: ", p
-                print "Error type:    ", type(inst)
+                print("\n")
+                print("Error at slot: ", p)
+                print("Error type:    ", type(inst))
                 raise
         if self.verbose:
             pp.pprint(lst)
@@ -455,4 +461,4 @@ class CharacterData:
 
     def verbose_print(self, str):
         if self.verbose:
-            print str
+            print(str)

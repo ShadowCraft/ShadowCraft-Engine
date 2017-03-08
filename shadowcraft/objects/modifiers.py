@@ -1,3 +1,4 @@
+from builtins import object
 from shadowcraft.core import exceptions
 
 #ModifierList contains all modifiers needed for dps computation.
@@ -24,14 +25,14 @@ class ModifierList(object):
 
 		# mods for all damage
 		lumped_modifier['all_damage'] = 1
-		for mod in self.modifiers.values():
+		for mod in list(self.modifiers.values()):
 			if mod.value is None:
 				raise exceptions.InvalidInputException(_('Modifier {mod} is uninitialized').format(mod=mod.name))
 			if mod.all_damage:
 				lumped_modifier['all_damage'] *= mod.value
 
 		# mods for damage schools
-		for mod in self.modifiers.values():
+		for mod in list(self.modifiers.values()):
 			if mod.value is None:
 				raise exceptions.InvalidInputException(_('Modifier {mod} is uninitialized').format(mod=mod.name))
 			if mod.dmg_schools:
@@ -43,7 +44,7 @@ class ModifierList(object):
 						lumped_modifier[modname] = lumped_modifier['all_damage'] * mod.value
 
 		# mods for source abilities
-		for mod in self.modifiers.values():
+		for mod in list(self.modifiers.values()):
 			if mod.value is None:
 				raise exceptions.InvalidInputException(_('Modifier {mod} is uninitialized').format(mod=mod.name))
 			for ability in self.sources:

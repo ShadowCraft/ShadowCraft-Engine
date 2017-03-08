@@ -1,7 +1,12 @@
+from __future__ import division
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
+from past.utils import old_div
 import gettext
-import __builtin__
+import builtins
 
-__builtin__._ = gettext.gettext
+builtins._ = gettext.gettext
 
 from shadowcraft.calcs import DamageCalculator
 from shadowcraft.core import exceptions
@@ -202,7 +207,7 @@ class RogueDamageCalculator(DamageCalculator):
                 base_damage = self.get_formula(a)(ap) * modifier
                 dps += self.get_dps_contribution(base_damage, crit_rate, attacks_per_second, crit_modifier)
         else:
-            for i in xrange(1, cps + 1):
+            for i in range(1, cps + 1):
                 for a in ability_list:
                     base_damage = self.get_formula(a)(ap, i) * modifier
                     dps += self.get_dps_contribution(base_damage, crit_rate, attacks_per_second[i], crit_modifier)
@@ -222,7 +227,7 @@ class RogueDamageCalculator(DamageCalculator):
 
         # this removes keys with empty values, prevents errors from:
         # attacks_per_second['sinister_strike'] = None
-        for key in attacks_per_second.keys():
+        for key in list(attacks_per_second.keys()):
             if not attacks_per_second[key]:
                 del attacks_per_second[key]
 
@@ -583,7 +588,7 @@ class RogueDamageCalculator(DamageCalculator):
             haste = self.get_haste_multiplier(current_stats)
             stacks_per_use = min(oozeling.icd * haste * 1.1307 * 3 / 60, 6) #3 rppm, capped at 6 stacks, 1.1307 bad luck protection
             damage_per_use = self.get_proc_damage_contribution(oozeling, stacks_per_use, current_stats, ap, modifier_dict)
-            damage_breakdown[oozeling.proc_name] = damage_per_use / oozeling.icd
+            damage_breakdown[oozeling.proc_name] = old_div(damage_per_use, oozeling.icd)
 
         # Tirathon's Betrayal and Faulty Countermeasure
         for proc in [self.stats.procs.tirathons_betrayal, self.stats.procs.faulty_countermeasure]:
@@ -591,4 +596,4 @@ class RogueDamageCalculator(DamageCalculator):
                 # both 20 RPPM with haste mod
                 procs_per_use = proc.duration * 20 * 1.1307 * self.get_haste_multiplier(current_stats) / 60
                 damage_per_use = self.get_proc_damage_contribution(proc, procs_per_use, current_stats, ap, modifier_dict)
-                damage_breakdown[proc.proc_name] = damage_per_use / proc.icd
+                damage_breakdown[proc.proc_name] = old_div(damage_per_use, proc.icd)

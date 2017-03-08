@@ -1,3 +1,5 @@
+from __future__ import division
+from past.utils import old_div
 import unittest
 from shadowcraft.core import exceptions
 from shadowcraft.objects import stats
@@ -16,20 +18,20 @@ class TestStats(unittest.TestCase):
         self.assertRaises(exceptions.InvalidLevelException, self.stats.__setattr__, 'level', 111)
 
     def test_get_mastery_from_rating(self):
-        self.assertAlmostEqual(self.stats.get_mastery_from_rating(), 8 + 1234 / 350.0)
-        self.assertAlmostEqual(self.stats.get_mastery_from_rating(100),  8 + 100 / 350.0)
+        self.assertAlmostEqual(self.stats.get_mastery_from_rating(), 8 + old_div(1234, 350.0))
+        self.assertAlmostEqual(self.stats.get_mastery_from_rating(100),  8 + old_div(100, 350.0))
 
     def test_get_versatility_multiplier_from_rating(self):
-        self.assertAlmostEqual(self.stats.get_versatility_multiplier_from_rating(), 1 + 1222 / 40000.0)
-        self.assertAlmostEqual(self.stats.get_versatility_multiplier_from_rating(100), 1 + 100 / 40000.0)
+        self.assertAlmostEqual(self.stats.get_versatility_multiplier_from_rating(), 1 + old_div(1222, 40000.0))
+        self.assertAlmostEqual(self.stats.get_versatility_multiplier_from_rating(100), 1 + old_div(100, 40000.0))
 
     def test_get_crit_from_rating(self):
-        self.assertAlmostEqual(self.stats.get_crit_from_rating(), 899 / 35000.0)
-        self.assertAlmostEqual(self.stats.get_crit_from_rating(100), 100 / 35000.0)
+        self.assertAlmostEqual(self.stats.get_crit_from_rating(), old_div(899, 35000.0))
+        self.assertAlmostEqual(self.stats.get_crit_from_rating(100), old_div(100, 35000.0))
 
     def test_get_haste_multiplier_from_rating(self):
-        self.assertAlmostEqual(self.stats.get_haste_multiplier_from_rating(), 1 + 666 / 32500.0)
-        self.assertAlmostEqual(self.stats.get_haste_multiplier_from_rating(100), 1 + 100 / 32500.0)
+        self.assertAlmostEqual(self.stats.get_haste_multiplier_from_rating(), 1 + old_div(666, 32500.0))
+        self.assertAlmostEqual(self.stats.get_haste_multiplier_from_rating(100), 1 + old_div(100, 32500.0))
 
 
 class TestGearBuffs(unittest.TestCase):

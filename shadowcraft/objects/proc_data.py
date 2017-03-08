@@ -1,8 +1,10 @@
+from __future__ import division
 # None should be used to indicate unknown values
 # The Proc class takes these parameters:
 # stat, value, duration, proc_name, default_behaviour, max_stacks=1, can_crit=True, spell_behaviour=None
 # Assumed heroic trinkets have the same behaviour as the non-heroic kin.
 # behaviours must have a 'default' key so that the proc is properly initialized.
+from past.utils import old_div
 allowed_procs = {
     #generic
     'rogue_poison': {
@@ -165,7 +167,7 @@ allowed_procs = {
         'stat':'physical_dot',
         'value': 0, # AP based
         'aoe': True,
-        'ap_coefficient': 2.5 / 3., # server-side, not in dbc, per tick is 2.5 / 3
+        'ap_coefficient': old_div(2.5, 3.), # server-side, not in dbc, per tick is 2.5 / 3
         'duration': 1.5,
         'dot_ticks': 3,
         'proc_name': 'Mark of the Distant Army',
@@ -313,7 +315,7 @@ allowed_procs = {
         'value': {'haste': 0, 'crit': 0, 'mastery': 0}, #TODO: needs special modeling, you get only one stat per proc, but can have multiple at the same time
         'duration': 20,
         'proc_name': 'Triumvirate',
-        'scaling': 2.069368 / 3., #FIXME: for now using 1/3 for each stat / assume we get all 3 for 1/3 each
+        'scaling': old_div(2.069368, 3.), #FIXME: for now using 1/3 for each stat / assume we get all 3 for 1/3 each
         'crm_scales': True,
         'item_level': 875,
         'source': 'trinket',
@@ -437,7 +439,7 @@ allowed_procs = {
         'value': {'mastery': 0, 'crit': 0, 'haste': 0}, #TODO: actually 1-3 stat buffs each time
         'duration': 8,
         'proc_name': 'Screams of the Dead',
-        'scaling': 2.297781 / 3., #FIXME: for now using 1/3 for each stat, similar to entwined elemental foci
+        'scaling': old_div(2.297781, 3.), #FIXME: for now using 1/3 for each stat, similar to entwined elemental foci
         'crm_scales': True,
         'item_level': 805,
         'source': 'trinket',
@@ -451,7 +453,7 @@ allowed_procs = {
         'value': {'mastery': 0, 'crit': 0, 'haste': 0}, #rpp-scaled, TODO: needs special modeling, you get only one stat per proc, but can have multiple at the same time
         'duration': 10,
         'proc_name': 'Allies of Nature',
-        'scaling': 1.378778 / 3., #FIXME: for now using 1/3 for each stat, similar to entwined elemental foci
+        'scaling': old_div(1.378778, 3.), #FIXME: for now using 1/3 for each stat, similar to entwined elemental foci
         'crm_scales': True,
         'item_level': 850,
         'source': 'trinket',

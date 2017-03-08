@@ -1,4 +1,8 @@
+from __future__ import division
+from __future__ import print_function
 # Simple test program to debug + play with assassination models.
+from builtins import str
+from past.utils import old_div
 from os import path
 import sys
 sys.path.append(path.abspath(path.join(path.dirname(__file__), '..')))
@@ -85,12 +89,12 @@ calculator = RogueDarkmantleCalculator(test_stats, test_talents, test_glyphs, te
 
 # Compute DPS Breakdown.
 dps_breakdown = calculator.get_dps_breakdown()
-total_dps = sum(entry[1] for entry in dps_breakdown.items())
+total_dps = sum(entry[1] for entry in list(dps_breakdown.items()))
 
 def max_length(dict_list):
     max_len = 0
     for i in dict_list:
-        dict_values = i.items()
+        dict_values = list(i.items())
         if max_len < max(len(entry[0]) for entry in dict_values):
             max_len = max(len(entry[0]) for entry in dict_values)
 
@@ -100,16 +104,16 @@ def pretty_print(dict_list, total_sum = 1., show_percent=False):
     max_len = max_length(dict_list)
 
     for i in dict_list:
-        dict_values = i.items()
+        dict_values = list(i.items())
         dict_values.sort(key=lambda entry: entry[1], reverse=True)
         for value in dict_values:
             #print value[0] + ':' + ' ' * (max_len - len(value[0])), str(value[1])
-            if show_percent and ("{0:.2f}".format(float(value[1])/total_dps)) != '0.00':
-                print value[0] + ':' + ' ' * (max_len - len(value[0])), str(value[1]) + ' ('+str( "{0:.2f}".format(100*float(value[1])/total_sum) )+'%)'
+            if show_percent and ("{0:.2f}".format(old_div(float(value[1]),total_dps))) != '0.00':
+                print(value[0] + ':' + ' ' * (max_len - len(value[0])), str(value[1]) + ' ('+str( "{0:.2f}".format(100*float(value[1])/total_sum) )+'%)')
             else:
-                print value[0] + ':' + ' ' * (max_len - len(value[0])), str(value[1])
-        print '-' * (max_len + 15)
+                print(value[0] + ':' + ' ' * (max_len - len(value[0])), str(value[1]))
+        print('-' * (max_len + 15))
 
 pretty_print([dps_breakdown], total_sum=total_dps, show_percent=True)
-print ' ' * (max_length([dps_breakdown]) + 1), total_dps, _("total damage per second.")
-print "Request time: %s sec" % (time.time() - start)
+print(' ' * (max_length([dps_breakdown]) + 1), total_dps, _("total damage per second."))
+print("Request time: %s sec" % (time.time() - start))

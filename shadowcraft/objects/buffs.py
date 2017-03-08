@@ -1,3 +1,4 @@
+from builtins import object
 from shadowcraft.core import exceptions
 
 class InvalidBuffException(exceptions.InvalidInputException):

@@ -1,3 +1,5 @@
+from builtins import range
+from builtins import object
 from shadowcraft.core import exceptions
 from shadowcraft.objects import artifact_data
 
@@ -35,7 +37,7 @@ class Artifact(object):
         if len(trait_string) != len(self.allowed_traits) and len(trait_string) != len(self.allowed_traits) + 1:
             raise InvalidTraitException(_('Trait strings must be {traits} (or {traits} + 1) characters long').format(traits=len(self.allowed_traits)))
         self.traits = {}
-        for trait in xrange(len(self.allowed_traits)):
+        for trait in range(len(self.allowed_traits)):
             #grab all charcters for final trait
             if trait == len(self.allowed_traits) - 1:
                 self.set_trait(self.allowed_traits[trait], int(trait_string[trait:]))

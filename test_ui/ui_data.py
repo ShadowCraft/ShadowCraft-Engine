@@ -1,3 +1,4 @@
+from __future__ import print_function
 # the following items had incorrect stats and should be corrected now
 # necklace of strife
 # wind dancer tunic
@@ -9,6 +10,8 @@
 # Wind Dancer's Spaulders
 # lots of necks/heads
 
+from builtins import str
+from builtins import object
 import math
 
 class Item(object):
@@ -52,13 +55,13 @@ class Item(object):
         return reforgable
 
     def reforge(self, from_stat, to_stat):
-        print "before: " + from_stat + " = " + str(getattr(self, from_stat))
-        print "        " + to_stat + " = " + str(getattr(self, to_stat))
+        print("before: " + from_stat + " = " + str(getattr(self, from_stat)))
+        print("        " + to_stat + " = " + str(getattr(self, to_stat)))
         reforged_value = math.floor(getattr(self, from_stat) * 0.4)
         setattr(self, from_stat, getattr(self, from_stat) - reforged_value)
         setattr(self, to_stat, reforged_value)
-        print "after: " + from_stat + " = " + str(getattr(self, from_stat))
-        print "        " + to_stat + " = " + str(getattr(self, to_stat))
+        print("after: " + from_stat + " = " + str(getattr(self, from_stat)))
+        print("        " + to_stat + " = " + str(getattr(self, to_stat)))
 
 class Weapon(Item):
     def __init__(self, name, id=0, str=0, agi=0, ap=0, crit=0, hit=0, exp=0, haste=0, mastery=0, sockets=[], bonus_stat='', bonus_value=0, proc='', gear_buff='', damage=0, speed=0, type=''):

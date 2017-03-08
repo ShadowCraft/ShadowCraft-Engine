@@ -1,6 +1,13 @@
-from urllib2 import Request, urlopen, URLError,quote
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import map
+from builtins import object
+from urllib.request import Request, urlopen
+from urllib.error import URLError
+from urllib.parse import quote
 import gzip
-import StringIO
+import io
 try:
     import simplejson as json
 except ImportError:
@@ -105,7 +112,7 @@ datatypes = {
     }
 }
 
-class WoWApi():
+class WoWApi(object):
     
 
     def __init__(self,privatekey=None,publickey=None,ssl=None):
@@ -126,9 +133,9 @@ class WoWApi():
     def _decode_response(self,response):
         
         if 'content-encoding' in response.info() and response.info()['content-encoding'] == 'gzip':
- 	        response = gzip.GzipFile(fileobj=StringIO.StringIO(response.read()))
+ 	        response = gzip.GzipFile(fileobj=io.StringIO(response.read()))
         try:
-            data = json.loads(unicode(response.read(),'UTF-8'))
+            data = json.loads(str(response.read(),'UTF-8'))
         except json.JSONDecodeError:
             raise APIError('Non-JSON Response')
         return data
@@ -137,7 +144,7 @@ class WoWApi():
     def _do_request(self,request):
         try:
             response = urlopen(request)
-        except URLError, e:
+        except URLError as e:
             if hasattr(e, 'reason'):
                 raise APIError(e.reason,request.get_full_url())
             elif hasattr(e, 'code'):
