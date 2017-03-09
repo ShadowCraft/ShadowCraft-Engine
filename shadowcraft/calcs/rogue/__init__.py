@@ -2,7 +2,6 @@ from __future__ import division
 from future import standard_library
 standard_library.install_aliases()
 from builtins import range
-from past.utils import old_div
 import gettext
 import builtins
 
@@ -588,7 +587,7 @@ class RogueDamageCalculator(DamageCalculator):
             haste = self.get_haste_multiplier(current_stats)
             stacks_per_use = min(oozeling.icd * haste * 1.1307 * 3 / 60, 6) #3 rppm, capped at 6 stacks, 1.1307 bad luck protection
             damage_per_use = self.get_proc_damage_contribution(oozeling, stacks_per_use, current_stats, ap, modifier_dict)
-            damage_breakdown[oozeling.proc_name] = old_div(damage_per_use, oozeling.icd)
+            damage_breakdown[oozeling.proc_name] = damage_per_use / oozeling.icd
 
         # Tirathon's Betrayal and Faulty Countermeasure
         for proc in [self.stats.procs.tirathons_betrayal, self.stats.procs.faulty_countermeasure]:
@@ -596,4 +595,4 @@ class RogueDamageCalculator(DamageCalculator):
                 # both 20 RPPM with haste mod
                 procs_per_use = proc.duration * 20 * 1.1307 * self.get_haste_multiplier(current_stats) / 60
                 damage_per_use = self.get_proc_damage_contribution(proc, procs_per_use, current_stats, ap, modifier_dict)
-                damage_breakdown[proc.proc_name] = old_div(damage_per_use, proc.icd)
+                damage_breakdown[proc.proc_name] = damage_per_use / proc.icd

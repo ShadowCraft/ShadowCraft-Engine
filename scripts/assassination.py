@@ -2,7 +2,6 @@ from __future__ import division
 from __future__ import print_function
 # Simple test program to debug + play with assassination models.
 from builtins import str
-from past.utils import old_div
 from os import path
 import sys
 from pprint import pprint
@@ -126,7 +125,7 @@ def pretty_print(dict_list, total_sum = 1., show_percent=False):
         dict_values.sort(key=lambda entry: entry[1], reverse=True)
         for value in dict_values:
             #print value[0] + ':' + ' ' * (max_len - len(value[0])), str(value[1])
-            if show_percent and ("{0:.2f}".format(old_div(float(value[1]),total_sum))) != '0.00':
+            if show_percent and ("{0:.2f}".format(float(value[1]) / total_sum)) != '0.00':
                 print(value[0] + ':' + ' ' * (max_len - len(value[0])), str(value[1]) + ' ('+str( "{0:.2f}".format(100*float(value[1])/total_sum) )+'%)')
             else:
                 print(value[0] + ':' + ' ' * (max_len - len(value[0])), str(value[1]))

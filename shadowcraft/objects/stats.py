@@ -1,6 +1,5 @@
 from __future__ import division
 from builtins import object
-from past.utils import old_div
 from shadowcraft.objects import buffs
 from shadowcraft.objects import procs
 from shadowcraft.objects import proc_data
@@ -99,22 +98,22 @@ class Stats(object):
     def get_mastery_from_rating(self, rating=None):
         if rating is None:
             rating = self.mastery
-        return 8 + old_div(rating, self.mastery_rating_conversion)
+        return 8 + rating / self.mastery_rating_conversion
 
     def get_crit_from_rating(self, rating=None):
         if rating is None:
             rating = self.crit
-        return old_div(rating, (100. * self.crit_rating_conversion))
+        return rating / (100. * self.crit_rating_conversion)
 
     def get_haste_multiplier_from_rating(self, rating=None):
         if rating is None:
             rating = self.haste
-        return 1 + old_div(rating, (100. * self.haste_rating_conversion))
+        return 1 + rating / (100. * self.haste_rating_conversion)
 
     def get_versatility_multiplier_from_rating(self, rating=None):
         if rating is None:
             rating = self.versatility
-        return 1. + old_div(rating, (100. * self.versatility_rating_conversion))
+        return 1. + rating / (100. * self.versatility_rating_conversion)
 
 class Weapon(object):
     allowed_melee_enchants = proc_data.allowed_melee_enchants
@@ -176,7 +175,7 @@ class Weapon(object):
     def damage(self, ap=0, weapon_speed=None):
         if weapon_speed == None:
             weapon_speed = self.speed
-        return weapon_speed * (self.weapon_dps + old_div(ap, 3.5)) #used to be 14
+        return weapon_speed * (self.weapon_dps + ap / 3.5) #used to be 14
 
     def normalized_damage(self, ap=0, weapon_speed=None):
         if weapon_speed == None:
@@ -276,7 +275,7 @@ class GearBuffs(object):
             return 1
         return 0
 
-    def rogue_t15_4pc_reduced_cost(self, uptime= old_div(12., 180.)): #This is for Mut calcs
+    def rogue_t15_4pc_reduced_cost(self, uptime=12/180): #This is for Mut calcs
         cost_reduction = .15
         if self.rogue_t15_4pc:
             return 1. - (cost_reduction * uptime)

@@ -4,7 +4,6 @@ from __future__ import print_function
 # -*- coding: utf-8 -*-
 from builtins import str
 from builtins import range
-from past.utils import old_div
 from builtins import object
 from os import path
 from types import *
@@ -263,7 +262,7 @@ class CharacterData(object):
                      20:'fishing_pole'}
         tmpItem = get_item_cached(self.region, item_data[u'id'])
         damage_info = weapon_info[u'damage']
-        damage = old_div((damage_info[u'max'] + damage_info[u'min']), 2)
+        damage = (damage_info[u'max'] + damage_info[u'min']) / 2
         speed = weapon_info[u'weaponSpeed']
         type = weaponMap[ tmpItem['data'][u'itemSubClass'] ]
         enchant = CharacterData.enchants[item_data[u'tooltipParams'][u'enchant']]

@@ -4,7 +4,6 @@ standard_library.install_aliases()
 from builtins import zip
 from builtins import str
 from builtins import object
-from past.utils import old_div
 import gettext
 import builtins
 import math
@@ -143,7 +142,7 @@ class DamageCalculator(object):
                 e_minus_lambda = math.e ** (-1 * lambd)
                 proc.uptime = 1.1307 * (e_lambda - 1) * (1 - ((1 - e_minus_lambda) ** proc.max_stacks))
         else:
-            mean_proc_time = old_div(60., (haste * proc.get_rppm_proc_rate(spec=self.spec))) + proc.icd - min(proc.icd, 10)
+            mean_proc_time = 60 / (haste * proc.get_rppm_proc_rate(spec=self.spec)) + proc.icd - min(proc.icd, 10)
             proc.uptime = 1.1307 * proc.duration / mean_proc_time
 
     def set_uptime(self, proc, attacks_per_second, crit_rates):
@@ -153,7 +152,7 @@ class DamageCalculator(object):
             procs_per_second = self.get_procs_per_second(proc, attacks_per_second, crit_rates)
 
             if proc.icd:
-                proc.uptime = old_div(proc.duration, (proc.icd + old_div(1., procs_per_second)))
+                proc.uptime = proc.duration / (proc.icd + 1 / procs_per_second)
             else:
                 if procs_per_second >= 1:
                     self.set_uptime_for_ramping_proc(proc, procs_per_second)
@@ -177,9 +176,9 @@ class DamageCalculator(object):
         for key in aps_dict:
             for entry in aps_dict[key][1]:
                 if entry in final_breakdown:
-                    final_breakdown[entry] += aps_dict[key][1][entry] * (old_div(aps_dict[key][0],denom))
+                    final_breakdown[entry] += aps_dict[key][1][entry] * (aps_dict[key][0] / denom)
                 else:
-                    final_breakdown[entry] = aps_dict[key][1][entry] * (old_div(aps_dict[key][0],denom))
+                    final_breakdown[entry] = aps_dict[key][1][entry] * (aps_dict[key][0] / denom)
         return final_breakdown
 
     def ep_helper(self, stat):
@@ -210,7 +209,7 @@ class DamageCalculator(object):
             ep_values[stat] = 1.0
             if normalize_ep_stat != stat:
                 dps = self.ep_helper(stat)
-                ep_values[stat] = old_div(abs(dps - baseline_dps), normalize_dps_difference)
+                ep_values[stat] = abs(dps - baseline_dps) / normalize_dps_difference
 
         return ep_values
 
@@ -229,7 +228,7 @@ class DamageCalculator(object):
             if dps:
                 getattr(self.stats, hand).weapon_dps += 1.
                 new_dps = self.get_dps()
-                ep = old_div(abs(new_dps - baseline_dps), (normalize_dps - baseline_dps))
+                ep = abs(new_dps - baseline_dps) / (normalize_dps - baseline_dps)
                 ep_values[hand + '_dps'] = ep
                 getattr(self.stats, hand).weapon_dps -= 1.
 
@@ -246,7 +245,7 @@ class DamageCalculator(object):
                     getattr(self.stats, hand).set_enchant(enchant)
                     new_dps = self.get_dps()
                     if new_dps != no_enchant_dps:
-                        ep = old_div(abs(new_dps - no_enchant_dps), (no_enchant_normalize_dps - no_enchant_dps))
+                        ep = abs(new_dps - no_enchant_dps) / (no_enchant_normalize_dps - no_enchant_dps)
                         ep_values[hand + '_' + enchant] = ep
                     getattr(self.stats, hand).set_enchant(old_enchant)
 
@@ -256,7 +255,7 @@ class DamageCalculator(object):
                 for speed in speed_list:
                     getattr(self.stats, hand).speed = speed
                     new_dps = self.get_dps()
-                    ep = old_div((new_dps - baseline_dps), (normalize_dps - baseline_dps))
+                    ep = (new_dps - baseline_dps) / (normalize_dps - baseline_dps)
                     ep_values[hand + '_' + str(speed)] = ep
                     getattr(self.stats, hand).speed = old_speed
 
@@ -284,7 +283,7 @@ class DamageCalculator(object):
             for wtype in ('dagger', 'one-hander'):
                 getattr(self.stats, hand).type = wtype
                 new_dps = self.get_dps()
-                ep = old_div((new_dps - baseline_dps), (normalize_dps - baseline_dps))
+                ep = (new_dps - baseline_dps) / (normalize_dps - baseline_dps)
                 ep_values[hand + '_type_' + wtype] = ep
             getattr(self.stats, hand).type = old_type
 
@@ -327,7 +326,7 @@ class DamageCalculator(object):
             try:
                 new_dps = self.get_dps()
                 if new_dps != baseline_dps:
-                    modifiers[tuple(current_setup)] = old_div(new_dps, baseline_dps)
+                    modifiers[tuple(current_setup)] = new_dps / baseline_dps
             except InputNotModeledException:
                 modifiers[tuple(current_setup)] = _('not allowed')
             for hand in baseline_setup:
@@ -390,7 +389,7 @@ class DamageCalculator(object):
             # engineering gizmos are handled as gear buffs by the engine.
             setattr(self.stats.gear_buffs, i, not getattr(self.stats.gear_buffs, i))
             new_dps = self.get_dps()
-            ep_values[i] = old_div(abs(new_dps - baseline_dps), (normalize_dps_difference))
+            ep_values[i] = abs(new_dps - baseline_dps) / (normalize_dps_difference)
             setattr(self.stats.gear_buffs, i, not getattr(self.stats.gear_buffs, i))
 
         for i in procs_list:
@@ -400,7 +399,7 @@ class DamageCalculator(object):
                 else:
                     self.stats.procs.set_proc(i)
                 new_dps = self.get_dps()
-                ep_values[i] = old_div(abs(new_dps - baseline_dps), (normalize_dps_difference))
+                ep_values[i] = abs(new_dps - baseline_dps) / (normalize_dps_difference)
                 if getattr(self.stats.procs, i):
                     delattr(self.stats.procs, i)
                 else:
@@ -456,7 +455,7 @@ class DamageCalculator(object):
                         proc.update_proc_value() # after setting item_level re-set the proc value
                         new_dps = self.get_dps()
                         if new_dps != base_dps:
-                            ep = old_div(abs(new_dps - base_dps), (base_normalize_dps - base_dps))
+                            ep = abs(new_dps - base_dps) / (base_normalize_dps - base_dps)
                             ep_values[proc_name][l] = ep
                 if old_proc:
                     self.stats.procs.set_proc(proc_name)
@@ -526,10 +525,10 @@ class DamageCalculator(object):
                     new_dps = self.get_dps()
                     if new_dps != base_dps:
                         for l in group:
-                            ep = old_div(abs(new_dps - base_dps), (base_normalize_dps - base_dps))
+                            ep = abs(new_dps - base_dps) / (base_normalize_dps - base_dps)
                             if l > proc.item_level:
                                 upgraded_scale_factor = self.tools.get_random_prop_point(l)
-                                ep *= old_div(float(upgraded_scale_factor), float(scale_factor))
+                                ep *= upgraded_scale_factor / scale_factor
                             ep_values[proc_name][l] = ep
                 if old_proc:
                     self.stats.procs.set_proc(proc_name)
@@ -615,7 +614,7 @@ class DamageCalculator(object):
     def armor_mitigation_multiplier(self, armor=None):
         if not armor:
             armor = self.target_base_armor
-        return old_div(self.attacker_k_value, (self.attacker_k_value + armor))
+        return self.attacker_k_value / (self.attacker_k_value + armor)
 
     def armor_mitigate(self, damage, armor):
         # Pass in raw physical damage and armor value, get armor-mitigated
