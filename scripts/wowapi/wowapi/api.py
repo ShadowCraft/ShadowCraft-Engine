@@ -113,7 +113,7 @@ datatypes = {
 }
 
 class WoWApi(object):
-    
+
 
     def __init__(self,privatekey=None,publickey=None,ssl=None):
         self.privkey = privatekey
@@ -125,15 +125,15 @@ class WoWApi(object):
                 self.ssl = False
         else:
             self.ssl = ssl
-        
+
 
 
 
 
     def _decode_response(self,response):
-        
+
         if 'content-encoding' in response.info() and response.info()['content-encoding'] == 'gzip':
- 	        response = gzip.GzipFile(fileobj=io.StringIO(response.read()))
+            response = gzip.GzipFile(fileobj=io.StringIO(response.read()))
         try:
             data = json.loads(str(response.read(),'UTF-8'))
         except json.JSONDecodeError:
@@ -175,7 +175,7 @@ class WoWApi(object):
         signature = None
         if self.privkey and self.pubkey:
             signature =  self._sign_request('/api/wow/'+data,httpdate)
-                   
+
         if params:
             data += '?'+datatypes[datatype]['param']+'='+','.join(map(str, params))
 
@@ -348,7 +348,7 @@ class WoWApi(object):
         """
         return self._get_data(region,datatypes['item_classes']['path'],None,lastmodified,lang)
 
-    
+
     def get_quest(self,region,questid,lastmodified=None,lang=None):
         """
         .. versionadded:: 0.2.3
