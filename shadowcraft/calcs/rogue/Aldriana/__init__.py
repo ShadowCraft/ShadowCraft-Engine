@@ -10,7 +10,7 @@ import math
 from operator import add
 from copy import copy
 
-builtins._ = gettext.gettext
+_ = gettext.gettext
 
 from shadowcraft.calcs.rogue import RogueDamageCalculator
 from shadowcraft.core import exceptions

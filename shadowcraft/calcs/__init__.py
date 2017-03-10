@@ -10,7 +10,7 @@ import math
 import os
 import subprocess
 
-builtins._ = gettext.gettext
+_ = gettext.gettext
 
 from shadowcraft.core import exceptions
 from shadowcraft.objects import class_data

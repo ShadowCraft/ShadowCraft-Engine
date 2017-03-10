@@ -5,6 +5,9 @@ from shadowcraft.objects import class_data
 
 import sys, traceback
 
+import gettext
+_ = gettext.gettext
+
 class InvalidProcException(exceptions.InvalidInputException):
     pass
 

@@ -7,7 +7,7 @@ import locale
 import builtins
 import sys
 
-builtins._ = gettext.gettext
+_ = gettext.gettext
 
 # Domain: this needs to be the name of our .mo files
 TRANSLATION_DOMAIN = 'SCE'

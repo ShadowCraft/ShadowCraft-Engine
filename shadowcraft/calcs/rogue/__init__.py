@@ -5,7 +5,7 @@ from builtins import range
 import gettext
 import builtins
 
-builtins._ = gettext.gettext
+_ = gettext.gettext
 
 from shadowcraft.calcs import DamageCalculator
 from shadowcraft.core import exceptions

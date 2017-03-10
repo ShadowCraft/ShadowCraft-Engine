@@ -6,6 +6,9 @@ from shadowcraft.objects import proc_data
 from shadowcraft.objects import race
 from shadowcraft.core import exceptions
 
+import gettext
+_ = gettext.gettext
+
 class Stats(object):
     # For the moment, lets define this as raw stats from gear
     # AP is only AP bonuses from gear (as of Legion usually 0)

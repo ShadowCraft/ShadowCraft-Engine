@@ -1,6 +1,9 @@
 from builtins import object
 from shadowcraft.core import exceptions
 
+import gettext
+_ = gettext.gettext
+
 class InvalidBuffException(exceptions.InvalidInputException):
     pass
 

@@ -3,6 +3,9 @@ from builtins import zip
 from builtins import object
 from shadowcraft.core import exceptions
 
+import gettext
+_ = gettext.gettext
+
 class InvalidRaceException(exceptions.InvalidInputException):
     pass
 
