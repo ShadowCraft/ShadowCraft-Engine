@@ -1,3 +1,4 @@
+from builtins import object
 import unittest
 from shadowcraft.calcs.rogue.Aldriana import AldrianasRogueDamageCalculator
 from shadowcraft.core import exceptions
@@ -10,7 +11,7 @@ from shadowcraft.objects import artifact as _artifact
 from shadowcraft.objects import artifact_data as artifact_data
 from shadowcraft.calcs.rogue.Aldriana import settings as _settings
 
-class RogueDamageCalculatorFactory:
+class RogueDamageCalculatorFactory(object):
     def __init__(self, spec, **kwargs):
         self.class_name = 'rogue'
         self.talent_str = '0000000'
@@ -92,7 +93,7 @@ class RogueDamageCalculatorFactory:
         self.calculator.level = 110
         return self.calculator
 
-class RogueDamageCalculatorTestBase:
+class RogueDamageCalculatorTestBase(object):
     def compare_dps(self, a, b):
         return self.compare(a, b, "get_dps")
 

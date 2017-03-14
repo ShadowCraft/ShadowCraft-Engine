@@ -1,7 +1,11 @@
+from __future__ import division
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
 import gettext
-import __builtin__
+import builtins
 
-__builtin__._ = gettext.gettext
+_ = gettext.gettext
 
 from shadowcraft.calcs import DamageCalculator
 from shadowcraft.core import exceptions
@@ -202,7 +206,7 @@ class RogueDamageCalculator(DamageCalculator):
                 base_damage = self.get_formula(a)(ap) * modifier
                 dps += self.get_dps_contribution(base_damage, crit_rate, attacks_per_second, crit_modifier)
         else:
-            for i in xrange(1, cps + 1):
+            for i in range(1, cps + 1):
                 for a in ability_list:
                     base_damage = self.get_formula(a)(ap, i) * modifier
                     dps += self.get_dps_contribution(base_damage, crit_rate, attacks_per_second[i], crit_modifier)
@@ -222,7 +226,7 @@ class RogueDamageCalculator(DamageCalculator):
 
         # this removes keys with empty values, prevents errors from:
         # attacks_per_second['sinister_strike'] = None
-        for key in attacks_per_second.keys():
+        for key in list(attacks_per_second.keys()):
             if not attacks_per_second[key]:
                 del attacks_per_second[key]
 

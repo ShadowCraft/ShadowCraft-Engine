@@ -1,3 +1,4 @@
+from builtins import str
 import unittest
 from shadowcraft.core.exceptions import InvalidInputException
 

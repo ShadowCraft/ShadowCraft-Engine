@@ -1,3 +1,5 @@
+from __future__ import print_function
+from builtins import str
 import json
 from shadowcraft.calcs.rogue.Aldriana import AldrianasRogueDamageCalculator
 from shadowcraft.calcs.rogue.Aldriana import settings
@@ -142,23 +144,23 @@ if __name__ == '__main__':
 
     calculator = from_json(json_string)
     # Compute EP values.
-    ep_values = calculator.get_ep().items()
+    ep_values = list(calculator.get_ep().items())
     ep_values.sort(key=lambda entry: entry[1], reverse=True)
     max_len = max(len(entry[0]) for entry in ep_values)
     for value in ep_values:
-        print value[0] + ':' + ' ' * (max_len - len(value[0])), value[1]
+        print(value[0] + ':' + ' ' * (max_len - len(value[0])), value[1])
 
-    print '---------'
+    print('---------')
 
     # Compute DPS Breakdown.
-    dps_breakdown = calculator.get_dps_breakdown().items()
+    dps_breakdown = list(calculator.get_dps_breakdown().items())
     dps_breakdown.sort(key=lambda entry: entry[1], reverse=True)
     max_len = max(len(entry[0]) for entry in dps_breakdown)
     total_dps = sum(entry[1] for entry in dps_breakdown)
     for entry in dps_breakdown:
-        print entry[0] + ':' + ' ' * (max_len - len(entry[0])), entry[1]
+        print(entry[0] + ':' + ' ' * (max_len - len(entry[0])), entry[1])
 
-    print '-' * (max_len + 15)
+    print('-' * (max_len + 15))
 
-    print ' ' * (max_len + 1), total_dps, _("total damage per second.")
+    print(' ' * (max_len + 1), total_dps, _("total damage per second."))
 

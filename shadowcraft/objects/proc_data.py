@@ -1,3 +1,4 @@
+from __future__ import division
 # None should be used to indicate unknown values
 # The Proc class takes these parameters:
 # stat, value, duration, proc_name, default_behaviour, max_stacks=1, can_crit=True, spell_behaviour=None
@@ -159,13 +160,13 @@ allowed_procs = {
         'haste_scales': True,
         'can_crit': True,
         'trigger': 'all_attacks'
-   },
+    },
 
     'mark_of_the_distant_army': { #A distant army fires a volley of arrows, dealing 3 ticks of damage over 1.5 sec.
         'stat':'physical_dot',
         'value': 0, # AP based
         'aoe': True,
-        'ap_coefficient': 2.5 / 3., # server-side, not in dbc, per tick is 2.5 / 3
+        'ap_coefficient': 2.5 / 3, # server-side, not in dbc, per tick is 2.5 / 3
         'duration': 1.5,
         'dot_ticks': 3,
         'proc_name': 'Mark of the Distant Army',
@@ -175,7 +176,7 @@ allowed_procs = {
         'haste_scales': True,
         'can_crit': True,
         'trigger': 'all_attacks'
-   },
+    },
 
     'mark_of_the_claw': { #Permanently enchants a necklace to sometimes increase critical strike and haste by 1000 for 6 sec.
         'stat':'stats',
@@ -186,9 +187,9 @@ allowed_procs = {
         'type': 'rppm',
         'proc_rate': 3,
         'trigger': 'all_attacks',
-   },
+    },
 
-     #Legion trinket procs
+    #Legion trinket procs
     'arcanogolem_digit': { #Equip: Your attacks have a chance to rake all enemies in front of you for X Arcane damage.
         'stat':'spell_damage',
         'value': 0, #rpp-scaled
@@ -205,7 +206,7 @@ allowed_procs = {
         'haste_scales': True,
         'can_crit': True,
         'trigger': 'all_attacks'
-   },
+    },
 
     'bloodstained_handkerchief': { #Use: Garrote your target from behind, causing them to bleed for X Physical damage every 3 sec until they die. (1 Min Cooldown)
         'stat':'physical_damage', #modeled as icd because it's active FOREVER
@@ -220,7 +221,7 @@ allowed_procs = {
         'icd': 3,
         'can_crit': True,
         'trigger': 'all_attacks'
-   },
+    },
 
     'bloodthirsty_instinct': { #Equip: Your melee attacks have a chance to increase your Haste by X for 10 sec.  This effect occurs more often against targets at low health.
         'stat':'stats',
@@ -234,7 +235,7 @@ allowed_procs = {
         'type': 'rppm',
         'proc_rate': 3,
         'trigger': 'all_attacks',
-   },
+    },
 
     'chaos_talisman': { #Equip: Your melee autoattacks grant you Chaotic Energy, increasing your Strength or Agility by X, stacking up to 20 times. If you do not autoattack an enemy for 4 sec, this effect will decrease by 1 stack every sec.
         'stat':'stats',
@@ -249,7 +250,7 @@ allowed_procs = {
         'icd': 0, # stacks with every autohit
         'proc_rate': 1,
         'trigger': 'auto_attacks',
-   },
+    },
 
     'chrono_shard': { #Equip: Your spells and abilities have a chance to grant you X Haste and 15% movement speed for 10 sec.
         'stat':'stats',
@@ -263,7 +264,7 @@ allowed_procs = {
         'type': 'rppm',
         'proc_rate': 1,
         'trigger': 'all_attacks',
-   },
+    },
 
     'convergence_of_fates': { #Equip: Your attacks have a chance to reduce the remaining cooldown on one of your powerful abilities by 5 sec.
         'stat':'ability_modifier',
@@ -275,7 +276,7 @@ allowed_procs = {
         'type': 'rppm',
         'proc_rate': {'assassination': 3.51, 'outlaw': 8.4, 'subtlety': 9},
         'trigger': 'all_attacks',
-   },
+    },
 
     #removed the ":" not sure which way it should be
     'darkmoon_deck_dominion': { #Equip: Increase critical strike by X-Y. The amount of critical strike depends on the topmost card in the deck. Equip: Periodically shuffle the deck while in combat.
@@ -306,21 +307,21 @@ allowed_procs = {
         'proc_rate': 1,
         'can_crit': True,
         'trigger': 'all_attacks',
-   },
+    },
 
     'entwined_elemental_foci': { #Equip: Your attacks have a chance to grant you a Fiery, Frost, or Arcane enchants for 20 sec.
         'stat':'stats',
         'value': {'haste': 0, 'crit': 0, 'mastery': 0}, #TODO: needs special modeling, you get only one stat per proc, but can have multiple at the same time
         'duration': 20,
         'proc_name': 'Triumvirate',
-        'scaling': 2.069368 / 3., #FIXME: for now using 1/3 for each stat / assume we get all 3 for 1/3 each
+        'scaling': 2.069368 / 3, #FIXME: for now using 1/3 for each stat / assume we get all 3 for 1/3 each
         'crm_scales': True,
         'item_level': 875,
         'source': 'trinket',
         'type': 'rppm',
         'proc_rate': 0.7,
         'trigger': 'all_attacks',
-   },
+    },
 
     'eye_of_command': { #Equip: Your melee auto attacks increase your Critical Strike by 148 for 10 sec, stacking up to 10 times. This effect is reset if you auto attack a different target.
         'stat':'stats',
@@ -336,7 +337,7 @@ allowed_procs = {
         'icd': 0, # stacks with every autohit
         'proc_rate': 1,
         'trigger': 'auto_attacks',
-   },
+    },
 
     'faulty_countermeasure': { #Use: Sheathe your weapons in ice for 30 sec, giving your attacks a chance to cause X additional Frost damage and slow the target's movement speed by 30% for 8 sec.  (2 Min Cooldown)
         'stat':'ability_modifier', #modeled in add_special_procs_damage
@@ -352,7 +353,7 @@ allowed_procs = {
         'icd': 120,
         'can_crit': True,
         'trigger': 'all_attacks'
-   },
+    },
 
     'giant_ornamental_pearl': { #Use: Become enveloped by a Gaseous Bubble that absorbs up to X damage for 8 sec.  When the bubble is consumed or expires, it explodes and deals Y Frost damage to all nearby enemies within 10 yards.  (1 Min Cooldown)
         'stat':'spell_damage',
@@ -370,7 +371,7 @@ allowed_procs = {
         'proc_rate': 1,
         'can_crit': True,
         'trigger': 'all_attacks',
-   },
+    },
 
     'horn_of_valor': { #Use: Sound the horn, increasing your primary stat by X for 30 sec. (2 Min Cooldown)
         'stat':'stats',
@@ -384,7 +385,7 @@ allowed_procs = {
         'icd': 120,
         'proc_rate': 1,
         'trigger': 'all_attacks',
-   },
+    },
 
     'infernal_alchemist_stone': { #Equip: When you heal or deal damage you have a chance to increase your Strength, Agility, or Intellect by X for 15 sec.  Your highest stat is always chosen.
         'stat': 'stats',
@@ -413,7 +414,7 @@ allowed_procs = {
         'proc_rate': 1,
         'icd': 75,
         'trigger': 'all_attacks'
-   },
+    },
 
     'mark_of_dargrul': { #Equip: Your melee attacks have a chance to trigger a Landslide, dealing X Physical damage to all enemies directly in front of you.
         'stat':'physical_damage',
@@ -430,28 +431,28 @@ allowed_procs = {
         'haste_scales': True,
         'can_crit': True,
         'trigger': 'all_attacks'
-   },
+    },
 
     'memento_of_angerboda': { #Equip: Your melee attacks have a chance to activate Screams of the Dead, granting you a random combat enhancement for 8 sec.
         'stat':'stats',
         'value': {'mastery': 0, 'crit': 0, 'haste': 0}, #TODO: actually 1-3 stat buffs each time
         'duration': 8,
         'proc_name': 'Screams of the Dead',
-        'scaling': 2.297781 / 3., #FIXME: for now using 1/3 for each stat, similar to entwined elemental foci
+        'scaling': 2.297781 / 3, #FIXME: for now using 1/3 for each stat, similar to entwined elemental foci
         'crm_scales': True,
         'item_level': 805,
         'source': 'trinket',
         'type': 'rppm',
         'proc_rate': 1.5,
         'trigger': 'all_attacks',
-   },
+    },
 
     'natures_call': { #Equip: Your melee attacks have a chance to grant you a blessing of one of the Allies of Nature for 10 sec.
         'stat':'stats',
         'value': {'mastery': 0, 'crit': 0, 'haste': 0}, #rpp-scaled, TODO: needs special modeling, you get only one stat per proc, but can have multiple at the same time
         'duration': 10,
         'proc_name': 'Allies of Nature',
-        'scaling': 1.378778 / 3., #FIXME: for now using 1/3 for each stat, similar to entwined elemental foci
+        'scaling': 1.378778 / 3, #FIXME: for now using 1/3 for each stat, similar to entwined elemental foci
         'crm_scales': True,
         'item_level': 850,
         'source': 'trinket',
@@ -459,7 +460,7 @@ allowed_procs = {
         'proc_rate': 2,
         'can_crit': True, #TODO: according to wowhead this can also proc Cleansed Drake's Breath for (scale factor 48.72993) damage
         'trigger': 'all_attacks',
-   },
+    },
 
     'nightblooming_frond': { #Equip: Your attacks have a chance to grant Recursive Strikes for 15 sec, causing your auto attacks to deal an additional X damage and increase the intensity of Recursive Strikes.
         'stat':'ability_modifier',
@@ -475,7 +476,7 @@ allowed_procs = {
         'proc_rate': 1,
         'can_crit': True,
         'trigger': 'all_attacks',
-   },
+    },
 
     'nightmare_egg_shell': { #Equip: Your melee attacks have a chance to grant you X Haste every 1 sec for 20 sec.
         'stat':'stats',
@@ -489,7 +490,7 @@ allowed_procs = {
         'icd': 20,
         'proc_rate': .7,
         'trigger': 'all_attacks',
-   },
+    },
 
     'ravaged_seed_pod': { #Use: Contaminate the ground beneath your feet for 10 sec, dealing X Shadow damage to enemies in the area each second.  While you remain in this area, you gain Y Leech.  (1 Min Cooldown)
         'stat':'spell_damage',
@@ -504,7 +505,7 @@ allowed_procs = {
         'icd': 60,
         'source': 'trinket',
         'proc_rate': 1,
-   },
+    },
 
     'six_feather_fan': { #Equip: Your attacks have a chance to launch a volley of 6 Wind Bolts, each dealing X Nature damage and slowing your target by 30% for 6 sec.
         'stat':'spell_dot',
@@ -521,7 +522,7 @@ allowed_procs = {
         'proc_rate': 1,
         'haste_scales': True,
         'can_crit': True
-   },
+    },
 
     'spiked_counterweight': { #Your melee attacks have a chance to deal X Physical damage and increase all damage the target takes from you by 15% for 15 sec, up to Y extra damage dealt.
         'stat':'physical_damage',
@@ -533,7 +534,7 @@ allowed_procs = {
         'type': 'rppm',
         'source': 'trinket',
         'proc_rate': .92,
-   },
+    },
 
     'spontaneous_appendages': { #Equip: Your melee attacks have a chance to generate extra appendages for 12 sec that attack nearby enemies for X Physical damage every 0.75 sec.
         'stat':'physical_dot',
@@ -549,7 +550,7 @@ allowed_procs = {
         'source': 'trinket',
         'proc_rate': .7,
         'haste_scales': True,
-   },
+    },
 
     'tempered_egg_of_serpentrix': { #Equip: Your attacks have a chance to summon a Spawn of Serpentrix to assist you.
         'stat':'spell_dot',
@@ -566,9 +567,9 @@ allowed_procs = {
         'can_crit': True,
         'haste_scales': True,
         'trigger': 'all_attacks',
-   },
+    },
 
-      'terrorbound_nexus': { #Equip: Your melee attacks have a chance to unleash 4 Shadow Waves that deal X Shadow damage to enemies in their path.  The waves travel 15 yards away from you, and then return.
+    'terrorbound_nexus': { #Equip: Your melee attacks have a chance to unleash 4 Shadow Waves that deal X Shadow damage to enemies in their path.  The waves travel 15 yards away from you, and then return.
         'stat':'spell_damage',
         'dmg_school': 'shadow',
         'value': 0, #rpp-scaled
@@ -584,7 +585,7 @@ allowed_procs = {
         'haste_scales': True,
         'can_crit': True,
         'trigger': 'all_attacks'
-   },
+    },
 
     'the_devilsaurs_bite': { #Equip: Your attacks have a chance to inflict X Physical damage and stun the target for 1 sec.
         'stat':'physical_damage',
@@ -598,7 +599,7 @@ allowed_procs = {
         'proc_rate': 2,
         'haste_scales': True,
         'can_crit': True
-   },
+    },
 
     'tiny_oozeling_in_a_jar': { #Equip: Your melee attacks have a chance to grant you Congealing Goo, stacking up to 6 times.  Use: Consume all Congealing Goo to vomit on enemies in front of you for 3 sec, inflicting X Nature damage per Goo consumed.  (20 Sec Cooldown)
         'stat':'special_model',
@@ -615,7 +616,7 @@ allowed_procs = {
         'icd': 20,
         'can_crit': True,
         'trigger': 'all_attacks'
-   },
+    },
 
     'tirathons_betrayal': { #Use: Empower yourself with dark energy, causing your attacks to have a chance to inflict 38847 additional Shadow damage and grant you a shield for 38847. Lasts 15 sec.  (1 Min, 15 Sec Cooldown)
         'stat':'ability_modifier', #modeled in add_special_procs_damage
@@ -631,7 +632,7 @@ allowed_procs = {
         'icd': 75,
         'can_crit': True,
         'trigger': 'all_attacks'
-   },
+    },
 
     'toe_knees_promise': { #Use: Create a Flame Gale at an enemy's location, dealing X Fire damage over 8 sec. If Flame Gale strikes an enemy affected by Thunder Ritual, Flame Gale's damage is increased by 30%, and its radius by 50%. (1 Min Cooldown)
         'stat':'spell_damage',
@@ -647,7 +648,7 @@ allowed_procs = {
         'proc_rate': 1,
         'can_crit': True,
         'trigger': 'all_attacks',
-   },
+    },
 
     'windscar_whetstone': { #Use: A Slicing Maelstrom surrounds you, inflicting X Physical damage to nearby enemies over 6 sec.  (2 Min Cooldown)
         'stat':'physical_damage',
@@ -663,21 +664,21 @@ allowed_procs = {
         'proc_rate': 1,
         'can_crit': True,
         'trigger': 'all_attacks'
-   },
+    },
 
-   #Other Legion procs
-   'jacins_ruse_2pc': { #Equip:  Your spells and attacks have a chance to increase your Mastery by 3000 for 15 sec.
-    	'stat':'stats',
-    	'value':{'mastery':3000},
-    	'duration':15,
-    	'proc_name': "Jacin's Ruse",
-    	'item_level': 820,
-    	'type': 'rppm',
-    	'source': 'unique',
-    	'icd': 0,
-    	'proc_rate': 1,
-    	'can_crit': False,
-    	'trigger': 'all_attacks'
+    #Other Legion procs
+    'jacins_ruse_2pc': { #Equip:  Your spells and attacks have a chance to increase your Mastery by 3000 for 15 sec.
+        'stat':'stats',
+        'value':{'mastery':3000},
+        'duration':15,
+        'proc_name': "Jacin's Ruse",
+        'item_level': 820,
+        'type': 'rppm',
+        'source': 'unique',
+        'icd': 0,
+        'proc_rate': 1,
+        'can_crit': False,
+        'trigger': 'all_attacks'
     },
 
     'march_of_the_legion_2pc': { #Equip: Your spells and attacks against Demons have a chance to deal an additional 27200 to 36800 Fire damage.
@@ -720,7 +721,7 @@ allowed_procs = {
         'haste_scales': False,
         'can_crit': False,
         'trigger': 'all_attacks'
-   },
+    },
 
     'infallible_tracking_charm_mod': {
         'stat':'damage_modifier',
@@ -734,7 +735,7 @@ allowed_procs = {
         'proc_rate': 3,
         'haste_scales': False,
         'trigger': 'all_attacks'
-   },
+    },
     #6.2 procs
     'maalus': {
         'stat': 'damage_modifier',

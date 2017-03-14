@@ -1,4 +1,10 @@
+from builtins import map
+from builtins import zip
+from builtins import object
 from shadowcraft.core import exceptions
+
+import gettext
+_ = gettext.gettext
 
 class InvalidRaceException(exceptions.InvalidInputException):
     pass
@@ -105,7 +111,7 @@ class Race(object):
     def __init__(self, race, character_class="rogue", level=85):
         self.character_class = str.lower(character_class)
         self.race_name = race
-        if self.race_name not in Race.racial_stat_offset.keys():
+        if self.race_name not in list(Race.racial_stat_offset.keys()):
             raise InvalidRaceException(_('Unsupported race {race}').format(race=self.race_name))
         if self.character_class == "rogue":
             self.stat_set = Race.rogue_base_stats
@@ -116,7 +122,7 @@ class Race(object):
 
     def set_racials(self):
         # Set all racials, so we don't invoke __getattr__ all the time
-        for race, racials in Race.racials_by_race.items():
+        for race, racials in list(Race.racials_by_race.items()):
             for racial in racials:
                 setattr(self, racial, False)
         for racial in Race.racials_by_race[self.race_name]:
@@ -138,7 +144,7 @@ class Race(object):
             self.activated_racial_data["blood_fury_physical"]["value"] = self.blood_fury_bonuses[self.level]["ap"]
             self.activated_racial_data["blood_fury_spell"]["value"] = self.blood_fury_bonuses[self.level]["sp"]
             # this merges racial stats with class stats (ie, racial_stat_offset and rogue_base_stats)
-            self.stats = map(sum, zip(self.stats, Race.racial_stat_offset[self.race_name]))
+            self.stats = list(map(sum, list(zip(self.stats, Race.racial_stat_offset[self.race_name]))))
             self.set_racials()
         except KeyError as e:
             raise InvalidRaceException(_('Unsupported class/level combination {character_class}/{level}').format(character_class=self.character_class, level=self.level))

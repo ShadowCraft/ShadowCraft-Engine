@@ -1,4 +1,6 @@
+from future import standard_library
+standard_library.install_aliases()
 import gettext
-import __builtin__
+import builtins
 
-__builtin__._ = gettext.gettext
+_ = gettext.gettext

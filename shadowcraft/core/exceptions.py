@@ -1,3 +1,4 @@
+from builtins import str
 class InvalidInputException(Exception):
     # Base class for all our exceptions.  All exceptions we generate should
     # either use or subclass this.

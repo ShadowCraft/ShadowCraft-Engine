@@ -1,3 +1,4 @@
+from __future__ import division
 import unittest
 from shadowcraft.core import exceptions
 from shadowcraft.objects import stats
@@ -16,36 +17,31 @@ class TestStats(unittest.TestCase):
         self.assertRaises(exceptions.InvalidLevelException, self.stats.__setattr__, 'level', 111)
 
     def test_get_mastery_from_rating(self):
-        self.assertAlmostEqual(self.stats.get_mastery_from_rating(), 8 + 1234 / 350.0)
-        self.assertAlmostEqual(self.stats.get_mastery_from_rating(100),  8 + 100 / 350.0)
+        self.assertAlmostEqual(self.stats.get_mastery_from_rating(), 8 + 1234 / 400)
+        self.assertAlmostEqual(self.stats.get_mastery_from_rating(100),  8 + 100 / 400)
 
     def test_get_versatility_multiplier_from_rating(self):
-        self.assertAlmostEqual(self.stats.get_versatility_multiplier_from_rating(), 1 + 1222 / 40000.0)
-        self.assertAlmostEqual(self.stats.get_versatility_multiplier_from_rating(100), 1 + 100 / 40000.0)
+        self.assertAlmostEqual(self.stats.get_versatility_multiplier_from_rating(), 1 + 1222 / 47500)
+        self.assertAlmostEqual(self.stats.get_versatility_multiplier_from_rating(100), 1 + 100 / 47500)
 
     def test_get_crit_from_rating(self):
-        self.assertAlmostEqual(self.stats.get_crit_from_rating(), 899 / 35000.0)
-        self.assertAlmostEqual(self.stats.get_crit_from_rating(100), 100 / 35000.0)
+        self.assertAlmostEqual(self.stats.get_crit_from_rating(), 899 / 40000)
+        self.assertAlmostEqual(self.stats.get_crit_from_rating(100), 100 / 40000)
 
     def test_get_haste_multiplier_from_rating(self):
-        self.assertAlmostEqual(self.stats.get_haste_multiplier_from_rating(), 1 + 666 / 32500.0)
-        self.assertAlmostEqual(self.stats.get_haste_multiplier_from_rating(100), 1 + 100 / 32500.0)
+        self.assertAlmostEqual(self.stats.get_haste_multiplier_from_rating(), 1 + 666 / 37500)
+        self.assertAlmostEqual(self.stats.get_haste_multiplier_from_rating(100), 1 + 100 / 37500)
 
 
 class TestGearBuffs(unittest.TestCase):
     def setUp(self):
-        self.gear = stats.GearBuffs('chaotic_metagem', 'gear_specialization', 'rogue_t11_2pc', 'potion_of_the_tolvir', 'engineer_glove_enchant', 'lifeblood')
+        self.gear = stats.GearBuffs('gear_specialization')
         self.gear_none = stats.GearBuffs()
 
     def test__getattr__(self):
-        self.assertTrue(self.gear.chaotic_metagem)
         self.assertTrue(self.gear.gear_specialization)
-        self.assertFalse(self.gear.rogue_t16_2pc)
+        self.assertFalse(self.gear.rogue_t19_2pc)
         self.assertRaises(AttributeError, self.gear.__getattr__, 'fake_gear_buff')
-
-    def test_metagem_crit_multiplier(self):
-        self.assertAlmostEqual(self.gear.metagem_crit_multiplier(), 1.03)
-        self.assertAlmostEqual(self.gear_none.metagem_crit_multiplier(), 1.0)
 
     def test_gear_specialization_multiplier(self):
         self.assertAlmostEqual(self.gear.gear_specialization_multiplier(), 1.05)

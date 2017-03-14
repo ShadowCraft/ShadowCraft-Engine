@@ -32,7 +32,7 @@ class TestProc(unittest.TestCase):
 
     def test__init__(self):
         self.assertEqual(self.proc.stat, 'stats')
-        self.assertEqual(self.proc.value['haste'], 3399)
+        self.assertEqual(self.proc.value['haste'], 2880)
         self.assertEqual(self.proc.duration, 10)
         self.assertEqual(self.proc.proc_rate, 3)
         self.assertEqual(self.proc.trigger, 'all_attacks')

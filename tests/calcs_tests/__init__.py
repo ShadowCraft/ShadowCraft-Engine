@@ -16,7 +16,7 @@ class TestDamageCalculator(unittest.TestCase):
         test_mh = stats.Weapon(737, 1.8, 'dagger')
         test_oh = stats.Weapon(573, 1.4, 'dagger')
         test_ranged = stats.Weapon(1104, 2.0, 'thrown')
-        test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs, 
+        test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          agi=20909,
                          stam=19566,
                          crit=4402,
@@ -45,7 +45,7 @@ class TestDamageCalculator(unittest.TestCase):
             self.calculator.one_hand_melee_hit_chance(dodgeable=False, parryable=True), 1.0 - 0.03)
 
     def test_dual_wield_mh_hit_chance(self):
-        self.assertAlmostEqual(self.calculator.dual_wield_mh_hit_chance(dodgeable=False, parryable=False), 1.0 - 0.17)
-        self.assertAlmostEqual(self.calculator.dual_wield_mh_hit_chance(dodgeable=True, parryable=False), 1.0 - 0.17)
-        self.assertAlmostEqual(self.calculator.dual_wield_mh_hit_chance(dodgeable=False, parryable=True), 1.0 - 0.17 - 0.03)
-        self.assertAlmostEqual(self.calculator.dual_wield_mh_hit_chance(dodgeable=True, parryable=True), 1.0 - 0.17 - 0.03)
+        self.assertAlmostEqual(self.calculator.dual_wield_mh_hit_chance(dodgeable=False, parryable=False), 1.0 - 0.19)
+        self.assertAlmostEqual(self.calculator.dual_wield_mh_hit_chance(dodgeable=True, parryable=False), 1.0 - 0.19)
+        self.assertAlmostEqual(self.calculator.dual_wield_mh_hit_chance(dodgeable=False, parryable=True), 1.0 - 0.19 - 0.03)
+        self.assertAlmostEqual(self.calculator.dual_wield_mh_hit_chance(dodgeable=True, parryable=True), 1.0 - 0.19 - 0.03)

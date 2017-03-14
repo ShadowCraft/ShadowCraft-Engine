@@ -1,10 +1,16 @@
+from __future__ import division
+from future import standard_library
+standard_library.install_aliases()
+from builtins import zip
+from builtins import str
+from builtins import object
 import gettext
-import __builtin__
+import builtins
 import math
 import os
 import subprocess
 
-__builtin__._ = gettext.gettext
+_ = gettext.gettext
 
 from shadowcraft.core import exceptions
 from shadowcraft.objects import class_data
@@ -136,7 +142,7 @@ class DamageCalculator(object):
                 e_minus_lambda = math.e ** (-1 * lambd)
                 proc.uptime = 1.1307 * (e_lambda - 1) * (1 - ((1 - e_minus_lambda) ** proc.max_stacks))
         else:
-            mean_proc_time = 60. / (haste * proc.get_rppm_proc_rate(spec=self.spec)) + proc.icd - min(proc.icd, 10)
+            mean_proc_time = 60 / (haste * proc.get_rppm_proc_rate(spec=self.spec)) + proc.icd - min(proc.icd, 10)
             proc.uptime = 1.1307 * proc.duration / mean_proc_time
 
     def set_uptime(self, proc, attacks_per_second, crit_rates):
@@ -146,7 +152,7 @@ class DamageCalculator(object):
             procs_per_second = self.get_procs_per_second(proc, attacks_per_second, crit_rates)
 
             if proc.icd:
-                proc.uptime = proc.duration / (proc.icd + 1. / procs_per_second)
+                proc.uptime = proc.duration / (proc.icd + 1 / procs_per_second)
             else:
                 if procs_per_second >= 1:
                     self.set_uptime_for_ramping_proc(proc, procs_per_second)
@@ -170,9 +176,9 @@ class DamageCalculator(object):
         for key in aps_dict:
             for entry in aps_dict[key][1]:
                 if entry in final_breakdown:
-                    final_breakdown[entry] += aps_dict[key][1][entry] * (aps_dict[key][0]/denom)
+                    final_breakdown[entry] += aps_dict[key][1][entry] * (aps_dict[key][0] / denom)
                 else:
-                    final_breakdown[entry] = aps_dict[key][1][entry] * (aps_dict[key][0]/denom)
+                    final_breakdown[entry] = aps_dict[key][1][entry] * (aps_dict[key][0] / denom)
         return final_breakdown
 
     def ep_helper(self, stat):
@@ -522,7 +528,7 @@ class DamageCalculator(object):
                             ep = abs(new_dps - base_dps) / (base_normalize_dps - base_dps)
                             if l > proc.item_level:
                                 upgraded_scale_factor = self.tools.get_random_prop_point(l)
-                                ep *= float(upgraded_scale_factor) / float(scale_factor)
+                                ep *= upgraded_scale_factor / scale_factor
                             ep_values[proc_name][l] = ep
                 if old_proc:
                     self.stats.procs.set_proc(proc_name)

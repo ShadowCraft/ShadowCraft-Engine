@@ -1,8 +1,13 @@
+from __future__ import division
+from builtins import object
 from shadowcraft.objects import buffs
 from shadowcraft.objects import procs
 from shadowcraft.objects import proc_data
 from shadowcraft.objects import race
 from shadowcraft.core import exceptions
+
+import gettext
+_ = gettext.gettext
 
 class Stats(object):
     # For the moment, lets define this as raw stats from gear
@@ -258,7 +263,7 @@ class GearBuffs(object):
                      ('combat', 'ss', 'sinister_strike'): 0.15,
                      ('subtlety', 'bs', 'backstab'): 0.1
             }
-            for spells in bonus.keys():
+            for spells in list(bonus.keys()):
                 if spell in spells:
                     return 1 + bonus[spells]
         return 1
@@ -273,7 +278,7 @@ class GearBuffs(object):
             return 1
         return 0
 
-    def rogue_t15_4pc_reduced_cost(self, uptime= 12. / 180.): #This is for Mut calcs
+    def rogue_t15_4pc_reduced_cost(self, uptime=12/180): #This is for Mut calcs
         cost_reduction = .15
         if self.rogue_t15_4pc:
             return 1. - (cost_reduction * uptime)
