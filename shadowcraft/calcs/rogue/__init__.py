@@ -589,10 +589,17 @@ class RogueDamageCalculator(DamageCalculator):
             damage_per_use = self.get_proc_damage_contribution(oozeling, stacks_per_use, current_stats, ap, modifier_dict)
             damage_breakdown[oozeling.proc_name] = damage_per_use / oozeling.icd
 
-        # Tirathon's Betrayal and Faulty Countermeasure
-        for proc in [self.stats.procs.tirathons_betrayal, self.stats.procs.faulty_countermeasure]:
+        # Potions: Potion of the Old War
+        # Trinkets: Tirathon's Betrayal and Faulty Countermeasure
+        for proc in [self.stats.procs.old_war_pot, self.stats.procs.old_war_prepot,
+            self.stats.procs.tirathons_betrayal, self.stats.procs.faulty_countermeasure]:
             if proc:
-                # both 20 RPPM with haste mod
-                procs_per_use = proc.duration * 20 * 1.1307 * self.get_haste_multiplier(current_stats) / 60
+                # all 20 RPPM with haste mod
+                rppm = 20
+                haste_mod = self.get_haste_multiplier(current_stats) if proc.haste_scales else 1
+                procs_per_use = proc.duration * rppm * 1.1307 * haste_mod / 60
                 damage_per_use = self.get_proc_damage_contribution(proc, procs_per_use, current_stats, ap, modifier_dict)
-                damage_breakdown[proc.proc_name] = damage_per_use / proc.icd
+                if proc.proc_name in damage_breakdown:
+                    damage_breakdown[proc.proc_name] += damage_per_use / proc.icd
+                else:
+                    damage_breakdown[proc.proc_name] = damage_per_use / proc.icd

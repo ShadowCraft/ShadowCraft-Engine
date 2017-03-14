@@ -223,6 +223,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             getattr(self.stats.procs, 'draenic_agi_pot').icd = self.settings.duration
         if self.stats.procs.draenic_agi_prepot:
             getattr(self.stats.procs, 'draenic_agi_prepot').icd = self.settings.duration
+        if self.stats.procs.prolonged_power_pot:
+            self.stats.procs.prolonged_power_pot.icd = self.settings.duration
+        if self.stats.procs.prolonged_power_prepot:
+            self.stats.procs.prolonged_power_prepot.icd = self.settings.duration
+        if self.stats.procs.old_war_pot:
+            self.stats.procs.old_war_pot.icd = self.settings.duration
+        if self.stats.procs.old_war_prepot:
+            self.stats.procs.old_war_prepot.icd = self.settings.duration
 
         self.relentless_strikes_energy_return_per_cp = 5 #.20 * 25
 
@@ -543,6 +551,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     def determine_stats(self, attack_counts_function):
         current_stats = {
             'str': self.base_stats['str'] * self.stat_multipliers['str'],
+            'int': self.base_stats['int'] * self.stat_multipliers['int'],
             'agi': self.base_stats['agi'] * self.stat_multipliers['agi'],
             'ap': self.base_stats['ap'] * self.stat_multipliers['ap'],
             'crit': self.base_stats['crit'] * self.stat_multipliers['crit'],
@@ -655,6 +664,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         while (need_converge or self.spec_needs_converge):
             current_stats = {
                 'str': self.base_stats['str'] * self.stat_multipliers['str'],
+                'int': self.base_stats['int'] * self.stat_multipliers['int'],
                 'agi': self.base_stats['agi'] * self.stat_multipliers['agi'],
                 'ap': self.base_stats['ap'] * self.stat_multipliers['ap'],
                 'crit': self.base_stats['crit'] * self.stat_multipliers['crit'],
