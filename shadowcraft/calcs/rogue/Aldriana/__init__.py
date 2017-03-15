@@ -223,6 +223,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             getattr(self.stats.procs, 'draenic_agi_pot').icd = self.settings.duration
         if self.stats.procs.draenic_agi_prepot:
             getattr(self.stats.procs, 'draenic_agi_prepot').icd = self.settings.duration
+        if self.stats.procs.prolonged_power_pot:
+            self.stats.procs.prolonged_power_pot.icd = self.settings.duration
+        if self.stats.procs.prolonged_power_prepot:
+            self.stats.procs.prolonged_power_prepot.icd = self.settings.duration
+        if self.stats.procs.old_war_pot:
+            self.stats.procs.old_war_pot.icd = self.settings.duration
+        if self.stats.procs.old_war_prepot:
+            self.stats.procs.old_war_prepot.icd = self.settings.duration
 
         self.relentless_strikes_energy_return_per_cp = 5 #.20 * 25
 
@@ -543,6 +551,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     def determine_stats(self, attack_counts_function):
         current_stats = {
             'str': self.base_stats['str'] * self.stat_multipliers['str'],
+            'int': self.base_stats['int'] * self.stat_multipliers['int'],
             'agi': self.base_stats['agi'] * self.stat_multipliers['agi'],
             'ap': self.base_stats['ap'] * self.stat_multipliers['ap'],
             'crit': self.base_stats['crit'] * self.stat_multipliers['crit'],
@@ -655,6 +664,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         while (need_converge or self.spec_needs_converge):
             current_stats = {
                 'str': self.base_stats['str'] * self.stat_multipliers['str'],
+                'int': self.base_stats['int'] * self.stat_multipliers['int'],
                 'agi': self.base_stats['agi'] * self.stat_multipliers['agi'],
                 'ap': self.base_stats['ap'] * self.stat_multipliers['ap'],
                 'crit': self.base_stats['crit'] * self.stat_multipliers['crit'],
@@ -2022,8 +2032,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attacks_per_second['mh_autoattack_hits'] = attacks_per_second['mh_autoattacks'] * self.dw_mh_hit_chance
         attacks_per_second['oh_autoattack_hits'] = attacks_per_second['oh_autoattacks'] * self.dw_oh_hit_chance
 
+        # Shadow Techniques have a 50% chance to proc on fourth autohit and are guaranteed on fifth
         shadow_techniques_cps_per_proc = 1 + (0.05 * self.traits.fortunes_bite)
-        shadow_techniques_procs = self.settings.duration * (attacks_per_second['mh_autoattack_hits'] + attacks_per_second['oh_autoattack_hits']) / 4
+        shadow_techniques_procs = self.settings.duration * (attacks_per_second['mh_autoattack_hits'] + attacks_per_second['oh_autoattack_hits']) / 4.5
         shadow_techniques_cps = shadow_techniques_procs * shadow_techniques_cps_per_proc
         self.cp_budget += shadow_techniques_cps
 

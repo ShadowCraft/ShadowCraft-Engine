@@ -17,6 +17,56 @@ allowed_procs = {
         'trigger': 'all_attacks'
     },
     #potions
+    'old_war_pot': {
+        'stat': 'special_model', #rppm, modeled in add_special_procs_damage
+        'value': 169900, #level 110 assumed for simplicity
+        'dmg_school': 'physical',
+        'duration': 25,
+        'proc_name': 'Potion of the Old War',
+        'type': 'icd',
+        'source': 'unique',
+        'icd': 0,
+        'proc_rate': 1.0,
+        'can_crit': True,
+        'haste_scales': True,
+        'trigger': 'all_attacks'
+    },
+    'old_war_prepot': {
+        'stat': 'special_model', #rppm, modeled in add_special_procs_damage
+        'value': 169900, #level 110 assumed for simplicity
+        'dmg_school': 'physical',
+        'duration': 25,
+        'proc_name': 'Potion of the Old War',
+        'type': 'icd',
+        'source': 'unique',
+        'icd': 0,
+        'proc_rate': 1.0,
+        'can_crit': True,
+        'haste_scales': True,
+        'trigger': 'all_attacks'
+    },
+    'prolonged_power_pot': {
+        'stat': 'stats',
+        'value': {'agi': 2500, 'str': 2500, 'int': 2500},
+        'duration': 60,
+        'proc_name': 'Potion of Prolonged Power',
+        'type': 'icd',
+        'source': 'unique',
+        'icd': 0,
+        'proc_rate': 1.0,
+        'trigger': 'all_attacks'
+    },
+    'prolonged_power_prepot': {
+        'stat': 'stats',
+        'value': {'agi': 2500, 'str': 2500, 'int': 2500},
+        'duration': 60,
+        'proc_name': 'Potion of Prolonged Power',
+        'type': 'icd',
+        'source': 'unique',
+        'icd': 0,
+        'proc_rate': 1.0,
+        'trigger': 'all_attacks'
+    },
     'draenic_agi_pot': {
         'stat': 'stats',
         'value': {'agi':1000},
