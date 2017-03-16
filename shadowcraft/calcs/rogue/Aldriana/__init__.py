@@ -501,7 +501,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     def setup_unique_procs(self, current_stats, average_ap):
         if self.stats.procs.rocket_barrage:
-            getattr(self.stats.procs, 'rocket_barrage').value = 0.42900 * self.base_intellect + .5 * average_ap + 1 + self.level * 2 #need to update
+            getattr(self.stats.procs, 'rocket_barrage').value = 0.42900 * current_stats['int'] + .5 * average_ap + 1 + self.level * 2 #need to update
         if self.stats.procs.touch_of_the_grave:
             getattr(self.stats.procs, 'touch_of_the_grave').value = 8 * self.tools.get_constant_scaling_point(self.level) # +/- 15% spread
 
