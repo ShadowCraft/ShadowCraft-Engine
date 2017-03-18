@@ -214,7 +214,7 @@ class GearBuffs(object):
         'rogue_orderhall_8pc',          # Your finishing moves have a chance to increase your Haste by 2000 for 12 sec.
         #Legendaries
         'the_dreadlords_deceit',             #fok/ssk damage increased by 35% per 2 seconds up to 1 minute
-        'duskwalker_footpads',               #Vendetta CD reduced by 1 second for each 50 energy spent
+        'duskwalkers_footpads',              #Vendetta CD reduced by 1 second for each 65 energy spent
         'thraxis_tricksy_treads',            #
         'shadow_satyrs_walk',                #3+1/3yd energy refund on ssk
         'insignia_of_ravenholdt',            #15% damage as shadow on cp generators
