@@ -268,6 +268,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         if proc.can_crit == False:
             crit_rate = 0
+        elif self.stats.gear_buffs.mantle_of_the_master_assassin:
+            crit_rate = min(crit_rate * (1. - self.mantle_uptime) + self.mantle_uptime, 1)
 
         proc_value = proc.value
         #280+75% AP
@@ -720,6 +722,20 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         for proc in weapon_damage_procs:
             self.set_uptime(proc, attacks_per_second, crit_rates)
+
+        #Mantle of the Master Assassin Legendary
+        if self.stats.gear_buffs.mantle_of_the_master_assassin:
+            mantle_triggers = 1 #Opener
+            if attacks_per_second['vanish']:
+                mantle_triggers += attacks_per_second['vanish'] * self.settings.duration
+            mantle_seconds = mantle_triggers * 6
+            #Note: As of 7.1 subterfuge keeps the buff, this is not true on 7.2 PTR (2018/03/18)
+            if self.spec in ['assassination', 'subtlety'] and self.talents.subterfuge:
+                mantle_seconds += mantle_triggers * 3
+            self.mantle_uptime = mantle_seconds / self.settings.duration
+            for attack in crit_rates:
+                crit_rates[attack] = min(crit_rates[attack] * (1. - self.mantle_uptime) + self.mantle_uptime, 1)
+
         return current_stats, attacks_per_second, crit_rates, damage_procs, additional_info
 
     def add_special_aps_penalties(self, attacks_per_second):
@@ -787,9 +803,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     #Artifact:
         # 'poison_knives'
-
-    #Items:
-        #Legendaries
 
     def assassination_dps_estimate(self):
         return sum(self.assassination_dps_breakdown().values())
@@ -962,6 +975,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.exsang_cd = self.get_spell_cd('exsanguinate')
         if self.settings.cycle.exsang_with_vendetta == 'only':
             self.exsang_cd = max(self.vendetta_cd, self.get_spell_cd('exsanguinate'))
+
+        #Vanish on cooldown
+        attacks_per_second['vanish'] = 1 / self.get_spell_cd('vanish')
 
         # set up our finisher distributions
         #unlike outlaw these depend on gear (crit) so they cannot be precomputed
@@ -1158,7 +1174,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 energy_budget += (new_alacrity_regen - old_alacrity_regen) * self.settings.duration
                 alacrity_stacks = new_alacrity_stacks
 
-        attacks_per_second['mh_autoattacks'] = (haste_multiplier * (1 + (alacrity_stacks * 0.01))) / self.stats.mh.speed
+        #swing timer
+        white_swing_downtime = 0
+        self.swing_reset_spacing = self.get_spell_cd('vanish')
+        if self.swing_reset_spacing is not None:
+            white_swing_downtime += self.settings.response_time / self.swing_reset_spacing
+        attacks_per_second['mh_autoattacks'] = (haste_multiplier * (1 + (alacrity_stacks * 0.01))) / self.stats.mh.speed * (1 - white_swing_downtime)
         attacks_per_second['oh_autoattacks'] = attacks_per_second['mh_autoattacks']
 
         if self.traits.bag_of_tricks:
@@ -1367,6 +1388,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.ghostly_strike_cost = self.get_spell_cost('ghostly_strike') - cost_reducer
 
         self.white_swing_downtime = self.settings.response_time / self.get_spell_cd('vanish')
+
         # Compute dps phases each non-rerolling RtB buff combo AR and not
         phases = {}
         ar_phases = {}
@@ -1511,6 +1533,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                     #old_ar_cd = new_ar_cd
 
             ar_uptime = self.ar_duration / ar_cd
+
+        #Vanish on cooldown
+        attacks_per_second['vanish'] = 1 / self.get_spell_cd('vanish')
+
         # Add in Cannonball and Killing Spree
         if self.talents.killing_spree:
             ksp_cd = self.get_spell_cd('killing_spree') / (1. + tb_seconds_per_second)
@@ -1525,7 +1551,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attack_speed_multiplier *= (1 + (0.2 * ar_uptime))
         if not self.talents.slice_and_dice:
             attack_speed_multiplier *= (1 + (0.5 * gm_uptime))
-        swing_timer = self.stats.mh.speed / attack_speed_multiplier
+        swing_timer = self.stats.mh.speed / (attack_speed_multiplier * (1 - self.white_swing_downtime))
         attacks_per_second['mh_autoattacks'] = 1 / swing_timer
         attacks_per_second['oh_autoattacks'] = 1 / swing_timer
         attacks_per_second['main_gauche'] = self.main_gauche_proc_rate * attacks_per_second['mh_autoattacks'] * self.dual_wield_mh_hit_chance()
@@ -1775,10 +1801,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     #Legion TODO:
 
     #Artifact:
-        # 'flickering_shadows',
-
-    #Items:
-        #Legendaries
+        # 'flickering_shadows'
 
     #Rotation details:
         #Combo Point loss
@@ -1946,7 +1969,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         white_swing_downtime = 0
         self.swing_reset_spacing = self.get_spell_cd('vanish')
         if self.swing_reset_spacing is not None:
-            white_swing_downtime += .5 / self.swing_reset_spacing
+            white_swing_downtime += self.settings.response_time / self.swing_reset_spacing
         attacks_per_second['mh_autoattacks'] = haste_multiplier / self.stats.mh.speed * (1 - white_swing_downtime)
         attacks_per_second['oh_autoattacks'] = haste_multiplier / self.stats.oh.speed * (1 - white_swing_downtime)
 
