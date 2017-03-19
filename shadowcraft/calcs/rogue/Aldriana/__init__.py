@@ -732,6 +732,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             #Note: As of 7.1 subterfuge keeps the buff, this is not true on 7.2 PTR (2018/03/18)
             if self.spec in ['assassination', 'subtlety'] and self.talents.subterfuge:
                 mantle_seconds += mantle_triggers * 3
+            #Assume extended stealth bug opener for subtlety (shadow dance -> stealth, stealth wears off after dance)
+            if self.spec == 'subtlety':
+                mantle_seconds += 5 if self.talents.subterfuge else 3 #One full dance mantle uptime
             self.mantle_uptime = mantle_seconds / self.settings.duration
             for attack in crit_rates:
                 crit_rates[attack] = min(crit_rates[attack] * (1. - self.mantle_uptime) + self.mantle_uptime, 1)
