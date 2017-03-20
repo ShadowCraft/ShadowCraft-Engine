@@ -216,7 +216,6 @@ class ProcsList(object):
                     procs.append(proc)
                 elif proc.stat in ('stats', 'highest', 'random') and stat in proc.value:
                     procs.append(proc)
-
         return procs
 
     def get_all_damage_procs(self):

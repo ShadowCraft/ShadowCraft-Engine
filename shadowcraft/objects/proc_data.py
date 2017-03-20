@@ -67,54 +67,6 @@ allowed_procs = {
         'proc_rate': 1.0,
         'trigger': 'all_attacks'
     },
-    'draenic_agi_pot': {
-        'stat': 'stats',
-        'value': {'agi':1000},
-        'duration': 25,
-        'proc_name': 'Draenic Agi Potion',
-        'item_level': 100,
-        'type': 'icd',
-        'source': 'unique',
-        'icd': 0,
-        'proc_rate': 1.0,
-        'trigger': 'all_attacks'
-    },
-    'draenic_agi_prepot': {
-        'stat': 'stats',
-        'value': {'agi':1000},
-        'duration': 23,
-        'proc_name': 'Draenic Agi Prepot',
-        'item_level': 100,
-        'type': 'icd',
-        'source': 'unique',
-        'icd': 0,
-        'proc_rate': 1.0,
-        'trigger': 'all_attacks'
-    },
-    'virmens_bite': {
-        'stat': 'stats',
-        'value': {'agi':456},
-        'duration': 25,
-        'proc_name': 'Virmens Bite',
-        'item_level': 90,
-        'type': 'icd',
-        'source': 'unique',
-        'icd': 0,
-        'proc_rate': 1.0,
-        'trigger': 'all_attacks'
-    },
-    'virmens_bite_prepot': {
-        'stat': 'stats',
-        'value': {'agi':456},
-        'duration': 23,
-        'proc_name': 'Virmens Bite',
-        'item_level': 90,
-        'type': 'icd',
-        'source': 'unique',
-        'icd': 0,
-        'proc_rate': 1.0,
-        'trigger': 'all_attacks'
-    },
     #racials
     'touch_of_the_grave': {
         'stat': 'spell_damage',

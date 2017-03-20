@@ -5,8 +5,8 @@ class Settings(object):
     # Settings object for AldrianasRogueDamageCalculator.
 
     def __init__(self, cycle, response_time=.5, latency=.03, duration=300, adv_params=None,
-                 merge_damage=True, num_boss_adds=0, feint_interval=0, default_ep_stat='ap', is_day=False, is_demon=False,
-                 marked_for_death_resets=0, finisher_threshold=5):
+                 merge_damage=True, num_boss_adds=0, feint_interval=0, default_ep_stat='ap',
+                 is_day=False, is_demon=False, marked_for_death_resets=0, finisher_threshold=5):
         self.cycle = cycle
         self.response_time = response_time
         self.latency = latency
@@ -63,13 +63,13 @@ class Cycle(object):
 class AssassinationCycle(Cycle):
     _cycle_type = 'assassination'
 
-    def __init__(self, kingsbane_with_vendetta ='just', exsang_with_vendetta='just', cp_builder='mutilate'):
+    def __init__(self, kingsbane='just', exsang='just', cp_builder='mutilate', lethal_poison=''):
         self.cp_builder = cp_builder #Allowed values: 'mutilate', 'fan_of_knives'
         #Cooldown scheduling and usage settings
         #Allowed values: 'just': Use cooldown if it aligns with vendetta but don't delay usages
         #                'only': Only use cooldown with vendetta
-        self.kingsbane_with_vendetta = kingsbane_with_vendetta
-        self.exsang_with_vendetta = exsang_with_vendetta
+        self.kingsbane_with_vendetta = kingsbane
+        self.exsang_with_vendetta = exsang
 
 class OutlawCycle(Cycle):
     _cycle_type = 'outlaw'

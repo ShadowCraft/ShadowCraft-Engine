@@ -617,25 +617,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             elif proc.stat == 'extra_weapon_damage':
                 weapon_damage_procs.append(proc)
 
-        #calculate weapon procs
-        weapon_enchants = set([])
-        for hand, enchant in [(x, y) for x in ('mh', 'oh') for y in ('dancing_steel', 'mark_of_the_frostwolf',
-                                                                     'mark_of_the_shattered_hand', 'mark_of_the_thunderlord',
-                                                                     'mark_of_the_bleeding_hollow', 'mark_of_warsong')]:
-            proc = getattr(getattr(self.stats, hand), enchant)
-            if proc:
-                setattr(proc, '_'.join((hand, 'only')), True)
-                if (proc.stat in current_stats or proc.stat == 'stats'):
-                    if proc.is_real_ppm():
-                        active_procs_rppm.append(proc)
-                    else:
-                        if proc.icd:
-                            active_procs_icd.append(proc)
-                        else:
-                            active_procs_no_icd.append(proc)
-                elif enchant in ('mark_of_the_shattered_hand', ):
-                    damage_procs.append(proc)
-
         static_proc_stats = {
             'str': 0,
             'agi': 0,
