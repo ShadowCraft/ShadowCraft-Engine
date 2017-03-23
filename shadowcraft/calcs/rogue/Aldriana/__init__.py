@@ -1141,9 +1141,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.talents.vigor:
             max_energy += 50
         energy_budget += max_energy
-        #assume you get 50% of max energy back each time
+        #As of Patch 7.2 we get 60 energy + 60 over 2s, assume no loss
         if self.traits.urge_to_kill:
-            energy_budget += (self.settings.duration / self.vendetta_cd) * 0.5 * max_energy
+            energy_budget += (self.settings.duration / self.vendetta_cd) * 120
 
         attacks_per_second['envenom'] = [0, 0, 0, 0, 0, 0, 0]
         #spend those extra cps
