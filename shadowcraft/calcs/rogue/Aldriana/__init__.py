@@ -857,6 +857,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('slayers_precision',
             1.05 + (0.005 * (self.traits.slayers_precision - 1)), [], all_damage=True))
 
+        if self.traits.silence_of_the_uncrowned:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('silence_of_the_uncrowned', 1.1, [], all_damage=True))
+
         #gear specific modifiers
         if self.stats.gear_buffs.the_dreadlords_deceit:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('the_dreadlords_deceit', None, ['fan_of_knives']))
@@ -1331,6 +1334,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.traits.cursed_steel:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('cursed_steel',
             1.05 + (0.005 * (self.traits.legionblade - 1)), [], all_damage=True))
+
+        if self.traits.bravado_of_the_uncrowned:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('bravado_of_the_uncrowned', 1.1, [], all_damage=True))
 
         stats, aps, crits, procs, additional_info = self.determine_stats(self.outlaw_attack_counts)
 
@@ -1880,6 +1886,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.traits.legionblade:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('legionblade',
             1.05 + (0.005 * (self.traits.legionblade - 1)), [], all_damage=True))
+
+        if self.traits.shadows_of_the_uncrowned:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('shadows_of_the_uncrowned', 1.1, [], all_damage=True))
 
         #gear specific modifiers
         if self.stats.gear_buffs.the_dreadlords_deceit:
