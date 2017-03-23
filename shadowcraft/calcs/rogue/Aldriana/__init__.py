@@ -1186,8 +1186,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attacks_per_second['oh_autoattacks'] = attacks_per_second['mh_autoattacks']
 
         if self.traits.bag_of_tricks:
-            bag_of_tricks_proc_chance = (haste_multiplier + (0.1 * alacrity_stacks)) * (1 / sum(attacks_per_second['envenom'])) / 60
-            attacks_per_second['poison_bomb'] = bag_of_tricks_proc_chance * sum(attacks_per_second['envenom'])
+            #2.5% chance per cp on envenom and rupture
+            attacks_per_second['poison_bomb'] = 0
+            for i in range(7):
+                attacks_per_second['poison_bomb'] += attacks_per_second['envenom'][i] * i * 0.025
+                attacks_per_second['poison_bomb'] += attacks_per_second['rupture'][i] * i * 0.025
 
         if self.stats.gear_buffs.duskwalkers_footpads:
             self.vendetta_cd /= 1 + (duskwalker_expended_energy / 65) / self.settings.duration
