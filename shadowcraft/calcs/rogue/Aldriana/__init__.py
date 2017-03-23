@@ -593,6 +593,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 self.stats.procs.toe_knees_promise.update_proc_value()
                 self.stats.procs.toe_knees_promise.value *= 1.3
 
+        if self.traits.concordance_of_the_legionfall:
+            self.stats.procs.set_proc('concordance_of_the_legionfall')
+            self.stats.procs.concordance_of_the_legionfall.value['agi'] = 2000 + (self.traits.concordance_of_the_legionfall - 1) * 200
+
         #sort the procs into groups
         for proc in self.stats.procs.get_all_procs_for_stat():
             if (proc.stat == 'stats'):
