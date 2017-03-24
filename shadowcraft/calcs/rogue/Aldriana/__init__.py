@@ -1228,8 +1228,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #T3:Anticipation
 
     #Artifact:
-        # 'hidden_blade', (ambush proc weirdness)
-        # 'blurred_time',
+        # 'hidden_blade' (ambush proc weirdness)
+        # 'blurred_time'
+        # 'loaded_dice' (for RtB)
 
     #Items:
         #Tier bonus

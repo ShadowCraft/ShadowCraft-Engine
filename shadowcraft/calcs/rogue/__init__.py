@@ -368,7 +368,7 @@ class RogueDamageCalculator(DamageCalculator):
         return 40 * 0.35 * ap
 
     def garrote_tick_damage(self, ap):
-        return .9 * ap
+        return .9 * ap * (1 + 0.04 * self.traits.strangler)
 
     def hemorrhage_damage(self, ap):
         return 1 * self.get_weapon_damage('mh', ap)
