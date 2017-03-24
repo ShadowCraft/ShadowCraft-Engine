@@ -164,7 +164,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         return self.stats.get_haste_multiplier_from_rating(current_stats['haste']) * self.true_haste_mod
 
 
-    def get_energy_regen(self, current_stats, buried=False, ar=False, alacrity_stacks=0):
+    def get_energy_regen(self, current_stats, buried=False, ar=False, alacrity_stacks=0, snd=False):
         regen = 10.
         if self.spec == "outlaw":
             regen = 12.
@@ -174,6 +174,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 regen *= 1.25
             if ar:
                 regen *= 2.0
+            if snd:
+                regen *= 1.195 if ar and self.traits.loaded_dice else 1.15
         else:
             alacrity_stacks = 0
         if self.talents.vigor:
@@ -187,7 +189,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if melee:
             attack_speed_multiplier *= 1.5
         elif snd:
-            attack_speed_multiplier *= 1.9
+            attack_speed_multiplier *= 2.3 if ar and self.traits.loaded_dice else 2
         if ar:
             attack_speed_multiplier *= 1.2
         return attack_speed_multiplier
@@ -1564,6 +1566,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attack_speed_multiplier *= (1 + (0.2 * ar_uptime))
         if not self.talents.slice_and_dice:
             attack_speed_multiplier *= (1 + (0.5 * gm_uptime))
+        elif self.talents.slice_and_dice and self.traits.loaded_dice:
+            buffed_snd_uptime = (self.settings.finisher_threshold + 1) * 6 / self.ar_cd
+            attack_speed_multiplier *= 1 + (0.3 * buffed_snd_uptime)
         swing_timer = self.stats.mh.speed / (attack_speed_multiplier * (1 - self.white_swing_downtime))
         attacks_per_second['mh_autoattacks'] = 1 / swing_timer
         attacks_per_second['oh_autoattacks'] = 1 / swing_timer
@@ -1599,7 +1604,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         maintainence_buff = 'slice_and_dice' if snd else 'roll_the_bones'
         attack_speed_multiplier = self.get_attack_speed_multiplier(current_stats, snd, melee, ar)
-        energy_regen = self.get_energy_regen(current_stats, buried, ar)
+        energy_regen = self.get_energy_regen(current_stats, buried, ar, snd)
 
         gcd_size = 1.0 + self.settings.latency
         if ar:
