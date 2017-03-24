@@ -1344,9 +1344,15 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.traits.bravado_of_the_uncrowned:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('bravado_of_the_uncrowned', 1.1, [], all_damage=True))
 
+        if self.traits.dreadblades_vigor:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('dreadblades_vigor', None, [], all_damage=True))
+
         stats, aps, crits, procs, additional_info = self.determine_stats(self.outlaw_attack_counts)
 
         self.damage_modifiers.update_modifier_value('versatility', self.stats.get_versatility_multiplier_from_rating(rating=stats['versatility']))
+
+        if self.traits.dreadblades_vigor:
+            self.damage_modifiers.update_modifier_value('dreadblades_vigor', 1 + (0.1 * 12 / self.cotd_cd))
 
         damage_breakdown, additional_info  = self.compute_damage_from_aps(stats, aps, crits, procs, additional_info)
 
