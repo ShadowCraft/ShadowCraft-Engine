@@ -59,17 +59,29 @@ class RogueDamageCalculator(DamageCalculator):
 
     #probability of getting X buffs with rtb
     rtb_probabilities = {
-    1: 0.5923,
-    2: 0.3537,
-    3: 0.0386,
-    6: 0.0154,
+        1: 0.5923,
+        2: 0.3537,
+        3: 0.0386,
+        6: 0.0154,
     }
+
+    #probabilities of getting X buffs from RtB with loaded dice
+    #assume we reroll/blacklist one buff rolls instead of adding a second buff to one rolls
+    #so far this assumption could neither be confirmed nor disproved
+    #TODO: actually plug these into the model :/
+    rtb_loaded_dice_probabilities = {
+        1: 0,
+        2: 0.8675,
+        3: 0.0946,
+        6: 0.0379,
+    }
+
     #number of unique rtb buffs of each amount
     rtb_buff_count = {
-    1: 6,
-    2: 15,
-    3: 20,
-    6: 1,
+        1: 6,
+        2: 15,
+        3: 20,
+        6: 1,
     }
 
     assassination_mastery_conversion = .04
