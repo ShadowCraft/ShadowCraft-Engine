@@ -31,6 +31,7 @@ test_spec = 'subtlety'
 
 # Set up buffs.
 test_buffs = buffs.Buffs(
+        'short_term_haste_buff',
         'flask_legion_agi',
         'food_legion_mastery_375',
         #'food_legion_feast_150'
@@ -41,16 +42,15 @@ test_mh = stats.Weapon(5442.0, 1.8, 'dagger', None)
 test_oh = stats.Weapon(5442.0, 1.8, 'dagger', None)
 
 # Set up procs. - trinkets, other things (legendary procs)
-#test_procs = procs.ProcsList(('scales_of_doom', 691), ('beating_heart_of_the_mountain', 701), ('infallible_tracking_charm', 715),
-#                             'draenic_agi_pot', 'draenic_agi_prepot', 'archmages_greater_incandescence')
 test_procs = procs.ProcsList(
     'mark_of_the_hidden_satyr',
-    #'mark_of_the_distant_army',
     ('convergence_of_fates', 890),
     ('nightblooming_frond', 905),
-    #('tirathons_betrayal', 840),
-    #('faulty_countermeasure', 840),
     #('kiljaedens_burning_wish', 940)
+    #'old_war_pot',
+    #'old_war_prepot',
+    'prolonged_power_pot',
+    'prolonged_power_prepot',
 )
 
 """
@@ -72,7 +72,8 @@ test_gear_buffs = stats.GearBuffs('gear_specialization',
 'denial_of_the_half_giants',
 'rogue_t19_2pc',
 'rogue_t19_4pc',
-'insignia_of_ravenholdt',
+#'insignia_of_ravenholdt',
+'mantle_of_the_master_assassin'
 ) #tier buffs located here
 
 # Set up a calcs object..
@@ -106,7 +107,12 @@ test_traits = artifact.Artifact(test_spec, test_class, trait_dict={
     'akarris_soul':        1,
     'soul_shadows':        3,
     'shadow_nova':         1,
-    'legionblade':         20,
+    'legionblade':         1,
+    'shadows_of_the_uncrowned': 1,
+    'etched_in_shadow': 4,
+    'shadows_whisper': 1,
+    'feeding_frenzy': 1,
+    'concordance_of_the_legionfall': 12,
 })
 
 # Set up settings.
@@ -126,10 +132,13 @@ print(str(test_stats.get_character_stats(test_race)))
 dps_breakdown = calculator.get_dps_breakdown()
 total_dps = sum(entry[1] for entry in list(dps_breakdown.items()))
 
+print(str(calculator.shadow_blades_uptime))
+
 # Compute EP values.
 ep_values = calculator.get_ep(baseline_dps=total_dps)
 #ep_values = calculator.get_ep()
-tier_ep_values = calculator.get_other_ep(['rogue_t19_2pc', 'rogue_t19_4pc', 'denial_of_the_half_giants', 'insignia_of_ravenholdt'])
+tier_ep_values = calculator.get_other_ep(['rogue_t19_2pc', 'rogue_t19_4pc', 'denial_of_the_half_giants', 'insignia_of_ravenholdt',
+'shadow_satyrs_walk', 'convergence_of_fates', 'mantle_of_the_master_assassin'])
 
 #talent_ranks = calculator.get_talents_ranking()
 #trait_ranks = calculator.get_trait_ranking()
@@ -167,12 +176,12 @@ pretty_print(dicts_for_pretty_print)
 print(' ' * (max_length(dicts_for_pretty_print) + 1), total_dps, ("total damage per second."))
 
 """
-for value in aps.items():
+for value in list(aps.items()):
     if type(value[1]) is float:
         val = value[1] * 300.
     else:
         val = sum(value[1]) * 300.
-    print str(value[0]) + ' - ' + str(val)
+    print(str(value[0]) + ' - ' + str(val))
 """
 
 #pprint(talent_ranks)
