@@ -1865,7 +1865,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('armor', self.armor_mitigation_multiplier(), ['death_from_above_pulse',
             'death_from_above_strike', 'shuriken_storm', 'eviscerate', 'backstab', 'shadowstrike', 'shuriken_toss', 'autoattacks'], dmg_schools=['physical']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('executioner', None, ['eviscerate', 'nightblade_ticks']))
-        self.damage_modifiers.register_modifier(modifiers.DamageModifier('symbols_of_death', 1.2, [], all_damage=True))
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('symbols_of_death', 1.2 + 0.01 * self.traits.etched_in_shadow, [], all_damage=True))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('stealth_shuriken_storm', None, ['shuriken_storm', 'second_shuriken']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('backstab_positional', 1 + 0.3 * self.settings.cycle.positional_uptime, ['backstab']))
 
@@ -2071,6 +2071,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second['goremaws_bite'] = 1 / goremaws_bite_cd
             self.cp_budget += (3 + self.shadow_blades_uptime) * (self.settings.duration / goremaws_bite_cd)
             self.energy_budget += 30 * (self.settings.duration / goremaws_bite_cd)
+        if self.traits.feeding_frenzy:
+            #assume we time it so we can get three free eviscerates
+            self.energy_budget += self.get_spell_cost('eviscerate') * (self.settings.duration / goremaws_bite_cd)
 
         if self.talents.death_from_above:
             dfa_cd = self.get_spell_cd('death_from_above') + self.settings.response_time
@@ -2100,6 +2103,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         shadow_techniques_procs = self.settings.duration * (attacks_per_second['mh_autoattack_hits'] + attacks_per_second['oh_autoattack_hits']) / 4.5
         shadow_techniques_cps = shadow_techniques_procs * shadow_techniques_cps_per_proc
         self.cp_budget += shadow_techniques_cps
+        if self.traits.shadows_whisper:
+            self.energy_budget += 5 * shadow_techniques_procs
 
         #vanish handling
         vanish_count = self.settings.duration / self.get_spell_cd('vanish')
