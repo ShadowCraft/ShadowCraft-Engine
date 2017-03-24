@@ -1388,15 +1388,15 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         cost_reducer = self.main_gauche_proc_rate * self.combat_potency_from_mg
 
         # Compute Main Gauche lumped ability costs
-        self.run_through_energy_cost = self.get_spell_cost('run_through') - (3 * self.traits.fatebringer) - cost_reducer
-        self.between_the_eyes_energy_cost = self.get_spell_cost('between_the_eyes') - (3 * self.traits.fatebringer) - cost_reducer
-        self.pistol_shot_energy_cost = self.get_spell_cost('run_through') - (3 * self.traits.fatebringer) - cost_reducer
+        self.run_through_energy_cost = self.get_spell_cost('run_through') - (1 * self.traits.fatebringer) - cost_reducer
+        self.between_the_eyes_energy_cost = self.get_spell_cost('between_the_eyes') - (1 * self.traits.fatebringer) - cost_reducer
+        self.pistol_shot_energy_cost = self.get_spell_cost('run_through') - (1 * self.traits.fatebringer) - cost_reducer
         self.saber_slash_energy_cost = self.get_spell_cost('saber_slash') - cost_reducer
-        self.death_from_above_energy_cost = max(0, self.get_spell_cost('death_from_above')  - (3 * self.traits.fatebringer) - cost_reducer * (1 + self.settings.num_boss_adds))
+        self.death_from_above_energy_cost = max(0, self.get_spell_cost('death_from_above')  - (1 * self.traits.fatebringer) - cost_reducer * (1 + self.settings.num_boss_adds))
         if self.talents.slice_and_dice:
-            self.slice_and_dice_cost = self.get_spell_cost('slice_and_dice') - (3 * self.traits.fatebringer)
+            self.slice_and_dice_cost = self.get_spell_cost('slice_and_dice') - (1 * self.traits.fatebringer)
         else:
-            self.roll_the_bones_cost = self.get_spell_cost('roll_the_bones') - (3 * self.traits.fatebringer)
+            self.roll_the_bones_cost = self.get_spell_cost('roll_the_bones') - (1 * self.traits.fatebringer)
         if self.talents.ghostly_strike:
             self.ghostly_strike_cost = self.get_spell_cost('ghostly_strike') - cost_reducer
 
