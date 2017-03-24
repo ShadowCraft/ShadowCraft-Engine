@@ -311,6 +311,8 @@ class RogueDamageCalculator(DamageCalculator):
                 #http://beta.askmrrobot.com/wow/simulator/docs/critdamage
                 if ability == 'between_the_eyes':
                     crit_mod = self.crit_damage_modifiers(3)
+                if ability == 'saber_slash' and self.traits.sabermetrics:
+                    crit_mod = self.crit_damage_modifiers(1 + self.traits.sabermetrics * 0.05)
                 damage_breakdown[ability] = self.get_ability_dps(average_ap, ability, aps, crits, modifier, crit_mod, both_hands, cps)
 
         if self.spec == 'subtlety':
