@@ -157,6 +157,8 @@ class RogueDamageCalculator(DamageCalculator):
             4: 38,
             5: 44,
             6: 48,
+            7: 52,
+            8: 56
     }
 
     # Adrenaline Rush CDR for number of points in trait
@@ -168,6 +170,8 @@ class RogueDamageCalculator(DamageCalculator):
             4: 31,
             5: 37,
             6: 42,
+            7: 46,
+            8: 49
     }
 
     def __setattr__(self, name, value):
