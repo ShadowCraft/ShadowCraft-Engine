@@ -802,11 +802,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     #Legion TODO:
 
-    #Talents:
-        #T2:Nightstalker
-        #T2:Subter
-        #T2:SF
-
     #Artifact:
         # 'poison_knives'
 
@@ -842,6 +837,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('elaborate_planning', None, [], all_damage=True))
         if self.talents.hemorrhage:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('hemorrhage', 1.25, ['rupture_ticks', 'garrote_ticks', 't19_2pc']))
+        if self.talents.nightstalker:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('nightstalker', None, ['rupture_ticks']))
+        if self.talents.subterfuge:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('subterfuge_garrote', None, ['garrote_ticks']))
         if self.talents.agonizing_poison:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('agonizing_poison', None, [], all_damage=True))
         if self.talents.deeper_strategem:
@@ -927,6 +926,15 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             ep_uptime = finisher_aps * 5 #attacks/second * seconds/attack
             self.damage_modifiers.update_modifier_value('elaborate_planning', 1 + (0.12 * ep_uptime))
 
+        if self.talents.nightstalker:
+            #Assume we use nightstalker for snapshotting Rupture
+            ns_rupture_uptime = aps['vanish'] / sum(aps['rupture'])
+            self.damage_modifiers.update_modifier_value('nightstalker', 1 + (0.5 * ns_rupture_uptime))
+
+        if self.talents.subterfuge:
+            #Get modifier for buffed garrotes from Subterfuge, including opener
+            subterfuge_garrote_uptime = (1 / self.settings.duration + aps['vanish']) / aps['garrote']
+            self.damage_modifiers.update_modifier_value('subterfuge_garrote', 1 + (1.25 * subterfuge_garrote_uptime))
 
         if self.talents.agonizing_poison:
             stack_time = 5 / aps['agonizing_poison']
@@ -1153,6 +1161,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             #As of Patch 7.2 we get 60 energy + 60 over 2s, assume no loss
             if self.traits.urge_to_kill:
                 energy_budget += (self.settings.duration / self.vendetta_cd) * 120
+            #If we have Shadow Focus, use it as a builder cost reducer after vanish
+            if self.talents.shadow_focus:
+                energy_budget += 0.75 * self.get_spell_cost('garrote') #Opener
+                energy_budget += 0.75 * self.get_spell_cost(self.cp_builder) * self.settings.duration / self.get_spell_cd('vanish')
 
             attacks_per_second['envenom'] = [0, 0, 0, 0, 0, 0, 0]
             #spend those extra cps
