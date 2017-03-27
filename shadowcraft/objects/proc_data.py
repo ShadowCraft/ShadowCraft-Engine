@@ -586,6 +586,22 @@ allowed_procs = {
         'proc_rate': .92,
     },
 
+    'splinters_of_agronax': { #Equip: Your attacks have a chance to imbed Fel Barbs into your target, dealing X Fire damage over 6 sec.
+        'stat': 'spell_dot',
+        'dmg_school': 'fire',
+        'dot_ticks': 6,
+        'can_crit': True,
+        'value': 0, #rpp-scaled
+        'duration': 6,
+        'proc_name': 'Fel Barbs',
+        'scaling': 5.075319,
+        'item_level': 845,
+        'type': 'rppm',
+        'haste_scales': True,
+        'proc_rate': 3.5,
+        'source': 'trinket',
+    },
+
     'spontaneous_appendages': { #Equip: Your melee attacks have a chance to generate extra appendages for 12 sec that attack nearby enemies for X Physical damage every 0.75 sec.
         'stat':'physical_dot',
         'value': 0, #rpp-scaled
