@@ -242,6 +242,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.true_haste_mod *= 1 + self.race.get_racial_haste() #doesn't include Berserking
         if self.stats.gear_buffs.rogue_t14_4pc:
             self.true_haste_mod *= 1.05
+        if self.stats.gear_buffs.sephuzs_secret:
+            self.true_haste_mod *= 1.02
 
         #hit chances
         self.dw_mh_hit_chance = self.dual_wield_mh_hit_chance()
