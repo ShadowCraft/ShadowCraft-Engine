@@ -521,10 +521,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if not poison:
             return
 
-        if self.talents.agonizing_poison:
-            poison_base_proc_rate = 0.2
-        else:
-            poison_base_proc_rate = 0.5
+        poison_base_proc_rate = 0.3
         poison_envenom_proc_rate = poison_base_proc_rate + 0.3
         aps_envenom = attacks_per_second['envenom']
         if self.talents.death_from_above:
@@ -915,6 +912,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         #actually 2% per cp up to max of 5
         surge_of_toxins_multiplier = 1.
+        surge_of_toxins_ap_multiplier = 1
         if self.traits.surge_of_toxins:
             finisher_cpps = 0.0 #finisher cps per second
             for ability in aps:
@@ -922,6 +920,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                     finisher_cpps += sum([min(cp, 5) * aps[ability][cp] for cp in range(len(aps[ability]))])
             surge_uptime = finisher_aps * 5 #attacks/second * seconds/attack
             surge_of_toxins_multiplier = 1. + ((0.02 * finisher_cpps) * surge_uptime)
+            surge_of_toxins_ap_multiplier = 1. + ((0.01 * finisher_cpps) * surge_uptime)
             self.damage_modifiers.update_modifier_value('surge_of_toxins', surge_of_toxins_multiplier)
 
         if self.talents.elaborate_planning:
@@ -943,19 +942,18 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             max_time = self.settings.duration - stack_time
             agonizing_poison_stacks = (max_time / self.settings.duration) * 5 + (stack_time / self.settings.duration) * 2.5
 
-            agonizing_poison_adder = 0.0 + 0.01 * self.traits.master_alchemist + 0.02 * self.traits.poison_knives
-            agonizing_poison_adder += 1 + (self.assassination_mastery_conversion * self.stats.get_mastery_from_rating(stats['mastery'])) / 2
+            agonizing_poison_additive_mod = 1 + 0.01 * self.traits.master_alchemist
+            agonizing_poison_additive_mod += 0.02 * self.traits.poison_knives
+            agonizing_poison_additive_mod += (self.assassination_mastery_conversion * self.stats.get_mastery_from_rating(stats['mastery'])) / 2
 
-            #12% reduction from 4% per stack
-            agonizing_poison_mod_per_stack= 0.0352 * agonizing_poison_adder
+            agonizing_poison_mod = 0.04 * agonizing_poison_stacks
+            agonizing_poison_mod *= agonizing_poison_additive_mod
             if self.talents.master_poisoner:
-                agonizing_poison_mod_per_stack *= 1.2
-
+                agonizing_poison_mod *= 1.2
             if self.traits.surge_of_toxins:
-                agonizing_poison_mod_per_stack *= surge_of_toxins_multiplier
+                agonizing_poison_mod *= surge_of_toxins_ap_multiplier
 
-            agonizing_poison_mod = 1 + (agonizing_poison_mod_per_stack * agonizing_poison_stacks)
-            self.damage_modifiers.update_modifier_value('agonizing_poison', agonizing_poison_mod)
+            self.damage_modifiers.update_modifier_value('agonizing_poison', 1 + agonizing_poison_mod)
 
         if self.stats.gear_buffs.the_dreadlords_deceit:
             avg_dreadlord_stacks = 0.5 / aps['fan_of_knives']
@@ -1230,10 +1228,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             #Sinister Circulation
             if self.traits.sinister_circulation:
                 if self.talents.agonizing_poison:
-                    kb_cdr_per_sec = attacks_per_second['agonizing_poison'] * 0.5
+                    poisons_per_second = attacks_per_second['agonizing_poison']
                 else:
-                    kb_cdr_per_sec = attacks_per_second['deadly_instant_poison'] * 0.5
-                #Recalculate KB cooldown
+                    poisons_per_second = attacks_per_second['deadly_instant_poison']
+                #Recalculate KB cooldown, Sinister Circulation has a 0.5s icd
+                kb_cdr_per_sec = min(poisons_per_second, 2) * 0.5
                 self.kingsbane_cd = self.get_spell_cd('kingsbane')
                 if self.settings.cycle.kingsbane_with_vendetta == 'only':
                     self.kingsbane_cd = max(self.vendetta_cd, self.kingsbane_cd)
