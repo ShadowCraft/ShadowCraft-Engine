@@ -522,6 +522,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             return
 
         poison_base_proc_rate = 0.3
+        if not self.talents.agonizing_poison:
+            poison_base_proc_rate += 0.2 #Improved Poisons passive for Deadly and Wound Poison
         poison_envenom_proc_rate = poison_base_proc_rate + 0.3
         aps_envenom = attacks_per_second['envenom']
         if self.talents.death_from_above:
