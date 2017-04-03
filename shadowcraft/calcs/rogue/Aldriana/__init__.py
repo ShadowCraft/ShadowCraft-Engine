@@ -837,7 +837,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.talents.elaborate_planning:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('elaborate_planning', None, [], all_damage=True))
         if self.talents.hemorrhage:
-            self.damage_modifiers.register_modifier(modifiers.DamageModifier('hemorrhage', 1.25, ['rupture_ticks', 'garrote_ticks', 't19_2pc']))
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('hemorrhage', 1.25, ['rupture_ticks', 'garrote_ticks']))
         if self.talents.nightstalker:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('nightstalker', None, ['rupture_ticks']))
         if self.talents.subterfuge:
@@ -870,7 +870,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.stats.gear_buffs.zoldyck_family_training_shackles:
             #Assume spend 30% of the time sub 30% health, imperfect but good enough
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('zoldyck_family_training_shackles', 1.09, ['deadly_poison', 'deadly_instant_poison',
-                'garrote_ticks', 'kingsbane', 'kingsbane_ticks', 'rupture_ticks', 'poison_bomb', 't19_2pc'], dmg_schools=['poison', 'bleed']))
+                'garrote_ticks', 'kingsbane', 'kingsbane_ticks', 'rupture_ticks', 'poison_bomb'], dmg_schools=['poison', 'bleed']))
 
         #Assume 100% uptime of Rupture, Garrote and Mutilated Flesh (2pc bleed)
         if self.stats.gear_buffs.rogue_t19_4pc:
@@ -967,6 +967,15 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 self.damage_modifiers.update_modifier_value('t19_4pc', 1.2 + t19_4pc_multiplier)
 
         damage_breakdown, additional_info  = self.compute_damage_from_aps(stats, aps, crits, procs, additional_info)
+
+        if self.stats.gear_buffs.rogue_t19_2pc:
+            # To prevent double dipping this is based on actual Mutilate damage.
+            # There's no pandemic and it does not respect other modifiers.
+            # Remaining damage is added on refresh.
+            damage_breakdown['t19_2pc'] = damage_breakdown['mutilate'] * 0.3
+            # This does double dip off Agonizing poison though
+            if self.talents.agonizing_poison:
+                damage_breakdown['t19_2pc'] *= 1 + agonizing_poison_mod
 
         if self.stats.gear_buffs.insignia_of_ravenholdt:
             damage_breakdown['insignia_of_ravenholdt'] = self.compute_insignia_of_ravenholdt_damage(stats, aps)
@@ -1224,8 +1233,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
             #poison computations, use old function for now
             self.get_poison_counts(attacks_per_second, current_stats)
-            if self.stats.gear_buffs.rogue_t19_2pc:
-                attacks_per_second['t19_2pc'] = attacks_per_second['mutilate']
 
             #Sinister Circulation
             if self.traits.sinister_circulation:

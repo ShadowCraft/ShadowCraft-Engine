@@ -399,9 +399,6 @@ class RogueDamageCalculator(DamageCalculator):
     def rupture_tick_damage(self, ap, cp):
         return 1.5 * ap * (1 + (0.0333 * self.traits.gushing_wounds))
 
-    def assn_t19_2pc_damage(self, ap):
-        return 0.3 * (self.mh_mutilate_damage(ap) + self.oh_mutilate_damage(ap))
-
     #outlaw
     def ambush_damage(self, ap):
         return 4.5 * self.get_weapon_damage('mh', ap)
@@ -512,7 +509,6 @@ class RogueDamageCalculator(DamageCalculator):
             'poisoned_knife':            self.poisoned_knife_damage,
             'poison_bomb':               self.poison_bomb_damage,
             'rupture_ticks':             self.rupture_tick_damage,
-            't19_2pc':                   self.assn_t19_2pc_damage,
             #outlaw
             'ambush':                    self.ambush_damage,
             'between_the_eyes':          self.between_the_eyes_damage,
