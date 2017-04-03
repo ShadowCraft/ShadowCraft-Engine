@@ -25,8 +25,7 @@ class RogueDamageCalculator(DamageCalculator):
                                     'deadly_poison', 'deadly_instant_poison', 'envenom',
                                     'fan_of_knives', 'garrote_ticks', 'hemorrhage',
                                     'kingsbane', 'kingsbane_ticks', 'mutilate',
-                                    'poisoned_knife', 'poison_bomb', 'rupture_ticks', 'from_the_shadows',
-                                    't19_2pc']
+                                    'poisoned_knife', 'poison_bomb', 'rupture_ticks', 'from_the_shadows']
     outlaw_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
                              'ambush', 'between_the_eyes', 'blunderbuss', 'cannonball_barrage',
                              'ghostly_strike', 'greed', 'killing_spree', 'main_gauche',
@@ -362,10 +361,10 @@ class RogueDamageCalculator(DamageCalculator):
 
     #Maybe add better handling for 'rule of three' for artifact traits
     def envenom_damage(self, ap, cp):
-        return .5 * cp * ap * (1 + (0.0333 * self.traits.toxic_blades))
+        return .6 * cp * ap * (1 + (0.0333 * self.traits.toxic_blades))
 
     def fan_of_knives_damage(self, ap):
-        return .8316 * ap
+        return 1.079 * ap
 
     #Lumping 40 ticks together for simplicity
     def from_the_shadows_damage(self, ap):
@@ -404,18 +403,18 @@ class RogueDamageCalculator(DamageCalculator):
         return 4.5 * self.get_weapon_damage('mh', ap)
 
     def between_the_eyes_damage(self, ap, cp):
-        return .75 * cp * ap * (1 + (0.06 * self.traits.black_powder))
+        return .85 * cp * ap * (1 + (0.06 * self.traits.black_powder))
 
-    #7*55% AP
+    #7*121% AP
     def blunderbuss_damage(self, ap):
-        return 3.85 * ap
+        return 8.47 * ap
 
-    #Ignoring that this behaves as a dot for simplicity
+    #Ignoring that this behaves as a dot for simplicity, 6*150%
     def cannonball_barrage_damage(self, ap):
-        return 7.2 * ap
+        return 9 * ap
 
     def ghostly_strike_damage(self, ap):
-        return 1.76 * self.get_weapon_damage('mh', ap)
+        return 1.94 * self.get_weapon_damage('mh', ap)
 
     def mh_greed_damage(self, ap):
         return 3.5 * self.get_weapon_damage('mh', ap)
@@ -425,28 +424,29 @@ class RogueDamageCalculator(DamageCalculator):
 
     #For KsP treat each hit individually
     def mh_killing_spree_damage(self, ap):
-        return 2.108 * self.get_weapon_damage('mh', ap)
+        return 2.6 * self.get_weapon_damage('mh', ap)
 
     def oh_killing_spree_damage(self, ap):
-        return 2.018 * self.oh_penalty() * self.get_weapon_damage('oh', ap)
+        return 2.6 * self.oh_penalty() * self.get_weapon_damage('oh', ap)
 
     def main_gauche_damage(self, ap):
         return 2.1 * self.oh_penalty() * self.get_weapon_damage('oh', ap) * (1 + (0.1 * self.traits.fortunes_strike))
 
     def pistol_shot_damage(self, ap):
-        return 1.5 * ap
+        return 1.65 * ap
 
     def run_through_damage(self, ap, cp):
-        return 1.5 * ap * cp * (1 + (0.06 * self.traits.fates_thirst))
+        return 1.42 * ap * cp * (1 + (0.04 * self.traits.fates_thirst))
 
     def saber_slash_damage(self, ap):
-        return 2.6 * self.get_weapon_damage('mh', ap) * (1 + (0.15 * self.traits.cursed_edges))
+        return 3.02 * self.get_weapon_damage('mh', ap) * (1 + (0.15 * self.traits.cursed_edges))
 
     #subtlety
     #Ignore positional modifier for now
     def backstab_damage(self, ap):
         return 3.7 * self.get_weapon_damage('mh', ap) * (1 + (0.0333 * self.traits.the_quiet_knife))
 
+    #has two ranks
     def eviscerate_damage(self, ap, cp):
         return 1.472 * cp * ap
 
