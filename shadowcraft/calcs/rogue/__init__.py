@@ -25,8 +25,7 @@ class RogueDamageCalculator(DamageCalculator):
                                     'deadly_poison', 'deadly_instant_poison', 'envenom',
                                     'fan_of_knives', 'garrote_ticks', 'hemorrhage',
                                     'kingsbane', 'kingsbane_ticks', 'mutilate',
-                                    'poisoned_knife', 'poison_bomb', 'rupture_ticks', 'from_the_shadows',
-                                    't19_2pc']
+                                    'poisoned_knife', 'poison_bomb', 'rupture_ticks', 'from_the_shadows']
     outlaw_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
                              'ambush', 'between_the_eyes', 'blunderbuss', 'cannonball_barrage',
                              'ghostly_strike', 'greed', 'killing_spree', 'main_gauche',
@@ -59,17 +58,29 @@ class RogueDamageCalculator(DamageCalculator):
 
     #probability of getting X buffs with rtb
     rtb_probabilities = {
-    1: 0.5923,
-    2: 0.3537,
-    3: 0.0386,
-    6: 0.0154,
+        1: 0.5923,
+        2: 0.3537,
+        3: 0.0386,
+        6: 0.0154,
     }
+
+    #probabilities of getting X buffs from RtB with loaded dice
+    #assume we reroll/blacklist one buff rolls instead of adding a second buff to one rolls
+    #so far this assumption could neither be confirmed nor disproved
+    #TODO: actually plug these into the model :/
+    rtb_loaded_dice_probabilities = {
+        1: 0,
+        2: 0.8675,
+        3: 0.0946,
+        6: 0.0379,
+    }
+
     #number of unique rtb buffs of each amount
     rtb_buff_count = {
-    1: 6,
-    2: 15,
-    3: 20,
-    6: 1,
+        1: 6,
+        2: 15,
+        3: 20,
+        6: 1,
     }
 
     assassination_mastery_conversion = .04
@@ -145,6 +156,8 @@ class RogueDamageCalculator(DamageCalculator):
             4: 38,
             5: 44,
             6: 48,
+            7: 52,
+            8: 56
     }
 
     # Adrenaline Rush CDR for number of points in trait
@@ -156,6 +169,8 @@ class RogueDamageCalculator(DamageCalculator):
             4: 31,
             5: 37,
             6: 42,
+            7: 46,
+            8: 49
     }
 
     def __setattr__(self, name, value):
@@ -299,6 +314,8 @@ class RogueDamageCalculator(DamageCalculator):
                 #http://beta.askmrrobot.com/wow/simulator/docs/critdamage
                 if ability == 'between_the_eyes':
                     crit_mod = self.crit_damage_modifiers(3)
+                if ability == 'saber_slash' and self.traits.sabermetrics:
+                    crit_mod = self.crit_damage_modifiers(1 + self.traits.sabermetrics * 0.05)
                 damage_breakdown[ability] = self.get_ability_dps(average_ap, ability, aps, crits, modifier, crit_mod, both_hands, cps)
 
         if self.spec == 'subtlety':
@@ -344,17 +361,17 @@ class RogueDamageCalculator(DamageCalculator):
 
     #Maybe add better handling for 'rule of three' for artifact traits
     def envenom_damage(self, ap, cp):
-        return .5 * cp * ap * (1 + (0.0333 * self.traits.toxic_blades))
+        return .6 * cp * ap * (1 + (0.0333 * self.traits.toxic_blades))
 
     def fan_of_knives_damage(self, ap):
-        return .8316 * ap
+        return 1.079 * ap
 
     #Lumping 40 ticks together for simplicity
     def from_the_shadows_damage(self, ap):
         return 40 * 0.35 * ap
 
     def garrote_tick_damage(self, ap):
-        return .9 * ap
+        return .9 * ap * (1 + 0.04 * self.traits.strangler)
 
     def hemorrhage_damage(self, ap):
         return 1 * self.get_weapon_damage('mh', ap)
@@ -381,26 +398,23 @@ class RogueDamageCalculator(DamageCalculator):
     def rupture_tick_damage(self, ap, cp):
         return 1.5 * ap * (1 + (0.0333 * self.traits.gushing_wounds))
 
-    def assn_t19_2pc_damage(self, ap):
-        return 0.3 * (self.mh_mutilate_damage(ap) + self.oh_mutilate_damage(ap))
-
     #outlaw
     def ambush_damage(self, ap):
         return 4.5 * self.get_weapon_damage('mh', ap)
 
     def between_the_eyes_damage(self, ap, cp):
-        return .75 * cp * ap * (1 + (0.06 * self.traits.black_powder))
+        return .85 * cp * ap * (1 + (0.06 * self.traits.black_powder))
 
-    #7*55% AP
+    #7*121% AP
     def blunderbuss_damage(self, ap):
-        return 3.85 * ap
+        return 8.47 * ap
 
-    #Ignoring that this behaves as a dot for simplicity
+    #Ignoring that this behaves as a dot for simplicity, 6*150%
     def cannonball_barrage_damage(self, ap):
-        return 7.2 * ap
+        return 9 * ap
 
     def ghostly_strike_damage(self, ap):
-        return 1.76 * self.get_weapon_damage('mh', ap)
+        return 1.94 * self.get_weapon_damage('mh', ap)
 
     def mh_greed_damage(self, ap):
         return 3.5 * self.get_weapon_damage('mh', ap)
@@ -410,28 +424,29 @@ class RogueDamageCalculator(DamageCalculator):
 
     #For KsP treat each hit individually
     def mh_killing_spree_damage(self, ap):
-        return 2.108 * self.get_weapon_damage('mh', ap)
+        return 2.6 * self.get_weapon_damage('mh', ap)
 
     def oh_killing_spree_damage(self, ap):
-        return 2.018 * self.oh_penalty() * self.get_weapon_damage('oh', ap)
+        return 2.6 * self.oh_penalty() * self.get_weapon_damage('oh', ap)
 
     def main_gauche_damage(self, ap):
         return 2.1 * self.oh_penalty() * self.get_weapon_damage('oh', ap) * (1 + (0.1 * self.traits.fortunes_strike))
 
     def pistol_shot_damage(self, ap):
-        return 1.5 * ap
+        return 1.65 * ap
 
     def run_through_damage(self, ap, cp):
-        return 1.5 * ap * cp * (1 + (0.06 * self.traits.fates_thirst))
+        return 1.42 * ap * cp * (1 + (0.04 * self.traits.fates_thirst))
 
     def saber_slash_damage(self, ap):
-        return 2.6 * self.get_weapon_damage('mh', ap) * (1 + (0.15 * self.traits.cursed_edges))
+        return 3.02 * self.get_weapon_damage('mh', ap) * (1 + (0.15 * self.traits.cursed_edges))
 
     #subtlety
     #Ignore positional modifier for now
     def backstab_damage(self, ap):
         return 3.7 * self.get_weapon_damage('mh', ap) * (1 + (0.0333 * self.traits.the_quiet_knife))
 
+    #has two ranks
     def eviscerate_damage(self, ap, cp):
         return 1.472 * cp * ap
 
@@ -494,7 +509,6 @@ class RogueDamageCalculator(DamageCalculator):
             'poisoned_knife':            self.poisoned_knife_damage,
             'poison_bomb':               self.poison_bomb_damage,
             'rupture_ticks':             self.rupture_tick_damage,
-            't19_2pc':                   self.assn_t19_2pc_damage,
             #outlaw
             'ambush':                    self.ambush_damage,
             'between_the_eyes':          self.between_the_eyes_damage,

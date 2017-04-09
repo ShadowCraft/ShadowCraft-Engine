@@ -18,6 +18,11 @@ traits = {
         'from_the_shadows',
         'blood_of_the_assassinated',
         'slayers_precision',
+        'silence_of_the_uncrowned',
+        'strangler',
+        'dense_concoction',
+        'sinister_circulation',
+        'concordance_of_the_legionfall',
     ),
     ('rogue', 'outlaw'): (
         'curse_of_the_dreadblades',
@@ -38,6 +43,11 @@ traits = {
         'blademaster',
         'blunderbuss',
         'cursed_steel',
+        'bravado_of_the_uncrowned',
+        'sabermetrics',
+        'dreadblades_vigor',
+        'loaded_dice',
+        'concordance_of_the_legionfall',
         ),
     ('rogue', 'subtlety'): (
         'goremaws_bite',
@@ -57,7 +67,12 @@ traits = {
         'akarris_soul',
         'soul_shadows',
         'shadow_nova',
-        'legionblade'
+        'legionblade',
+        'shadows_of_the_uncrowned',
+        'etched_in_shadow',
+        'shadows_whisper',
+        'feeding_frenzy',
+        'concordance_of_the_legionfall',
         ),
 }
 
@@ -73,6 +88,10 @@ single_rank = {
         'bag_of_tricks',
         'from_the_shadows',
         'blood_of_the_assassinated',
+        'slayers_precision',
+        'silence_of_the_uncrowned',
+        'dense_concoction',
+        'sinister_circulation',
     ),
     ('rogue', 'outlaw'): (
         'curse_of_the_dreadblades',
@@ -83,6 +102,10 @@ single_rank = {
         'blurred_time',
         'blademaster',
         'blunderbuss',
+        'cursed_steel',
+        'bravado_of_the_uncrowned',
+        'dreadblades_vigor',
+        'loaded_dice',
         ),
     ('rogue', 'subtlety'): (
         'goremaws_bite',
@@ -93,5 +116,9 @@ single_rank = {
         'finality',
         'akarris_soul',
         'shadow_nova',
+        'legionblade',
+        'shadows_of_the_uncrowned',
+        'shadows_whisper',
+        'feeding_frenzy',
         ),
 }

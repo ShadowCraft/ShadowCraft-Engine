@@ -58,8 +58,8 @@ class Buffs(object):
         'food_legion_damage_1',             # Spiced Rib Roast
         'food_legion_damage_2',             # Drogbar-Style Salmon
         'food_legion_damage_3',             # Fishbrul Special
-        'food_legion_feast_150',
-        'food_legion_feast_200',
+        'food_legion_feast_400',
+        'food_legion_feast_500',
     ])
 
     buffs_debuffs = frozenset([
@@ -108,8 +108,8 @@ class Buffs(object):
         bonus_agi += 200 * self.flask_wod_agi_200
         bonus_agi += 250 * self.flask_wod_agi
         bonus_agi += 1300 * self.flask_legion_agi
-        bonus_agi += 150 * self.food_legion_feast_150 * [1, 2][race]
-        bonus_agi += 200 * self.food_legion_feast_200 * [1, 2][race]
+        bonus_agi += 400 * self.food_legion_feast_400 * [1, 2][race]
+        bonus_agi += 500 * self.food_legion_feast_500 * [1, 2][race]
         return bonus_agi
 
     def buff_haste(self, race=False):

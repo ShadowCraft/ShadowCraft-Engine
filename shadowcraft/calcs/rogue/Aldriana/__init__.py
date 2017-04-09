@@ -164,7 +164,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         return self.stats.get_haste_multiplier_from_rating(current_stats['haste']) * self.true_haste_mod
 
 
-    def get_energy_regen(self, current_stats, buried=False, ar=False, alacrity_stacks=0):
+    def get_energy_regen(self, current_stats, buried=False, ar=False, alacrity_stacks=0, snd=False):
         regen = 10.
         if self.spec == "outlaw":
             regen = 12.
@@ -174,6 +174,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 regen *= 1.25
             if ar:
                 regen *= 2.0
+            if snd:
+                regen *= 1.195 if ar and self.traits.loaded_dice else 1.15
         else:
             alacrity_stacks = 0
         if self.talents.vigor:
@@ -187,7 +189,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if melee:
             attack_speed_multiplier *= 1.5
         elif snd:
-            attack_speed_multiplier *= 1.9
+            attack_speed_multiplier *= 2.3 if ar and self.traits.loaded_dice else 2
         if ar:
             attack_speed_multiplier *= 1.2
         return attack_speed_multiplier
@@ -240,6 +242,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.true_haste_mod *= 1 + self.race.get_racial_haste() #doesn't include Berserking
         if self.stats.gear_buffs.rogue_t14_4pc:
             self.true_haste_mod *= 1.05
+        if self.stats.gear_buffs.sephuzs_secret:
+            self.true_haste_mod *= 1.02
 
         #hit chances
         self.dw_mh_hit_chance = self.dual_wield_mh_hit_chance()
@@ -517,10 +521,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if not poison:
             return
 
-        if self.talents.agonizing_poison:
-            poison_base_proc_rate = 0.2
-        else:
-            poison_base_proc_rate = 0.5
+        poison_base_proc_rate = 0.3
+        if not self.talents.agonizing_poison:
+            poison_base_proc_rate += 0.2 #Improved Poisons passive for Deadly and Wound Poison
         poison_envenom_proc_rate = poison_base_proc_rate + 0.3
         aps_envenom = attacks_per_second['envenom']
         if self.talents.death_from_above:
@@ -592,6 +595,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if self.stats.procs.toe_knees_promise:
                 self.stats.procs.toe_knees_promise.update_proc_value()
                 self.stats.procs.toe_knees_promise.value *= 1.3
+
+        if self.traits.concordance_of_the_legionfall:
+            self.stats.procs.set_proc('concordance_of_the_legionfall')
+            self.stats.procs.concordance_of_the_legionfall.value['agi'] = 2000 + (self.traits.concordance_of_the_legionfall - 1) * 200
 
         #sort the procs into groups
         for proc in self.stats.procs.get_all_procs_for_stat():
@@ -729,9 +736,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if attacks_per_second['vanish']:
                 mantle_triggers += attacks_per_second['vanish'] * self.settings.duration
             mantle_seconds = mantle_triggers * 6
-            #Note: As of 7.1 subterfuge keeps the buff, this is not true on 7.2 PTR (2018/03/18)
-            if self.spec in ['assassination', 'subtlety'] and self.talents.subterfuge:
-                mantle_seconds += mantle_triggers * 3
             #Assume extended stealth bug opener for subtlety (shadow dance -> stealth, stealth wears off after dance)
             if self.spec == 'subtlety':
                 mantle_seconds += 5 if self.talents.subterfuge else 3 #One full dance mantle uptime
@@ -799,11 +803,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     #Legion TODO:
 
-    #Talents:
-        #T2:Nightstalker
-        #T2:Subter
-        #T2:SF
-
     #Artifact:
         # 'poison_knives'
 
@@ -838,7 +837,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.talents.elaborate_planning:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('elaborate_planning', None, [], all_damage=True))
         if self.talents.hemorrhage:
-            self.damage_modifiers.register_modifier(modifiers.DamageModifier('hemorrhage', 1.25, ['rupture_ticks', 'garrote_ticks', 't19_2pc']))
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('hemorrhage', 1.25, ['rupture_ticks', 'garrote_ticks']))
+        if self.talents.nightstalker:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('nightstalker', None, ['rupture_ticks']))
+        if self.talents.subterfuge:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('subterfuge_garrote', None, ['garrote_ticks']))
         if self.talents.agonizing_poison:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('agonizing_poison', None, [], all_damage=True))
         if self.talents.deeper_strategem:
@@ -857,6 +860,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('slayers_precision',
             1.05 + (0.005 * (self.traits.slayers_precision - 1)), [], all_damage=True))
 
+        if self.traits.silence_of_the_uncrowned:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('silence_of_the_uncrowned', 1.1, [], all_damage=True))
+
         #gear specific modifiers
         if self.stats.gear_buffs.the_dreadlords_deceit:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('the_dreadlords_deceit', None, ['fan_of_knives']))
@@ -864,7 +870,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.stats.gear_buffs.zoldyck_family_training_shackles:
             #Assume spend 30% of the time sub 30% health, imperfect but good enough
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('zoldyck_family_training_shackles', 1.09, ['deadly_poison', 'deadly_instant_poison',
-                'garrote_ticks', 'kingsbane', 'kingsbane_ticks', 'rupture_ticks', 'poison_bomb', 't19_2pc'], dmg_schools=['poison', 'bleed']))
+                'garrote_ticks', 'kingsbane', 'kingsbane_ticks', 'rupture_ticks', 'poison_bomb'], dmg_schools=['poison', 'bleed']))
 
         #Assume 100% uptime of Rupture, Garrote and Mutilated Flesh (2pc bleed)
         if self.stats.gear_buffs.rogue_t19_4pc:
@@ -908,6 +914,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         #actually 2% per cp up to max of 5
         surge_of_toxins_multiplier = 1.
+        surge_of_toxins_ap_multiplier = 1
         if self.traits.surge_of_toxins:
             finisher_cpps = 0.0 #finisher cps per second
             for ability in aps:
@@ -915,31 +922,40 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                     finisher_cpps += sum([min(cp, 5) * aps[ability][cp] for cp in range(len(aps[ability]))])
             surge_uptime = finisher_aps * 5 #attacks/second * seconds/attack
             surge_of_toxins_multiplier = 1. + ((0.02 * finisher_cpps) * surge_uptime)
+            surge_of_toxins_ap_multiplier = 1. + ((0.01 * finisher_cpps) * surge_uptime)
             self.damage_modifiers.update_modifier_value('surge_of_toxins', surge_of_toxins_multiplier)
 
         if self.talents.elaborate_planning:
             ep_uptime = finisher_aps * 5 #attacks/second * seconds/attack
             self.damage_modifiers.update_modifier_value('elaborate_planning', 1 + (0.12 * ep_uptime))
 
+        if self.talents.nightstalker:
+            #Assume we use nightstalker for snapshotting Rupture
+            ns_rupture_uptime = aps['vanish'] / sum(aps['rupture'])
+            self.damage_modifiers.update_modifier_value('nightstalker', 1 + (0.5 * ns_rupture_uptime))
+
+        if self.talents.subterfuge:
+            #Get modifier for buffed garrotes from Subterfuge, including opener
+            subterfuge_garrote_uptime = (1 / self.settings.duration + aps['vanish']) / aps['garrote']
+            self.damage_modifiers.update_modifier_value('subterfuge_garrote', 1 + (1.25 * subterfuge_garrote_uptime))
 
         if self.talents.agonizing_poison:
             stack_time = 5 / aps['agonizing_poison']
             max_time = self.settings.duration - stack_time
             agonizing_poison_stacks = (max_time / self.settings.duration) * 5 + (stack_time / self.settings.duration) * 2.5
 
-            agonizing_poison_adder = 0.0 + 0.01 * self.traits.master_alchemist + 0.02 * self.traits.poison_knives
-            agonizing_poison_adder += 1 + (self.assassination_mastery_conversion * self.stats.get_mastery_from_rating(stats['mastery'])) / 2
+            agonizing_poison_additive_mod = 1 + 0.01 * self.traits.master_alchemist
+            agonizing_poison_additive_mod += 0.02 * self.traits.poison_knives
+            agonizing_poison_additive_mod += (self.assassination_mastery_conversion * self.stats.get_mastery_from_rating(stats['mastery'])) / 2
 
-            #12% reduction from 4% per stack
-            agonizing_poison_mod_per_stack= 0.0352 * agonizing_poison_adder
+            agonizing_poison_mod = 0.04 * agonizing_poison_stacks
+            agonizing_poison_mod *= agonizing_poison_additive_mod
             if self.talents.master_poisoner:
-                agonizing_poison_mod_per_stack *= 1.2
-
+                agonizing_poison_mod *= 1.2
             if self.traits.surge_of_toxins:
-                agonizing_poison_mod_per_stack *= surge_of_toxins_multiplier
+                agonizing_poison_mod *= surge_of_toxins_ap_multiplier
 
-            agonizing_poison_mod = 1 + (agonizing_poison_mod_per_stack * agonizing_poison_stacks)
-            self.damage_modifiers.update_modifier_value('agonizing_poison', agonizing_poison_mod)
+            self.damage_modifiers.update_modifier_value('agonizing_poison', 1 + agonizing_poison_mod)
 
         if self.stats.gear_buffs.the_dreadlords_deceit:
             avg_dreadlord_stacks = 0.5 / aps['fan_of_knives']
@@ -951,6 +967,15 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 self.damage_modifiers.update_modifier_value('t19_4pc', 1.2 + t19_4pc_multiplier)
 
         damage_breakdown, additional_info  = self.compute_damage_from_aps(stats, aps, crits, procs, additional_info)
+
+        if self.stats.gear_buffs.rogue_t19_2pc:
+            # To prevent double dipping this is based on actual Mutilate damage.
+            # There's no pandemic and it does not respect other modifiers.
+            # Remaining damage is added on refresh.
+            damage_breakdown['t19_2pc'] = damage_breakdown['mutilate'] * 0.3
+            # This does double dip off Agonizing poison though
+            if self.talents.agonizing_poison:
+                damage_breakdown['t19_2pc'] *= 1 + agonizing_poison_mod
 
         if self.stats.gear_buffs.insignia_of_ravenholdt:
             damage_breakdown['insignia_of_ravenholdt'] = self.compute_insignia_of_ravenholdt_damage(stats, aps)
@@ -970,235 +995,268 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #Vendetta cd, modified by Duskwalker Legendary, used for damage modifier
         self.vendetta_cd = self.get_spell_cd('vendetta')
 
-        #cd stacking handlers, FIXME: in 'only' mode, we don't respect vendetta cdr with duskwalkers atm
         self.kingsbane_cd = self.get_spell_cd('kingsbane')
-        if self.settings.cycle.kingsbane_with_vendetta == 'only':
-            self.kingsbane_cd = max(self.vendetta_cd, self.get_spell_cd('kingsbane'))
-
         self.exsang_cd = self.get_spell_cd('exsanguinate')
-        if self.settings.cycle.exsang_with_vendetta == 'only':
-            self.exsang_cd = max(self.vendetta_cd, self.get_spell_cd('exsanguinate'))
 
-        #Vanish on cooldown
-        attacks_per_second['vanish'] = 1 / self.get_spell_cd('vanish')
+        #convergence loop
+        old_aps = {}
+        for assa_loop in range(6):
+            if assa_loop >= 5:
+                raise ConvergenceErrorException(_('Assassination aps failed to converge.'))
 
-        # set up our finisher distributions
-        #unlike outlaw these depend on gear (crit) so they cannot be precomputed
-        self.cp_builder = self.settings.cycle.cp_builder
-        cp_builder_crit = crit_rates[self.cp_builder]
-        if self.cp_builder == 'mutilate':
-            cpg_cps = {2: (1 - cp_builder_crit) ** 2,
-                       3: 2 * (1 - cp_builder_crit) * cp_builder_crit,
-                       4: cp_builder_crit ** 2}
-        elif self.cp_builder == 'fan_of_knives':
-            raise InputNotModeledException(_('Fan of Knives cp builder unimplemented'))
-        else:
-            raise InputNotModeledException(_('Cp builder must be \'mutilate\' or \'fan_of_knives\''))
+            #cd stacking handlers
+            if self.settings.cycle.kingsbane_with_vendetta == 'only':
+                self.kingsbane_cd = max(self.vendetta_cd, self.kingsbane_cd)
+            if self.settings.cycle.exsang_with_vendetta == 'only':
+                self.exsang_cd = max(self.vendetta_cd, self.exsang_cd)
 
-        #if anticipation we can just assume no waste
-        if self.talents.anticipation:
-            avg_cp_per_builder = sum([cp * cpg_cps[cp] for cp in cpg_cps])
-            builders_per_finisher =  self.settings.finisher_threshold / avg_cp_per_builder
-            avg_finisher_size = self.settings.finisher_threshold
-            finisher_list = [0, 0, 0, 0, 0, 0, 0]
-            finisher_list[self.settings.finisher_threshold] = 1.0
-        #otherwise we need to enumerate paths to determine amount of waste given cp threshold
-        else:
-            #TODO: Super hackish, do this right
-            finisher_list = [0, 0, 0, 0, 0, 0, 0]
-            if self.settings.finisher_threshold == 4:
-                paths = [(2, 2), (2, 3), (2, 4), (3, 2), (3, 3), (3, 4), (4,)]
-            elif self.settings.finisher_threshold == 5:
-                paths = [(2, 2, 2), (2, 2, 3), (2, 2, 4), (2, 3), (2, 4), (3, 2), (3, 3), (3, 4), (4, 2), (4, 3), (4, 4)]
-            elif self.settings.finisher_threshold == 6:
-                paths = [(2, 2, 2), (2, 2, 3), (2, 2, 4), (2, 3, 2), (2, 3, 3), (2, 3, 4), (2, 4),
-                         (3, 2, 2), (3, 2, 3), (3, 2, 4), (3, 3), (3, 4), (4, 2), (4, 3), (4, 4)]
+            #Vanish on cooldown
+            attacks_per_second['vanish'] = 1 / self.get_spell_cd('vanish')
+
+            # set up our finisher distributions
+            #unlike outlaw these depend on gear (crit) so they cannot be precomputed
+            self.cp_builder = self.settings.cycle.cp_builder
+            cp_builder_crit = crit_rates[self.cp_builder]
+            if self.cp_builder == 'mutilate':
+                cpg_cps = {2: (1 - cp_builder_crit) ** 2,
+                            3: 2 * (1 - cp_builder_crit) * cp_builder_crit,
+                            4: cp_builder_crit ** 2}
+            elif self.cp_builder == 'fan_of_knives':
+                raise InputNotModeledException(_('Fan of Knives cp builder unimplemented'))
             else:
-                raise InputNotModeledException(_('Finisher thresholds less than 4 unimplemented'))
-            max_cps = 5
-            if self.talents.deeper_strategem:
-                max_cps = 6
-            builders_per_finisher = 0.0
-            avg_finisher_size = 0.0
-            finisher_list = [0., 0., 0., 0., 0., 0., 0.]
+                raise InputNotModeledException(_('Cp builder must be \'mutilate\' or \'fan_of_knives\''))
 
-            for path in paths:
-                chance = 1.0
-                for step in path:
-                    chance *= cpg_cps[step]
-                builders_per_finisher += chance * len(path)
-                size = min(max_cps, sum(path))
-                avg_finisher_size += chance * size
-                finisher_list[size] += chance
+            #if anticipation we can just assume no waste
+            if self.talents.anticipation:
+                avg_cp_per_builder = sum([cp * cpg_cps[cp] for cp in cpg_cps])
+                builders_per_finisher =  self.settings.finisher_threshold / avg_cp_per_builder
+                avg_finisher_size = self.settings.finisher_threshold
+                finisher_list = [0, 0, 0, 0, 0, 0, 0]
+                finisher_list[self.settings.finisher_threshold] = 1.0
+            #otherwise we need to enumerate paths to determine amount of waste given cp threshold
+            else:
+                #TODO: Super hackish, do this right
+                finisher_list = [0, 0, 0, 0, 0, 0, 0]
+                if self.settings.finisher_threshold == 4:
+                    paths = [(2, 2), (2, 3), (2, 4), (3, 2), (3, 3), (3, 4), (4,)]
+                elif self.settings.finisher_threshold == 5:
+                    paths = [(2, 2, 2), (2, 2, 3), (2, 2, 4), (2, 3), (2, 4), (3, 2), (3, 3), (3, 4), (4, 2), (4, 3), (4, 4)]
+                elif self.settings.finisher_threshold == 6:
+                    paths = [(2, 2, 2), (2, 2, 3), (2, 2, 4), (2, 3, 2), (2, 3, 3), (2, 3, 4), (2, 4),
+                                (3, 2, 2), (3, 2, 3), (3, 2, 4), (3, 3), (3, 4), (4, 2), (4, 3), (4, 4)]
+                else:
+                    raise InputNotModeledException(_('Finisher thresholds less than 4 unimplemented'))
+                max_cps = 5
+                if self.talents.deeper_strategem:
+                    max_cps = 6
+                builders_per_finisher = 0.0
+                avg_finisher_size = 0.0
+                finisher_list = [0., 0., 0., 0., 0., 0., 0.]
 
-        cp_builder_energy_per_finisher = builders_per_finisher * self.get_spell_cost(self.cp_builder)
+                for path in paths:
+                    chance = 1.0
+                    for step in path:
+                        chance *= cpg_cps[step]
+                    builders_per_finisher += chance * len(path)
+                    size = min(max_cps, sum(path))
+                    avg_finisher_size += chance * size
+                    finisher_list[size] += chance
 
-        #set up our energy budget
-        haste_multiplier = self.get_haste_multiplier(current_stats)
-        energy_regen = self.get_energy_regen(current_stats)
+            cp_builder_energy_per_finisher = builders_per_finisher * self.get_spell_cost(self.cp_builder)
 
-        #set up rupture
-        attacks_per_second['rupture'] = [0, 0, 0, 0, 0, 0, 0]
-        attacks_per_second['rupture_ticks'] = [0, 0, 0, 0, 0, 0, 0]
-        base_rupture_duration = 4 * (1 + avg_finisher_size)
-        if self.talents.exsanguinate:
-            #assume full pandemic on exsanged ruptures
-            exsang_rupture_duration = (1.3 * base_rupture_duration) / 2
-            #rupture we're pandemicing from
-            exsang_from_duration = 0.7 * base_rupture_duration
-            normal_ruptures_per_exsang_cd = (self.exsang_cd - exsang_from_duration - exsang_rupture_duration) / base_rupture_duration
-            ruptures_per_second = (2. + normal_ruptures_per_exsang_cd) / self.exsang_cd
-            rupture_ticks_per_second = 1. * float(exsang_rupture_duration)/ self.exsang_cd + \
-                                       0.5 * float(self.exsang_cd - exsang_rupture_duration)/self.exsang_cd
-        else:
-            ruptures_per_second = 1 / base_rupture_duration
-            rupture_ticks_per_second = 0.5
+            #set up our energy budget
+            haste_multiplier = self.get_haste_multiplier(current_stats)
+            energy_regen = self.get_energy_regen(current_stats)
 
-        for cp in range(7):
-            attacks_per_second['rupture'][cp] = ruptures_per_second * finisher_list[cp]
-            attacks_per_second['rupture_ticks'][cp] = rupture_ticks_per_second * finisher_list[cp]
-        rupture_cost_per_second = self.get_spell_cost('rupture') * ruptures_per_second
-        rupture_cost_per_second += cp_builder_energy_per_finisher * ruptures_per_second
-        attacks_per_second[self.cp_builder] = ruptures_per_second * builders_per_finisher
+            #set up rupture
+            attacks_per_second['rupture'] = [0, 0, 0, 0, 0, 0, 0]
+            attacks_per_second['rupture_ticks'] = [0, 0, 0, 0, 0, 0, 0]
+            base_rupture_duration = 4 * (1 + avg_finisher_size)
+            if self.talents.exsanguinate:
+                #assume full pandemic on exsanged ruptures
+                exsang_rupture_duration = (1.3 * base_rupture_duration) / 2
+                #rupture we're pandemicing from
+                exsang_from_duration = 0.7 * base_rupture_duration
+                normal_ruptures_per_exsang_cd = (self.exsang_cd - exsang_from_duration - exsang_rupture_duration) / base_rupture_duration
+                ruptures_per_second = (2. + normal_ruptures_per_exsang_cd) / self.exsang_cd
+                rupture_ticks_per_second = 1. * float(exsang_rupture_duration)/ self.exsang_cd + \
+                                            0.5 * float(self.exsang_cd - exsang_rupture_duration)/self.exsang_cd
+            else:
+                ruptures_per_second = 1 / base_rupture_duration
+                rupture_ticks_per_second = 0.5
 
-        #set up garrote:
-        base_garrote_duration = 18.
-        garrote_cooldown = self.get_spell_cd('garrote')
-        if self.talents.exsanguinate:
-            exsang_garrote_duration = base_garrote_duration / 2
-            exsang_downtime = garrote_cooldown - exsang_garrote_duration
-            normal_garrote_per_exsang = (self.exsang_cd - garrote_cooldown) / base_garrote_duration
-            attacks_per_second['garrote'] = (1 + normal_garrote_per_exsang) / self.exsang_cd
-            attacks_per_second['garrote_ticks'] = 2/3 * float(exsang_garrote_duration) / self.exsang_cd + \
-                                                  1/3 * float(self.exsang_cd - exsang_garrote_duration - exsang_downtime) / self.exsang_cd
-        else:
-            attacks_per_second['garrote'] = 1 / base_garrote_duration
-            attacks_per_second['garrote_ticks'] = 1 / 3
-
-        cp_budget = attacks_per_second['garrote'] * self.settings.duration
-        garrote_cost_per_second = self.get_spell_cost('garrote') * attacks_per_second['garrote']
-
-        #Now that ticks are done, we can compute VW regen
-        vw_energy_per_tick = 7 + 3 * self.talents.venom_rush
-        vw_regen_per_second = vw_energy_per_tick * (sum(attacks_per_second['rupture_ticks']) + attacks_per_second['garrote_ticks'])
-
-        net_energy_per_second = energy_regen + vw_regen_per_second
-        net_energy_per_second -= rupture_cost_per_second + garrote_cost_per_second
-        duskwalker_expended_energy = rupture_cost_per_second + garrote_cost_per_second
-
-        #compute cooldowned talents:
-        mfd_cps = self.talents.marked_for_death * (self.settings.duration/60. * (5. + self.talents.deeper_strategem) * (1. + self.settings.marked_for_death_resets))
-        cp_budget += mfd_cps
-
-        if self.stats.gear_buffs.the_dreadlords_deceit:
-            fok_interval = 1 / 60
-            attacks_per_second['fan_of_knives'] = fok_interval
-            cp_budget += self.settings.duration * fok_interval * (1 + crit_rates['fan_of_knives'])
-            net_energy_per_second -= fok_interval * 35
-            duskwalker_expended_energy += fok_interval * 35
-
-        if self.traits.kingsbane:
-            attacks_per_second['kingsbane'] = 1 / self.kingsbane_cd
-            attacks_per_second['kingsbane_ticks'] = 7 / self.kingsbane_cd
-            kb_crit = crit_rates['kingsbane']
-            cpg_cps = {1: (1 - kb_crit) ** 2,
-                       2: 2 * (1 - kb_crit) * kb_crit,
-                       3: kb_crit ** 2}
-            avg_cp_per_kb = sum([cp * cpg_cps[cp] for cp in cpg_cps])
-            cp_budget += avg_cp_per_kb * attacks_per_second['kingsbane'] * self.settings.duration
-            net_energy_per_second -= self.get_spell_cost('kingsbane') * attacks_per_second['kingsbane']
-            duskwalker_expended_energy += self.get_spell_cost('kingsbane') * attacks_per_second['kingsbane']
-
-        if self.talents.hemorrhage:
-            hemos_per_second = 1 / 20
-            attacks_per_second['hemorrhage'] = hemos_per_second
-            hemo_cps = (1 + crit_rates['hemorrhage']) * (self.settings.duration * hemos_per_second)
-            cp_budget += hemo_cps
-            net_energy_per_second -= self.get_spell_cost('hemorrhage') * hemos_per_second
-            duskwalker_expended_energy += self.get_spell_cost('hemorrhage') * hemos_per_second
-
-        if self.talents.death_from_above:
-            dfa_cd = self.get_spell_cd('death_from_above') + self.settings.response_time
-            dfa_per_second = 1 / dfa_cd
-            attacks_per_second['death_from_above_strike'] = [0, 0, 0, 0, 0, 0, 0]
-            attacks_per_second['death_from_above_pulse'] = [0, 0, 0, 0, 0, 0, 0]
             for cp in range(7):
-                attacks_per_second['death_from_above_pulse'][cp] = dfa_per_second * finisher_list[cp]
-                attacks_per_second['death_from_above_strike'][cp] = dfa_per_second * finisher_list[cp]
-            attacks_per_second[self.cp_builder] += dfa_per_second * builders_per_finisher
-            dfa_cost_per_second = self.get_spell_cost('death_from_above') * dfa_per_second
-            dfa_cost_per_second += cp_builder_energy_per_finisher * dfa_per_second
-            net_energy_per_second -= dfa_cost_per_second
-            duskwalker_expended_energy += dfa_cost_per_second
+                attacks_per_second['rupture'][cp] = ruptures_per_second * finisher_list[cp]
+                attacks_per_second['rupture_ticks'][cp] = rupture_ticks_per_second * finisher_list[cp]
+            rupture_cost_per_second = self.get_spell_cost('rupture') * ruptures_per_second
+            rupture_cost_per_second += cp_builder_energy_per_finisher * ruptures_per_second
+            attacks_per_second[self.cp_builder] = ruptures_per_second * builders_per_finisher
 
-        #form whats left into a budget
-        duskwalker_expended_energy *= self.settings.duration
-        energy_budget = self.settings.duration * net_energy_per_second
-        max_energy = 120
-        if self.talents.vigor:
-            max_energy += 50
-        energy_budget += max_energy
-        #assume you get 50% of max energy back each time
-        if self.traits.urge_to_kill:
-            energy_budget += (self.settings.duration / self.vendetta_cd) * 0.5 * max_energy
+            #set up garrote:
+            base_garrote_duration = 18.
+            garrote_cooldown = self.get_spell_cd('garrote')
+            if self.talents.exsanguinate:
+                exsang_garrote_duration = base_garrote_duration / 2
+                exsang_downtime = garrote_cooldown - exsang_garrote_duration
+                normal_garrote_per_exsang = (self.exsang_cd - garrote_cooldown) / base_garrote_duration
+                attacks_per_second['garrote'] = (1 + normal_garrote_per_exsang) / self.exsang_cd
+                attacks_per_second['garrote_ticks'] = 2/3 * float(exsang_garrote_duration) / self.exsang_cd + \
+                                                        1/3 * float(self.exsang_cd - exsang_garrote_duration - exsang_downtime) / self.exsang_cd
+            else:
+                attacks_per_second['garrote'] = 1 / base_garrote_duration
+                attacks_per_second['garrote_ticks'] = 1 / 3
 
-        attacks_per_second['envenom'] = [0, 0, 0, 0, 0, 0, 0]
-        #spend those extra cps
-        if cp_budget > 0:
-            extra_envenom = cp_budget / avg_finisher_size
-            energy_budget -= self.get_spell_cost('envenom') * extra_envenom
-            duskwalker_expended_energy += self.get_spell_cost('envenom') * extra_envenom
-            extra_envenom_per_second = extra_envenom / self.settings.duration
-            for cp in range(7):
-                attacks_per_second['envenom'][cp] = extra_envenom_per_second * finisher_list[cp]
+            cp_budget = attacks_per_second['garrote'] * self.settings.duration
+            garrote_cost_per_second = self.get_spell_cost('garrote') * attacks_per_second['garrote']
 
-        #now burn whats left in a minicycle
-        mini_cycle_energy = self.get_spell_cost('envenom') + cp_builder_energy_per_finisher
-        loop_counter = 0
+            #Now that ticks are done, we can compute VW regen
+            vw_energy_per_tick = 7 + 3 * self.talents.venom_rush
+            vw_regen_per_second = vw_energy_per_tick * (sum(attacks_per_second['rupture_ticks']) + attacks_per_second['garrote_ticks'])
 
-        alacrity_stacks = 0
-        while energy_budget > 0.1:
-            if loop_counter > 20:
-                   raise ConvergenceErrorException(_('Mini-cycles failed to converge.'))
-            loop_counter += 1
+            net_energy_per_second = energy_regen + vw_regen_per_second
+            net_energy_per_second -= rupture_cost_per_second + garrote_cost_per_second
+            duskwalker_expended_energy = rupture_cost_per_second + garrote_cost_per_second
 
-            total_minicycles = energy_budget / mini_cycle_energy
-            attacks_per_second[self.cp_builder] += total_minicycles * builders_per_finisher / self.settings.duration
-            finishers_per_second = total_minicycles / self.settings.duration
-            for cp in range(7):
-                attacks_per_second['envenom'][cp] += finisher_list[cp] * finishers_per_second
-            energy_budget -= total_minicycles * mini_cycle_energy
-            duskwalker_expended_energy += total_minicycles * mini_cycle_energy
+            #compute cooldowned talents:
+            mfd_cps = self.talents.marked_for_death * (self.settings.duration/60. * (5. + self.talents.deeper_strategem) * (1. + self.settings.marked_for_death_resets))
+            cp_budget += mfd_cps
 
-            if self.talents.alacrity:
-                old_alacrity_regen = energy_regen * (1 + (alacrity_stacks *0.02))
-                new_alacrity_stacks = self.get_average_alacrity(attacks_per_second)
-                new_alacrity_regen = energy_regen * (1 + (new_alacrity_stacks *0.02))
-                energy_budget += (new_alacrity_regen - old_alacrity_regen) * self.settings.duration
-                alacrity_stacks = new_alacrity_stacks
+            if self.stats.gear_buffs.the_dreadlords_deceit:
+                fok_interval = 1 / 60
+                attacks_per_second['fan_of_knives'] = fok_interval
+                cp_budget += self.settings.duration * fok_interval * (1 + crit_rates['fan_of_knives'])
+                net_energy_per_second -= fok_interval * 35
+                duskwalker_expended_energy += fok_interval * 35
 
-        #swing timer
-        white_swing_downtime = 0
-        self.swing_reset_spacing = self.get_spell_cd('vanish')
-        if self.swing_reset_spacing is not None:
-            white_swing_downtime += self.settings.response_time / self.swing_reset_spacing
-        attacks_per_second['mh_autoattacks'] = (haste_multiplier * (1 + (alacrity_stacks * 0.01))) / self.stats.mh.speed * (1 - white_swing_downtime)
-        attacks_per_second['oh_autoattacks'] = attacks_per_second['mh_autoattacks']
+            if self.traits.kingsbane:
+                attacks_per_second['kingsbane'] = 1 / self.kingsbane_cd
+                attacks_per_second['kingsbane_ticks'] = 7 / self.kingsbane_cd
+                kb_crit = crit_rates['kingsbane']
+                cpg_cps = {1: (1 - kb_crit) ** 2,
+                            2: 2 * (1 - kb_crit) * kb_crit,
+                            3: kb_crit ** 2}
+                avg_cp_per_kb = sum([cp * cpg_cps[cp] for cp in cpg_cps])
+                cp_budget += avg_cp_per_kb * attacks_per_second['kingsbane'] * self.settings.duration
+                net_energy_per_second -= self.get_spell_cost('kingsbane') * attacks_per_second['kingsbane']
+                duskwalker_expended_energy += self.get_spell_cost('kingsbane') * attacks_per_second['kingsbane']
 
-        if self.traits.bag_of_tricks:
-            bag_of_tricks_proc_chance = (haste_multiplier + (0.1 * alacrity_stacks)) * (1 / sum(attacks_per_second['envenom'])) / 60
-            attacks_per_second['poison_bomb'] = bag_of_tricks_proc_chance * sum(attacks_per_second['envenom'])
+            if self.talents.hemorrhage:
+                hemos_per_second = 1 / 20
+                attacks_per_second['hemorrhage'] = hemos_per_second
+                hemo_cps = (1 + crit_rates['hemorrhage']) * (self.settings.duration * hemos_per_second)
+                cp_budget += hemo_cps
+                net_energy_per_second -= self.get_spell_cost('hemorrhage') * hemos_per_second
+                duskwalker_expended_energy += self.get_spell_cost('hemorrhage') * hemos_per_second
 
-        if self.stats.gear_buffs.duskwalkers_footpads:
-            self.vendetta_cd /= 1 + (duskwalker_expended_energy / 65) / self.settings.duration
+            if self.talents.death_from_above:
+                dfa_cd = self.get_spell_cd('death_from_above') + self.settings.response_time
+                dfa_per_second = 1 / dfa_cd
+                attacks_per_second['death_from_above_strike'] = [0, 0, 0, 0, 0, 0, 0]
+                attacks_per_second['death_from_above_pulse'] = [0, 0, 0, 0, 0, 0, 0]
+                for cp in range(7):
+                    attacks_per_second['death_from_above_pulse'][cp] = dfa_per_second * finisher_list[cp]
+                    attacks_per_second['death_from_above_strike'][cp] = dfa_per_second * finisher_list[cp]
+                attacks_per_second[self.cp_builder] += dfa_per_second * builders_per_finisher
+                dfa_cost_per_second = self.get_spell_cost('death_from_above') * dfa_per_second
+                dfa_cost_per_second += cp_builder_energy_per_finisher * dfa_per_second
+                net_energy_per_second -= dfa_cost_per_second
+                duskwalker_expended_energy += dfa_cost_per_second
 
-        if self.traits.from_the_shadows:
-            attacks_per_second['from_the_shadows'] = 1 / self.vendetta_cd
+            #form whats left into a budget
+            duskwalker_expended_energy *= self.settings.duration
+            energy_budget = self.settings.duration * net_energy_per_second
+            max_energy = 120
+            if self.talents.vigor:
+                max_energy += 50
+            energy_budget += max_energy
+            #As of Patch 7.2 we get 60 energy + 60 over 2s, assume no loss
+            if self.traits.urge_to_kill:
+                energy_budget += (self.settings.duration / self.vendetta_cd) * 120
+            #If we have Shadow Focus, use it as a builder cost reducer after vanish
+            if self.talents.shadow_focus:
+                energy_budget += 0.75 * self.get_spell_cost('garrote') #Opener
+                energy_budget += 0.75 * self.get_spell_cost(self.cp_builder) * self.settings.duration / self.get_spell_cd('vanish')
 
-        #poison computations, use old function for now
-        self.get_poison_counts(attacks_per_second, current_stats)
-        if self.stats.gear_buffs.rogue_t19_2pc:
-            attacks_per_second['t19_2pc'] = attacks_per_second['mutilate']
+            attacks_per_second['envenom'] = [0, 0, 0, 0, 0, 0, 0]
+            #spend those extra cps
+            if cp_budget > 0:
+                extra_envenom = cp_budget / avg_finisher_size
+                energy_budget -= self.get_spell_cost('envenom') * extra_envenom
+                duskwalker_expended_energy += self.get_spell_cost('envenom') * extra_envenom
+                extra_envenom_per_second = extra_envenom / self.settings.duration
+                for cp in range(7):
+                    attacks_per_second['envenom'][cp] = extra_envenom_per_second * finisher_list[cp]
+
+            #now burn whats left in a minicycle
+            mini_cycle_energy = self.get_spell_cost('envenom') + cp_builder_energy_per_finisher
+            loop_counter = 0
+
+            alacrity_stacks = 0
+            while energy_budget > 0.1:
+                if loop_counter > 20:
+                        raise ConvergenceErrorException(_('Mini-cycles failed to converge.'))
+                loop_counter += 1
+
+                total_minicycles = energy_budget / mini_cycle_energy
+                attacks_per_second[self.cp_builder] += total_minicycles * builders_per_finisher / self.settings.duration
+                finishers_per_second = total_minicycles / self.settings.duration
+                for cp in range(7):
+                    attacks_per_second['envenom'][cp] += finisher_list[cp] * finishers_per_second
+                energy_budget -= total_minicycles * mini_cycle_energy
+                duskwalker_expended_energy += total_minicycles * mini_cycle_energy
+
+                if self.talents.alacrity:
+                    old_alacrity_regen = energy_regen * (1 + (alacrity_stacks *0.02))
+                    new_alacrity_stacks = self.get_average_alacrity(attacks_per_second)
+                    new_alacrity_regen = energy_regen * (1 + (new_alacrity_stacks *0.02))
+                    energy_budget += (new_alacrity_regen - old_alacrity_regen) * self.settings.duration
+                    alacrity_stacks = new_alacrity_stacks
+
+            #swing timer
+            white_swing_downtime = 0
+            self.swing_reset_spacing = self.get_spell_cd('vanish')
+            if self.swing_reset_spacing is not None:
+                white_swing_downtime += self.settings.response_time / self.swing_reset_spacing
+            attacks_per_second['mh_autoattacks'] = (haste_multiplier * (1 + (alacrity_stacks * 0.01))) / self.stats.mh.speed * (1 - white_swing_downtime)
+            attacks_per_second['oh_autoattacks'] = attacks_per_second['mh_autoattacks']
+
+            if self.traits.bag_of_tricks:
+                #2.5% chance per cp on envenom and rupture
+                attacks_per_second['poison_bomb'] = 0
+                for i in range(7):
+                    attacks_per_second['poison_bomb'] += attacks_per_second['envenom'][i] * i * 0.025
+                    attacks_per_second['poison_bomb'] += attacks_per_second['rupture'][i] * i * 0.025
+
+            if self.stats.gear_buffs.duskwalkers_footpads:
+                #Recalculate Vendetta cooldown
+                self.vendetta_cd = self.get_spell_cd('vendetta') / (1 + (duskwalker_expended_energy / 65) / self.settings.duration)
+
+            #poison computations, use old function for now
+            self.get_poison_counts(attacks_per_second, current_stats)
+
+            #Sinister Circulation
+            if self.traits.sinister_circulation:
+                if self.talents.agonizing_poison:
+                    poisons_per_second = attacks_per_second['agonizing_poison']
+                else:
+                    poisons_per_second = attacks_per_second['deadly_instant_poison']
+                #Recalculate KB cooldown, Sinister Circulation has a 0.5s icd
+                kb_cdr_per_sec = min(poisons_per_second, 2) * 0.5
+                self.kingsbane_cd = self.get_spell_cd('kingsbane')
+                if self.settings.cycle.kingsbane_with_vendetta == 'only':
+                    self.kingsbane_cd = max(self.vendetta_cd, self.kingsbane_cd)
+                self.kingsbane_cd /= 1 + kb_cdr_per_sec
+
+            if self.traits.from_the_shadows:
+                attacks_per_second['from_the_shadows'] = 1 / self.vendetta_cd
+
+            #Break convergence loop when it's not needed
+            if not self.traits.sinister_circulation and not self.stats.gear_buffs.duskwalkers_footpads:
+                break
+            if self.are_close_enough(old_aps, attacks_per_second):
+                break
+
+            old_aps = attacks_per_second
 
         # for a in attacks_per_second:
         #     if isinstance(attacks_per_second[a], list):
@@ -1219,8 +1277,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #T3:Anticipation
 
     #Artifact:
-        # 'hidden_blade', (ambush proc weirdness)
-        # 'blurred_time',
+        # 'hidden_blade' (ambush proc weirdness)
+        # 'blurred_time'
+        # 'loaded_dice' (for RtB)
 
     #Items:
         #Tier bonus
@@ -1319,7 +1378,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             'pistol_shot', 'run_through', 'saber_slash', 'autoattacks'], dmg_schools=['physical']))
 
         # Generic tuning aura
-        self.damage_modifiers.register_modifier(modifiers.DamageModifier('outlaw_aura', 1.16, ['death_from_above_pulse', 'death_from_above_strike',
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('outlaw_aura', 1.20, ['death_from_above_pulse', 'death_from_above_strike',
             'ambush', 'between_the_eyes', 'blunderbuss', 'cannonball_barrage', 'ghostly_strike', 'killing_spree',
             'pistol_shot', 'run_through', 'saber_slash']))
 
@@ -1332,9 +1391,18 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('cursed_steel',
             1.05 + (0.005 * (self.traits.legionblade - 1)), [], all_damage=True))
 
+        if self.traits.bravado_of_the_uncrowned:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('bravado_of_the_uncrowned', 1.1, [], all_damage=True))
+
+        if self.traits.dreadblades_vigor:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('dreadblades_vigor', None, [], all_damage=True))
+
         stats, aps, crits, procs, additional_info = self.determine_stats(self.outlaw_attack_counts)
 
         self.damage_modifiers.update_modifier_value('versatility', self.stats.get_versatility_multiplier_from_rating(rating=stats['versatility']))
+
+        if self.traits.dreadblades_vigor:
+            self.damage_modifiers.update_modifier_value('dreadblades_vigor', 1 + (0.1 * 12 / self.cotd_cd))
 
         damage_breakdown, additional_info  = self.compute_damage_from_aps(stats, aps, crits, procs, additional_info)
 
@@ -1378,15 +1446,15 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         cost_reducer = self.main_gauche_proc_rate * self.combat_potency_from_mg
 
         # Compute Main Gauche lumped ability costs
-        self.run_through_energy_cost = self.get_spell_cost('run_through') - (3 * self.traits.fatebringer) - cost_reducer
-        self.between_the_eyes_energy_cost = self.get_spell_cost('between_the_eyes') - (3 * self.traits.fatebringer) - cost_reducer
-        self.pistol_shot_energy_cost = self.get_spell_cost('run_through') - (3 * self.traits.fatebringer) - cost_reducer
+        self.run_through_energy_cost = self.get_spell_cost('run_through') - (1 * self.traits.fatebringer) - cost_reducer
+        self.between_the_eyes_energy_cost = self.get_spell_cost('between_the_eyes') - (1 * self.traits.fatebringer) - cost_reducer
+        self.pistol_shot_energy_cost = self.get_spell_cost('run_through') - (1 * self.traits.fatebringer) - cost_reducer
         self.saber_slash_energy_cost = self.get_spell_cost('saber_slash') - cost_reducer
-        self.death_from_above_energy_cost = max(0, self.get_spell_cost('death_from_above')  - (3 * self.traits.fatebringer) - cost_reducer * (1 + self.settings.num_boss_adds))
+        self.death_from_above_energy_cost = max(0, self.get_spell_cost('death_from_above')  - (1 * self.traits.fatebringer) - cost_reducer * (1 + self.settings.num_boss_adds))
         if self.talents.slice_and_dice:
-            self.slice_and_dice_cost = self.get_spell_cost('slice_and_dice') - (3 * self.traits.fatebringer)
+            self.slice_and_dice_cost = self.get_spell_cost('slice_and_dice') - (1 * self.traits.fatebringer)
         else:
-            self.roll_the_bones_cost = self.get_spell_cost('roll_the_bones') - (3 * self.traits.fatebringer)
+            self.roll_the_bones_cost = self.get_spell_cost('roll_the_bones') - (1 * self.traits.fatebringer)
         if self.talents.ghostly_strike:
             self.ghostly_strike_cost = self.get_spell_cost('ghostly_strike') - cost_reducer
 
@@ -1554,6 +1622,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attack_speed_multiplier *= (1 + (0.2 * ar_uptime))
         if not self.talents.slice_and_dice:
             attack_speed_multiplier *= (1 + (0.5 * gm_uptime))
+        elif self.talents.slice_and_dice and self.traits.loaded_dice:
+            buffed_snd_uptime = (self.settings.finisher_threshold + 1) * 6 / self.ar_cd
+            attack_speed_multiplier *= 1 + (0.3 * buffed_snd_uptime)
         swing_timer = self.stats.mh.speed / (attack_speed_multiplier * (1 - self.white_swing_downtime))
         attacks_per_second['mh_autoattacks'] = 1 / swing_timer
         attacks_per_second['oh_autoattacks'] = 1 / swing_timer
@@ -1589,7 +1660,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         maintainence_buff = 'slice_and_dice' if snd else 'roll_the_bones'
         attack_speed_multiplier = self.get_attack_speed_multiplier(current_stats, snd, melee, ar)
-        energy_regen = self.get_energy_regen(current_stats, buried, ar)
+        energy_regen = self.get_energy_regen(current_stats, buried, ar, snd)
 
         gcd_size = 1.0 + self.settings.latency
         if ar:
@@ -1844,7 +1915,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('armor', self.armor_mitigation_multiplier(), ['death_from_above_pulse',
             'death_from_above_strike', 'shuriken_storm', 'eviscerate', 'backstab', 'shadowstrike', 'shuriken_toss', 'autoattacks'], dmg_schools=['physical']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('executioner', None, ['eviscerate', 'nightblade_ticks']))
-        self.damage_modifiers.register_modifier(modifiers.DamageModifier('symbols_of_death', 1.2, [], all_damage=True))
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('symbols_of_death', 1.2 + 0.01 * self.traits.etched_in_shadow, [], all_damage=True))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('stealth_shuriken_storm', None, ['shuriken_storm', 'second_shuriken']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('backstab_positional', 1 + 0.3 * self.settings.cycle.positional_uptime, ['backstab']))
 
@@ -1880,6 +1951,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.traits.legionblade:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('legionblade',
             1.05 + (0.005 * (self.traits.legionblade - 1)), [], all_damage=True))
+
+        if self.traits.shadows_of_the_uncrowned:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('shadows_of_the_uncrowned', 1.1, [], all_damage=True))
 
         #gear specific modifiers
         if self.stats.gear_buffs.the_dreadlords_deceit:
@@ -2047,6 +2121,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second['goremaws_bite'] = 1 / goremaws_bite_cd
             self.cp_budget += (3 + self.shadow_blades_uptime) * (self.settings.duration / goremaws_bite_cd)
             self.energy_budget += 30 * (self.settings.duration / goremaws_bite_cd)
+        if self.traits.feeding_frenzy:
+            #assume we time it so we can get three free eviscerates
+            self.energy_budget += self.get_spell_cost('eviscerate') * (self.settings.duration / goremaws_bite_cd)
 
         if self.talents.death_from_above:
             dfa_cd = self.get_spell_cd('death_from_above') + self.settings.response_time
@@ -2076,6 +2153,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         shadow_techniques_procs = self.settings.duration * (attacks_per_second['mh_autoattack_hits'] + attacks_per_second['oh_autoattack_hits']) / 4.5
         shadow_techniques_cps = shadow_techniques_procs * shadow_techniques_cps_per_proc
         self.cp_budget += shadow_techniques_cps
+        if self.traits.shadows_whisper:
+            self.energy_budget += 5 * shadow_techniques_procs
 
         #vanish handling
         vanish_count = self.settings.duration / self.get_spell_cd('vanish')
