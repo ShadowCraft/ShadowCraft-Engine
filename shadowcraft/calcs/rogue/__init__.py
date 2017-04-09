@@ -376,7 +376,7 @@ class RogueDamageCalculator(DamageCalculator):
 
     #Lumping 6 ticks together for simplicity
     def poison_bomb_damage(self, ap):
-        return 6 * 1.2 * ap
+        return 6 * 1.2 * ap * (1 + (0.3 * self.talents.master_poisoner))
 
     def rupture_tick_damage(self, ap, cp):
         return 1.5 * ap * (1 + (0.0333 * self.traits.gushing_wounds))

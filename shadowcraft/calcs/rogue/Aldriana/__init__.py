@@ -268,6 +268,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         if proc.can_crit == False:
             crit_rate = 0
+        elif self.stats.gear_buffs.mantle_of_the_master_assassin:
+            crit_rate = min(crit_rate * (1. - self.mantle_uptime) + self.mantle_uptime, 1)
 
         proc_value = proc.value
         #280+75% AP
@@ -720,6 +722,23 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         for proc in weapon_damage_procs:
             self.set_uptime(proc, attacks_per_second, crit_rates)
+
+        #Mantle of the Master Assassin Legendary
+        if self.stats.gear_buffs.mantle_of_the_master_assassin:
+            mantle_triggers = 1 #Opener
+            if attacks_per_second['vanish']:
+                mantle_triggers += attacks_per_second['vanish'] * self.settings.duration
+            mantle_seconds = mantle_triggers * 6
+            #Note: As of 7.1 subterfuge keeps the buff, this is not true on 7.2 PTR (2018/03/18)
+            if self.spec in ['assassination', 'subtlety'] and self.talents.subterfuge:
+                mantle_seconds += mantle_triggers * 3
+            #Assume extended stealth bug opener for subtlety (shadow dance -> stealth, stealth wears off after dance)
+            if self.spec == 'subtlety':
+                mantle_seconds += 5 if self.talents.subterfuge else 3 #One full dance mantle uptime
+            self.mantle_uptime = mantle_seconds / self.settings.duration
+            for attack in crit_rates:
+                crit_rates[attack] = min(crit_rates[attack] * (1. - self.mantle_uptime) + self.mantle_uptime, 1)
+
         return current_stats, attacks_per_second, crit_rates, damage_procs, additional_info
 
     def add_special_aps_penalties(self, attacks_per_second):
@@ -786,17 +805,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #T2:SF
 
     #Artifact:
-        # 'poison_knives',
-        # 'bag_of_tricks',
-        # 'from_the_shadows',
-
-    #Items:
-        #Class hall set bonus
-        #Tier bonus
-        #Trinkets
-        #Legendaries
-
-    #Rotation details:
+        # 'poison_knives'
 
     def assassination_dps_estimate(self):
         return sum(self.assassination_dps_breakdown().values())
@@ -810,9 +819,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.damage_modifiers = modifiers.ModifierList(self.assassination_damage_sources + ['autoattacks'])
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('versatility', None, [], all_damage=True))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('armor', self.armor_mitigation_multiplier(), ['death_from_above_pulse',
-            'fan_of_knives', 'hemorrhage', 'mutilate', 'poisoned_knife', 'autoattacks', 't19_2pc'], dmg_schools=['physical']))
+            'fan_of_knives', 'hemorrhage', 'mutilate', 'poisoned_knife', 'autoattacks'], dmg_schools=['physical']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('potent_poisons', None, ['deadly_poison',
-            'deadly_instant_poison', 'envenom', 'poison_bomb']))
+            'deadly_instant_poison', 'envenom', 'poison_bomb', 'kingsbane', 'kingsbane_ticks']))
 
         #Generic tuning aura
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('assassination_aura', 1.11, ['death_from_above_pulse', 'death_from_above_strike',
@@ -820,7 +829,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             'kingsbane', 'kingsbane_ticks', 'mutilate', 'poisoned_knife', 'rupture_ticks']))
 
         #time averaged vendetta modifier used for most things
-        self.damage_modifiers.register_modifier(modifiers.DamageModifier('vendetta_time_average', None, [], all_damage=True))
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('vendetta_time_average', None, ['rupture_ticks', 'kingsbane', 'kingsbane_ticks'], blacklist=True, all_damage=True))
 
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('vendetta_exsang', None, ['rupture_ticks']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('vendetta_kb', None, ['kingsbane', 'kingsbane_ticks']))
@@ -836,6 +845,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('deeper_strategem', 1.05, ['rupture_ticks', 'envenom', 'death_from_above_pulse', 'death_from_above_strike']))
 
         #trait specific modifiers
+        if self.traits.kingsbane:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('kingsbane_tick_increase', None, ['kingsbane_ticks']))
         if self.traits.blood_of_the_assassinated:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('blood_of_the_assassinated', None, ['rupture_ticks']))
         if self.traits.surge_of_toxins:
@@ -853,38 +864,37 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.stats.gear_buffs.zoldyck_family_training_shackles:
             #Assume spend 30% of the time sub 30% health, imperfect but good enough
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('zoldyck_family_training_shackles', 1.09, ['deadly_poison', 'deadly_instant_poison',
-                'garrote_ticks', 'kingsbane_ticks', 'rupture_ticks'], dmg_schools=['poison', 'bleed']))
+                'garrote_ticks', 'kingsbane', 'kingsbane_ticks', 'rupture_ticks', 'poison_bomb', 't19_2pc'], dmg_schools=['poison', 'bleed']))
+
+        #Assume 100% uptime of Rupture, Garrote and Mutilated Flesh (2pc bleed)
         if self.stats.gear_buffs.rogue_t19_4pc:
-            self.damage_modifiers.register_modifier(modifiers.DamageModifier('t19_4pc', 1.2, ['envenom']))
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('t19_4pc', 1.3, ['envenom']))
 
         self.set_constants()
 
-        self.vendetta_cd = self.get_spell_cd('vendetta')
+        stats, aps, crits, procs, additional_info = self.determine_stats(self.assassination_attack_counts)
+
         self.vendetta_multiplier = 0.3 * (20 / self.vendetta_cd)
-
-        #cd stacking handlers
-        if self.settings.cycle.kingsbane_with_vendetta == 'only':
-            self.kingsbane_cd = min(self.vendetta_cd, self.get_spell_cd('kingsbane'))
+        if self.settings.cycle.kingsbane_with_vendetta == 'just':
+            kb_venn_uptime = min(1, self.kingsbane_cd / self.vendetta_cd)
+        else:
             kb_venn_uptime = 1.0
+        if self.settings.cycle.exsang_with_vendetta == 'just':
+            exsang_venn_uptime = min(1, self.exsang_cd / self.vendetta_cd)
         else:
-            self.kingsbane_cd = self.get_spell_cd('kingsbane')
-            kb_venn_uptime = self.kingsbane_cd / self.vendetta_cd
-
-        if self.settings.cycle.exsang_with_vendetta == 'only':
-            self.exsang_cd = min(self.vendetta_cd), self.get_spell_cd('exsanguinate')
             exsang_venn_uptime = 1.0
-        else:
-            self.exsang_cd = self.get_spell_cd('exsanguinate')
-            exsang_venn_uptime = self.exsang_cd / self.vendetta_cd
-
         self.damage_modifiers.update_modifier_value('vendetta_time_average', 1 + self.vendetta_multiplier)
         self.damage_modifiers.update_modifier_value('vendetta_exsang', 1 + (self.vendetta_multiplier * exsang_venn_uptime))
         self.damage_modifiers.update_modifier_value('vendetta_kb', 1 + (self.vendetta_multiplier * kb_venn_uptime))
 
-        stats, aps, crits, procs, additional_info = self.determine_stats(self.assassination_attack_counts)
-
         self.damage_modifiers.update_modifier_value('versatility', self.stats.get_versatility_multiplier_from_rating(rating=stats['versatility']))
         self.damage_modifiers.update_modifier_value('potent_poisons', (1 + self.assassination_mastery_conversion * self.stats.get_mastery_from_rating(stats['mastery'])))
+
+        #Lethal poison applications increase kingsbane damage by 15% each, KB ticks 7 times every 2 sec
+        if self.traits.kingsbane:
+            applications_per_tick = 2 * (aps['agonizing_poison'] if self.talents.agonizing_poison else aps['deadly_instant_poison'])
+            average_kb_stacks = (applications_per_tick + applications_per_tick * 7) / 2
+            self.damage_modifiers.update_modifier_value('kingsbane_tick_increase', 1 + (average_kb_stacks * 0.15))
 
         if self.traits.blood_of_the_assassinated:
             bota_uptime = 0.35 * sum(aps['rupture']) * 10 # procs/ability * ability/second * seconds/proc gives unit-less uptime
@@ -956,6 +966,21 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         if crit_rates == None:
             crit_rates = self.get_crit_rates(current_stats)
+
+        #Vendetta cd, modified by Duskwalker Legendary, used for damage modifier
+        self.vendetta_cd = self.get_spell_cd('vendetta')
+
+        #cd stacking handlers, FIXME: in 'only' mode, we don't respect vendetta cdr with duskwalkers atm
+        self.kingsbane_cd = self.get_spell_cd('kingsbane')
+        if self.settings.cycle.kingsbane_with_vendetta == 'only':
+            self.kingsbane_cd = max(self.vendetta_cd, self.get_spell_cd('kingsbane'))
+
+        self.exsang_cd = self.get_spell_cd('exsanguinate')
+        if self.settings.cycle.exsang_with_vendetta == 'only':
+            self.exsang_cd = max(self.vendetta_cd, self.get_spell_cd('exsanguinate'))
+
+        #Vanish on cooldown
+        attacks_per_second['vanish'] = 1 / self.get_spell_cd('vanish')
 
         # set up our finisher distributions
         #unlike outlaw these depend on gear (crit) so they cannot be precomputed
@@ -1058,7 +1083,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         vw_regen_per_second = vw_energy_per_tick * (sum(attacks_per_second['rupture_ticks']) + attacks_per_second['garrote_ticks'])
 
         net_energy_per_second = energy_regen + vw_regen_per_second
-        net_energy_per_second -= rupture_cost_per_second - garrote_cost_per_second
+        net_energy_per_second -= rupture_cost_per_second + garrote_cost_per_second
+        duskwalker_expended_energy = rupture_cost_per_second + garrote_cost_per_second
 
         #compute cooldowned talents:
         mfd_cps = self.talents.marked_for_death * (self.settings.duration/60. * (5. + self.talents.deeper_strategem) * (1. + self.settings.marked_for_death_resets))
@@ -1069,6 +1095,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second['fan_of_knives'] = fok_interval
             cp_budget += self.settings.duration * fok_interval * (1 + crit_rates['fan_of_knives'])
             net_energy_per_second -= fok_interval * 35
+            duskwalker_expended_energy += fok_interval * 35
 
         if self.traits.kingsbane:
             attacks_per_second['kingsbane'] = 1 / self.kingsbane_cd
@@ -1080,6 +1107,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             avg_cp_per_kb = sum([cp * cpg_cps[cp] for cp in cpg_cps])
             cp_budget += avg_cp_per_kb * attacks_per_second['kingsbane'] * self.settings.duration
             net_energy_per_second -= self.get_spell_cost('kingsbane') * attacks_per_second['kingsbane']
+            duskwalker_expended_energy += self.get_spell_cost('kingsbane') * attacks_per_second['kingsbane']
 
         if self.talents.hemorrhage:
             hemos_per_second = 1 / 20
@@ -1087,6 +1115,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             hemo_cps = (1 + crit_rates['hemorrhage']) * (self.settings.duration * hemos_per_second)
             cp_budget += hemo_cps
             net_energy_per_second -= self.get_spell_cost('hemorrhage') * hemos_per_second
+            duskwalker_expended_energy += self.get_spell_cost('hemorrhage') * hemos_per_second
 
         if self.talents.death_from_above:
             dfa_cd = self.get_spell_cd('death_from_above') + self.settings.response_time
@@ -1100,8 +1129,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             dfa_cost_per_second = self.get_spell_cost('death_from_above') * dfa_per_second
             dfa_cost_per_second += cp_builder_energy_per_finisher * dfa_per_second
             net_energy_per_second -= dfa_cost_per_second
+            duskwalker_expended_energy += dfa_cost_per_second
 
         #form whats left into a budget
+        duskwalker_expended_energy *= self.settings.duration
         energy_budget = self.settings.duration * net_energy_per_second
         max_energy = 120
         if self.talents.vigor:
@@ -1116,6 +1147,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if cp_budget > 0:
             extra_envenom = cp_budget / avg_finisher_size
             energy_budget -= self.get_spell_cost('envenom') * extra_envenom
+            duskwalker_expended_energy += self.get_spell_cost('envenom') * extra_envenom
             extra_envenom_per_second = extra_envenom / self.settings.duration
             for cp in range(7):
                 attacks_per_second['envenom'][cp] = extra_envenom_per_second * finisher_list[cp]
@@ -1136,6 +1168,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             for cp in range(7):
                 attacks_per_second['envenom'][cp] += finisher_list[cp] * finishers_per_second
             energy_budget -= total_minicycles * mini_cycle_energy
+            duskwalker_expended_energy += total_minicycles * mini_cycle_energy
 
             if self.talents.alacrity:
                 old_alacrity_regen = energy_regen * (1 + (alacrity_stacks *0.02))
@@ -1144,12 +1177,20 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 energy_budget += (new_alacrity_regen - old_alacrity_regen) * self.settings.duration
                 alacrity_stacks = new_alacrity_stacks
 
-        attacks_per_second['mh_autoattacks'] = (haste_multiplier * (1 + (alacrity_stacks * 0.01))) / self.stats.mh.speed
+        #swing timer
+        white_swing_downtime = 0
+        self.swing_reset_spacing = self.get_spell_cd('vanish')
+        if self.swing_reset_spacing is not None:
+            white_swing_downtime += self.settings.response_time / self.swing_reset_spacing
+        attacks_per_second['mh_autoattacks'] = (haste_multiplier * (1 + (alacrity_stacks * 0.01))) / self.stats.mh.speed * (1 - white_swing_downtime)
         attacks_per_second['oh_autoattacks'] = attacks_per_second['mh_autoattacks']
 
         if self.traits.bag_of_tricks:
             bag_of_tricks_proc_chance = (haste_multiplier + (0.1 * alacrity_stacks)) * (1 / sum(attacks_per_second['envenom'])) / 60
             attacks_per_second['poison_bomb'] = bag_of_tricks_proc_chance * sum(attacks_per_second['envenom'])
+
+        if self.stats.gear_buffs.duskwalkers_footpads:
+            self.vendetta_cd /= 1 + (duskwalker_expended_energy / 65) / self.settings.duration
 
         if self.traits.from_the_shadows:
             attacks_per_second['from_the_shadows'] = 1 / self.vendetta_cd
@@ -1182,9 +1223,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         # 'blurred_time',
 
     #Items:
-        #Class hall set bonus
         #Tier bonus
-        #Trinkets
         #Legendaries
 
     #Rotation details:
@@ -1352,6 +1391,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.ghostly_strike_cost = self.get_spell_cost('ghostly_strike') - cost_reducer
 
         self.white_swing_downtime = self.settings.response_time / self.get_spell_cd('vanish')
+
         # Compute dps phases each non-rerolling RtB buff combo AR and not
         phases = {}
         ar_phases = {}
@@ -1496,6 +1536,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                     #old_ar_cd = new_ar_cd
 
             ar_uptime = self.ar_duration / ar_cd
+
+        #Vanish on cooldown
+        attacks_per_second['vanish'] = 1 / self.get_spell_cd('vanish')
+
         # Add in Cannonball and Killing Spree
         if self.talents.killing_spree:
             ksp_cd = self.get_spell_cd('killing_spree') / (1. + tb_seconds_per_second)
@@ -1510,7 +1554,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attack_speed_multiplier *= (1 + (0.2 * ar_uptime))
         if not self.talents.slice_and_dice:
             attack_speed_multiplier *= (1 + (0.5 * gm_uptime))
-        swing_timer = self.stats.mh.speed / attack_speed_multiplier
+        swing_timer = self.stats.mh.speed / (attack_speed_multiplier * (1 - self.white_swing_downtime))
         attacks_per_second['mh_autoattacks'] = 1 / swing_timer
         attacks_per_second['oh_autoattacks'] = 1 / swing_timer
         attacks_per_second['main_gauche'] = self.main_gauche_proc_rate * attacks_per_second['mh_autoattacks'] * self.dual_wield_mh_hit_chance()
@@ -1760,12 +1804,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     #Legion TODO:
 
     #Artifact:
-        # 'flickering_shadows',
-
-    #Items:
-        #Class hall set bonus
-        #Trinkets
-        #Legendaries
+        # 'flickering_shadows'
 
     #Rotation details:
         #Combo Point loss
@@ -1933,7 +1972,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         white_swing_downtime = 0
         self.swing_reset_spacing = self.get_spell_cd('vanish')
         if self.swing_reset_spacing is not None:
-            white_swing_downtime += .5 / self.swing_reset_spacing
+            white_swing_downtime += self.settings.response_time / self.swing_reset_spacing
         attacks_per_second['mh_autoattacks'] = haste_multiplier / self.stats.mh.speed * (1 - white_swing_downtime)
         attacks_per_second['oh_autoattacks'] = haste_multiplier / self.stats.oh.speed * (1 - white_swing_downtime)
 
@@ -2006,7 +2045,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.traits.goremaws_bite:
             goremaws_bite_cd = self.get_spell_cd('goremaws_bite') + self.settings.response_time
             attacks_per_second['goremaws_bite'] = 1 / goremaws_bite_cd
-            self.cp_budget += 3 * (self.settings.duration / goremaws_bite_cd)
+            self.cp_budget += (3 + self.shadow_blades_uptime) * (self.settings.duration / goremaws_bite_cd)
             self.energy_budget += 30 * (self.settings.duration / goremaws_bite_cd)
 
         if self.talents.death_from_above:
@@ -2100,6 +2139,31 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second[self.cp_builder] = extra_builders / self.settings.duration
         attacks_per_second['eviscerate'][self.settings.finisher_threshold] += extra_evis
 
+        #Calculate Shadow Blades extension so far
+        if self.stats.gear_buffs.denial_of_the_half_giants:
+            sb_uptime = self.shadow_blades_uptime
+            sb_extension_converged = False
+            sb_extension = 0
+            counter = 0
+            while not sb_extension_converged:
+                if counter > 50:
+                    raise ConvergenceErrorException(_('Denial Shadow Blades extension failed to converge.'))
+                finisher_cps = 0
+                for i in range(0, 7):
+                    finisher_cps += attacks_per_second['eviscerate'][i] * i
+                    finisher_cps += attacks_per_second['nightblade'][i] * i
+                new_sb_extension = finisher_cps * sb_uptime * 0.3
+                sb_extension_converged = (new_sb_extension - sb_extension) < 10 ** -5
+                sb_uptime = self.shadow_blades_uptime + new_sb_extension
+                sb_extension = new_sb_extension
+                counter += 1
+            #Account for extra cps
+            generators = ['shadowstrike', 'shuriken_storm', 'backstab', 'goremaws_bite', 'gloomblade', 'shuriken_toss']
+            denial_extra_cps = sb_extension * sum((attacks_per_second[gen] if gen in attacks_per_second else 0) for gen in generators)
+            self.cp_budget += denial_extra_cps * self.settings.duration
+            self.shadow_blades_uptime = sb_uptime
+            cp_per_builder += sb_extension
+
         #Hopefully energy budget here isn't negative, if it is we're in trouble
         #Now we convert all the energy we have left into mini-cycles
         #Each mini-cycle contains enough 1 dance and generators+finishers for one dance
@@ -2144,6 +2208,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 new_alacrity_regen = self.energy_regen * (1 + (new_alacrity_stacks *0.02))
                 self.energy_budget += (new_alacrity_regen - old_alacrity_regen) * self.settings.duration
                 alacrity_stacks = new_alacrity_stacks
+            #Update Shadow Blades extension from Denial
+            if self.stats.gear_buffs.denial_of_the_half_giants:
+                new_sb_extension = mini_cycle_count * finishers_per_minicycle * self.settings.finisher_threshold * self.shadow_blades_uptime * 0.3 / self.settings.duration
+                generators = ['shadowstrike', 'shuriken_storm', 'backstab', 'goremaws_bite', 'gloomblade', 'shuriken_toss']
+                denial_extra_cps = new_sb_extension * sum((attacks_per_second[gen] if gen in attacks_per_second else 0) for gen in generators)
+                self.shadow_blades_uptime += new_sb_extension
+                self.cp_budget += denial_extra_cps * self.settings.duration
+                cp_per_builder += new_sb_extension
 
         #Now fixup attacks_per_second
         #convert nightblade casts into nightblade ticks
@@ -2278,11 +2350,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         net_energy -= attack_counts[cp_builder] * cp_builder_cost
         if cp_builder == 'shadowstrike':
-            net_cps += attack_counts['shadowstrike'] * (1 + self.talents.premeditation) + self.shadow_blades_uptime
+            net_cps += attack_counts['shadowstrike'] * (1 + self.talents.premeditation + self.shadow_blades_uptime)
             if self.stats.gear_buffs.rogue_t19_4pc:
                 net_cps += attack_counts['shadowstrike'] * 0.3
         elif cp_builder == 'shuriken_storm':
-            net_cps += min(1 + self.settings.num_boss_adds, self.max_store_cps) + self.shadow_blades_uptime
+            net_cps += min(1 + self.settings.num_boss_adds + self.shadow_blades_uptime, self.max_store_cps)
 
         return net_energy, net_cps, spent_cps, attack_counts
 
