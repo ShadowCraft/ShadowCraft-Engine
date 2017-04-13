@@ -217,14 +217,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if boost['stat'] in self.base_stats:
                 self.base_stats[boost['stat']] += boost['value'] * boost['duration'] * 1.0 / (boost['cooldown'] + self.settings.response_time)
 
-        if self.stats.procs.virmens_bite:
-            getattr(self.stats.procs, 'virmens_bite').icd = self.settings.duration
-        if self.stats.procs.virmens_bite_prepot:
-            getattr(self.stats.procs, 'virmens_bite_prepot').icd = self.settings.duration
-        if self.stats.procs.draenic_agi_pot:
-            getattr(self.stats.procs, 'draenic_agi_pot').icd = self.settings.duration
-        if self.stats.procs.draenic_agi_prepot:
-            getattr(self.stats.procs, 'draenic_agi_prepot').icd = self.settings.duration
         if self.stats.procs.prolonged_power_pot:
             self.stats.procs.prolonged_power_pot.icd = self.settings.duration
         if self.stats.procs.prolonged_power_prepot:

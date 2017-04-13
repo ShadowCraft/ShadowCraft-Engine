@@ -101,7 +101,7 @@ test_traits = artifact.Artifact(test_spec, test_class, trait_dict={
 })
 
 # Set up settings.
-test_cycle = settings.AssassinationCycle('just', 'just')
+test_cycle = settings.AssassinationCycle()
 test_settings = settings.Settings(test_cycle, response_time=.5, duration=300,
                                   finisher_threshold=4)
 

@@ -9,6 +9,7 @@ sys.path.append(path.abspath(path.join(path.dirname(__file__), '..')))
 
 from shadowcraft.calcs.rogue.Aldriana import AldrianasRogueDamageCalculator
 from shadowcraft.calcs.rogue.Aldriana import settings
+from shadowcraft.calcs.rogue.Aldriana import settings_data
 
 from shadowcraft.objects import buffs
 from shadowcraft.objects import race
@@ -116,12 +117,8 @@ test_traits = artifact.Artifact(test_spec, test_class, trait_dict={
 })
 
 # Set up settings.
-test_cycle = settings.SubtletyCycle(cp_builder='backstab',
-                                    dance_finishers_allowed=True,
-                                    positional_uptime=1.
-    )
-test_settings = settings.Settings(test_cycle, response_time=.5, duration=300,
-                                 adv_params="", is_demon=False, num_boss_adds=0, marked_for_death_resets=0.0)
+test_cycle = settings.SubtletyCycle()
+test_settings = settings.Settings(test_cycle)
 
 # Build a DPS object.
 calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_traits, test_buffs, test_race, test_spec, test_settings, test_level)
@@ -131,8 +128,6 @@ print(str(test_stats.get_character_stats(test_race)))
 # Compute DPS Breakdown.
 dps_breakdown = calculator.get_dps_breakdown()
 total_dps = sum(entry[1] for entry in list(dps_breakdown.items()))
-
-print(str(calculator.shadow_blades_uptime))
 
 # Compute EP values.
 ep_values = calculator.get_ep(baseline_dps=total_dps)

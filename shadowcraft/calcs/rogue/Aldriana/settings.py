@@ -1,27 +1,28 @@
 from builtins import object
 from shadowcraft.core import exceptions
+from shadowcraft.calcs.rogue.Aldriana import settings_data
 
 class Settings(object):
     # Settings object for AldrianasRogueDamageCalculator.
 
-    def __init__(self, cycle, response_time=.5, latency=.03, duration=300, adv_params=None,
-                 merge_damage=True, num_boss_adds=0, feint_interval=0, default_ep_stat='ap',
-                 is_day=False, is_demon=False, marked_for_death_resets=0, finisher_threshold=5):
+    def __init__(self, cycle, **kwargs):
         self.cycle = cycle
-        self.response_time = response_time
-        self.latency = latency
-        self.duration = duration
-        self.feint_interval = feint_interval
-        self.is_day = is_day
-        self.is_demon = is_demon
-        self.num_boss_adds = max(num_boss_adds, 0)
-        self.adv_params = self.interpret_adv_params(adv_params)
-        self.default_ep_stat = default_ep_stat
-        #per minute
-        self.marked_for_death_resets=marked_for_death_resets
+        self.default_ep_stat = kwargs.get('default_ep_stat', 'ap')
+        self.feint_interval = int(kwargs.get('feint_interval', 0))
 
-        #TODO: can be overridden by spec specific finisher thresholds
-        self.finisher_threshold = finisher_threshold
+        #Get defaults from settings_data
+        defaults = settings_data.get_default_settings('general.settings', self.cycle._cycle_type, settings_data.rogue_settings)
+        defaults.update(settings_data.get_default_settings('other', self.cycle._cycle_type, settings_data.rogue_settings))
+
+        self.response_time = float(kwargs.get('response_time', defaults['response_time']))
+        self.latency = float(kwargs.get('latency', defaults['latency']))
+        self.duration = int(kwargs.get('duration', defaults['duration']))
+        self.is_day = kwargs.get('is_day', defaults['is_day'])
+        self.is_demon = kwargs.get('is_demon', defaults['is_demon'])
+        self.num_boss_adds = max(int(kwargs.get('num_boss_adds', defaults['num_boss_adds'])), 0)
+        self.adv_params = self.interpret_adv_params(kwargs.get('adv_params', defaults['adv_params']))
+        self.marked_for_death_resets = int(kwargs.get('marked_for_death_resets', defaults['marked_for_death_resets']))
+        self.finisher_threshold = int(kwargs.get('finisher_threshold', defaults['finisher_threshold']))
 
     def interpret_adv_params(self, s=""):
         data = {}
@@ -55,7 +56,7 @@ class Cycle(object):
     # respect.
 
     # When subclassing, define _cycle_type to be one of 'assassination',
-    # 'combat', or 'subtlety' - this is how the damage calculator makes sure
+    # 'outlaw', or 'subtlety' - this is how the damage calculator makes sure
     # you have an appropriate cycle object to go with your talent trees, etc.
     _cycle_type = ''
 
@@ -63,13 +64,12 @@ class Cycle(object):
 class AssassinationCycle(Cycle):
     _cycle_type = 'assassination'
 
-    def __init__(self, kingsbane='just', exsang='just', cp_builder='mutilate', lethal_poison=''):
-        self.cp_builder = cp_builder #Allowed values: 'mutilate', 'fan_of_knives'
-        #Cooldown scheduling and usage settings
-        #Allowed values: 'just': Use cooldown if it aligns with vendetta but don't delay usages
-        #                'only': Only use cooldown with vendetta
-        self.kingsbane_with_vendetta = kingsbane
-        self.exsang_with_vendetta = exsang
+    def __init__(self, **kwargs):
+        defaults = settings_data.get_default_settings('rotation.assassination', 'assassination', settings_data.rogue_settings)
+        self.cp_builder = kwargs.get('cp_builder', defaults['cp_builder'])
+        self.kingsbane_with_vendetta = kwargs.get('kingsbane', defaults['kingsbane'])
+        self.exsang_with_vendetta = kwargs.get('exsang', defaults['exsang'])
+        self.lethal_poison = kwargs.get('lethal_poison', defaults['lethal_poison'])
 
 class OutlawCycle(Cycle):
     _cycle_type = 'outlaw'
@@ -98,23 +98,22 @@ class OutlawCycle(Cycle):
                   #single buffs
                   ('jr',), ('gm',), ('s',), ('tb',), ('bt',), ('b',)]
 
-    def __init__(self, blade_flurry=False, between_the_eyes_policy='shark',
-                 jolly_roger_reroll=0, grand_melee_reroll=0, shark_reroll=0,
-                 true_bearing_reroll=0, buried_treasure_reroll=0, broadsides_reroll=0):
-        self.blade_flurry = bool(blade_flurry)
-        self.between_the_eyes_policy = between_the_eyes_policy #Allowed values: 'shark', 'always', 'never'
+    def __init__(self, **kwargs):
+        defaults = settings_data.get_default_settings('rotation.outlaw', 'outlaw', settings_data.rogue_settings)
+        self.blade_flurry = kwargs.get('blade_flurry', defaults['blade_flurry'])
+        self.between_the_eyes_policy = kwargs.get('between_the_eyes_policy', defaults['between_the_eyes_policy'])
+        self.jolly_roger_reroll = int(kwargs.get('jolly_roger_reroll', defaults['jolly_roger_reroll']))
+        self.grand_melee_reroll = int(kwargs.get('grand_melee_reroll', defaults['grand_melee_reroll']))
+        self.shark_reroll = int(kwargs.get('shark_reroll', defaults['shark_reroll']))
+        self.true_bearing_reroll = int(kwargs.get('true_bearing_reroll', defaults['true_bearing_reroll']))
+        self.buried_treasure_reroll = int(kwargs.get('buried_treasure_reroll', defaults['buried_treasure_reroll']))
+        self.broadsides_reroll = int(kwargs.get('broadsides_reroll', defaults['broadsides_reroll']))
+
         # RtB reroll thresholds, 0, 1, 2, 3
         # 0 means never reroll combos with this buff
         # 1 means reroll singles of buff
         # 2 means reroll doubles containing this buff
         # 3 means reroll triples containing this buff
-        self.jolly_roger_reroll = jolly_roger_reroll
-        self.grand_melee_reroll = grand_melee_reroll
-        self.shark_reroll = shark_reroll
-        self.true_bearing_reroll = true_bearing_reroll
-        self.buried_treasure_reroll = buried_treasure_reroll
-        self.broadsides_reroll = broadsides_reroll
-
         #build reroll lists here
         self.reroll_list = []
         self.keep_list = []
@@ -143,14 +142,13 @@ class OutlawCycle(Cycle):
 class SubtletyCycle(Cycle):
     _cycle_type = 'subtlety'
 
-    def __init__(self, cp_builder='backstab', positional_uptime=1.0, symbols_policy='just',
-                 dance_finishers_allowed=True, compute_cp_waste=False):
-        self.cp_builder = cp_builder #Allowed values: 'shuriken_storm', 'backstab' (implies gloomblade if selected and ssk during dance)
-        self.positional_uptime = positional_uptime #Range 0.0 to 1.0, time behind target
-        self.symbols_policy = symbols_policy #Allowed values:
-                                             #'always' - use SoD every dance (macro)
-                                             #'just'   - Only use SoD when needed to refresh
-        #Allow finishers to be scheduled during dance
-        self.dance_finishers_allowed= dance_finishers_allowed
-        #EXPERIMENTAL CP Waste Test
-        self.compute_cp_waste = compute_cp_waste
+    def __init__(self, **kwargs):
+        defaults = settings_data.get_default_settings('rotation.subtlety', 'subtlety', settings_data.rogue_settings)
+        self.cp_builder = kwargs.get('cp_builder', defaults['cp_builder'])
+        self.symbols_policy = kwargs.get('symbols_policy', defaults['symbols_policy'])
+        self.dance_finishers_allowed = kwargs.get('dance_finishers_allowed', defaults['dance_finishers_allowed'])
+        self.compute_cp_waste = kwargs.get('compute_cp_waste', defaults['compute_cp_waste'])
+
+        #Handle percent vs float automatically
+        self.positional_uptime = int(kwargs.get('positional_uptime_percent', defaults['positional_uptime_percent'])) / 100
+        self.positional_uptime = float(kwargs.get('positional_uptime', self.positional_uptime))
