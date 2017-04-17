@@ -621,7 +621,7 @@ class DamageCalculator(object):
         # damage value.
         return damage * self.armor_mitigation_multiplier(armor)
 
-    def melee_hit_chance(self, base_miss_chance, dodgeable, parryable, weapon_type, blockable=False):
+    def melee_hit_chance(self, base_miss_chance, dodgeable, parryable, blockable=False):
         miss_chance = base_miss_chance
 
         if dodgeable:
@@ -642,45 +642,41 @@ class DamageCalculator(object):
         return (1 - (miss_chance + dodge_chance + parry_chance)) * (1 - block_chance)
 
     def melee_spells_hit_chance(self, bonus_hit=0):
-        hit_chance = self.melee_hit_chance(self.base_one_hand_miss_rate, dodgeable=False, parryable=False, weapon_type=None)
+        hit_chance = self.melee_hit_chance(self.base_one_hand_miss_rate, dodgeable=False, parryable=False)
         return hit_chance
 
-    def one_hand_melee_hit_chance(self, dodgeable=False, parryable=False, weapon=None, blockable=False):
+    def one_hand_melee_hit_chance(self, dodgeable=False, parryable=False, blockable=False):
         # Most attacks by DPS aren't parryable due to positional negation. But
         # if you ever want to attacking from the front, you can just set that
         # to True.
-        if weapon == None:
-            weapon = self.stats.mh
-        hit_chance = self.melee_hit_chance(self.base_one_hand_miss_rate, dodgeable, parryable, weapon.type, blockable)
+        hit_chance = self.melee_hit_chance(self.base_one_hand_miss_rate, dodgeable, parryable, blockable)
         return hit_chance
 
-    def off_hand_melee_hit_chance(self, dodgeable=False, parryable=False, weapon=None, bonus_hit=0):
+    def off_hand_melee_hit_chance(self, dodgeable=False, parryable=False, bonus_hit=0):
         # Most attacks by DPS aren't parryable due to positional negation. But
         # if you ever want to attacking from the front, you can just set that
         # to True.
-        if weapon == None:
-            weapon = self.stats.oh
-        hit_chance = self.melee_hit_chance(self.base_one_hand_miss_rate, dodgeable, parryable, weapon.type)
+        hit_chance = self.melee_hit_chance(self.base_one_hand_miss_rate, dodgeable, parryable)
         return hit_chance
 
     def dual_wield_mh_hit_chance(self, dodgeable=False, parryable=False, dw_miss=None):
         # Most attacks by DPS aren't parryable due to positional negation. But
         # if you ever want to attacking from the front, you can just set that
         # to True.
-        hit_chance = self.dual_wield_hit_chance(dodgeable, parryable, self.stats.mh.type, dw_miss=dw_miss)
+        hit_chance = self.dual_wield_hit_chance(dodgeable, parryable, dw_miss=dw_miss)
         return hit_chance
 
     def dual_wield_oh_hit_chance(self, dodgeable=False, parryable=False, dw_miss=None):
         # Most attacks by DPS aren't parryable due to positional negation. But
         # if you ever want to attacking from the front, you can just set that
         # to True.
-        hit_chance = self.dual_wield_hit_chance(dodgeable, parryable, self.stats.oh.type, dw_miss=dw_miss)
+        hit_chance = self.dual_wield_hit_chance(dodgeable, parryable, dw_miss=dw_miss)
         return hit_chance
 
-    def dual_wield_hit_chance(self, dodgeable, parryable, weapon_type, dw_miss=None):
+    def dual_wield_hit_chance(self, dodgeable, parryable, dw_miss=None):
         if not dw_miss:
             dw_miss = self.base_dw_miss_rate
-        hit_chance = self.melee_hit_chance(dw_miss, dodgeable, parryable, weapon_type)
+        hit_chance = self.melee_hit_chance(dw_miss, dodgeable, parryable)
         return hit_chance
 
     def buff_melee_crit(self):

@@ -217,14 +217,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if boost['stat'] in self.base_stats:
                 self.base_stats[boost['stat']] += boost['value'] * boost['duration'] * 1.0 / (boost['cooldown'] + self.settings.response_time)
 
-        if self.stats.procs.virmens_bite:
-            getattr(self.stats.procs, 'virmens_bite').icd = self.settings.duration
-        if self.stats.procs.virmens_bite_prepot:
-            getattr(self.stats.procs, 'virmens_bite_prepot').icd = self.settings.duration
-        if self.stats.procs.draenic_agi_pot:
-            getattr(self.stats.procs, 'draenic_agi_pot').icd = self.settings.duration
-        if self.stats.procs.draenic_agi_prepot:
-            getattr(self.stats.procs, 'draenic_agi_prepot').icd = self.settings.duration
         if self.stats.procs.prolonged_power_pot:
             self.stats.procs.prolonged_power_pot.icd = self.settings.duration
         if self.stats.procs.prolonged_power_prepot:
@@ -616,25 +608,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 damage_procs.append(proc)
             elif proc.stat == 'extra_weapon_damage':
                 weapon_damage_procs.append(proc)
-
-        #calculate weapon procs
-        weapon_enchants = set([])
-        for hand, enchant in [(x, y) for x in ('mh', 'oh') for y in ('dancing_steel', 'mark_of_the_frostwolf',
-                                                                     'mark_of_the_shattered_hand', 'mark_of_the_thunderlord',
-                                                                     'mark_of_the_bleeding_hollow', 'mark_of_warsong')]:
-            proc = getattr(getattr(self.stats, hand), enchant)
-            if proc:
-                setattr(proc, '_'.join((hand, 'only')), True)
-                if (proc.stat in current_stats or proc.stat == 'stats'):
-                    if proc.is_real_ppm():
-                        active_procs_rppm.append(proc)
-                    else:
-                        if proc.icd:
-                            active_procs_icd.append(proc)
-                        else:
-                            active_procs_no_icd.append(proc)
-                elif enchant in ('mark_of_the_shattered_hand', ):
-                    damage_procs.append(proc)
 
         static_proc_stats = {
             'str': 0,
