@@ -11,8 +11,19 @@ class Settings(object):
         self.feint_interval = int(kwargs.get('feint_interval', 0))
 
         #Get defaults from settings_data
-        defaults = settings_data.get_default_settings('general.settings', self.cycle._cycle_type, settings_data.rogue_settings)
-        defaults.update(settings_data.get_default_settings('other', self.cycle._cycle_type, settings_data.rogue_settings))
+        defaults = settings_data.get_default_settings(settings_data.rogue_settings)
+
+        suffix = '_' + self.cycle._cycle_type
+        #Spec overrides from defaults
+        for setting in list(defaults.keys()):
+            if setting.endswith(suffix):
+                override_key = setting.replace(suffix, '')
+                defaults[override_key] = defaults[setting]
+        #Spec overrides from params
+        for setting in kwargs:
+            if setting.endswith(suffix):
+                override_key = setting.replace(suffix, '')
+                defaults[override_key] = defaults[setting]
 
         self.response_time = float(kwargs.get('response_time', defaults['response_time']))
         self.latency = float(kwargs.get('latency', defaults['latency']))
@@ -65,7 +76,7 @@ class AssassinationCycle(Cycle):
     _cycle_type = 'assassination'
 
     def __init__(self, **kwargs):
-        defaults = settings_data.get_default_settings('rotation.assassination', 'assassination', settings_data.rogue_settings)
+        defaults = settings_data.get_default_settings(settings_data.rogue_settings)
         self.cp_builder = kwargs.get('cp_builder', defaults['cp_builder'])
         self.kingsbane_with_vendetta = kwargs.get('kingsbane', defaults['kingsbane'])
         self.exsang_with_vendetta = kwargs.get('exsang', defaults['exsang'])
@@ -99,7 +110,7 @@ class OutlawCycle(Cycle):
                   ('jr',), ('gm',), ('s',), ('tb',), ('bt',), ('b',)]
 
     def __init__(self, **kwargs):
-        defaults = settings_data.get_default_settings('rotation.outlaw', 'outlaw', settings_data.rogue_settings)
+        defaults = settings_data.get_default_settings(settings_data.rogue_settings)
         self.blade_flurry = kwargs.get('blade_flurry', defaults['blade_flurry'])
         self.between_the_eyes_policy = kwargs.get('between_the_eyes_policy', defaults['between_the_eyes_policy'])
         self.jolly_roger_reroll = int(kwargs.get('jolly_roger_reroll', defaults['jolly_roger_reroll']))
@@ -143,7 +154,7 @@ class SubtletyCycle(Cycle):
     _cycle_type = 'subtlety'
 
     def __init__(self, **kwargs):
-        defaults = settings_data.get_default_settings('rotation.subtlety', 'subtlety', settings_data.rogue_settings)
+        defaults = settings_data.get_default_settings(settings_data.rogue_settings)
         self.cp_builder = kwargs.get('cp_builder', defaults['cp_builder'])
         self.symbols_policy = kwargs.get('symbols_policy', defaults['symbols_policy'])
         self.dance_finishers_allowed = kwargs.get('dance_finishers_allowed', defaults['dance_finishers_allowed'])

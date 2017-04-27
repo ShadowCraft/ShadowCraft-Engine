@@ -1,16 +1,14 @@
-# This file contains all rogue settings that are advertised to the react UI and later passed
-# into the settings object before calculation.
+#This file contains all rogue settings that are advertised to the react UI and later passed
+#into the settings object before calculation.
+#Variable names are supposed to be unique and currently passed into the settings and cycle
+#constructors all together.
+#Options ending in "_spec" will set shared settings with the spec stripped.
 
-def get_default_settings(block_name, spec, settings_data):
+def get_default_settings(settings_data):
     defaults = {}
     for category in settings_data:
-        if category['name'] == block_name:
-            for option in category['items']:
-                if isinstance(option['default'], dict):
-                    defaults[option['name']] = option['default'][spec]
-                else:
-                    defaults[option['name']] = option['default']
-            break
+        for option in category['items']:
+            defaults[option['name']] = option['default']
     return defaults
 
 rogue_settings = [
@@ -61,6 +59,18 @@ rogue_settings = [
                 'options': {
                     'dp': 'Deadly Poison',
                     'wp': 'Wound Poison'
+                }
+            },
+            {
+                'name': 'finisher_threshold_assassination',
+                'label': 'Finisher Threshold',
+                'description': 'Minimum CPs to use finisher',
+                'type': 'dropdown',
+                'default': '4',
+                'options': {
+                    '4': '4',
+                    '5': '5',
+                    '6': '6'
                 }
             },
         ]
@@ -179,7 +189,19 @@ rogue_settings = [
                     '2': '2 - Reroll double-buff rolls containing this buff',
                     '3': '3 - Reroll triple-buff rolls containing this buff'
                 }
-            }
+            },
+            {
+                'name': 'finisher_threshold_outlaw',
+                'label': 'Finisher Threshold',
+                'description': 'Minimum CPs to use finisher',
+                'type': 'dropdown',
+                'default': '5',
+                'options': {
+                    '4': '4',
+                    '5': '5',
+                    '6': '6'
+                }
+            },
         ]
     },
     {
@@ -229,7 +251,19 @@ rogue_settings = [
                 'description': 'EXPERIMENTAL FEATURE: Compute combo point waste',
                 'type': 'checkbox',
                 'default': False
-            }
+            },
+            {
+                'name': 'finisher_threshold_subtlety',
+                'label': 'Finisher Threshold',
+                'description': 'Minimum CPs to use finisher',
+                'type': 'dropdown',
+                'default': '5',
+                'options': {
+                    '4': '4',
+                    '5': '5',
+                    '6': '6'
+                }
+            },
         ]
     },
     {
@@ -344,22 +378,6 @@ rogue_settings = [
                 'options': {
                     False: 'Night',
                     True: 'Day',
-                }
-            },
-            {
-                'name': 'finisher_threshold',
-                'label': 'Finisher Threshold',
-                'description': 'Minimum CPs to use finisher',
-                'type': 'dropdown',
-                'default': {
-                    'assassination': '4',
-                    'outlaw': '5',
-                    'subtlety': '5'
-                },
-                'options': {
-                    '4': '4',
-                    '5': '5',
-                    '6': '6'
                 }
             },
             {
