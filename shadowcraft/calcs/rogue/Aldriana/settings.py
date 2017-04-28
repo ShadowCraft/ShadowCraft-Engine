@@ -23,7 +23,7 @@ class Settings(object):
         for setting in kwargs:
             if setting.endswith(suffix):
                 override_key = setting.replace(suffix, '')
-                defaults[override_key] = defaults[setting]
+                defaults[override_key] = kwargs[setting]
 
         self.response_time = float(kwargs.get('response_time', defaults['response_time']))
         self.latency = float(kwargs.get('latency', defaults['latency']))
