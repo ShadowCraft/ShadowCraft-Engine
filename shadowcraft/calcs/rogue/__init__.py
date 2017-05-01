@@ -25,7 +25,8 @@ class RogueDamageCalculator(DamageCalculator):
                                     'deadly_poison', 'deadly_instant_poison', 'envenom',
                                     'fan_of_knives', 'garrote_ticks', 'hemorrhage',
                                     'kingsbane', 'kingsbane_ticks', 'mutilate',
-                                    'poisoned_knife', 'poison_bomb', 'rupture_ticks', 'from_the_shadows']
+                                    'poisoned_knife', 'poison_bomb', 'rupture_ticks', 'from_the_shadows',
+                                    'wound_poison']
     outlaw_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
                              'ambush', 'between_the_eyes', 'blunderbuss', 'cannonball_barrage',
                              'ghostly_strike', 'greed', 'killing_spree', 'main_gauche',
@@ -398,6 +399,9 @@ class RogueDamageCalculator(DamageCalculator):
     def rupture_tick_damage(self, ap, cp):
         return 1.5 * ap * (1 + (0.0333 * self.traits.gushing_wounds))
 
+    def wound_poison_damage(self, ap):
+        return 0.13 * ap * (1 + (0.05 * self.traits.master_alchemist)) * (1 + (0.3 * self.talents.master_poisoner))
+
     #outlaw
     def ambush_damage(self, ap):
         return 4.5 * self.get_weapon_damage('mh', ap)
@@ -509,6 +513,7 @@ class RogueDamageCalculator(DamageCalculator):
             'poisoned_knife':            self.poisoned_knife_damage,
             'poison_bomb':               self.poison_bomb_damage,
             'rupture_ticks':             self.rupture_tick_damage,
+            'wound_poison':              self.wound_poison_damage,
             #outlaw
             'ambush':                    self.ambush_damage,
             'between_the_eyes':          self.between_the_eyes_damage,

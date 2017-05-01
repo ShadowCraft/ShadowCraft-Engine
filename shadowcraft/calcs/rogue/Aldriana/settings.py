@@ -12,18 +12,7 @@ class Settings(object):
 
         #Get defaults from settings_data
         defaults = settings_data.get_default_settings(settings_data.rogue_settings)
-
-        suffix = '_' + self.cycle._cycle_type
-        #Spec overrides from defaults
-        for setting in list(defaults.keys()):
-            if setting.endswith(suffix):
-                override_key = setting.replace(suffix, '')
-                defaults[override_key] = defaults[setting]
-        #Spec overrides from params
-        for setting in kwargs:
-            if setting.endswith(suffix):
-                override_key = setting.replace(suffix, '')
-                defaults[override_key] = kwargs[setting]
+        settings_data.process_overrides(defaults, kwargs, self.cycle._cycle_type)
 
         self.response_time = float(kwargs.get('response_time', defaults['response_time']))
         self.latency = float(kwargs.get('latency', defaults['latency']))
@@ -77,6 +66,8 @@ class AssassinationCycle(Cycle):
 
     def __init__(self, **kwargs):
         defaults = settings_data.get_default_settings(settings_data.rogue_settings)
+        settings_data.process_overrides(defaults, kwargs, self._cycle_type)
+
         self.cp_builder = kwargs.get('cp_builder', defaults['cp_builder'])
         self.kingsbane_with_vendetta = kwargs.get('kingsbane', defaults['kingsbane'])
         self.exsang_with_vendetta = kwargs.get('exsang', defaults['exsang'])
@@ -111,6 +102,8 @@ class OutlawCycle(Cycle):
 
     def __init__(self, **kwargs):
         defaults = settings_data.get_default_settings(settings_data.rogue_settings)
+        settings_data.process_overrides(defaults, kwargs, self._cycle_type)
+
         self.blade_flurry = kwargs.get('blade_flurry', defaults['blade_flurry'])
         self.between_the_eyes_policy = kwargs.get('between_the_eyes_policy', defaults['between_the_eyes_policy'])
         self.jolly_roger_reroll = int(kwargs.get('jolly_roger_reroll', defaults['jolly_roger_reroll']))
@@ -155,6 +148,8 @@ class SubtletyCycle(Cycle):
 
     def __init__(self, **kwargs):
         defaults = settings_data.get_default_settings(settings_data.rogue_settings)
+        settings_data.process_overrides(defaults, kwargs, self._cycle_type)
+
         self.cp_builder = kwargs.get('cp_builder', defaults['cp_builder'])
         self.symbols_policy = kwargs.get('symbols_policy', defaults['symbols_policy'])
         self.dance_finishers_allowed = kwargs.get('dance_finishers_allowed', defaults['dance_finishers_allowed'])

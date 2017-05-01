@@ -11,6 +11,19 @@ def get_default_settings(settings_data):
             defaults[option['name']] = option['default']
     return defaults
 
+def process_overrides(defaults_dict, params_dict, spec):
+    suffix = '_' + spec
+    #Spec overrides from defaults
+    for setting in list(defaults_dict.keys()):
+        if setting.endswith(suffix):
+            override_key = setting.replace(suffix, '')
+            defaults_dict[override_key] = defaults_dict[setting]
+    #Spec overrides from params
+    for setting in params_dict:
+        if setting.endswith(suffix):
+            override_key = setting.replace(suffix, '')
+            defaults_dict[override_key] = params_dict[setting]
+
 rogue_settings = [
     {
         'spec': 'a',
@@ -40,7 +53,7 @@ rogue_settings = [
                 }
             },
             {
-                'name': 'cp_builder',
+                'name': 'cp_builder_assassination',
                 'label': 'CP Builder',
                 'description': '',
                 'type': 'dropdown',
@@ -210,7 +223,7 @@ rogue_settings = [
         'name': 'rotation.subtlety',
         'items': [
             {
-                'name': 'cp_builder',
+                'name': 'cp_builder_subtlety',
                 'label': 'CP Builder',
                 'description': '',
                 'type': 'dropdown',

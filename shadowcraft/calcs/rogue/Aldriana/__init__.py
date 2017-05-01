@@ -527,8 +527,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second['agonizing_poison'] = total_hits_per_second * avg_poison_proc_rate
         else:
             poison_procs = avg_poison_proc_rate * total_hits_per_second - 1 / self.settings.duration
-            attacks_per_second['deadly_instant_poison'] = poison_procs
-            attacks_per_second['deadly_poison'] = 1 / 3
+            if self.settings.cycle.lethal_poison == 'dp':
+                attacks_per_second['deadly_instant_poison'] = poison_procs
+                attacks_per_second['deadly_poison'] = 1 / 3
+            elif self.settings.cycle.lethal_poison == 'wp':
+                attacks_per_second['wound_poison'] = poison_procs
 
     def get_average_alacrity(self, attacks_per_second):
         stacks_per_second = 0.0
@@ -793,7 +796,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('armor', self.armor_mitigation_multiplier(), ['death_from_above_pulse',
             'fan_of_knives', 'hemorrhage', 'mutilate', 'poisoned_knife', 'autoattacks'], dmg_schools=['physical']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('potent_poisons', None, ['deadly_poison',
-            'deadly_instant_poison', 'envenom', 'poison_bomb', 'kingsbane', 'kingsbane_ticks']))
+            'deadly_instant_poison', 'wound_poison', 'envenom', 'poison_bomb', 'kingsbane', 'kingsbane_ticks']))
+        # Wound poison is affected by Mastery twice, probably to offset that DP profits twice as well (direct +  dot part)
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('potent_poisons_2', None, ['wound_poison']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('assassins_resolve', 1.17, [], all_damage=True))
 
         #Generic tuning aura
@@ -828,7 +833,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('blood_of_the_assassinated', None, ['rupture_ticks']))
         if self.traits.surge_of_toxins:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('surge_of_toxins', None, ['deadly_poison',
-            'deadly_instant_poison', 'envenom', 'poison_bomb'], dmg_schools=['poison']))
+            'deadly_instant_poison', 'wound_poison', 'envenom', 'poison_bomb'], dmg_schools=['poison']))
 
         if self.traits.slayers_precision:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('slayers_precision',
@@ -844,7 +849,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.stats.gear_buffs.zoldyck_family_training_shackles:
             #Assume spend 30% of the time sub 30% health, imperfect but good enough
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('zoldyck_family_training_shackles', 1.09, ['deadly_poison', 'deadly_instant_poison',
-                'garrote_ticks', 'kingsbane', 'kingsbane_ticks', 'rupture_ticks', 'poison_bomb'], dmg_schools=['poison', 'bleed']))
+                'garrote_ticks', 'kingsbane', 'kingsbane_ticks', 'rupture_ticks', 'poison_bomb', 'wound_poison'], dmg_schools=['poison', 'bleed']))
 
         #Assume 100% uptime of Rupture, Garrote and Mutilated Flesh (2pc bleed)
         if self.stats.gear_buffs.rogue_t19_4pc:
@@ -869,10 +874,18 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         self.damage_modifiers.update_modifier_value('versatility', self.stats.get_versatility_multiplier_from_rating(rating=stats['versatility']))
         self.damage_modifiers.update_modifier_value('potent_poisons', (1 + self.assassination_mastery_conversion * self.stats.get_mastery_from_rating(stats['mastery'])))
+        self.damage_modifiers.update_modifier_value('potent_poisons_2', (1 + self.assassination_mastery_conversion * self.stats.get_mastery_from_rating(stats['mastery'])))
 
         #Lethal poison applications increase kingsbane damage by 15% each, KB ticks 7 times every 2 sec
         if self.traits.kingsbane:
-            applications_per_tick = 2 * (aps['agonizing_poison'] if self.talents.agonizing_poison else aps['deadly_instant_poison'])
+            poison_aps = 0
+            if self.talents.agonizing_poison:
+                poison_aps = aps['agonizing_poison']
+            elif self.settings.cycle.lethal_poison == 'dp':
+                poison_aps = aps['deadly_instant_poison']
+            elif self.settings.cycle.lethal_poison == 'wp':
+                poison_aps = aps['wound_poison']
+            applications_per_tick = 2 * poison_aps
             average_kb_stacks = (applications_per_tick + applications_per_tick * 7) / 2
             self.damage_modifiers.update_modifier_value('kingsbane_tick_increase', 1 + (average_kb_stacks * 0.15))
 
@@ -1210,10 +1223,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
             #Sinister Circulation
             if self.traits.sinister_circulation:
+                poisons_per_second = 0
                 if self.talents.agonizing_poison:
                     poisons_per_second = attacks_per_second['agonizing_poison']
-                else:
+                elif self.settings.cycle.lethal_poison == 'dp':
                     poisons_per_second = attacks_per_second['deadly_instant_poison']
+                elif self.settings.cycle.lethal_poison == 'wp':
+                    poisons_per_second = attacks_per_second['wound_poison']
                 #Recalculate KB cooldown, Sinister Circulation has a 0.5s icd
                 kb_cdr_per_sec = min(poisons_per_second, 2) * 0.5
                 self.kingsbane_cd = self.get_spell_cd('kingsbane')
