@@ -854,6 +854,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.stats.gear_buffs.jeweled_signet_of_melandrus:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('jeweled_signet_of_melandrus', 1.1, ['autoattacks']))
 
+        if self.stats.gear_buffs.gnawed_thumb_ring:
+            gtr_mod = 1 + 0.05 * 12 / 180
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('gnawed_thumb_ring', gtr_mod,
+                ['deadly_poison', 'deadly_instant_poison', 'envenom', 'kingsbane', 'kingsbane_ticks',
+                'poison_bomb', 'from_the_shadows', 'wound_poison'],
+                dmg_schools=['arcane', 'fire', 'frost', 'holy', 'nature', 'shadow']))
+
         #Assume 100% uptime of Rupture, Garrote and Mutilated Flesh (2pc bleed)
         if self.stats.gear_buffs.rogue_t19_4pc:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('t19_4pc', 1.3, ['envenom']))
@@ -1393,6 +1400,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #Gear specific
         if self.stats.gear_buffs.jeweled_signet_of_melandrus:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('jeweled_signet_of_melandrus', 1.1, ['autoattacks']))
+
+        if self.stats.gear_buffs.gnawed_thumb_ring:
+            gtr_mod = 1 + 0.05 * 12 / 180
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('gnawed_thumb_ring', gtr_mod, [],
+                dmg_schools=['arcane', 'fire', 'frost', 'holy', 'nature', 'shadow']))
 
         stats, aps, crits, procs, additional_info = self.determine_stats(self.outlaw_attack_counts)
 
@@ -1958,6 +1970,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         if self.stats.gear_buffs.jeweled_signet_of_melandrus:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('jeweled_signet_of_melandrus', 1.1, ['autoattacks', 'shadow_blades']))
+
+        if self.stats.gear_buffs.gnawed_thumb_ring:
+            gtr_mod = 1 + 0.05 * 12 / 180
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('gnawed_thumb_ring', gtr_mod,
+                ['gloomblade', 'goremaws_bite', 'shadow_blades', 'nightblade_ticks', 'soul_rip', 'shadow_nova'],
+                dmg_schools=['arcane', 'fire', 'frost', 'holy', 'nature', 'shadow']))
 
         stats, aps, crits, procs, additional_info = self.determine_stats(self.subtlety_attack_counts)
 
