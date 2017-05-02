@@ -851,6 +851,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('zoldyck_family_training_shackles', 1.09, ['deadly_poison', 'deadly_instant_poison',
                 'garrote_ticks', 'kingsbane', 'kingsbane_ticks', 'rupture_ticks', 'poison_bomb', 'wound_poison'], dmg_schools=['poison', 'bleed']))
 
+        if self.stats.gear_buffs.jeweled_signet_of_melandrus:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('jeweled_signet_of_melandrus', 1.1, ['autoattacks']))
+
         #Assume 100% uptime of Rupture, Garrote and Mutilated Flesh (2pc bleed)
         if self.stats.gear_buffs.rogue_t19_4pc:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('t19_4pc', 1.3, ['envenom']))
@@ -1386,6 +1389,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         if self.traits.dreadblades_vigor:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('dreadblades_vigor', None, [], all_damage=True))
+
+        #Gear specific
+        if self.stats.gear_buffs.jeweled_signet_of_melandrus:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('jeweled_signet_of_melandrus', 1.1, ['autoattacks']))
 
         stats, aps, crits, procs, additional_info = self.determine_stats(self.outlaw_attack_counts)
 
@@ -1948,6 +1955,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #gear specific modifiers
         if self.stats.gear_buffs.the_dreadlords_deceit:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('the_dreadlords_deceit', None, ['shuriken_storm']))
+
+        if self.stats.gear_buffs.jeweled_signet_of_melandrus:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('jeweled_signet_of_melandrus', 1.1, ['autoattacks', 'shadow_blades']))
 
         stats, aps, crits, procs, additional_info = self.determine_stats(self.subtlety_attack_counts)
 

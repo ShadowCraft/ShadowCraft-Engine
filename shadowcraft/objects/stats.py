@@ -225,6 +225,9 @@ class GearBuffs(object):
         'mantle_of_the_master_assassin',     #100% crit during stealth and for 6 seconds after
         'cinidaria_the_symbiote',            #30% additional damage to enemies above 90% health
         'sephuzs_secret',                    #2% haste
+        #Other
+        'jeweled_signet_of_melandrus',       #Increases your autoattack damage by 10%.
+        'gnawed_thumb_ring',                 #Use: Have a nibble, increasing your healing and magic damage done by 5% for 12 sec. (3 Min Cooldown)
     ]
 
     allowed_buffs = frozenset(other_gear_buffs)
