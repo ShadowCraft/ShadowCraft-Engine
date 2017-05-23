@@ -593,10 +593,10 @@ class RogueDamageCalculator(DamageCalculator):
             stack_list = []
             for second in range(1, frond.duration + 1):
                 stack_list.append(min(second * autoattacks_per_second, frond.max_stacks))
-            base_damage = self.get_proc_damage_contribution(frond, 1, current_stats, ap, modifier_dict)
+            stack_damage = self.get_proc_damage_contribution(frond, 1, current_stats, ap, modifier_dict)
             proc_damage = 0
             for stack_count in stack_list:
-                proc_damage += base_damage * (1 + stack_count * 0.5) * autoattacks_per_second
+                proc_damage += stack_count * stack_damage * autoattacks_per_second
 
             damage_breakdown[frond.proc_name] = proc_damage * frond.get_proc_rate(spec=self.spec) * 1.1307 #BLP
 
