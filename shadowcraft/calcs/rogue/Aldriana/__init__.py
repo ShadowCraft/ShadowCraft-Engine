@@ -795,7 +795,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('assassins_resolve', 1.17, [], all_damage=True))
 
         #Generic tuning aura
-        self.damage_modifiers.register_modifier(modifiers.DamageModifier('assassination_aura', 1.11, ['death_from_above_pulse', 'death_from_above_strike',
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('assassination_aura', 1.22, ['death_from_above_pulse', 'death_from_above_strike',
             'deadly_poison', 'deadly_instant_poison', 'envenom', 'fan_of_knives', 'garrote_ticks', 'hemorrhage',
             'kingsbane', 'kingsbane_ticks', 'mutilate', 'poisoned_knife', 'rupture_ticks', 'toxic_blade']))
 
@@ -858,7 +858,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         #Assume 100% uptime of Rupture, Garrote and Mutilated Flesh (2pc bleed)
         if self.stats.gear_buffs.rogue_t19_4pc:
-            self.damage_modifiers.register_modifier(modifiers.DamageModifier('t19_4pc', 1.3, ['envenom']))
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('t19_4pc', 1.21, ['envenom']))
 
         self.set_constants()
 
@@ -934,12 +934,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         if self.stats.gear_buffs.the_dreadlords_deceit:
             avg_dreadlord_stacks = 0.5 / aps['fan_of_knives']
-            self.damage_modifiers.update_modifier_value('the_dreadlords_deceit', 1 + (0.35 * avg_dreadlord_stacks))
+            self.damage_modifiers.update_modifier_value('the_dreadlords_deceit', 1 + (0.25 * avg_dreadlord_stacks))
 
         if self.stats.gear_buffs.rogue_t19_4pc:
             if aps['mutilate'] < 0.125:
-                t19_4pc_multiplier = 0.1 * (aps['mutilate'] / 0.125)
-                self.damage_modifiers.update_modifier_value('t19_4pc', 1.2 + t19_4pc_multiplier)
+                t19_4pc_multiplier = 0.07 * (aps['mutilate'] / 0.125)
+                self.damage_modifiers.update_modifier_value('t19_4pc', 1.14 + t19_4pc_multiplier)
 
         damage_breakdown, additional_info  = self.compute_damage_from_aps(stats, aps, crits, procs, additional_info)
 
@@ -947,7 +947,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             # To prevent double dipping this is based on actual Mutilate damage.
             # There's no pandemic and it does not respect other modifiers.
             # Remaining damage is added on refresh.
-            damage_breakdown['t19_2pc'] = damage_breakdown['mutilate'] * 0.3
+            damage_breakdown['t19_2pc'] = damage_breakdown['mutilate'] * 0.2
 
         if self.stats.gear_buffs.insignia_of_ravenholdt:
             damage_breakdown['insignia_of_ravenholdt'] = self.compute_insignia_of_ravenholdt_damage(stats, aps)
@@ -1046,7 +1046,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             base_rupture_duration = 4 * (1 + avg_finisher_size)
             if self.talents.exsanguinate:
                 #assume full pandemic on exsanged ruptures
-                exsang_rupture_duration = (1.3 * base_rupture_duration) / 2
+                exsang_rupture_duration = (1.3 * base_rupture_duration) / 2.5
                 #rupture we're pandemicing from
                 exsang_from_duration = 0.7 * base_rupture_duration
                 normal_ruptures_per_exsang_cd = (self.exsang_cd - exsang_from_duration - exsang_rupture_duration) / base_rupture_duration
@@ -1068,7 +1068,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             base_garrote_duration = 18.
             garrote_cooldown = self.get_spell_cd('garrote')
             if self.talents.exsanguinate:
-                exsang_garrote_duration = base_garrote_duration / 2
+                exsang_garrote_duration = base_garrote_duration / 2.5
                 exsang_downtime = garrote_cooldown - exsang_garrote_duration
                 normal_garrote_per_exsang = (self.exsang_cd - garrote_cooldown) / base_garrote_duration
                 attacks_per_second['garrote'] = (1 + normal_garrote_per_exsang) / self.exsang_cd
@@ -1141,6 +1141,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 tb_cost_per_second = self.get_spell_cost('toxic_blade') * attacks_per_second['toxic_blade']
                 net_energy_per_second -= tb_cost_per_second
                 duskwalker_expended_energy += tb_cost_per_second
+
+            if self.talents.exsanguinate:
+                exsg_cost_per_second = self.get_spell_cost('exsanguinate') / self.exsang_cd
+                net_energy_per_second -= exsg_cost_per_second
+                duskwalker_expended_energy += exsg_cost_per_second
 
             #form whats left into a budget
             duskwalker_expended_energy *= self.settings.duration
@@ -1995,7 +2000,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         if self.stats.gear_buffs.the_dreadlords_deceit:
             avg_dreadlord_stacks = 0.5 / aps['shuriken_storm']
-            self.damage_modifiers.update_modifier_value('the_dreadlords_deceit', 1 + (0.35 * avg_dreadlord_stacks))
+            self.damage_modifiers.update_modifier_value('the_dreadlords_deceit', 1 + (0.25 * avg_dreadlord_stacks))
 
         damage_breakdown, additional_info  = self.compute_damage_from_aps(stats, aps, crits, procs, additional_info)
 

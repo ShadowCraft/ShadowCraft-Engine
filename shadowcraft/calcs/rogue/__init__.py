@@ -104,6 +104,7 @@ class RogueDamageCalculator(DamageCalculator):
             'poisoned_knife':      (40., 'strike'),
             'rupture':             (25., 'strike'),
             'toxic_blade':         (20., 'strike'),
+            'exsanguinate':        (25., 'buff'),
             #outlaw
             'ambush':              (60., 'strike'),
             'between_the_eyes':    (35., 'strike'),
@@ -367,7 +368,7 @@ class RogueDamageCalculator(DamageCalculator):
         return .6 * cp * ap * (1 + (0.0333 * self.traits.toxic_blades))
 
     def fan_of_knives_damage(self, ap):
-        return 1.079 * ap
+        return 1.5 * ap
 
     #Lumping 40 ticks together for simplicity
     def from_the_shadows_damage(self, ap):
