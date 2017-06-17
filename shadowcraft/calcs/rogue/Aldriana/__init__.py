@@ -513,9 +513,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if not poison:
             return
 
-        poison_base_proc_rate = 0.3
-        if not self.talents.agonizing_poison:
-            poison_base_proc_rate += 0.2 #Improved Poisons passive for Deadly and Wound Poison
+        poison_base_proc_rate = 0.5 #Improved Poisons passive for Deadly and Wound Poison
         poison_envenom_proc_rate = poison_base_proc_rate + 0.3
         aps_envenom = attacks_per_second['envenom']
         if self.talents.death_from_above:
@@ -523,15 +521,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         envenom_uptime = min(sum([(1 + cps) * aps_envenom[cps] for cps in range(1, 6)]), 1)
         avg_poison_proc_rate = poison_base_proc_rate * (1 - envenom_uptime) + poison_envenom_proc_rate * envenom_uptime
 
-        if self.talents.agonizing_poison:
-            attacks_per_second['agonizing_poison'] = total_hits_per_second * avg_poison_proc_rate
-        else:
-            poison_procs = avg_poison_proc_rate * total_hits_per_second - 1 / self.settings.duration
-            if self.settings.cycle.lethal_poison == 'dp':
-                attacks_per_second['deadly_instant_poison'] = poison_procs
-                attacks_per_second['deadly_poison'] = 1 / 3
-            elif self.settings.cycle.lethal_poison == 'wp':
-                attacks_per_second['wound_poison'] = poison_procs
+        poison_procs = avg_poison_proc_rate * total_hits_per_second - 1 / self.settings.duration
+        if self.settings.cycle.lethal_poison == 'dp':
+            attacks_per_second['deadly_instant_poison'] = poison_procs
+            attacks_per_second['deadly_poison'] = 1 / 3
+        elif self.settings.cycle.lethal_poison == 'wp':
+            attacks_per_second['wound_poison'] = poison_procs
 
     def get_average_alacrity(self, attacks_per_second):
         stacks_per_second = 0.0
@@ -822,8 +817,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('nightstalker', None, ['rupture_ticks']))
         if self.talents.subterfuge:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('subterfuge_garrote', None, ['garrote_ticks']))
-        if self.talents.agonizing_poison:
-            self.damage_modifiers.register_modifier(modifiers.DamageModifier('agonizing_poison', None, [], all_damage=True))
         if self.talents.deeper_strategem:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('deeper_strategem', 1.05, ['rupture_ticks', 'envenom', 'death_from_above_pulse', 'death_from_above_strike']))
 
@@ -890,9 +883,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #Lethal poison applications increase kingsbane damage by 15% each, KB ticks 7 times every 2 sec
         if self.traits.kingsbane:
             poison_aps = 0
-            if self.talents.agonizing_poison:
-                poison_aps = aps['agonizing_poison']
-            elif self.settings.cycle.lethal_poison == 'dp':
+            if self.settings.cycle.lethal_poison == 'dp':
                 poison_aps = aps['deadly_instant_poison']
             elif self.settings.cycle.lethal_poison == 'wp':
                 poison_aps = aps['wound_poison']
@@ -937,24 +928,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             subterfuge_garrote_uptime = (1 / self.settings.duration + aps['vanish']) / aps['garrote']
             self.damage_modifiers.update_modifier_value('subterfuge_garrote', 1 + (1.25 * subterfuge_garrote_uptime))
 
-        if self.talents.agonizing_poison:
-            stack_time = 5 / aps['agonizing_poison']
-            max_time = self.settings.duration - stack_time
-            agonizing_poison_stacks = (max_time / self.settings.duration) * 5 + (stack_time / self.settings.duration) * 2.5
-
-            agonizing_poison_additive_mod = 1 + 0.01 * self.traits.master_alchemist
-            agonizing_poison_additive_mod += 0.02 * self.traits.poison_knives
-            agonizing_poison_additive_mod += (self.assassination_mastery_conversion * self.stats.get_mastery_from_rating(stats['mastery'])) / 2
-
-            agonizing_poison_mod = 0.04 * agonizing_poison_stacks
-            agonizing_poison_mod *= agonizing_poison_additive_mod
-            if self.talents.master_poisoner:
-                agonizing_poison_mod *= 1.2
-            if self.traits.surge_of_toxins:
-                agonizing_poison_mod *= surge_of_toxins_ap_multiplier
-
-            self.damage_modifiers.update_modifier_value('agonizing_poison', 1 + agonizing_poison_mod)
-
         if self.stats.gear_buffs.the_dreadlords_deceit:
             avg_dreadlord_stacks = 0.5 / aps['fan_of_knives']
             self.damage_modifiers.update_modifier_value('the_dreadlords_deceit', 1 + (0.35 * avg_dreadlord_stacks))
@@ -971,9 +944,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             # There's no pandemic and it does not respect other modifiers.
             # Remaining damage is added on refresh.
             damage_breakdown['t19_2pc'] = damage_breakdown['mutilate'] * 0.3
-            # This does double dip off Agonizing poison though
-            if self.talents.agonizing_poison:
-                damage_breakdown['t19_2pc'] *= 1 + agonizing_poison_mod
 
         if self.stats.gear_buffs.insignia_of_ravenholdt:
             damage_breakdown['insignia_of_ravenholdt'] = self.compute_insignia_of_ravenholdt_damage(stats, aps)
@@ -1235,9 +1205,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             #Sinister Circulation
             if self.traits.sinister_circulation:
                 poisons_per_second = 0
-                if self.talents.agonizing_poison:
-                    poisons_per_second = attacks_per_second['agonizing_poison']
-                elif self.settings.cycle.lethal_poison == 'dp':
+                if self.settings.cycle.lethal_poison == 'dp':
                     poisons_per_second = attacks_per_second['deadly_instant_poison']
                 elif self.settings.cycle.lethal_poison == 'wp':
                     poisons_per_second = attacks_per_second['wound_poison']
