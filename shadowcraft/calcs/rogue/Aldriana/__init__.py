@@ -807,7 +807,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             'kingsbane', 'kingsbane_ticks', 'mutilate', 'poisoned_knife', 'rupture_ticks']))
 
         #time averaged vendetta modifier used for most things
-        self.damage_modifiers.register_modifier(modifiers.DamageModifier('vendetta_time_average', None, ['rupture_ticks', 'kingsbane', 'kingsbane_ticks'], blacklist=True, all_damage=True))
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('vendetta_time_average', None, ['garrote_ticks', 'mutilate', 'deadly_poison',
+            'wound_poison', 'hemorrhage', 'envenom', 'fan_of_knives', 'death_from_above_pulse', 'poisoned_knife', 'from_the_shadows', 'poison_bomb', 'toxic_blade']))
 
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('vendetta_exsang', None, ['rupture_ticks']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('vendetta_kb', None, ['kingsbane', 'kingsbane_ticks']))
