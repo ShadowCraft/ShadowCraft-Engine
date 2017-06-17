@@ -792,8 +792,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             'fan_of_knives', 'hemorrhage', 'mutilate', 'poisoned_knife', 'autoattacks'], dmg_schools=['physical']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('potent_poisons', None, ['deadly_poison',
             'deadly_instant_poison', 'wound_poison', 'envenom', 'poison_bomb', 'kingsbane', 'kingsbane_ticks']))
-        # Wound poison is affected by Mastery twice, probably to offset that DP profits twice as well (direct +  dot part)
-        self.damage_modifiers.register_modifier(modifiers.DamageModifier('potent_poisons_2', None, ['wound_poison']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('assassins_resolve', 1.17, [], all_damage=True))
 
         #Generic tuning aura
