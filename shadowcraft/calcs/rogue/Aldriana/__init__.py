@@ -2416,7 +2416,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         net_energy -= attack_counts[cp_builder] * cp_builder_cost
         if cp_builder == 'shadowstrike':
-            net_cps += attack_counts['shadowstrike'] * (1 + self.talents.premeditation + self.shadow_blades_uptime)
+            net_cps += attack_counts['shadowstrike'] * (2 + self.shadow_blades_uptime)
             if self.stats.gear_buffs.rogue_t19_4pc:
                 net_cps += attack_counts['shadowstrike'] * 0.3
         elif cp_builder == 'shuriken_storm':
