@@ -877,9 +877,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.damage_modifiers.update_modifier_value('vendetta_exsang', 1 + (self.vendetta_multiplier * exsang_venn_uptime))
         self.damage_modifiers.update_modifier_value('vendetta_kb', 1 + (self.vendetta_multiplier * kb_venn_uptime))
 
+        if self.talents.toxic_blade:
+            tb_debuff_multiplier = 0.35 * (9 / self.get_spell_cd('toxic_blade'))
+            self.damage_modifiers.update_modifier_value('toxic_blade', 1 + tb_debuff_multiplier)
+
         self.damage_modifiers.update_modifier_value('versatility', self.stats.get_versatility_multiplier_from_rating(rating=stats['versatility']))
         self.damage_modifiers.update_modifier_value('potent_poisons', (1 + self.assassination_mastery_conversion * self.stats.get_mastery_from_rating(stats['mastery'])))
-        self.damage_modifiers.update_modifier_value('potent_poisons_2', (1 + self.assassination_mastery_conversion * self.stats.get_mastery_from_rating(stats['mastery'])))
 
         #Lethal poison applications increase kingsbane damage by 15% each, KB ticks 7 times every 2 sec
         if self.traits.kingsbane:
@@ -1130,6 +1133,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 dfa_cost_per_second += cp_builder_energy_per_finisher * dfa_per_second
                 net_energy_per_second -= dfa_cost_per_second
                 duskwalker_expended_energy += dfa_cost_per_second
+
+            if self.talents.toxic_blade:
+                attacks_per_second['toxic_blade'] = 1 / self.get_spell_cd('toxic_blade')
+                tb_cps = (1 + crit_rates['toxic_blade']) * (self.settings.duration * attacks_per_second['toxic_blade'])
+                cp_budget += tb_cps
+                tb_cost_per_second = self.get_spell_cost('toxic_blade') * attacks_per_second['toxic_blade']
+                net_energy_per_second -= tb_cost_per_second
+                duskwalker_expended_energy += tb_cost_per_second
 
             #form whats left into a budget
             duskwalker_expended_energy *= self.settings.duration
