@@ -806,8 +806,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('vendetta_exsang', None, ['rupture_ticks']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('vendetta_kb', None, ['kingsbane', 'kingsbane_ticks']))
 
-        self.damage_modifiers.register_modifier(modifiers.DamageModifier('toxic_blade', None, ['deadly_poison', 'deadly_instant_poison','wound_poison', 'envenom',
-            'from_the_shadows', 'poison_bomb', 'kingsbane', 'kingsbane_ticks', 'toxic_blade']))
+        if self.talents.toxic_blade:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('toxic_blade', None, ['deadly_poison', 'deadly_instant_poison','wound_poison', 'envenom',
+                'from_the_shadows', 'poison_bomb', 'kingsbane', 'kingsbane_ticks', 'toxic_blade']))
 
         #talent specific modifiers
         if self.talents.elaborate_planning:
