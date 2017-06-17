@@ -26,7 +26,7 @@ class RogueDamageCalculator(DamageCalculator):
                                     'fan_of_knives', 'garrote_ticks', 'hemorrhage',
                                     'kingsbane', 'kingsbane_ticks', 'mutilate',
                                     'poisoned_knife', 'poison_bomb', 'rupture_ticks', 'from_the_shadows',
-                                    'wound_poison']
+                                    'wound_poison', 'toxic_blade']
     outlaw_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
                              'ambush', 'between_the_eyes', 'blunderbuss', 'cannonball_barrage',
                              'ghostly_strike', 'greed', 'killing_spree', 'main_gauche',
@@ -103,6 +103,7 @@ class RogueDamageCalculator(DamageCalculator):
             'mutilate':            (55., 'strike'),
             'poisoned_knife':      (40., 'strike'),
             'rupture':             (25., 'strike'),
+            'toxic_blade':         (20., 'strike'),
             #outlaw
             'ambush':              (60., 'strike'),
             'between_the_eyes':    (35., 'strike'),
@@ -137,6 +138,7 @@ class RogueDamageCalculator(DamageCalculator):
             'garrote':                   15.,
             'kingsbane':                 45.,
             'vendetta':                 120.,
+            'toxic_blade':               25.,
             #outlaw
             'adrenaline_rush':          180.,
             'cannonball_barrage':        60.,
@@ -378,7 +380,7 @@ class RogueDamageCalculator(DamageCalculator):
         return 1 * self.get_weapon_damage('mh', ap)
 
     def mh_kingsbane_damage(self, ap):
-       return 2.4 * self.get_weapon_damage('mh', ap) * (1 + (0.3 * self.talents.master_poisoner))
+        return 2.4 * self.get_weapon_damage('mh', ap) * (1 + (0.3 * self.talents.master_poisoner))
     def oh_kingsbane_damage(self, ap):
         return 2.4 * self.oh_penalty() * self.get_weapon_damage('oh', ap) * (1 + (0.3 * self.talents.master_poisoner))
     def kingsbane_tick_damage(self, ap):
@@ -391,6 +393,9 @@ class RogueDamageCalculator(DamageCalculator):
 
     def poisoned_knife_damage(self, ap):
         return 0.6 * ap
+
+    def toxic_blade_damage(self, ap):
+        return 6 * self.get_weapon_damage('mh', ap)
 
     #Lumping 6 ticks together for simplicity
     def poison_bomb_damage(self, ap):
@@ -514,6 +519,7 @@ class RogueDamageCalculator(DamageCalculator):
             'poison_bomb':               self.poison_bomb_damage,
             'rupture_ticks':             self.rupture_tick_damage,
             'wound_poison':              self.wound_poison_damage,
+            'toxic_blade':               self.toxic_blade_damage,
             #outlaw
             'ambush':                    self.ambush_damage,
             'between_the_eyes':          self.between_the_eyes_damage,

@@ -791,13 +791,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('armor', self.armor_mitigation_multiplier(), ['death_from_above_pulse',
             'fan_of_knives', 'hemorrhage', 'mutilate', 'poisoned_knife', 'autoattacks'], dmg_schools=['physical']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('potent_poisons', None, ['deadly_poison',
-            'deadly_instant_poison', 'wound_poison', 'envenom', 'poison_bomb', 'kingsbane', 'kingsbane_ticks']))
+            'deadly_instant_poison', 'wound_poison', 'envenom', 'poison_bomb', 'kingsbane', 'kingsbane_ticks', 'toxic_blade']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('assassins_resolve', 1.17, [], all_damage=True))
 
         #Generic tuning aura
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('assassination_aura', 1.11, ['death_from_above_pulse', 'death_from_above_strike',
             'deadly_poison', 'deadly_instant_poison', 'envenom', 'fan_of_knives', 'garrote_ticks', 'hemorrhage',
-            'kingsbane', 'kingsbane_ticks', 'mutilate', 'poisoned_knife', 'rupture_ticks']))
+            'kingsbane', 'kingsbane_ticks', 'mutilate', 'poisoned_knife', 'rupture_ticks', 'toxic_blade']))
 
         #time averaged vendetta modifier used for most things
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('vendetta_time_average', None, ['garrote_ticks', 'mutilate', 'deadly_poison',
@@ -805,6 +805,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('vendetta_exsang', None, ['rupture_ticks']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('vendetta_kb', None, ['kingsbane', 'kingsbane_ticks']))
+
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('toxic_blade', None, ['deadly_poison', 'wound_poison', 'envenom',
+            'from_the_shadows', 'poison_bomb', 'kingsbane', 'kingsbane_ticks', 'toxic_blade']))
 
         #talent specific modifiers
         if self.talents.elaborate_planning:
