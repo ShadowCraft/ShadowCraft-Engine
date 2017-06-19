@@ -2045,7 +2045,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.energy_budget += 40 * (1 + self.settings.duration / self.get_spell_cd('symbols_of_death'))
 
         #set initial dance budget
-        self.dance_budget = 3 + self.settings.duration / 60
+        self.dance_budget = 2 + self.settings.duration / 60
+        if self.talents.enveloping_shadows:
+            self.dance_budget += 1
+        deepening_shadows_cdr_per_cp = 2.5 if self.talents.enveloping_shadows else 1.5
 
         shadow_blades_duration = 15. + (3.3333 * self.traits.soul_shadows)
         self.shadow_blades_uptime = shadow_blades_duration / self.get_spell_cd('shadow_blades')
@@ -2079,8 +2082,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         nightblade_count = len(nightblade_timeline)
         attacks_per_second['nightblade'][self.settings.finisher_threshold] += nightblade_count / self.settings.duration
         self.cp_budget -= self.settings.finisher_threshold * nightblade_count
-        self.energy_budget += (40 * (0.2 * self.settings.finisher_threshold) - self.get_spell_cost('nightblade')) * nightblade_count
-        self.dance_budget += (3 * self.settings.finisher_threshold * nightblade_count) / 60
+        self.energy_budget += (self.relentless_strikes_energy_return_per_cp * self.settings.finisher_threshold - self.get_spell_cost('nightblade')) * nightblade_count
+        self.dance_budget += (deepening_shadows_cdr_per_cp * self.settings.finisher_threshold * nightblade_count) / self.get_spell_cd('shadow_dance')
 
         #Add in various cooldown abilities
         #This could be made better with timelining but for now simple time average will do
@@ -2109,8 +2112,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second['death_from_above_pulse'][self.max_spend_cps] += 1 / dfa_cd
 
             self.cp_budget -= self.max_spend_cps * dfa_count
-            self.energy_budget += (40 * (0.2 * self.max_spend_cps) - self.get_spell_cost('death_from_above')) * dfa_count
-            self.dance_budget += (3 * self.max_spend_cps * dfa_count) / 60
+            self.energy_budget += (self.relentless_strikes_energy_return_per_cp * self.max_spend_cps - self.get_spell_cost('death_from_above')) * dfa_count
+            self.dance_budget += (deepening_shadows_cdr_per_cp * self.max_spend_cps * dfa_count) / self.get_spell_cd('shadow_dance')
 
         #Need to handle shadow techniques now to account for swing timer loss
         attacks_per_second['mh_autoattack_hits'] = attacks_per_second['mh_autoattacks'] * self.dw_mh_hit_chance
@@ -2133,7 +2136,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
            net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(finisher=None, vanish=True)
         self.energy_budget += vanish_count * net_energy
         self.cp_budget += vanish_count * net_cps
-        self.dance_budget += (3. * spent_cps* vanish_count) / 60
+        self.dance_budget += (deepening_shadows_cdr_per_cp * spent_cps * vanish_count) / self.get_spell_cd('shadow_dance')
         self.rotation_merge(attacks_per_second, attack_counts, vanish_count)
 
         #Generate one final dance templates
@@ -2151,10 +2154,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         extra_evis = 0
         extra_builders = 0
         #Not enough dances, generate some more
+        cps_per_dance = self.get_spell_cd('shadow_dance') / deepening_shadows_cdr_per_cp
+        net_evis_cost = self.relentless_strikes_energy_return_per_cp * self.settings.finisher_threshold - self.get_spell_cost('eviscerate')
         if self.dance_budget<0:
-            cps_required = abs(self.dance_budget) * 20
+            cps_required = abs(self.dance_budget) * cps_per_dance
             extra_evis += cps_required / self.settings.finisher_threshold
-            self.energy_budget += self.net_evis_cost
+            self.energy_budget += net_evis_cost
             #just subtract the cps because we'll fix those next
             self.cp_budget -= cps_required
             self.dance_budget = 0
@@ -2168,7 +2173,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 dance_count = abs(self.dance_budget)
                 self.energy_budget += dance_count * net_energy
                 self.cp_budget += dance_count * net_cps
-                self.dance_budget += (3 * spent_cps * dance_count / 60) - dance_count
+                self.dance_budget += (deepening_shadows_cdr_per_cp * spent_cps * dance_count / self.get_spell_cd('shadow_dance')) - dance_count
                 #merge attack counts into attacks_per_second
                 self.rotation_merge(attacks_per_second, attack_counts, dance_count)
                 loop_counter += 1
@@ -2214,7 +2219,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #Hopefully energy budget here isn't negative, if it is we're in trouble
         #Now we convert all the energy we have left into mini-cycles
         #Each mini-cycle contains enough 1 dance and generators+finishers for one dance
-        cps_per_dance = 20
         finishers_per_minicycle = cps_per_dance / self.settings.finisher_threshold
 
         attack_counts_mini_cycle = attack_counts
@@ -2228,7 +2232,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             loop_counter += 1
             cps_to_generate = max(cps_per_dance - self.cp_budget, 0)
             builders_per_minicycle = cps_to_generate / cp_per_builder
-            mini_cycle_energy = 5 * finishers_per_minicycle - (cps_to_generate * energy_per_cp)
+            mini_cycle_energy = net_evis_cost * finishers_per_minicycle - (cps_to_generate * energy_per_cp)
             #add in dance energy
             mini_cycle_energy += net_energy
             if cps_to_generate:
@@ -2365,7 +2369,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         max_dance_energy = dance_gcds * self.energy_regen + self.max_energy
 
         if finisher:
-            net_energy += 40 * (0.2 * self.settings.finisher_threshold) - self.get_spell_cost(finisher)
+            net_energy += self.relentless_strikes_energy_return_per_cp * self.settings.finisher_threshold - self.get_spell_cost(finisher)
             dance_gcds -= 1
             net_cps -= self.settings.finisher_threshold
             attack_counts[finisher] = [0, 0, 0, 0, 0, 0, 0]
