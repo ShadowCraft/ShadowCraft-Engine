@@ -340,6 +340,8 @@ class RogueDamageCalculator(DamageCalculator):
                 if ability == 'death_from_above_strike':
                     modifier *= 1.5
                     ability = 'eviscerate'
+                if ability in ['shadowstrike', 'backstab']:
+                    crit_mod *= 1.0 + (0.08 * self.traits.weak_point)
 
                 damage_breakdown[ability] = self.get_ability_dps(average_ap, ability, aps, crits, modifier, crit_mod, both_hands, cps)
 
