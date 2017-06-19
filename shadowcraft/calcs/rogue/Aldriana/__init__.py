@@ -1915,6 +1915,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('stealth_shuriken_storm', None, ['shuriken_storm', 'second_shuriken']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('backstab_positional', 1 + 0.2 * self.settings.cycle.positional_uptime, ['backstab']))
 
+        #Assume 100% Nightblade uptime, TODO: AoE handling
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('nightblade', 1.15, [], all_damage=True))
+
         #Generic tuning aura
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('subtlety_aura', 1.25, ['death_from_above_pulse', 'death_from_above_strike',
             'backstab', 'eviscerate', 'gloomblade', 'nightblade', 'shadowstrike', 'shuriken_storm', 'shuriken_toss', 'nightblade_ticks']))
@@ -1932,10 +1935,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('mos_evis', None, ['eviscerate']))
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('mos_other', None, ['shadowstrike', 'eviscerate'], blacklist=True, all_damage=True))
 
-
         if self.talents.deeper_strategem:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('deeper_strategem', 1.05, ['nightblade_ticks', 'eviscerate', 'death_from_above_strike', 'death_from_above_pulse']))
-
 
         #trait specific modifiers
         if self.traits.shadow_fangs:
