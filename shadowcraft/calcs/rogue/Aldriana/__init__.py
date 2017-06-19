@@ -1091,8 +1091,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             duskwalker_expended_energy = rupture_cost_per_second + garrote_cost_per_second
 
             #compute cooldowned talents:
-            mfd_cps = self.talents.marked_for_death * (self.settings.duration/60. * (5. + self.talents.deeper_strategem) * (1. + self.settings.marked_for_death_resets))
-            cp_budget += mfd_cps
+            if self.talents.marked_for_death:
+                mfd_base_count = 1 + self.settings.duration / self.get_spell_cd('marked_for_death')
+                mfd_cps = (5. + self.talents.deeper_strategem) * (mfd_base_count + self.settings.marked_for_death_resets)
+                cp_budget += mfd_cps
 
             if self.stats.gear_buffs.the_dreadlords_deceit:
                 fok_interval = 1 / 60
@@ -1735,8 +1737,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         #consider MfD
         if self.talents.marked_for_death:
-            mfd_count = (1 + self.settings.marked_for_death_resets) / duration
-            bonus_cps += 5 * (1 + self.settings.marked_for_death_resets) * mfd_count
+            mfd_base_count = 1 + self.settings.duration / self.get_spell_cd('marked_for_death')
+            mfd_cps = (5. + self.talents.deeper_strategem) * (mfd_base_count + self.settings.marked_for_death_resets)
+            bonus_cps += mfd_cps
 
         #consider Curse of the Dreadblades
         if self.traits.curse_of_the_dreadblades:
@@ -2063,8 +2066,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attacks_per_second['oh_autoattacks'] = haste_multiplier / self.stats.oh.speed * (1 - white_swing_downtime)
 
         #Set up initial combo point budget
-        mfd_cps = self.talents.marked_for_death * (self.settings.duration/60. * (5. + self.talents.deeper_strategem) * (1. + self.settings.marked_for_death_resets))
-        self.cp_budget = mfd_cps
+        self.cp_budget = 0
+        if self.talents.marked_for_death:
+            mfd_base_count = 1 + self.settings.duration / self.get_spell_cd('marked_for_death')
+            mfd_cps = (5. + self.talents.deeper_strategem) * (mfd_base_count + self.settings.marked_for_death_resets)
+            self.cp_budget += mfd_cps
 
         #setup timelines
         nightblade_duration = 6 + (2 * self.settings.finisher_threshold)

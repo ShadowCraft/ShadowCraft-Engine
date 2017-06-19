@@ -574,7 +574,7 @@ class RogueDamageCalculator(DamageCalculator):
             cd -= self.master_assassin_cdr[self.traits.master_assassin]
         elif ability == 'vanish' and self.traits.flickering_shadows:
             cd -= 30
-        elif ability == 'marked_for_death':
+        elif self.spec == 'subtlety' and ability == 'marked_for_death':
             cd = 40
 
         #Convergence of Fates Trinket

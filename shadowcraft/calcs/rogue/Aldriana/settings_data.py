@@ -412,7 +412,7 @@ rogue_settings = [
             },
             {
                 'name': 'marked_for_death_resets',
-                'label': 'MfD Resets Per Minute',
+                'label': 'Total number of additional MfD Resets',
                 'description': '',
                 'type': 'text',
                 'default': '0',
