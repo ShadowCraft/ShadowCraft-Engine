@@ -1986,7 +1986,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             ns_full_multiplier = 0.12
             self.damage_modifiers.update_modifier_value('nightstalker_ssk', 1 + ns_full_multiplier)
             self.damage_modifiers.update_modifier_value('nightstalker_shuriken_storm', 1 + (0.12 * self.stealth_shuriken_uptime))
-            self.damage_modifiers.update_modifier_value('nightstalker_nightblade', 1 + (0.12 * self.dance_nb_uptime))
+            #Re-add? self.damage_modifiers.update_modifier_value('nightstalker_nightblade', 1 + (0.12 * self.dance_nb_uptime))
             self.damage_modifiers.update_modifier_value('nightstalker_evis', 1 + (0.12 * self.stealth_evis_uptime))
 
         #master of subtlety
@@ -2127,7 +2127,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #vanish handling
         vanish_count = self.settings.duration / self.get_spell_cd('vanish')
         #Treat subterfuge as a mini-dance
-        if self.talents.subterfuge:
+        if self.talents.subterfuge or self.talents.nightstalker:
             net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(finisher='eviscerate', vanish=True)
         else:
            net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(finisher=None, vanish=True)
@@ -2354,14 +2354,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.talents.shadow_focus:
             cost_mod = 0.75
 
-        dance_gcds = 3
-        if self.talents.subterfuge:
-            if vanish:
+        dance_gcds = 1
+        if vanish and self.talents.subterfuge:
+            dance_gcds += 3
+        elif not vanish:
+            dance_gcds = 4
+            if self.talents.subterfuge:
                 dance_gcds += 1
-            else:
-                dance_gcds += 2
-        elif vanish:
-            dance_gcds = 1
 
         max_dance_energy = dance_gcds * self.energy_regen + self.max_energy
 
