@@ -123,7 +123,6 @@ class RogueDamageCalculator(DamageCalculator):
             'shadowstrike':        (40., 'strike'),
             'shuriken_storm':      (35., 'strike'),
             'shuriken_toss':       (40., 'strike'),
-            'symbols_of_death':    (35., 'buff'),
     }
     ability_cds = {
             #general
@@ -149,6 +148,7 @@ class RogueDamageCalculator(DamageCalculator):
             'goremaws_bite':             60.,
             'shadow_dance':              60.,
             'shadow_blades':            180.,
+            'symbols_of_death':          30.,
         }
 
     # Vendetta CDR for number of points in trait

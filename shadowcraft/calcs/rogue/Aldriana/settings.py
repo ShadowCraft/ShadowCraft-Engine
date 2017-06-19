@@ -151,7 +151,6 @@ class SubtletyCycle(Cycle):
         settings_data.process_overrides(defaults, kwargs, self._cycle_type)
 
         self.cp_builder = kwargs.get('cp_builder', defaults['cp_builder'])
-        self.symbols_policy = kwargs.get('symbols_policy', defaults['symbols_policy'])
         self.dance_finishers_allowed = kwargs.get('dance_finishers_allowed', defaults['dance_finishers_allowed'])
         self.compute_cp_waste = kwargs.get('compute_cp_waste', defaults['compute_cp_waste'])
 

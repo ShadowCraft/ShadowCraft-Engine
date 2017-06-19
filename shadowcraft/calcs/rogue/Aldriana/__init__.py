@@ -1911,7 +1911,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('armor', self.armor_mitigation_multiplier(), ['death_from_above_pulse',
             'death_from_above_strike', 'shuriken_storm', 'eviscerate', 'backstab', 'shadowstrike', 'shuriken_toss', 'autoattacks'], dmg_schools=['physical']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('executioner', None, ['eviscerate', 'nightblade_ticks']))
-        self.damage_modifiers.register_modifier(modifiers.DamageModifier('symbols_of_death', 1.2, [], all_damage=True))
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('symbols_of_death', None, [], all_damage=True))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('stealth_shuriken_storm', None, ['shuriken_storm', 'second_shuriken']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('backstab_positional', 1 + 0.2 * self.settings.cycle.positional_uptime, ['backstab']))
 
@@ -1977,6 +1977,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 self.set_rppm_uptime(ift)
                 infallible_trinket_mod = 1+(ift.uptime *0.10)
 
+        #Symbols of Death
+        sod_uptime = 10 / self.get_spell_cd('symbols_of_death')
+        self.damage_modifiers.update_modifier_value('symbols_of_death', 1 + 0.15 * sod_uptime)
+
         #nightstalker
         if self.talents.nightstalker:
             ns_full_multiplier = 0.12
@@ -2028,10 +2032,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if crit_rates == None:
             crit_rates = self.get_crit_rates(current_stats)
 
-        use_sod = False
-        if self.settings.cycle.symbols_policy == 'always':
-            use_sod = True
-
         #Set up initial energy budget
         haste_multiplier = self.get_haste_multiplier(current_stats)
         self.energy_regen = self.get_energy_regen(current_stats)
@@ -2040,6 +2040,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.talents.vigor:
             self.max_energy += 50
         self.energy_budget = self.settings.duration * self.energy_regen + self.max_energy
+
+        #Symbols of Death
+        self.energy_budget += 40 * (1 + self.settings.duration / self.get_spell_cd('symbols_of_death'))
 
         #set initial dance budget
         self.dance_budget = 3 + self.settings.duration / 60
@@ -2060,51 +2063,19 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.cp_budget = mfd_cps
 
         #setup timelines
-        sod_duration = 35
         nightblade_duration = 6 + (2 * self.settings.finisher_threshold)
         if self.stats.gear_buffs.rogue_t19_2pc:
             nightblade_duration = 6 + (4 * self.settings.finisher_threshold)
 
         #Add attacks that could occur during first pass to aps
         attacks_per_second[self.dance_cp_builder] = 0
-        attacks_per_second['symbols_of_death'] = 0
         attacks_per_second['shadow_dance'] = 0
         attacks_per_second['vanish'] = 0
 
 
-        #Leaving space for opener handling for the first cast
-        sod_timeline = list(range(0, self.settings.duration, sod_duration))
         nightblade_timeline = list(range(nightblade_duration, self.settings.duration, nightblade_duration))
-
-        dance_nb_uptime = 0.0
         for finisher in ['nightblade', 'eviscerate']:
             attacks_per_second[finisher] = [0, 0, 0, 0, 0, 0, 0]
-            #Timeline match of ruptures, fill in rest with eviscerate
-            if self.settings.cycle.dance_finishers_allowed:
-                dance_count = 0
-                if finisher == 'nightblade':
-                    joint, sod_timeline, nightblade_timeline = self.timeline_overlap(sod_timeline, nightblade_timeline, -0.3 * sod_duration)
-                    dance_count = len(joint)
-                    dance_nb_uptime = dance_count / len(nightblade_timeline)
-                elif finisher == 'eviscerate':
-                    dance_count = len(sod_timeline)
-                    sod_timeline = []
-
-            #Not using finishers during dance
-            else:
-                finisher=None
-                dance_count = len(sod_timeline)
-                sod_timeline = []
-
-            if dance_count:
-                net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(use_sod=True, finisher=finisher)
-                self.energy_budget += dance_count * net_energy
-                self.cp_budget += dance_count * net_cps
-                self.dance_budget += ((3 * spent_cps * dance_count) / 60) - dance_count
-                #merge attack counts into attacks_per_second
-                self.rotation_merge(attacks_per_second, attack_counts, dance_count)
-
-        #Add in ruptures not previously covered
         nightblade_count = len(nightblade_timeline)
         attacks_per_second['nightblade'][self.settings.finisher_threshold] += nightblade_count / self.settings.duration
         self.cp_budget -= self.settings.finisher_threshold * nightblade_count
@@ -2157,9 +2128,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         vanish_count = self.settings.duration / self.get_spell_cd('vanish')
         #Treat subterfuge as a mini-dance
         if self.talents.subterfuge:
-            net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(use_sod=use_sod, finisher='eviscerate', vanish=True)
+            net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(finisher='eviscerate', vanish=True)
         else:
-           net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(use_sod=use_sod, finisher=None, vanish=True)
+           net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(finisher=None, vanish=True)
         self.energy_budget += vanish_count * net_energy
         self.cp_budget += vanish_count * net_cps
         self.dance_budget += (3. * spent_cps* vanish_count) / 60
@@ -2167,9 +2138,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         #Generate one final dance templates
         if self.settings.cycle.dance_finishers_allowed:
-            net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(use_sod=use_sod, finisher='eviscerate')
+            net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(finisher='eviscerate')
         else:
-            net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(use_sod=use_sod, finisher=None)
+            net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(finisher=None)
 
         #Now lets make sure all our budgets are positive
         cp_per_builder = 1 + self.shadow_blades_uptime
@@ -2334,9 +2305,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                  stealth_time = 10. * attacks_per_second['shadow_dance'] + 8 * attacks_per_second['vanish']
             self.mos_time = stealth_time / self.settings.duration
 
-        if self.talents.nightstalker:
-            self.dance_nb_uptime = dance_nb_uptime
-
         for ability in list(attacks_per_second.keys()):
             if not attacks_per_second[ability]:
                 del attacks_per_second[ability]
@@ -2355,11 +2323,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.traits.second_shuriken and 'shuriken_toss' in attacks_per_second:
             attacks_per_second['second_shuriken'] = 0.1 * attacks_per_second['shuriken_toss']
 
-        #add SoD auto crits
-        if 'shadowstrike' in attacks_per_second:
-            sod_shadowstrikes = attacks_per_second['symbols_of_death'] / attacks_per_second['shadowstrike']
-            crit_rates['shadowstrike'] = crit_rates['shadowstrike'] * (1. - sod_shadowstrikes) + sod_shadowstrikes
-
         if self.talents.weaponmaster:
             for ability in attacks_per_second:
                 if isinstance(attacks_per_second[ability], list):
@@ -2377,7 +2340,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     #Computes the net energy and combo points from a shadow dance rotation
     #Returns net_energy, net_cps, spent_cps, dict of attack counts
-    def get_dance_resources(self, use_sod=False, finisher=None, vanish=False):
+    def get_dance_resources(self, finisher=None, vanish=False):
         net_energy = 0
         net_cps = 0
         spent_cps = 0
@@ -2389,11 +2352,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         cost_mod = 1.0
         if self.talents.shadow_focus:
-            cost_mod = 0.8
-
-        if use_sod:
-            net_energy -= self.get_spell_cost('symbols_of_death', cost_mod=cost_mod)
-            attack_counts['symbols_of_death'] = 1
+            cost_mod = 0.75
 
         dance_gcds = 3
         if self.talents.subterfuge:
