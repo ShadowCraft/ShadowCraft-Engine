@@ -454,14 +454,14 @@ class RogueDamageCalculator(DamageCalculator):
     #subtlety
     #Ignore positional modifier for now
     def backstab_damage(self, ap):
-        return 3.7 * self.get_weapon_damage('mh', ap) * (1 + (0.0333 * self.traits.the_quiet_knife))
+        return 5 * self.get_weapon_damage('mh', ap) * (1 + (0.05 * self.traits.the_quiet_knife))
 
     #has two ranks
     def eviscerate_damage(self, ap, cp):
         return 1.472 * cp * ap
 
     def gloomblade_damage(self, ap):
-        return 5.25 * self.get_weapon_damage('mh', ap) * (1 + (0.0333 * self.traits.the_quiet_knife))
+        return 5.75 * self.get_weapon_damage('mh', ap) * (1 + (0.05 * self.traits.the_quiet_knife))
 
     def mh_goremaws_bite_damage(self, ap):
         return 10 * self.get_weapon_damage('mh', ap)
@@ -471,7 +471,7 @@ class RogueDamageCalculator(DamageCalculator):
 
     #Nightblade doesn't actually scale with cps but passing cps for simplicity
     def nightblade_tick_damage(self, ap, cp):
-        return 1.38 * ap * (1 + (0.05 * self.traits.demons_kiss))
+        return 0.9 * ap * (1 + (0.05 * self.traits.demons_kiss))
 
     def shadowstrike_damage(self, ap):
         return 8.5 * self.get_weapon_damage('mh', ap) * (1 + (0.05 * self.traits.precision_strike))
@@ -483,7 +483,7 @@ class RogueDamageCalculator(DamageCalculator):
         return self.oh_penalty() * self.get_weapon_damage('oh', ap, is_normalized=False)
 
     def second_shuriken_damage(self, ap):
-        return 0.338 * ap
+        return 1.0 * ap
 
     def shuriken_storm_damage(self, ap):
         return 0.7215 * ap
@@ -495,7 +495,7 @@ class RogueDamageCalculator(DamageCalculator):
         return 1.5 * ap
 
     def shadow_nova_damage(self, ap):
-        return 1.5 * ap
+        return 2.5 * ap
 
     def get_formula(self, name):
         formulas = {
@@ -556,10 +556,12 @@ class RogueDamageCalculator(DamageCalculator):
     def get_spell_cost(self, ability, cost_mod=1.0):
         cost = self.ability_info[ability][0] * cost_mod
         if ability == 'shadowstrike':
-            cost -= 0.25 * (5 * self.traits.energetic_stabbing)
+            cost -= 0.5 * (2 * self.traits.energetic_stabbing)
             #Assume 5 yards away so 3 + 5/3
             if self.stats.gear_buffs.shadow_satyrs_walk:
                 cost -= 4.67
+        elif ability == 'backstab':
+            cost -= 0.5 * (2 * self.traits.energetic_stabbing)
         return cost
 
     def get_spell_cd(self, ability):
@@ -568,6 +570,10 @@ class RogueDamageCalculator(DamageCalculator):
             cd -= self.fortunes_boon_cdr[self.traits.fortunes_boon]
         elif ability == 'vendetta':
             cd -= self.master_assassin_cdr[self.traits.master_assassin]
+        elif ability == 'vanish' and self.traits.flickering_shadows:
+            cd -= 30
+        elif ability == 'marked_for_death':
+            cd = 40
 
         #Convergence of Fates Trinket
         cof = self.stats.procs.convergence_of_fates

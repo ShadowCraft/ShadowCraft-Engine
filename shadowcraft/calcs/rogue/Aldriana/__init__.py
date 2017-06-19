@@ -226,7 +226,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.stats.procs.old_war_prepot:
             self.stats.procs.old_war_prepot.icd = self.settings.duration
 
-        self.relentless_strikes_energy_return_per_cp = 5 #.20 * 25
+        self.relentless_strikes_energy_return_per_cp = 6
 
         #should only include bloodlust if the spec can average it in, deal with this later
         if self.race.berserking:
@@ -1913,10 +1913,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('executioner', None, ['eviscerate', 'nightblade_ticks']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('symbols_of_death', 1.2, [], all_damage=True))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('stealth_shuriken_storm', None, ['shuriken_storm', 'second_shuriken']))
-        self.damage_modifiers.register_modifier(modifiers.DamageModifier('backstab_positional', 1 + 0.3 * self.settings.cycle.positional_uptime, ['backstab']))
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('backstab_positional', 1 + 0.2 * self.settings.cycle.positional_uptime, ['backstab']))
 
         #Generic tuning aura
-        self.damage_modifiers.register_modifier(modifiers.DamageModifier('subtlety_aura', 1.09, ['death_from_above_pulse', 'death_from_above_strike',
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('subtlety_aura', 1.25, ['death_from_above_pulse', 'death_from_above_strike',
             'backstab', 'eviscerate', 'gloomblade', 'nightblade', 'shadowstrike', 'shuriken_storm', 'shuriken_toss', 'nightblade_ticks']))
 
         #talent specific modifiers
@@ -2059,14 +2059,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         mfd_cps = self.talents.marked_for_death * (self.settings.duration/60. * (5. + self.talents.deeper_strategem) * (1. + self.settings.marked_for_death_resets))
         self.cp_budget = mfd_cps
 
-
-        #Enveloping Shadows generates 1 bonus cp per 6 seconds regardless of cps
-        #2 net energy per 6 seconds from relentless strikes
-        if self.talents.enveloping_shadows:
-            self.cp_budget += self.settings.duration / 6
-            self.energy_budget += (2 / 6) * self.settings.duration
-            self.dance_budget += (0.5 * self.settings.duration) / 60
-
         #setup timelines
         sod_duration = 35
         nightblade_duration = 6 + (2 * self.settings.finisher_threshold)
@@ -2159,7 +2151,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         shadow_techniques_cps = shadow_techniques_procs * shadow_techniques_cps_per_proc
         self.cp_budget += shadow_techniques_cps
         if self.traits.shadows_whisper:
-            self.energy_budget += 5 * shadow_techniques_procs
+            self.energy_budget += 8 * shadow_techniques_procs
 
         #vanish handling
         vanish_count = self.settings.duration / self.get_spell_cd('vanish')
