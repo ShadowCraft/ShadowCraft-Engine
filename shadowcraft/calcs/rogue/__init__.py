@@ -643,3 +643,9 @@ class RogueDamageCalculator(DamageCalculator):
                     damage_breakdown[proc.proc_name] += damage_per_use / proc.icd
                 else:
                     damage_breakdown[proc.proc_name] = damage_per_use / proc.icd
+
+        # Specter of Betrayal
+        specter_of_betrayal = self.stats.procs.specter_of_betrayal
+        if specter_of_betrayal:
+            num_torrents = (1 + 2 * (self.settings.duration / specter_of_betrayal.icd)) / self.settings.duration
+            damage_breakdown[specter_of_betrayal.proc_name] = self.get_proc_damage_contribution(specter_of_betrayal, num_torrents, current_stats, ap, modifier_dict)
