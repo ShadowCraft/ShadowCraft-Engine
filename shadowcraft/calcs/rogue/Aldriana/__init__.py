@@ -1933,17 +1933,24 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.talents.nightstalker:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('nightstalker_ssk', None, ['shadowstrike']))
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('nightstalker_shuriken_storm', None, ['shuriken_storm']))
-            self.damage_modifiers.register_modifier(modifiers.DamageModifier('nightstalker_nightblade', None, ['nightblade_ticks']))
+            #self.damage_modifiers.register_modifier(modifiers.DamageModifier('nightstalker_nightblade', None, ['nightblade_ticks']))
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('nightstalker_evis', None, ['eviscerate']))
 
         if self.talents.master_of_subtlety:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('mos_ssk', None, ['shadowstrike']))
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('mos_shuriken_storm', None, ['shuriken_storm']))
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('mos_evis', None, ['eviscerate']))
-            self.damage_modifiers.register_modifier(modifiers.DamageModifier('mos_other', None, ['shadowstrike', 'eviscerate'], blacklist=True, all_damage=True))
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('mos_other', None, ['shadowstrike', 'eviscerate', 'shuriken_storm'], blacklist=True, all_damage=True))
 
         if self.talents.deeper_strategem:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('deeper_strategem', 1.05, ['nightblade_ticks', 'eviscerate', 'death_from_above_strike', 'death_from_above_pulse']))
+
+        if self.talents.dark_shadow:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('dark_shadow_ssk', None, ['shadowstrike']))
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('dark_shadow_storm', None, ['shuriken_storm']))
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('dark_shadow_evis', None, ['eviscerate']))
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('dark_shadow_other', None, ['shadowstrike', 'shuriken_storm', 'eviscerate',
+                'backstab', 'goremaws_bite'], blacklist=True, all_damage=True))
 
         #trait specific modifiers
         if self.traits.shadow_fangs:
@@ -2013,6 +2020,22 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.damage_modifiers.update_modifier_value('mos_shuriken_storm', 1 + (0.1 * self.stealth_shuriken_uptime))
             self.damage_modifiers.update_modifier_value('mos_evis', 1 + (0.1 * self.stealth_evis_uptime))
             self.damage_modifiers.update_modifier_value('mos_other', mos_uptime_multipler)
+
+        if self.talents.dark_shadow:
+            dsh_uptime = aps['shadow_dance'] * (5 if self.talents.subterfuge else 4)
+            dsh_ssk_uptime = 0
+            dsh_storm_uptime = 0
+            dsh_evis_uptime = 0
+            if 'shadowstrike' in self.dark_shadow_attacks_per_dance and 'shadowstrike' in aps:
+                dsh_ssk_uptime = self.dark_shadow_attacks_per_dance['shadowstrike'] * aps['shadow_dance'] / aps['shadowstrike']
+            if 'shuriken_storm' in self.dark_shadow_attacks_per_dance and 'shuriken_storm' in aps:
+                dsh_storm_uptime = self.dark_shadow_attacks_per_dance['shuriken_storm'] * aps['shadow_dance'] / aps['shuriken_storm']
+            if 'eviscerate' in self.dark_shadow_attacks_per_dance and 'eviscerate' in aps:
+                dsh_evis_uptime = sum(self.dark_shadow_attacks_per_dance['eviscerate']) * aps['shadow_dance'] / sum(aps['eviscerate'])
+            self.damage_modifiers.update_modifier_value('dark_shadow_ssk', 1 + (0.3 * dsh_ssk_uptime))
+            self.damage_modifiers.update_modifier_value('dark_shadow_storm', 1 + (0.3 * dsh_storm_uptime))
+            self.damage_modifiers.update_modifier_value('dark_shadow_evis', 1 + (0.3 * dsh_evis_uptime))
+            self.damage_modifiers.update_modifier_value('dark_shadow_other', 1 + (0.3 * dsh_uptime))
 
         if self.traits.finality:
             #4% increase per cp applied every to every other
@@ -2094,7 +2117,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attacks_per_second['shadow_dance'] = 0
         attacks_per_second['vanish'] = 0
 
-
         nightblade_timeline = list(range(nightblade_duration, self.settings.duration, nightblade_duration))
         for finisher in ['nightblade', 'eviscerate']:
             attacks_per_second[finisher] = [0, 0, 0, 0, 0, 0, 0]
@@ -2163,6 +2185,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(finisher='eviscerate')
         else:
             net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(finisher=None)
+
+        #Remember dark shadow buffed abilties per one dance
+        self.dark_shadow_attacks_per_dance = {}
+        if self.talents.dark_shadow:
+            self.dark_shadow_attacks_per_dance = dict(attack_counts)
 
         #Now lets make sure all our budgets are positive
         cp_per_builder = 1 + self.shadow_blades_uptime
