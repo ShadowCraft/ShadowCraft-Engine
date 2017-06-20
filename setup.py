@@ -3,7 +3,7 @@ from distutils.core import setup
 setup(
     name='ShadowCraft-Engine',
     url='http://github.com/ShadowCraft/ShadowCraft-Engine/',
-    version='7.2.0',
+    version='7.2.5',
     packages=[
         'shadowcraft',
         'shadowcraft.calcs',
