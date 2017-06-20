@@ -227,10 +227,10 @@ class GearBuffs(object):
         'mantle_of_the_master_assassin',     #100% crit during stealth and for 6 seconds after
         'cinidaria_the_symbiote',            #30% additional damage to enemies above 90% health
         'sephuzs_secret',                    #2% haste
-        'the_empty_crown',
-        'the_first_of_the_dead',
+        'the_empty_crown',                   #Kingsbane generates 40 Energy over 5 sec.
+        'the_first_of_the_dead',             #For 2 sec after activating Symbols of Death, Shadowstrike generates 3 additional combo points and Backstab generates 4 additional combo points.
         'the_curse_of_restlessness',         #NYI
-        'soul_of_the_shadowblade',
+        'soul_of_the_shadowblade',           #Gain the Vigor talent.
         #Other
         'jeweled_signet_of_melandrus',       #Increases your autoattack damage by 10%.
         'gnawed_thumb_ring',                 #Use: Have a nibble, increasing your healing and magic damage done by 5% for 12 sec. (3 Min Cooldown)

@@ -178,7 +178,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 regen *= 1.195 if ar and self.traits.loaded_dice else 1.15
         else:
             alacrity_stacks = 0
-        if self.talents.vigor:
+        if self.talents.vigor or self.stats.gear_buffs.soul_of_the_shadowblade:
             regen *= 1.1
         regen *= self.get_haste_multiplier(current_stats) + 0.01 * alacrity_stacks
         return regen
@@ -1117,6 +1117,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 cp_budget += avg_cp_per_kb * attacks_per_second['kingsbane'] * self.settings.duration
                 net_energy_per_second -= self.get_spell_cost('kingsbane') * attacks_per_second['kingsbane']
                 duskwalker_expended_energy += self.get_spell_cost('kingsbane') * attacks_per_second['kingsbane']
+                if self.stats.gear_buffs.the_empty_crown:
+                    net_energy_per_second += 40 * attacks_per_second['kingsbane']
 
             if self.talents.hemorrhage:
                 hemos_per_second = 1 / 20
@@ -1157,7 +1159,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             duskwalker_expended_energy *= self.settings.duration
             energy_budget = self.settings.duration * net_energy_per_second
             max_energy = 120
-            if self.talents.vigor:
+            if self.talents.vigor or self.stats.gear_buffs.soul_of_the_shadowblade:
                 max_energy += 50
             energy_budget += max_energy
             #As of Patch 7.2 we get 60 energy + 60 over 2s, assume no loss
@@ -1864,7 +1866,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
     def get_max_energy(self):
         self.max_energy = 100
-        if self.talents.vigor:
+        if self.talents.vigor or self.stats.gear_buffs.soul_of_the_shadowblade:
             self.max_energy += 50
         if self.race.expansive_mind:
             self.max_energy = round(self.max_energy * 1.05, 0)
@@ -2095,14 +2097,15 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.energy_regen = self.get_energy_regen(current_stats)
 
         self.max_energy = 100.
-        if self.talents.vigor:
+        if self.talents.vigor or self.stats.gear_buffs.soul_of_the_shadowblade:
             self.max_energy += 50
         self.energy_budget = self.settings.duration * self.energy_regen + self.max_energy
 
         #Symbols of Death
-        self.energy_budget += 40 * (1 + self.settings.duration / self.get_spell_cd('symbols_of_death'))
+        sod_casts = 1 + self.settings.duration / self.get_spell_cd('symbols_of_death')
+        self.energy_budget += 40 * sod_casts
         if self.stats.gear_buffs.rogue_t20_4pc:
-            self.energy_budget += 20 * (1 + self.settings.duration / self.get_spell_cd('symbols_of_death'))
+            self.energy_budget += 20 * sod_casts
 
         #set initial dance budget
         self.dance_budget = 2 + self.settings.duration / 60
@@ -2127,6 +2130,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             mfd_base_count = 1 + self.settings.duration / self.get_spell_cd('marked_for_death')
             mfd_cps = (5. + self.talents.deeper_strategem) * (mfd_base_count + self.settings.marked_for_death_resets)
             self.cp_budget += mfd_cps
+
+        #Very VERY simple implementation for The First of the Dead legendary (this should be handled better)
+        if self.stats.gear_buffs.the_first_of_the_dead:
+            self.cp_budget += (6 if self.talents.anticipation else 3) * sod_casts
 
         #setup timelines
         nightblade_duration = 6 + (2 * self.settings.finisher_threshold)
