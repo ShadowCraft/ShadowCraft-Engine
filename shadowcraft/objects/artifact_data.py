@@ -69,7 +69,7 @@ traits = {
         'shadow_nova',
         'legionblade',
         'shadows_of_the_uncrowned',
-        'etched_in_shadow',
+        'weak_point',
         'shadows_whisper',
         'feeding_frenzy',
         'concordance_of_the_legionfall',

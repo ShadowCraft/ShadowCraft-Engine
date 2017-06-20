@@ -26,7 +26,7 @@ class RogueDamageCalculator(DamageCalculator):
                                     'fan_of_knives', 'garrote_ticks', 'hemorrhage',
                                     'kingsbane', 'kingsbane_ticks', 'mutilate',
                                     'poisoned_knife', 'poison_bomb', 'rupture_ticks', 'from_the_shadows',
-                                    'wound_poison']
+                                    'wound_poison', 'toxic_blade']
     outlaw_damage_sources = ['death_from_above_pulse', 'death_from_above_strike',
                              'ambush', 'between_the_eyes', 'blunderbuss', 'cannonball_barrage',
                              'ghostly_strike', 'greed', 'killing_spree', 'main_gauche',
@@ -103,6 +103,8 @@ class RogueDamageCalculator(DamageCalculator):
             'mutilate':            (55., 'strike'),
             'poisoned_knife':      (40., 'strike'),
             'rupture':             (25., 'strike'),
+            'toxic_blade':         (20., 'strike'),
+            'exsanguinate':        (25., 'buff'),
             #outlaw
             'ambush':              (60., 'strike'),
             'between_the_eyes':    (35., 'strike'),
@@ -121,7 +123,6 @@ class RogueDamageCalculator(DamageCalculator):
             'shadowstrike':        (40., 'strike'),
             'shuriken_storm':      (35., 'strike'),
             'shuriken_toss':       (40., 'strike'),
-            'symbols_of_death':    (35., 'buff'),
     }
     ability_cds = {
             #general
@@ -137,6 +138,7 @@ class RogueDamageCalculator(DamageCalculator):
             'garrote':                   15.,
             'kingsbane':                 45.,
             'vendetta':                 120.,
+            'toxic_blade':               25.,
             #outlaw
             'adrenaline_rush':          180.,
             'cannonball_barrage':        60.,
@@ -146,6 +148,7 @@ class RogueDamageCalculator(DamageCalculator):
             'goremaws_bite':             60.,
             'shadow_dance':              60.,
             'shadow_blades':            180.,
+            'symbols_of_death':          30.,
         }
 
     # Vendetta CDR for number of points in trait
@@ -337,6 +340,8 @@ class RogueDamageCalculator(DamageCalculator):
                 if ability == 'death_from_above_strike':
                     modifier *= 1.5
                     ability = 'eviscerate'
+                if ability in ['shadowstrike', 'backstab']:
+                    crit_mod *= 1.0 + (0.08 * self.traits.weak_point)
 
                 damage_breakdown[ability] = self.get_ability_dps(average_ap, ability, aps, crits, modifier, crit_mod, both_hands, cps)
 
@@ -365,7 +370,7 @@ class RogueDamageCalculator(DamageCalculator):
         return .6 * cp * ap * (1 + (0.0333 * self.traits.toxic_blades))
 
     def fan_of_knives_damage(self, ap):
-        return 1.079 * ap
+        return 1.5 * ap
 
     #Lumping 40 ticks together for simplicity
     def from_the_shadows_damage(self, ap):
@@ -378,7 +383,7 @@ class RogueDamageCalculator(DamageCalculator):
         return 1 * self.get_weapon_damage('mh', ap)
 
     def mh_kingsbane_damage(self, ap):
-       return 2.4 * self.get_weapon_damage('mh', ap) * (1 + (0.3 * self.talents.master_poisoner))
+        return 2.4 * self.get_weapon_damage('mh', ap) * (1 + (0.3 * self.talents.master_poisoner))
     def oh_kingsbane_damage(self, ap):
         return 2.4 * self.oh_penalty() * self.get_weapon_damage('oh', ap) * (1 + (0.3 * self.talents.master_poisoner))
     def kingsbane_tick_damage(self, ap):
@@ -391,6 +396,9 @@ class RogueDamageCalculator(DamageCalculator):
 
     def poisoned_knife_damage(self, ap):
         return 0.6 * ap
+
+    def toxic_blade_damage(self, ap):
+        return 6 * self.get_weapon_damage('mh', ap)
 
     #Lumping 6 ticks together for simplicity
     def poison_bomb_damage(self, ap):
@@ -448,14 +456,14 @@ class RogueDamageCalculator(DamageCalculator):
     #subtlety
     #Ignore positional modifier for now
     def backstab_damage(self, ap):
-        return 3.7 * self.get_weapon_damage('mh', ap) * (1 + (0.0333 * self.traits.the_quiet_knife))
+        return 5 * self.get_weapon_damage('mh', ap) * (1 + (0.05 * self.traits.the_quiet_knife))
 
     #has two ranks
     def eviscerate_damage(self, ap, cp):
         return 1.472 * cp * ap
 
     def gloomblade_damage(self, ap):
-        return 5.25 * self.get_weapon_damage('mh', ap) * (1 + (0.0333 * self.traits.the_quiet_knife))
+        return 5.75 * self.get_weapon_damage('mh', ap) * (1 + (0.05 * self.traits.the_quiet_knife))
 
     def mh_goremaws_bite_damage(self, ap):
         return 10 * self.get_weapon_damage('mh', ap)
@@ -465,7 +473,7 @@ class RogueDamageCalculator(DamageCalculator):
 
     #Nightblade doesn't actually scale with cps but passing cps for simplicity
     def nightblade_tick_damage(self, ap, cp):
-        return 1.38 * ap * (1 + (0.05 * self.traits.demons_kiss))
+        return 0.9 * ap * (1 + (0.05 * self.traits.demons_kiss))
 
     def shadowstrike_damage(self, ap):
         return 8.5 * self.get_weapon_damage('mh', ap) * (1 + (0.05 * self.traits.precision_strike))
@@ -477,7 +485,7 @@ class RogueDamageCalculator(DamageCalculator):
         return self.oh_penalty() * self.get_weapon_damage('oh', ap, is_normalized=False)
 
     def second_shuriken_damage(self, ap):
-        return 0.338 * ap
+        return 1.0 * ap
 
     def shuriken_storm_damage(self, ap):
         return 0.7215 * ap
@@ -489,7 +497,7 @@ class RogueDamageCalculator(DamageCalculator):
         return 1.5 * ap
 
     def shadow_nova_damage(self, ap):
-        return 1.5 * ap
+        return 2.5 * ap
 
     def get_formula(self, name):
         formulas = {
@@ -514,6 +522,7 @@ class RogueDamageCalculator(DamageCalculator):
             'poison_bomb':               self.poison_bomb_damage,
             'rupture_ticks':             self.rupture_tick_damage,
             'wound_poison':              self.wound_poison_damage,
+            'toxic_blade':               self.toxic_blade_damage,
             #outlaw
             'ambush':                    self.ambush_damage,
             'between_the_eyes':          self.between_the_eyes_damage,
@@ -549,10 +558,14 @@ class RogueDamageCalculator(DamageCalculator):
     def get_spell_cost(self, ability, cost_mod=1.0):
         cost = self.ability_info[ability][0] * cost_mod
         if ability == 'shadowstrike':
-            cost -= 0.25 * (5 * self.traits.energetic_stabbing)
+            cost -= 0.5 * (2 * self.traits.energetic_stabbing)
             #Assume 5 yards away so 3 + 5/3
             if self.stats.gear_buffs.shadow_satyrs_walk:
                 cost -= 4.67
+        elif ability == 'backstab':
+            cost -= 0.5 * (2 * self.traits.energetic_stabbing)
+        elif ability == 'garrote' and self.stats.gear_buffs.rogue_t20_4pc:
+            cost -= 25
         return cost
 
     def get_spell_cd(self, ability):
@@ -561,6 +574,14 @@ class RogueDamageCalculator(DamageCalculator):
             cd -= self.fortunes_boon_cdr[self.traits.fortunes_boon]
         elif ability == 'vendetta':
             cd -= self.master_assassin_cdr[self.traits.master_assassin]
+        elif ability == 'vanish' and self.traits.flickering_shadows:
+            cd -= 30
+        elif self.spec == 'subtlety' and ability == 'marked_for_death':
+            cd = 40
+        elif ability == 'garrote' and self.stats.gear_buffs.rogue_t20_4pc:
+            cd -= 12
+        elif ability == 'symbols_of_death' and self.stats.gear_buffs.rogue_t20_4pc:
+            cd -= 5
 
         #Convergence of Fates Trinket
         cof = self.stats.procs.convergence_of_fates
@@ -622,3 +643,9 @@ class RogueDamageCalculator(DamageCalculator):
                     damage_breakdown[proc.proc_name] += damage_per_use / proc.icd
                 else:
                     damage_breakdown[proc.proc_name] = damage_per_use / proc.icd
+
+        # Specter of Betrayal
+        specter_of_betrayal = self.stats.procs.specter_of_betrayal
+        if specter_of_betrayal:
+            num_torrents = (1 + 2 * (self.settings.duration / specter_of_betrayal.icd)) / self.settings.duration
+            damage_breakdown[specter_of_betrayal.proc_name] = self.get_proc_damage_contribution(specter_of_betrayal, num_torrents, current_stats, ap, modifier_dict)

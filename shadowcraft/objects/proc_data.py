@@ -311,6 +311,20 @@ allowed_procs = {
         'trigger': 'all_attacks',
     },
 
+    'engine_of_eradication': { #Equip: Your auto attacks have a chance to increase your Strength or Agility, based on your specialization, by 5424 for 12 sec, and expel orbs of fel energy. Collecting an orb increases the duration of this effect by 3 sec.
+        'stat':'stats',
+        'value': {'agi': 0},
+        'duration': 24, # 12 + 4*3
+        'proc_name': 'Demonic Vigor',
+        'scaling': 1.314659,
+        'crm_scales': False,
+        'item_level': 900,
+        'source': 'trinket',
+        'type': 'rppm',
+        'proc_rate': 1,
+        'trigger': 'all_attacks',
+    },
+
     'entwined_elemental_foci': { #Equip: Your attacks have a chance to grant you a Fiery, Frost, or Arcane enchants for 20 sec.
         'stat':'stats',
         'value': {'haste': 0, 'crit': 0, 'mastery': 0}, #TODO: needs special modeling, you get only one stat per proc, but can have multiple at the same time
@@ -399,6 +413,22 @@ allowed_procs = {
         'type': 'rppm', #yes, it is rppm now
         'source': 'trinket',
         'proc_rate': 1,
+        'trigger': 'all_attacks'
+    },
+
+    'infernal_cinders': { #Your melee attacks have a chance to deal an additional 82910 Fire damage. The critical strike chance of this damage is increased by 10% for each ally within 10 yds who bears this item.
+        'stat':'spell_damage',
+        'value': 0, #rpp-scaled
+        'duration': 0,
+        'proc_name': 'Infernal Cinders',
+        'dmg_school': 'fire',
+        'scaling': 20.09453,
+        'item_level': 900,
+        'type': 'rppm',
+        'source': 'trinket',
+        'proc_rate': 10,
+        'haste_scales': True,
+        'can_crit': True,
         'trigger': 'all_attacks'
     },
 
@@ -524,6 +554,22 @@ allowed_procs = {
         'proc_rate': 1,
         'haste_scales': True,
         'can_crit': True
+    },
+
+    'specter_of_betrayal': { #Use: Create a Dread Reflection at your location for 1 min and cause each of your Dread Reflections to unleash a torrent of magic that deals (111484 * 4) Shadow damage over 3 sec, split evenly among nearby enemies. (45 Sec Cooldown)
+        'stat':'spell_damage',
+        'dmg_school': 'shadow',
+        'value': 0, #rpp-scaled
+        'duration': 0, #modeled all-in-one
+        'proc_name': 'Dread Torrent',
+        'scaling': 4 * 24.6155,
+        'item_level': 900,
+        'type': 'icd',
+        'source': 'trinket',
+        'proc_rate': 1,
+        'icd': 45,
+        'can_crit': True,
+        'trigger': 'all_attacks'
     },
 
     'spiked_counterweight': { #Your melee attacks have a chance to deal X Physical damage and increase all damage the target takes from you by 15% for 15 sec, up to Y extra damage dealt.
@@ -666,6 +712,39 @@ allowed_procs = {
         'proc_rate': 1,
         'can_crit': True,
         'trigger': 'all_attacks',
+    },
+
+    'umbral_moonglaives': { #Use: Conjure a storm of glaives at your location, causing 125220 Arcane damage every 1 sec to nearby enemies. After 8 sec the glaives shatter, causing another 313052 Arcane damage to enemies in the area. (1 Min, 30 Sec Cooldown)
+        'stat':'spell_damage',
+        'dmg_school': 'arcane',
+        'value': 0, #rpp-scaled
+        'aoe': True,
+        'duration': 0, #modeled all-in-one
+        'proc_name': 'Umbral Glaive Storm',
+        'scaling': 8 * 30.34914 + 75.87286,
+        'item_level': 900,
+        'type': 'icd',
+        'source': 'trinket',
+        'proc_rate': 1,
+        'icd': 90,
+        'can_crit': True,
+        'trigger': 'all_attacks'
+    },
+
+    'vial_of_ceaseless_toxins': { #Use: Inflict 225700 Shadow damage to an enemy in melee range, plus 366752 damage over 20 sec. If they die while this effect is active, the cooldown of this ability is reduced by 45 sec. (1 Min Cooldown)
+        'stat':'spell_damage',
+        'dmg_school': 'shadow',
+        'value': 0, #rpp-scaled
+        'duration': 0, #modeled all-in-one
+        'proc_name': 'Ceaseless Toxin',
+        'scaling': 10 * 8.888798 + 54.70188,
+        'item_level': 900,
+        'type': 'icd',
+        'source': 'trinket',
+        'proc_rate': 1,
+        'icd': 60,
+        'can_crit': True,
+        'trigger': 'all_attacks'
     },
 
     'windscar_whetstone': { #Use: A Slicing Maelstrom surrounds you, inflicting X Physical damage to nearby enemies over 6 sec.  (2 Min Cooldown)

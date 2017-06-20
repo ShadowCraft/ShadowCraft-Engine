@@ -70,11 +70,11 @@ for proc in test_procs.get_all_procs_for_stat():
 
 # Set up gear buffs.
 test_gear_buffs = stats.GearBuffs('gear_specialization',
-'denial_of_the_half_giants',
+'shadow_satyrs_walk',
 'rogue_t19_2pc',
 'rogue_t19_4pc',
 #'insignia_of_ravenholdt',
-'mantle_of_the_master_assassin'
+'mantle_of_the_master_assassin',
 ) #tier buffs located here
 
 # Set up a calcs object..
@@ -110,7 +110,7 @@ test_traits = artifact.Artifact(test_spec, test_class, trait_dict={
     'shadow_nova':         1,
     'legionblade':         1,
     'shadows_of_the_uncrowned': 1,
-    'etched_in_shadow': 4,
+    'weak_point': 4,
     'shadows_whisper': 1,
     'feeding_frenzy': 1,
     'concordance_of_the_legionfall': 12,

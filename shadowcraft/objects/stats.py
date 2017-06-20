@@ -206,6 +206,8 @@ class GearBuffs(object):
         'rogue_t18_4pc_lfr',            # Energy increased by 20, 5% increase in energy regen
         'rogue_t19_2pc',                # Mutilate causes 30% bleed over 8 seconds, Nightblades lasts additional 2 seconds per CP
         'rogue_t19_4pc',                # 10% envenom damage per bleed, 30% SSk generates additional CP if nightblade up
+        'rogue_t20_2pc',                # Garrote deals 40% increased damage, Symbols of Death increases your damage done by an additional 10%.
+        'rogue_t20_4pc',                # Garrote's cost is reduced by 25 Energy and cooldown is reduced by 12 sec, Symbols of Death has 5 sec reduced cooldown and generates 2 Energy per sec while active.
         'jacins_ruse_2pc',              # Proc 3000 mastery for 15s, 1 rppm
         'march_of_the_legion_2pc',      # Proc 35K damage when fighting demons, 6+Haste RPPM
         'journey_through_time_2pc',     # The effect from Chrono Shard now increases your movement speed by 30%, and grants an additional 1000 Haste.
@@ -225,6 +227,10 @@ class GearBuffs(object):
         'mantle_of_the_master_assassin',     #100% crit during stealth and for 6 seconds after
         'cinidaria_the_symbiote',            #30% additional damage to enemies above 90% health
         'sephuzs_secret',                    #2% haste
+        'the_empty_crown',                   #Kingsbane generates 40 Energy over 5 sec.
+        'the_first_of_the_dead',             #For 2 sec after activating Symbols of Death, Shadowstrike generates 3 additional combo points and Backstab generates 4 additional combo points.
+        'the_curse_of_restlessness',         #NYI
+        'soul_of_the_shadowblade',           #Gain the Vigor talent.
         #Other
         'jeweled_signet_of_melandrus',       #Increases your autoattack damage by 10%.
         'gnawed_thumb_ring',                 #Use: Have a nibble, increasing your healing and magic damage done by 5% for 12 sec. (3 Min Cooldown)

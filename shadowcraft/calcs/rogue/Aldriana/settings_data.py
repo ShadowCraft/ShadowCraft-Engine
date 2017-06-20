@@ -234,17 +234,6 @@ rogue_settings = [
                 }
             },
             {
-                'name': 'symbols_policy',
-                'label': 'SoD Policy',
-                'description': '',
-                'type': 'dropdown',
-                'default': 'just',
-                'options': {
-                    'always': 'Use on cooldown',
-                    'just': 'Only use SoD when needed to refresh',
-                }
-            },
-            {
                 'name': 'dance_finishers_allowed',
                 'label': 'Use Finishers during Dance',
                 'description': '',
@@ -423,7 +412,7 @@ rogue_settings = [
             },
             {
                 'name': 'marked_for_death_resets',
-                'label': 'MfD Resets Per Minute',
+                'label': 'Total number of additional MfD Resets',
                 'description': '',
                 'type': 'text',
                 'default': '0',

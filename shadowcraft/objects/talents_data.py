@@ -76,7 +76,7 @@ talents = {
         ('deeper_strategem', 'anticipation', 'vigor'),
         ('leeching_poison', 'elusiveness', 'cheat_death'),
         ('thuggee', 'prey_on_the_weak', 'internal_bleeding'),
-        ('agonizing_poison', 'alacrity', 'exsanguinate'),
+        ('toxic_blade', 'alacrity', 'exsanguinate'),
         ('venom_rush', 'marked_for_death', 'death_from_above')
     ),
     ('rogue', 'outlaw'): (
@@ -94,7 +94,7 @@ talents = {
         ('deeper_strategem', 'anticipation', 'vigor'),
         ('soothing_darkness', 'elusiveness', 'cheat_death'),
         ('strike_from_the_shadows', 'prey_on_the_weak', 'tangled_shadow'),
-        ('premeditation', 'alacrity', 'enveloping_shadows'),
+        ('dark_shadow', 'alacrity', 'enveloping_shadows'),
         ('master_of_shadows', 'marked_for_death', 'death_from_above')
     ),
     ('shaman', 'elemental'): (
