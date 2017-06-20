@@ -1921,6 +1921,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #Assume 100% Nightblade uptime, TODO: AoE handling
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('nightblade', 1.15, [], all_damage=True))
 
+        #Shadowstrike (Rank 2) deals 25% more damage from stealth
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('shadowstrike_rank_2', None, ['shadowstrike']))
+
         #Generic tuning aura
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('subtlety_aura', 1.25, ['death_from_above_pulse', 'death_from_above_strike',
             'backstab', 'eviscerate', 'gloomblade', 'nightblade', 'shadowstrike', 'shuriken_storm', 'shuriken_toss', 'nightblade_ticks', 'shadow_blades',
@@ -1985,6 +1988,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #Symbols of Death
         sod_uptime = 10 / self.get_spell_cd('symbols_of_death')
         self.damage_modifiers.update_modifier_value('symbols_of_death', 1 + 0.15 * sod_uptime)
+
+        #Shadowstrike (Rank 2) deals 25% more damage from stealth
+        #Atm, we assume one Shadowstrike per Vanish + Opener unless Nightstalker was chosen
+        if aps['shadowstrike']:
+            buffed_shadowstrikes = 1 / self.settings.duration
+            if not self.talents.nightstalker and aps['vanish']:
+                buffed_shadowstrikes += aps['vanish'] / aps['shadowstrike']
+            self.damage_modifiers.update_modifier_value('shadowstrike_rank_2', 1 + (0.25 * buffed_shadowstrikes))
 
         #nightstalker
         if self.talents.nightstalker:
