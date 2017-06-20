@@ -857,6 +857,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 'poison_bomb', 'from_the_shadows', 'wound_poison'],
                 dmg_schools=['arcane', 'fire', 'frost', 'holy', 'nature', 'shadow']))
 
+        if self.stats.gear_buffs.rogue_t20_2pc:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('t20_2pc', 1.4, ['garrote_ticks']))
+
         #Assume 100% uptime of Rupture, Garrote and Mutilated Flesh (2pc bleed)
         if self.stats.gear_buffs.rogue_t19_4pc:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('t19_4pc', 1.21, ['envenom']))
@@ -1070,7 +1073,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             garrote_cooldown = self.get_spell_cd('garrote')
             if self.talents.exsanguinate:
                 exsang_garrote_duration = base_garrote_duration / 2.5
-                exsang_downtime = garrote_cooldown - exsang_garrote_duration
+                exsang_downtime = max(0, garrote_cooldown - exsang_garrote_duration)
                 normal_garrote_per_exsang = (self.exsang_cd - garrote_cooldown) / base_garrote_duration
                 attacks_per_second['garrote'] = (1 + normal_garrote_per_exsang) / self.exsang_cd
                 attacks_per_second['garrote_ticks'] = 2/3 * float(exsang_garrote_duration) / self.exsang_cd + \

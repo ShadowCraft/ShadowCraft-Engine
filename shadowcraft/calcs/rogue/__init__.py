@@ -564,6 +564,8 @@ class RogueDamageCalculator(DamageCalculator):
                 cost -= 4.67
         elif ability == 'backstab':
             cost -= 0.5 * (2 * self.traits.energetic_stabbing)
+        elif ability == 'garrote' and self.stats.gear_buffs.rogue_t20_4pc:
+            cost -= 25
         return cost
 
     def get_spell_cd(self, ability):
@@ -576,6 +578,8 @@ class RogueDamageCalculator(DamageCalculator):
             cd -= 30
         elif self.spec == 'subtlety' and ability == 'marked_for_death':
             cd = 40
+        elif ability == 'garrote' and self.stats.gear_buffs.rogue_t20_4pc:
+            cd -= 12
 
         #Convergence of Fates Trinket
         cof = self.stats.procs.convergence_of_fates
