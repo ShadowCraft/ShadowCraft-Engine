@@ -2000,7 +2000,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         #Symbols of Death
         sod_uptime = 10 / self.get_spell_cd('symbols_of_death')
-        self.damage_modifiers.update_modifier_value('symbols_of_death', 1 + 0.15 * sod_uptime)
+        sod_modifier = 0.25 if self.stats.gear_buffs.rogue_t20_2pc else 0.15
+        self.damage_modifiers.update_modifier_value('symbols_of_death', 1 + sod_modifier * sod_uptime)
 
         #Shadowstrike (Rank 2) deals 25% more damage from stealth
         #Atm, we assume one Shadowstrike per Vanish + Opener unless Nightstalker was chosen
@@ -2100,6 +2101,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         #Symbols of Death
         self.energy_budget += 40 * (1 + self.settings.duration / self.get_spell_cd('symbols_of_death'))
+        if self.stats.gear_buffs.rogue_t20_4pc:
+            self.energy_budget += 20 * (1 + self.settings.duration / self.get_spell_cd('symbols_of_death'))
 
         #set initial dance budget
         self.dance_budget = 2 + self.settings.duration / 60

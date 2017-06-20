@@ -580,6 +580,8 @@ class RogueDamageCalculator(DamageCalculator):
             cd = 40
         elif ability == 'garrote' and self.stats.gear_buffs.rogue_t20_4pc:
             cd -= 12
+        elif ability == 'symbols_of_death' and self.stats.gear_buffs.rogue_t20_4pc:
+            cd -= 5
 
         #Convergence of Fates Trinket
         cof = self.stats.procs.convergence_of_fates
