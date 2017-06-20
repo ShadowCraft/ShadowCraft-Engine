@@ -1924,6 +1924,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #Shadowstrike (Rank 2) deals 25% more damage from stealth
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('shadowstrike_rank_2', None, ['shadowstrike']))
 
+        #Shuriken Combo
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('focused_shurikens', None, ['eviscerate']))
+
         #Generic tuning aura
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('subtlety_aura', 1.25, ['death_from_above_pulse', 'death_from_above_strike',
             'backstab', 'eviscerate', 'gloomblade', 'nightblade', 'shadowstrike', 'shuriken_storm', 'shuriken_toss', 'nightblade_ticks', 'shadow_blades',
@@ -1998,11 +2001,23 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         #Shadowstrike (Rank 2) deals 25% more damage from stealth
         #Atm, we assume one Shadowstrike per Vanish + Opener unless Nightstalker was chosen
-        if aps['shadowstrike']:
+        if 'shadowstrike' in aps:
             buffed_shadowstrikes = 1 / self.settings.duration
             if not self.talents.nightstalker and aps['vanish']:
                 buffed_shadowstrikes += aps['vanish'] / aps['shadowstrike']
             self.damage_modifiers.update_modifier_value('shadowstrike_rank_2', 1 + (0.25 * buffed_shadowstrikes))
+        else:
+            self.damage_modifiers.update_modifier_value('shadowstrike_rank_2', 1)
+
+        #Focused Shurikens gets one stack up to 5 per additional enemy hit and increases Evi dmg by 10% per stack
+        if 'shuriken_storm' in aps:
+            storms_per_evis = aps['shuriken_storm'] / sum(aps['eviscerate'])
+            stacks_per_evis = min(5, storms_per_evis * self.settings.num_boss_adds)
+            print(stacks_per_evis)
+            self.damage_modifiers.update_modifier_value('focused_shurikens', 1 + (0.1 * stacks_per_evis))
+        else:
+            self.damage_modifiers.update_modifier_value('focused_shurikens', 1)
+
 
         #nightstalker
         if self.talents.nightstalker:
