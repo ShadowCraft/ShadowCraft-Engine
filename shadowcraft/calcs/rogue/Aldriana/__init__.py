@@ -1923,7 +1923,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         #Generic tuning aura
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('subtlety_aura', 1.25, ['death_from_above_pulse', 'death_from_above_strike',
-            'backstab', 'eviscerate', 'gloomblade', 'nightblade', 'shadowstrike', 'shuriken_storm', 'shuriken_toss', 'nightblade_ticks']))
+            'backstab', 'eviscerate', 'gloomblade', 'nightblade', 'shadowstrike', 'shuriken_storm', 'shuriken_toss', 'nightblade_ticks', 'shadow_blades',
+            'second_shuriken', 'shadow_nova', 'goremaws_bite', 'soul_rip']))
 
         #talent specific modifiers
         if self.talents.nightstalker:
