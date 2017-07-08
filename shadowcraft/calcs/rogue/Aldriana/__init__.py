@@ -2242,6 +2242,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         cp_per_builder = 1 + self.shadow_blades_uptime
         if self.cp_builder == 'shuriken_storm':
             cp_per_builder += self.settings.num_boss_adds
+        cp_per_builder = min(self.max_store_cps, cp_per_builder)
         energy_per_cp = self.get_spell_cost(self.cp_builder) / cp_per_builder
 
         extra_evis = 0
@@ -2295,6 +2296,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                     raise ConvergenceErrorException(_('Denial Shadow Blades extension failed to converge.'))
                 finisher_cps = 0
                 for i in range(0, 7):
+                    if self.talents.death_from_above:
+                        finisher_cps += attacks_per_second['death_from_above_strike'][i] * i
                     finisher_cps += attacks_per_second['eviscerate'][i] * i
                     finisher_cps += attacks_per_second['nightblade'][i] * i
                 new_sb_extension = finisher_cps * sb_uptime * 0.3
@@ -2315,7 +2318,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         finishers_per_minicycle = cps_per_dance / self.settings.finisher_threshold
 
         attack_counts_mini_cycle = attack_counts
-        attack_counts_mini_cycle['eviscerate'] = [0, 0, 0, 0, 0, 0, 0]
+        if 'eviscerate' in attack_counts_mini_cycle:
+            attack_counts_mini_cycle['eviscerate'][self.settings.finisher_threshold] += finishers_per_minicycle
+        else:
+            attack_counts_mini_cycle['eviscerate'][self.settings.finisher_threshold] = finishers_per_minicycle
         loop_counter = 0
 
         alacrity_stacks = 0
@@ -2341,7 +2347,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 attack_counts_mini_cycle['shuriken_storm-no-dance'] = builders_per_minicycle
             else:
                 attack_counts_mini_cycle[self.cp_builder] = builders_per_minicycle
-            attack_counts_mini_cycle['eviscerate'][self.settings.finisher_threshold] = finishers_per_minicycle
             self.rotation_merge(attacks_per_second, attack_counts_mini_cycle, mini_cycle_count)
             self.energy_budget += mini_cycle_energy * mini_cycle_count
             self.cp_budget += (net_cps - cps_per_dance + cps_to_generate) * mini_cycle_count
@@ -2354,7 +2359,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 alacrity_stacks = new_alacrity_stacks
             #Update Shadow Blades extension from Denial
             if self.stats.gear_buffs.denial_of_the_half_giants:
-                new_sb_extension = mini_cycle_count * finishers_per_minicycle * self.settings.finisher_threshold * self.shadow_blades_uptime * 0.3 / self.settings.duration
+                new_sb_extension = mini_cycle_count * sum(attack_counts_mini_cycle['eviscerate']) * self.settings.finisher_threshold * self.shadow_blades_uptime * 0.3 / self.settings.duration
                 generators = ['shadowstrike', 'shuriken_storm', 'backstab', 'goremaws_bite', 'gloomblade', 'shuriken_toss']
                 denial_extra_cps = new_sb_extension * sum((attacks_per_second[gen] if gen in attacks_per_second else 0) for gen in generators)
                 self.shadow_blades_uptime += new_sb_extension
