@@ -295,7 +295,10 @@ class RogueDamageCalculator(DamageCalculator):
                 if ability == 'death_from_above_strike':
                     modifier *= 1.5
                     ability = 'envenom'
-                damage_breakdown[ability] = self.get_ability_dps(average_ap, ability, aps, crits, modifier, crit_mod, both_hands, cps)
+                if ability in damage_breakdown:
+                    damage_breakdown[ability] += self.get_ability_dps(average_ap, ability, aps, crits, modifier, crit_mod, both_hands, cps)
+                else:
+                    damage_breakdown[ability] = self.get_ability_dps(average_ap, ability, aps, crits, modifier, crit_mod, both_hands, cps)
 
         if self.spec == 'outlaw':
             for ability in self.outlaw_damage_sources:
@@ -320,7 +323,10 @@ class RogueDamageCalculator(DamageCalculator):
                     crit_mod = self.crit_damage_modifiers(3)
                 if ability == 'saber_slash' and self.traits.sabermetrics:
                     crit_mod = self.crit_damage_modifiers(1 + self.traits.sabermetrics * 0.05)
-                damage_breakdown[ability] = self.get_ability_dps(average_ap, ability, aps, crits, modifier, crit_mod, both_hands, cps)
+                if ability in damage_breakdown:
+                    damage_breakdown[ability] += self.get_ability_dps(average_ap, ability, aps, crits, modifier, crit_mod, both_hands, cps)
+                else:
+                    damage_breakdown[ability] = self.get_ability_dps(average_ap, ability, aps, crits, modifier, crit_mod, both_hands, cps)
 
         if self.spec == 'subtlety':
 
@@ -343,7 +349,14 @@ class RogueDamageCalculator(DamageCalculator):
                 if ability in ['shadowstrike', 'backstab']:
                     crit_mod *= 1.0 + (0.08 * self.traits.weak_point)
 
-                damage_breakdown[ability] = self.get_ability_dps(average_ap, ability, aps, crits, modifier, crit_mod, both_hands, cps)
+                if ability in damage_breakdown:
+                    damage_breakdown[ability] += self.get_ability_dps(average_ap, ability, aps, crits, modifier, crit_mod, both_hands, cps)
+                else:
+                    damage_breakdown[ability] = self.get_ability_dps(average_ap, ability, aps, crits, modifier, crit_mod, both_hands, cps)
+
+        #DfA AoE
+        if 'death_from_above_pulse' in damage_breakdown:
+            damage_breakdown['death_from_above_pulse'] *= 1 + self.settings.num_boss_adds
 
         return damage_breakdown, additional_info
 

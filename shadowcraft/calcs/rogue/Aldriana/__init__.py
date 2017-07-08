@@ -2078,7 +2078,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #add AoE damage sources:
         if self.settings.num_boss_adds:
             for key in damage_breakdown:
-                if key in ['shuriken_toss', 'second_shuriken', 'shadow_nova']:
+                if key in ['shuriken_storm', 'second_shuriken', 'shadow_nova']:
                     damage_breakdown[key] *= 1 + self.settings.num_boss_adds
 
         if self.stats.gear_buffs.cinidaria_the_symbiote:
@@ -2176,13 +2176,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second['oh_autoattacks'] -= lost_swings_oh / dfa_cd
 
             attacks_per_second['death_from_above_strike'] = [0, 0, 0, 0, 0, 0, 0]
-            attacks_per_second['death_from_above_strike'][self.max_spend_cps] += 1 / dfa_cd
+            attacks_per_second['death_from_above_strike'][self.settings.finisher_threshold] += 1 / dfa_cd
             attacks_per_second['death_from_above_pulse'] = [0, 0, 0, 0, 0, 0, 0]
-            attacks_per_second['death_from_above_pulse'][self.max_spend_cps] += 1 / dfa_cd
+            attacks_per_second['death_from_above_pulse'][self.settings.finisher_threshold] += 1 / dfa_cd
 
-            self.cp_budget -= self.max_spend_cps * dfa_count
-            self.energy_budget += (self.relentless_strikes_energy_return_per_cp * self.max_spend_cps - self.get_spell_cost('death_from_above')) * dfa_count
-            self.dance_budget += (deepening_shadows_cdr_per_cp * self.max_spend_cps * dfa_count) / self.get_spell_cd('shadow_dance')
+            self.cp_budget -= self.settings.finisher_threshold * dfa_count
+            self.energy_budget += (self.relentless_strikes_energy_return_per_cp * self.settings.finisher_threshold - self.get_spell_cost('death_from_above')) * dfa_count
+            self.dance_budget += (deepening_shadows_cdr_per_cp * self.settings.finisher_threshold * dfa_count) / self.get_spell_cd('shadow_dance')
 
         #Need to handle shadow techniques now to account for swing timer loss
         attacks_per_second['mh_autoattack_hits'] = attacks_per_second['mh_autoattacks'] * self.dw_mh_hit_chance
@@ -2325,7 +2325,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attack_counts_mini_cycle['eviscerate'][self.settings.finisher_threshold] = finishers_per_minicycle
             self.rotation_merge(attacks_per_second, attack_counts_mini_cycle, mini_cycle_count)
             self.energy_budget += mini_cycle_energy * mini_cycle_count
-            self.cp_budget += net_cps - 20 + cps_to_generate
+            self.cp_budget += net_cps - cps_per_dance + cps_to_generate
             #Update energy budget with alacrity and haste procs
             if self.talents.alacrity:
                 old_alacrity_regen = self.energy_regen * (1 + (alacrity_stacks *0.02))
