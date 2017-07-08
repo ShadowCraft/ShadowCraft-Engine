@@ -1686,7 +1686,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.talents.death_from_above and not ar:
             dfa_cd = self.get_spell_cd('death_from_above') + self.settings.response_time - (10 * true_bearing)
             dfa_count = duration / dfa_cd
-            dfa_lost_swings = self.lost_swings_from_swing_delay(1.3, self.stats.mh.speed / attack_speed_multiplier)
+            dfa_lost_swings = self.lost_swings_from_swing_delay(1.5, self.stats.mh.speed / attack_speed_multiplier)
             dfa_energy_lost = dfa_lost_swings * (self.main_gauche_proc_rate * self.combat_potency_from_mg + self.combat_potency_regen_per_oh)
             energy_budget -= dfa_energy_lost
 
@@ -1918,7 +1918,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('versatility', None, [], all_damage=True))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('armor', self.armor_mitigation_multiplier(), ['death_from_above_pulse',
             'death_from_above_strike', 'shuriken_storm', 'eviscerate', 'backstab', 'shadowstrike', 'shuriken_toss', 'autoattacks'], dmg_schools=['physical']))
-        self.damage_modifiers.register_modifier(modifiers.DamageModifier('executioner', None, ['eviscerate', 'nightblade_ticks']))
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('executioner', None, ['eviscerate', 'nightblade_ticks', 'death_from_above_strike', 'death_from_above_pulse']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('symbols_of_death', None, [], all_damage=True))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('stealth_shuriken_storm', None, ['shuriken_storm', 'second_shuriken']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('backstab_positional', 1 + 0.2 * self.settings.cycle.positional_uptime, ['backstab']))
@@ -1930,7 +1930,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('shadowstrike_rank_2', None, ['shadowstrike']))
 
         #Shuriken Combo
-        self.damage_modifiers.register_modifier(modifiers.DamageModifier('focused_shurikens', None, ['eviscerate']))
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('focused_shurikens', None, ['eviscerate', 'death_from_above_strike']))
 
         #Generic tuning aura
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('subtlety_aura', 1.25, ['death_from_above_pulse', 'death_from_above_strike',
@@ -1948,7 +1948,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('mos_ssk', None, ['shadowstrike']))
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('mos_shuriken_storm', None, ['shuriken_storm']))
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('mos_evis', None, ['eviscerate']))
-            self.damage_modifiers.register_modifier(modifiers.DamageModifier('mos_other', None, ['shadowstrike', 'eviscerate', 'shuriken_storm'], blacklist=True, all_damage=True))
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('mos_other', None, ['shadowstrike', 'eviscerate', 'shuriken_storm', 'death_from_above_strike'], blacklist=True, all_damage=True))
 
         if self.talents.deeper_strategem:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('deeper_strategem', 1.05, ['nightblade_ticks', 'eviscerate', 'death_from_above_strike', 'death_from_above_pulse']))
@@ -1958,7 +1958,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('dark_shadow_storm', None, ['shuriken_storm']))
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('dark_shadow_evis', None, ['eviscerate']))
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('dark_shadow_other', None, ['shadowstrike', 'shuriken_storm', 'eviscerate',
-                'backstab', 'goremaws_bite'], blacklist=True, all_damage=True))
+                'backstab', 'goremaws_bite', 'death_from_above_strike'], blacklist=True, all_damage=True))
+
+        if self.talents.death_from_above:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('dfa_mods', None, ['death_from_above_strike']))
 
         #trait specific modifiers
         if self.traits.shadow_fangs:
@@ -2017,7 +2020,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         #Focused Shurikens gets one stack up to 5 per additional enemy hit and increases Evi dmg by 10% per stack
         if 'shuriken_storm' in aps:
-            storms_per_evis = aps['shuriken_storm'] / sum(aps['eviscerate'])
+            if self.talents.death_from_above:
+                storms_per_evis = aps['shuriken_storm'] / (sum(aps['eviscerate']) + sum(aps['death_from_above_strike']))
+            else:
+                storms_per_evis = aps['shuriken_storm'] / sum(aps['eviscerate'])
             stacks_per_evis = min(5, storms_per_evis * self.settings.num_boss_adds)
             print(stacks_per_evis)
             self.damage_modifiers.update_modifier_value('focused_shurikens', 1 + (0.1 * stacks_per_evis))
@@ -2057,6 +2063,17 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.damage_modifiers.update_modifier_value('dark_shadow_storm', 1 + (0.3 * dsh_storm_uptime))
             self.damage_modifiers.update_modifier_value('dark_shadow_evis', 1 + (0.3 * dsh_evis_uptime))
             self.damage_modifiers.update_modifier_value('dark_shadow_other', 1 + (0.3 * dsh_uptime))
+
+        # Special DfA mod handling
+        if self.talents.death_from_above:
+            dfa_mod = 1
+            if self.talents.dark_shadow:
+                dfa_mod *= 1.3
+                if self.talents.nightstalker:
+                    dfa_mod *= 1.12
+            elif self.talents.master_of_subtlety:
+                dfa_mod *= mos_uptime_multipler
+            self.damage_modifiers.update_modifier_value('dfa_mods', dfa_mod)
 
         if self.traits.finality:
             #4% increase per cp applied every to every other
@@ -2128,7 +2145,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.cp_budget = 0
         if self.talents.marked_for_death:
             mfd_base_count = 1 + self.settings.duration / self.get_spell_cd('marked_for_death')
-            mfd_cps = (5. + self.talents.deeper_strategem) * (mfd_base_count + self.settings.marked_for_death_resets)
+            mfd_cps = (6 if self.talents.deeper_strategem else 5) * (mfd_base_count + self.settings.marked_for_death_resets)
             self.cp_budget += mfd_cps
 
         #Very VERY simple implementation for The First of the Dead legendary (this should be handled better)
@@ -2167,10 +2184,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         if self.talents.death_from_above:
             dfa_cd = self.get_spell_cd('death_from_above') + self.settings.response_time
+            if self.talents.dark_shadow:
+                dfa_cd = self.get_spell_cd('symbols_of_death') + self.settings.response_time
             dfa_count = self.settings.duration / dfa_cd
 
-            lost_swings_mh = self.lost_swings_from_swing_delay(1.3, self.stats.mh.speed / haste_multiplier)
-            lost_swings_oh = self.lost_swings_from_swing_delay(1.3, self.stats.oh.speed / haste_multiplier)
+            lost_swings_mh = self.lost_swings_from_swing_delay(1.475, self.stats.mh.speed / haste_multiplier)
+            lost_swings_oh = self.lost_swings_from_swing_delay(1.475, self.stats.oh.speed / haste_multiplier)
 
             attacks_per_second['mh_autoattacks'] -= lost_swings_mh / dfa_cd
             attacks_per_second['oh_autoattacks'] -= lost_swings_oh / dfa_cd
@@ -2325,7 +2344,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attack_counts_mini_cycle['eviscerate'][self.settings.finisher_threshold] = finishers_per_minicycle
             self.rotation_merge(attacks_per_second, attack_counts_mini_cycle, mini_cycle_count)
             self.energy_budget += mini_cycle_energy * mini_cycle_count
-            self.cp_budget += net_cps - cps_per_dance + cps_to_generate
+            self.cp_budget += (net_cps - cps_per_dance + cps_to_generate) * mini_cycle_count
             #Update energy budget with alacrity and haste procs
             if self.talents.alacrity:
                 old_alacrity_regen = self.energy_regen * (1 + (alacrity_stacks *0.02))
