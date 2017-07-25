@@ -706,10 +706,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             mantle_triggers = 1 #Opener
             if attacks_per_second['vanish']:
                 mantle_triggers += attacks_per_second['vanish'] * self.settings.duration
-            mantle_seconds = mantle_triggers * 6
-            #Assume extended stealth bug opener for subtlety (shadow dance -> stealth, stealth wears off after dance)
-            if self.spec == 'subtlety':
-                mantle_seconds += 5 if self.talents.subterfuge else 3 #One full dance mantle uptime
+            mantle_seconds = mantle_triggers * 5
             self.mantle_uptime = mantle_seconds / self.settings.duration
             for attack in crit_rates:
                 crit_rates[attack] = min(crit_rates[attack] * (1. - self.mantle_uptime) + self.mantle_uptime, 1)
@@ -2300,7 +2297,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                         finisher_cps += attacks_per_second['death_from_above_strike'][i] * i
                     finisher_cps += attacks_per_second['eviscerate'][i] * i
                     finisher_cps += attacks_per_second['nightblade'][i] * i
-                new_sb_extension = finisher_cps * sb_uptime * 0.3
+                new_sb_extension = finisher_cps * sb_uptime * 0.2
                 sb_extension_converged = (new_sb_extension - sb_extension) < 10 ** -5
                 sb_uptime = self.shadow_blades_uptime + new_sb_extension
                 sb_extension = new_sb_extension
@@ -2359,7 +2356,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 alacrity_stacks = new_alacrity_stacks
             #Update Shadow Blades extension from Denial
             if self.stats.gear_buffs.denial_of_the_half_giants:
-                new_sb_extension = mini_cycle_count * sum(attack_counts_mini_cycle['eviscerate']) * self.settings.finisher_threshold * self.shadow_blades_uptime * 0.3 / self.settings.duration
+                new_sb_extension = mini_cycle_count * sum(attack_counts_mini_cycle['eviscerate']) * self.settings.finisher_threshold * self.shadow_blades_uptime * 0.2 / self.settings.duration
                 generators = ['shadowstrike', 'shuriken_storm', 'backstab', 'goremaws_bite', 'gloomblade', 'shuriken_toss']
                 denial_extra_cps = new_sb_extension * sum((attacks_per_second[gen] if gen in attacks_per_second else 0) for gen in generators)
                 self.shadow_blades_uptime += new_sb_extension
