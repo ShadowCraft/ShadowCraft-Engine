@@ -740,17 +740,22 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #damage_breakdown, additional_info = self.get_damage_breakdown(self.determine_stats(attack_counts_function))
         return damage_breakdown, additional_info
 
-    def compute_insignia_of_ravenholdt_damage(self, stats, attacks_per_second):
-        # Insignia of Ravenholdt, 30% (Assassination) / 15% base generator damage with crit chance
-        ap = stats['ap'] + stats['agi'] * self.stat_multipliers['ap']
+    def compute_insignia_of_ravenholdt_damage(self, stats, damage_breakdown):
+        # Insignia of Ravenholdt, 30% (Assassination) / 15% generator damage with crit chance
         insignia_base_dmg = 0
         insignia_dmg_factor = 0.3 if self.spec == 'assassination' else 0.15
-        for ability in attacks_per_second:
+        # Ignores Vendetta and Nightblade modifiers
+        if self.spec == 'assassination':
+            insignia_dmg_factor /= 1 + self.vendetta_multiplier
+        if self.spec == 'subtlety':
+            insignia_dmg_factor /= 1.15
+        for ability in damage_breakdown:
             if ability in ['mutilate', 'hemorrhage',
                 'ambush', 'blunderbuss', 'pistol_shot', 'saber_slash',
                 'backstab', 'gloomblade', 'shadowstrike']:
-                both_hands = ability in self.dual_wield_damage_sources
-                insignia_base_dmg += insignia_dmg_factor * self.get_ability_dps(ap, ability, attacks_per_second[ability], 0, 1, 1, both_hands) # base dps wihout modifiers
+                # For physical generators we assume an additional 4.38% damage. (See https://github.com/Ravenholdt-TC/Rogue/issues/50)
+                physical_mod = 1.0438 if ability in self.physical_damage_sources else 1
+                insignia_base_dmg += insignia_dmg_factor * physical_mod * damage_breakdown[ability]
         crit_rate = self.crit_rate(crit=stats['crit'])
         crit_mod = self.crit_damage_modifiers()
         insignia_dmg = insignia_base_dmg * (1 - crit_rate) + insignia_base_dmg * crit_rate * crit_mod
@@ -951,7 +956,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             damage_breakdown['t19_2pc'] = damage_breakdown['mutilate'] * 0.2
 
         if self.stats.gear_buffs.insignia_of_ravenholdt:
-            damage_breakdown['insignia_of_ravenholdt'] = self.compute_insignia_of_ravenholdt_damage(stats, aps)
+            damage_breakdown['insignia_of_ravenholdt'] = self.compute_insignia_of_ravenholdt_damage(stats, damage_breakdown)
 
         if self.stats.gear_buffs.cinidaria_the_symbiote:
             damage_breakdown['symbiote_strike'] = self.compute_symbiote_strike_damage(damage_breakdown)
@@ -1407,7 +1412,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         damage_breakdown, additional_info  = self.compute_damage_from_aps(stats, aps, crits, procs, additional_info)
 
         if self.stats.gear_buffs.insignia_of_ravenholdt:
-            damage_breakdown['insignia_of_ravenholdt'] = self.compute_insignia_of_ravenholdt_damage(stats, aps)
+            damage_breakdown['insignia_of_ravenholdt'] = self.compute_insignia_of_ravenholdt_damage(stats, damage_breakdown)
 
         bf_mod = .35
         if self.settings.cycle.blade_flurry:
@@ -2084,7 +2089,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         damage_breakdown, additional_info  = self.compute_damage_from_aps(stats, aps, crits, procs, additional_info)
 
         if self.stats.gear_buffs.insignia_of_ravenholdt:
-            damage_breakdown['insignia_of_ravenholdt'] = self.compute_insignia_of_ravenholdt_damage(stats, aps)
+            damage_breakdown['insignia_of_ravenholdt'] = self.compute_insignia_of_ravenholdt_damage(stats, damage_breakdown)
 
         for key in damage_breakdown:
             damage_breakdown[key] *= infallible_trinket_mod
