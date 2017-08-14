@@ -280,6 +280,20 @@ allowed_procs = {
         'trigger': 'all_attacks',
     },
 
+    'cradle_of_anguish': { #Equip: While you are above 80% health you gain X Strength or Agility per second, based on your specialization, stacking up to 10 times. If you fall below 50% health, this effect is lost.
+        'stat': 'special_model', #handled in determine stats, assume 10 stacks all the time
+        'value': {'agi':0}, #rpp-scaled
+        'proc_name': 'Strength of Will',
+        'item_level': 900,
+        'scaling': 0.05585,
+        'duration': 1,
+        'max_stacks': 10,
+        'type': 'icd',
+        'icd': 1,
+        'proc_rate': 1,
+        'source': 'trinket',
+    },
+
     #removed the ":" not sure which way it should be
     'darkmoon_deck_dominion': { #Equip: Increase critical strike by X-Y. The amount of critical strike depends on the topmost card in the deck. Equip: Periodically shuffle the deck while in combat.
         'stat': 'stats',

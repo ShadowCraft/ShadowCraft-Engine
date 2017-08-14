@@ -629,6 +629,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 for e in proc.value:
                     static_proc_stats[ e ] += proc.uptime * proc.value[e] * self.stat_multipliers[e]
 
+        # Cradle of Anguish, special hanling
+        if self.stats.procs.cradle_of_anguish:
+            static_proc_stats['agi'] += self.stats.procs.cradle_of_anguish.value['agi'] * self.stats.procs.cradle_of_anguish.max_stacks
+
         for k in static_proc_stats:
             current_stats[k] +=  static_proc_stats[ k ]
 
