@@ -801,7 +801,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('assassins_resolve', 1.17, [], all_damage=True))
 
         #Generic tuning aura
-        self.damage_modifiers.register_modifier(modifiers.DamageModifier('assassination_aura', 1.22, ['death_from_above_pulse', 'death_from_above_strike',
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('assassination_aura', 1.28, ['death_from_above_pulse', 'death_from_above_strike',
             'deadly_poison', 'deadly_instant_poison', 'envenom', 'fan_of_knives', 'garrote_ticks', 'hemorrhage',
             'kingsbane', 'kingsbane_ticks', 'mutilate', 'poisoned_knife', 'rupture_ticks', 'toxic_blade']))
 
@@ -1378,7 +1378,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             'pistol_shot', 'run_through', 'saber_slash', 'autoattacks'], dmg_schools=['physical']))
 
         # Generic tuning aura
-        self.damage_modifiers.register_modifier(modifiers.DamageModifier('outlaw_aura', 1.20, ['death_from_above_pulse', 'death_from_above_strike',
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('outlaw_aura', 1.06, ['death_from_above_pulse', 'death_from_above_strike',
             'ambush', 'between_the_eyes', 'blunderbuss', 'cannonball_barrage', 'ghostly_strike', 'killing_spree',
             'pistol_shot', 'run_through', 'saber_slash']))
 
@@ -1939,7 +1939,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('focused_shurikens', None, ['eviscerate', 'death_from_above_strike']))
 
         #Generic tuning aura
-        self.damage_modifiers.register_modifier(modifiers.DamageModifier('subtlety_aura', 1.25, ['death_from_above_pulse', 'death_from_above_strike',
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('subtlety_aura', 1.27, ['death_from_above_pulse', 'death_from_above_strike',
             'backstab', 'eviscerate', 'gloomblade', 'nightblade', 'shadowstrike', 'shuriken_storm', 'shuriken_toss', 'nightblade_ticks', 'shadow_blades',
             'second_shuriken', 'shadow_nova', 'goremaws_bite', 'soul_rip']))
 
