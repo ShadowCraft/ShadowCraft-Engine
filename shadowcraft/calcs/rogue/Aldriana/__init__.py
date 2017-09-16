@@ -39,6 +39,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.spec == 'assassination':
             return self.assassination_dps_estimate()
         elif self.spec == 'outlaw':
+            raise InputNotModeledException(_('Outlaw model not supported, at the moment.'))
             return self.outlaw_dps_estimate()
         elif self.spec == 'subtlety':
             return self.subtlety_dps_estimate()
@@ -49,6 +50,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.spec == 'assassination':
             return self.assassination_dps_breakdown()
         elif self.spec == 'outlaw':
+            raise InputNotModeledException(_('Outlaw model not supported, at the moment.'))
             return self.outlaw_dps_breakdown()
         elif self.spec == 'subtlety':
             return self.subtlety_dps_breakdown()
