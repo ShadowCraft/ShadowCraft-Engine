@@ -74,6 +74,20 @@ traits = {
         'feeding_frenzy',
         'concordance_of_the_legionfall',
         ),
+    ('all','netherlight'): (
+        'chaotic_darkness',
+        'dark_sorrows',
+        'infusion_of_light',
+        'light_speed',
+        'lights_embrace'
+        'master_of_shadows',
+        'murderous_intent',
+        'refractive_shell',
+        'secure_in_the_light',
+        'shadowbind',
+        'shocklight',
+        'torment_of_the_weak',
+    )
 }
 
 #Single Rank Traits for each spec

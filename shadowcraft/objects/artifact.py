@@ -8,7 +8,7 @@ class InvalidTraitException(exceptions.InvalidInputException):
 
 class Artifact(object):
     def __init__(self, class_spec, game_class, trait_string='', trait_dict= {}):
-        self.allowed_traits = artifact_data.traits[(game_class, class_spec)]
+        self.allowed_traits = artifact_data.traits[(game_class, class_spec)]+artifact_data.traits[('all','netherlight')]
         self.single_rank_traits = artifact_data.single_rank[(game_class, class_spec)]
 
         if trait_string:
