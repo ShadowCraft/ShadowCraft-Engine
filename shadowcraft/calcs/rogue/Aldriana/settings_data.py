@@ -307,7 +307,7 @@ rogue_settings = [
                 'label': 'Pre-pot',
                 'description': '',
                 'type': 'dropdown',
-                'default': 'old_war_pot',
+                'default': 'prolonged_power_pot',
                 'options': {
                     'old_war_pot': 'Potion of the Old War',
                     'prolonged_power_pot': 'Potion of Prolonged Power',
@@ -319,7 +319,7 @@ rogue_settings = [
                 'label': 'Combat Potion',
                 'description': '',
                 'type': 'dropdown',
-                'default': 'old_war_prepot',
+                'default': 'prolonged_power_prepot',
                 'options': {
                     'old_war_prepot': 'Potion of the Old War',
                     'prolonged_power_prepot': 'Potion of Prolonged Power',
