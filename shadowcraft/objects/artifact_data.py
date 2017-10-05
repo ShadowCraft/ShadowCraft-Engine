@@ -79,14 +79,14 @@ traits = {
         'dark_sorrows',
         'infusion_of_light',
         'light_speed',
-        'lights_embrace'
+        'lights_embrace',
         'master_of_shadows',
         'murderous_intent',
         'refractive_shell',
         'secure_in_the_light',
         'shadowbind',
         'shocklight',
-        'torment_of_the_weak',
+        'torment_the_weak',
     )
 }
 

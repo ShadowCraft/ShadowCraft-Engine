@@ -212,7 +212,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         #only include if general multiplier applies to spec calculations
         self.true_haste_mod *= self.get_heroism_haste_multiplier()
-        self.base_stats = self.stats.get_character_base_stats(self.race, self.buffs)
+        self.base_stats = self.stats.get_character_base_stats(self.race, self.traits, self.buffs)
         self.stat_multipliers = self.stats.get_character_stat_multipliers(self.race)
 
         for boost in self.race.get_racial_stat_boosts():
@@ -238,6 +238,74 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.true_haste_mod *= 1.05
         if self.stats.gear_buffs.sephuzs_secret:
             self.true_haste_mod *= 1.02
+
+        #The procs are set within the stats object, which is global.
+        #This means they will still be active, even if gear/traits of
+        #origin changed due to rankings.
+        #Because of that, remove these manually added procs before setting them.
+        #For other procs, the specific EP ranking function is responsible.
+
+        #set additional procs
+        self.stats.procs.del_proc('felmouth_frenzy')
+        if self.buffs.felmouth_food():
+            self.stats.procs.set_proc('felmouth_frenzy')
+        self.stats.procs.del_proc('jacins_ruse_2pc')
+        if self.stats.gear_buffs.jacins_ruse_2pc:
+            self.stats.procs.set_proc('jacins_ruse_2pc')
+        self.stats.procs.del_proc('march_of_the_legion_2pc')
+        if self.stats.gear_buffs.march_of_the_legion_2pc and self.settings.is_demon:
+            self.stats.procs.set_proc('march_of_the_legion_2pc')
+        self.stats.procs.del_proc('rogue_orderhall_8pc')
+        if self.stats.gear_buffs.rogue_orderhall_8pc:
+            self.stats.procs.set_proc('rogue_orderhall_8pc')
+        if self.stats.gear_buffs.journey_through_time_2pc and self.stats.procs.chrono_shard:
+            self.stats.procs.chrono_shard.update_proc_value()
+            self.stats.procs.chrono_shard.value['haste'] += 1000
+        if self.stats.gear_buffs.kara_empowered_2pc:
+            if self.stats.procs.bloodstained_handkerchief:
+                self.stats.procs.bloodstained_handkerchief.update_proc_value()
+                self.stats.procs.bloodstained_handkerchief.value *= 1.3
+            if self.stats.procs.eye_of_command:
+                self.stats.procs.eye_of_command.update_proc_value()
+                self.stats.procs.eye_of_command.value['crit'] *= 1.3
+            if self.stats.procs.toe_knees_promise:
+                self.stats.procs.toe_knees_promise.update_proc_value()
+                self.stats.procs.toe_knees_promise.value *= 1.3
+
+        self.stats.procs.del_proc('concordance_of_the_legionfall')
+        if self.traits.concordance_of_the_legionfall:
+            self.stats.procs.set_proc('concordance_of_the_legionfall')
+            self.stats.procs.concordance_of_the_legionfall.value['agi'] = 4000 + (self.traits.concordance_of_the_legionfall - 1) * 300
+            if self.traits.murderous_intent:
+                self.stats.procs.concordance_of_the_legionfall.value['versatility'] = 1500 * self.traits.murderous_intent
+            if self.traits.shocklight:
+                self.stats.procs.concordance_of_the_legionfall.value['crit'] = 1500 * self.traits.shocklight
+
+        #netherlight crucible t2 procs
+        self.stats.procs.del_proc('chaotic_darkness')
+        if self.traits.chaotic_darkness:
+            self.stats.procs.set_proc('chaotic_darkness')
+            self.stats.procs.chaotic_darkness.value *= self.traits.chaotic_darkness
+        self.stats.procs.del_proc('dark_sorrows')
+        if self.traits.dark_sorrows:
+            self.stats.procs.set_proc('dark_sorrows')
+            self.stats.procs.dark_sorrows.value *= self.traits.dark_sorrows
+        self.stats.procs.del_proc('infusion_of_light')
+        if self.traits.infusion_of_light:
+            self.stats.procs.set_proc('infusion_of_light')
+            self.stats.procs.infusion_of_light.value *= self.traits.infusion_of_light
+        self.stats.procs.del_proc('secure_in_the_light')
+        if self.traits.secure_in_the_light:
+            self.stats.procs.set_proc('secure_in_the_light')
+            self.stats.procs.secure_in_the_light.value *= self.traits.secure_in_the_light
+        self.stats.procs.del_proc('shadowbind')
+        if self.traits.shadowbind:
+            self.stats.procs.set_proc('shadowbind')
+            self.stats.procs.shadowbind.value *= self.traits.shadowbind
+        self.stats.procs.del_proc('torment_the_weak')
+        if self.traits.torment_the_weak:
+            self.stats.procs.set_proc('torment_the_weak')
+            self.stats.procs.torment_the_weak.value *= self.traits.torment_the_weak
 
         #hit chances
         self.dw_mh_hit_chance = self.dual_wield_mh_hit_chance()
@@ -565,32 +633,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         active_procs_no_icd = []
         damage_procs = []
         weapon_damage_procs = []
-
-        if self.buffs.felmouth_food():
-            self.stats.procs.set_proc('felmouth_frenzy')
-        if self.stats.gear_buffs.jacins_ruse_2pc:
-            self.stats.procs.set_proc('jacins_ruse_2pc')
-        if self.stats.gear_buffs.march_of_the_legion_2pc and self.settings.is_demon:
-            self.stats.procs.set_proc('march_of_the_legion_2pc')
-        if self.stats.gear_buffs.rogue_orderhall_8pc:
-            self.stats.procs.set_proc('rogue_orderhall_8pc')
-        if self.stats.gear_buffs.journey_through_time_2pc and self.stats.procs.chrono_shard:
-            self.stats.procs.chrono_shard.update_proc_value()
-            self.stats.procs.chrono_shard.value['haste'] += 1000
-        if self.stats.gear_buffs.kara_empowered_2pc:
-            if self.stats.procs.bloodstained_handkerchief:
-                self.stats.procs.bloodstained_handkerchief.update_proc_value()
-                self.stats.procs.bloodstained_handkerchief.value *= 1.3
-            if self.stats.procs.eye_of_command:
-                self.stats.procs.eye_of_command.update_proc_value()
-                self.stats.procs.eye_of_command.value['crit'] *= 1.3
-            if self.stats.procs.toe_knees_promise:
-                self.stats.procs.toe_knees_promise.update_proc_value()
-                self.stats.procs.toe_knees_promise.value *= 1.3
-
-        if self.traits.concordance_of_the_legionfall:
-            self.stats.procs.set_proc('concordance_of_the_legionfall')
-            self.stats.procs.concordance_of_the_legionfall.value['agi'] = 2000 + (self.traits.concordance_of_the_legionfall - 1) * 200
 
         #sort the procs into groups
         for proc in self.stats.procs.get_all_procs_for_stat():
@@ -2186,9 +2228,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second['goremaws_bite'] = 1 / goremaws_bite_cd
             self.cp_budget += (3 + self.shadow_blades_uptime) * (self.settings.duration / goremaws_bite_cd)
             self.energy_budget += 30 * (self.settings.duration / goremaws_bite_cd)
-        if self.traits.feeding_frenzy:
-            #assume we time it so we can get three free eviscerates
-            self.energy_budget += self.get_spell_cost('eviscerate') * (self.settings.duration / goremaws_bite_cd)
+            if self.traits.feeding_frenzy:
+                #assume we time it so we can get three free eviscerates
+                self.energy_budget += self.get_spell_cost('eviscerate') * (self.settings.duration / goremaws_bite_cd)
 
         if self.talents.death_from_above:
             dfa_cd = self.get_spell_cd('death_from_above') + self.settings.response_time

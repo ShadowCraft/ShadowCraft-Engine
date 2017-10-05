@@ -117,7 +117,7 @@ test_settings = settings.Settings(test_cycle, response_time=.5, duration=300,
 # Build a DPS object.
 calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_traits, test_buffs, test_race, test_spec, test_settings, test_level)
 
-print(str(test_stats.get_character_stats(test_race)))
+print(str(test_stats.get_character_stats(test_race, test_traits)))
 
 # Compute DPS Breakdown.
 dps_breakdown = calculator.get_dps_breakdown()

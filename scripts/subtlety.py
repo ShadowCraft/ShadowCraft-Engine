@@ -70,9 +70,9 @@ for proc in test_procs.get_all_procs_for_stat():
 
 # Set up gear buffs.
 test_gear_buffs = stats.GearBuffs('gear_specialization',
-'shadow_satyrs_walk',
-'rogue_t19_2pc',
-'rogue_t19_4pc',
+'the_first_of_the_dead',
+'rogue_t20_2pc',
+'rogue_t20_4pc',
 #'insignia_of_ravenholdt',
 'mantle_of_the_master_assassin',
 ) #tier buffs located here
@@ -87,33 +87,35 @@ test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
                          versatility=5428,)
 
 # Initialize talents..
-test_talents = talents.Talents('2223211', test_spec, test_class, level=test_level)
+test_talents = talents.Talents('1113213', test_spec, test_class, level=test_level)
 
 #initialize artifact traits..
 test_traits = artifact.Artifact(test_spec, test_class, trait_dict={
     'goremaws_bite':       1,
     'shadow_fangs':        1,
-    'gutripper':           3,
-    'fortunes_bite':       3,
-    'catlike_reflexes':    3,
+    'gutripper':           4,
+    'fortunes_bite':       4,
+    'catlike_reflexes':    4,
     'embrace_of_darkness': 1,
-    'ghost_armor':         3,
-    'precision_strike':    3,
-    'energetic_stabbing':  3+3,
+    'ghost_armor':         4,
+    'precision_strike':    4,
+    'energetic_stabbing':  4+3,
     'flickering_shadows':  1,
     'second_shuriken':     1,
-    'demons_kiss':         3,
+    'demons_kiss':         4,
     'finality':            1,
-    'the_quiet_knife':     3,
+    'the_quiet_knife':     4,
     'akarris_soul':        1,
-    'soul_shadows':        3,
+    'soul_shadows':        4,
     'shadow_nova':         1,
     'legionblade':         1,
     'shadows_of_the_uncrowned': 1,
     'weak_point': 4,
     'shadows_whisper': 1,
     'feeding_frenzy': 1,
-    'concordance_of_the_legionfall': 12,
+    'concordance_of_the_legionfall': 24,
+    #crucible
+    #'master_of_shadows': 3,
 })
 
 # Set up settings.
@@ -123,7 +125,7 @@ test_settings = settings.Settings(test_cycle)
 # Build a DPS object.
 calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_traits, test_buffs, test_race, test_spec, test_settings, test_level)
 
-print(str(test_stats.get_character_stats(test_race)))
+print(str(test_stats.get_character_stats(test_race, test_traits)))
 
 # Compute DPS Breakdown.
 dps_breakdown = calculator.get_dps_breakdown()
@@ -179,4 +181,4 @@ for value in list(aps.items()):
     print(str(value[0]) + ' - ' + str(val))
 """
 
-#pprint(talent_ranks)
+#pprint(trait_ranks)

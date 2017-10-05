@@ -54,7 +54,7 @@ class Stats(object):
         if name == 'level' and value is not None:
             self._set_constants_for_level()
 
-    def get_character_base_stats(self, race, buffs=None):
+    def get_character_base_stats(self, race, traits=None, buffs=None):
         base_stats = {
             'str': self.str + race.racial_str,
             'int': self.int + race.racial_int,
@@ -69,6 +69,13 @@ class Stats(object):
             buff_bonuses = buffs.get_stat_bonuses(race.epicurean)
             for bonus in buff_bonuses:
                 base_stats[bonus] += buff_bonuses[bonus]
+
+        #netherlight crucible t2
+        if traits:
+            if traits.light_speed:
+                base_stats['haste'] += 500 * traits.light_speed
+            if traits.master_of_shadows:
+                base_stats['mastery'] += 500 * traits.master_of_shadows
 
         # Other bonuses
         if self.gear_buffs.rogue_orderhall_6pc:
@@ -90,8 +97,8 @@ class Stats(object):
         }
         return stat_multipliers
 
-    def get_character_stats(self, race, buffs=None):
-        base = self.get_character_base_stats(race, buffs)
+    def get_character_stats(self, race, traits=None, buffs=None):
+        base = self.get_character_base_stats(race, traits, buffs)
         mult = self.get_character_stat_multipliers(race)
         stats = { }
         for stat in base:

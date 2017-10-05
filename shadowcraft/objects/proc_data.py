@@ -90,6 +90,90 @@ allowed_procs = {
         'proc_rate': 1.0,
         'trigger': 'all_attacks'
     },
+    #netherlight crucible
+    'chaotic_darkness': {
+        'stat': 'spell_damage',
+        'dmg_school': 'shadow',
+        'value': 180000, #avg of range 60000 to 5*60000
+        'proc_name': 'Chaotic Darkness',
+        'duration': 0,
+        'type': 'rppm',
+        'source': 'crucible',
+        'proc_rate': 2,
+        'haste_scales': True,
+        'can_crit': True,
+        'trigger': 'all_attacks'
+    },
+    'dark_sorrows': {
+        'stat': 'spell_damage',
+        'dmg_school': 'shadow',
+        'aoe': True,
+        'value': 186350,
+        'proc_name': 'Dark Sorrows',
+        'duration': 0,
+        'type': 'rppm',
+        'source': 'crucible',
+        'icd': 8,
+        'proc_rate': 1,
+        'haste_scales': True,
+        'can_crit': True,
+        'trigger': 'all_attacks'
+    },
+    'infusion_of_light': {
+        'stat': 'spell_damage',
+        'dmg_school': 'holy',
+        'value': 101000,
+        'proc_name': 'Infusion of Light',
+        'duration': 0,
+        'type': 'rppm',
+        'source': 'crucible',
+        'icd': 1,
+        'proc_rate': 4,
+        'haste_scales': True,
+        'can_crit': True,
+        'trigger': 'all_attacks'
+    },
+    'secure_in_the_light': {
+        'stat': 'spell_damage',
+        'dmg_school': 'holy',
+        'value': 135000,
+        'proc_name': 'Secure in the Light',
+        'duration': 0,
+        'type': 'rppm',
+        'source': 'crucible',
+        'icd': 1,
+        'proc_rate': 3,
+        'haste_scales': True,
+        'can_crit': True,
+        'trigger': 'all_attacks'
+    },
+    'shadowbind': {
+        'stat': 'spell_damage',
+        'dmg_school': 'shadow',
+        'value': 200000,
+        'proc_name': 'Shadowbind',
+        'duration': 0,
+        'type': 'rppm',
+        'source': 'crucible',
+        'proc_rate': 2,
+        'haste_scales': True,
+        'can_crit': True,
+        'trigger': 'all_attacks'
+    },
+    'torment_the_weak': {
+        'stat': 'spell_dot',
+        'dmg_school': 'shadow',
+        'dot_ticks': 5,
+        'can_crit': True,
+        'value': 16000,
+        'duration': 15,
+        'max_stacks': 3,
+        'proc_name': 'Torment the Weak',
+        'type': 'rppm',
+        'proc_rate': 4,
+        'source': 'crucible',
+        'trigger': 'all_attacks'
+    },
     #gear procs
     'fury_of_xuen': {
         'stat':'physical_damage',
