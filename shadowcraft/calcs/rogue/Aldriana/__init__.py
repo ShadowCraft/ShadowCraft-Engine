@@ -2452,10 +2452,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         #Full additive assumption for now
         if self.talents.master_of_subtlety:
-            stealth_time = 8. * attacks_per_second['shadow_dance'] + 5 * attacks_per_second['vanish']
+            self.mos_time = 9 * attacks_per_second['shadow_dance'] + 5 * attacks_per_second['vanish']
             if self.talents.subterfuge:
-                 stealth_time = 10. * attacks_per_second['shadow_dance'] + 8 * attacks_per_second['vanish']
-            self.mos_time = stealth_time / self.settings.duration
+                 self.mos_time += 1 * attacks_per_second['shadow_dance'] + 3 * attacks_per_second['vanish']
 
         for ability in list(attacks_per_second.keys()):
             if not attacks_per_second[ability]:
@@ -2481,7 +2480,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                     for cp in range(7):
                         attacks_per_second[ability][cp] *= 1.06
                 else:
-                    attacks_per_second[ability] *=1.06
+                    attacks_per_second[ability] *= 1.06
 
         #for a in attacks_per_second:
         #    if isinstance(attacks_per_second[a], list):
