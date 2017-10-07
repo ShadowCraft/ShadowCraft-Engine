@@ -7,7 +7,7 @@ class Settings(object):
 
     def __init__(self, cycle, **kwargs):
         self.cycle = cycle
-        self.default_ep_stat = kwargs.get('default_ep_stat', 'ap')
+        self.default_ep_stat = kwargs.get('default_ep_stat', 'agi')
         self.feint_interval = int(kwargs.get('feint_interval', 0))
 
         #Get defaults from settings_data
