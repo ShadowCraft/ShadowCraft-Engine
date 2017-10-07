@@ -845,6 +845,22 @@ allowed_procs = {
         'trigger': 'all_attacks'
     },
 
+    'void_stalkers_contract': { #Use: Call upon two Void Stalkers to strike your target from two directions inflicting up to (209877 * 2) Physical damage to all enemies in their paths. (1 Min, 30 Sec Cooldown)
+        'stat':'physical_damage',
+        'value': 0, #rpp-scaled
+        'aoe': True,
+        'duration': 0,
+        'proc_name': 'Void Slash',
+        'scaling': 84.93605,
+        'item_level': 845,
+        'type': 'icd',
+        'source': 'trinket',
+        'icd': 90,
+        'proc_rate': 1,
+        'can_crit': True,
+        'trigger': 'all_attacks'
+    },
+
     'windscar_whetstone': { #Use: A Slicing Maelstrom surrounds you, inflicting X Physical damage to nearby enemies over 6 sec.  (2 Min Cooldown)
         'stat':'physical_damage',
         'value': 0, #rpp-scaled
