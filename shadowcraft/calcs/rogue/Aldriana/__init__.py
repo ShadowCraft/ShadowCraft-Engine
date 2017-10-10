@@ -1989,10 +1989,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         #talent specific modifiers
         if self.talents.nightstalker:
-            self.damage_modifiers.register_modifier(modifiers.DamageModifier('nightstalker_ssk', None, ['shadowstrike']))
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('nightstalker_full', None, ['shadowstrike', 'shadow_nova']))
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('nightstalker_shuriken_storm', None, ['shuriken_storm']))
-            #self.damage_modifiers.register_modifier(modifiers.DamageModifier('nightstalker_nightblade', None, ['nightblade_ticks']))
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('nightstalker_evis', None, ['eviscerate']))
+            # The following creates a blacklist so only AA abilities and procs are affected
+            other_whitelist = ['shadow_blades', 'soul_rip']
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('nightstalker_other', None,
+                [item for item in self.subtlety_damage_sources if item not in other_whitelist], blacklist=True, all_damage=True))
 
         if self.talents.master_of_subtlety:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('mos_ssk', None, ['shadowstrike']))
@@ -2018,7 +2021,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('shadow_fangs', 1.04, [], blacklist=True, dmg_schools=['physical', 'shadow']))
 
         if self.traits.finality:
-            self.damage_modifiers.register_modifier(modifiers.DamageModifier('finality', None, ['nightblade_ticks', 'eviscerate']))
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('finality', None, ['nightblade_ticks', 'eviscerate', 'death_from_above_strike']))
 
         if self.traits.legionblade:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('legionblade',
@@ -2084,15 +2087,15 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #nightstalker
         if self.talents.nightstalker:
             ns_full_multiplier = 0.12
-            self.damage_modifiers.update_modifier_value('nightstalker_ssk', 1 + ns_full_multiplier)
+            self.damage_modifiers.update_modifier_value('nightstalker_full', 1 + ns_full_multiplier)
             self.damage_modifiers.update_modifier_value('nightstalker_shuriken_storm', 1 + (0.12 * self.stealth_shuriken_uptime))
-            #Re-add? self.damage_modifiers.update_modifier_value('nightstalker_nightblade', 1 + (0.12 * self.dance_nb_uptime))
             self.damage_modifiers.update_modifier_value('nightstalker_evis', 1 + (0.12 * self.stealth_evis_uptime))
+            self.damage_modifiers.update_modifier_value('nightstalker_other', 1 + (0.12 * self.stealthed_uptime))
 
         #master of subtlety
         if self.talents.master_of_subtlety:
             mos_full_multiplier = 1.1
-            mos_uptime_multipler = 1. + (0.1 * self.mos_time)
+            mos_uptime_multipler = 1. + (0.1 * self.mos_uptime)
             self.damage_modifiers.update_modifier_value('mos_ssk', mos_full_multiplier)
             self.damage_modifiers.update_modifier_value('mos_shuriken_storm', 1 + (0.1 * self.stealth_shuriken_uptime))
             self.damage_modifiers.update_modifier_value('mos_evis', 1 + (0.1 * self.stealth_evis_uptime))
@@ -2121,8 +2124,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 dfa_mod *= 1.3
                 if self.talents.nightstalker:
                     dfa_mod *= 1.12
-            elif self.talents.master_of_subtlety:
-                dfa_mod *= mos_uptime_multipler
+                if self.talents.master_of_subtlety:
+                    dfa_mod *= 1.1
+            else:
+                if self.talents.master_of_subtlety:
+                    dfa_mod *= mos_uptime_multipler
             self.damage_modifiers.update_modifier_value('dfa_mods', dfa_mod)
 
         if self.traits.finality:
@@ -2450,11 +2456,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second['shuriken_storm'] = attacks_per_second['shuriken_storm'] + attacks_per_second['shuriken_storm-no-dance']
             del attacks_per_second['shuriken_storm-no-dance']
 
+        self.stealthed_uptime = 4 * attacks_per_second['shadow_dance']
+        if self.talents.subterfuge:
+            self.stealthed_uptime += 1 * attacks_per_second['shadow_dance'] + 3 * attacks_per_second['vanish']
+
         #Full additive assumption for now
         if self.talents.master_of_subtlety:
-            self.mos_time = 9 * attacks_per_second['shadow_dance'] + 5 * attacks_per_second['vanish']
-            if self.talents.subterfuge:
-                 self.mos_time += 1 * attacks_per_second['shadow_dance'] + 3 * attacks_per_second['vanish']
+            self.mos_uptime = self.stealthed_uptime + 5 * attacks_per_second['shadow_dance'] + 5 * attacks_per_second['vanish']
 
         for ability in list(attacks_per_second.keys()):
             if not attacks_per_second[ability]:
