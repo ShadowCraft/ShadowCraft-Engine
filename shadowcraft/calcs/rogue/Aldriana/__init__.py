@@ -2271,11 +2271,16 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.traits.shadows_whisper:
             self.energy_budget += 8 * shadow_techniques_procs
 
+        # Init stealth evis counter
+        stealth_evis_per_vanish = 0
+        stealth_evis_per_dance = 0
+
         #vanish handling
         vanish_count = self.settings.duration / self.get_spell_cd('vanish')
         #Treat subterfuge as a mini-dance
         if self.talents.subterfuge or self.talents.nightstalker:
             net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(finisher='eviscerate', vanish=True)
+            stealth_evis_per_vanish += sum(attack_counts['eviscerate'])
         else:
            net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(finisher=None, vanish=True)
         self.energy_budget += vanish_count * net_energy
@@ -2286,6 +2291,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #Generate one final dance templates
         if self.settings.cycle.dance_finishers_allowed:
             net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(finisher='eviscerate')
+            stealth_evis_per_dance += sum(attack_counts['eviscerate'])
         else:
             net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(finisher=None)
 
@@ -2470,11 +2476,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             elif isinstance(attacks_per_second[ability], list) and not any(attacks_per_second[ability]):
                 del attacks_per_second[ability]
 
-        #determine how many evis used during dance
+        #determine how many evis used during stealth
         if self.settings.cycle.dance_finishers_allowed:
-            stealth_evis = attacks_per_second['shadow_dance']
+            stealth_evis = stealth_evis_per_dance * attacks_per_second['shadow_dance']
             if self.talents.subterfuge:
-                stealth_evis += attacks_per_second['vanish']
+                stealth_evis += stealth_evis_per_vanish * attacks_per_second['vanish']
         else:
             stealth_evis = 0
         self.stealth_evis_uptime = stealth_evis / sum(attacks_per_second['eviscerate'])
@@ -2523,31 +2529,36 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         max_dance_energy = dance_gcds * self.energy_regen + self.max_energy
 
-        if finisher:
-            net_energy += self.relentless_strikes_energy_return_per_cp * self.settings.finisher_threshold - self.get_spell_cost(finisher)
-            dance_gcds -= 1
-            net_cps -= self.settings.finisher_threshold
-            attack_counts[finisher] = [0, 0, 0, 0, 0, 0, 0]
-            attack_counts[finisher][self.settings.finisher_threshold] += 1
-            spent_cps += self.settings.finisher_threshold
-        #fill remaining gcds with shadowstrikes
-        cp_builder = self.dance_cp_builder
-        cp_builder_cost = float(self.get_spell_cost(cp_builder, cost_mod=cost_mod))
-        builder_count = min(dance_gcds, (net_energy + max_dance_energy) / cp_builder_cost)
         if vanish:
-            attack_counts[cp_builder] = builder_count
             attack_counts['vanish'] = 1
         else:
-            attack_counts[cp_builder] = builder_count
             attack_counts['shadow_dance'] = 1
 
-        net_energy -= attack_counts[cp_builder] * cp_builder_cost
-        if cp_builder == 'shadowstrike':
-            net_cps += attack_counts['shadowstrike'] * (2 + self.shadow_blades_uptime)
-            if self.stats.gear_buffs.rogue_t19_4pc:
-                net_cps += attack_counts['shadowstrike'] * 0.3
-        elif cp_builder == 'shuriken_storm':
-            net_cps += min(1 + self.settings.num_boss_adds + self.shadow_blades_uptime, self.max_store_cps)
+        cp_builder_cost = self.get_spell_cost(self.dance_cp_builder, cost_mod=cost_mod)
+        attack_counts[self.dance_cp_builder] = 0
+        if finisher:
+            finisher_cost = self.get_spell_cost(finisher, cost_mod=cost_mod)
+            attack_counts[finisher] = [0, 0, 0, 0, 0, 0, 0]
+
+        while dance_gcds > 0:
+            remaining_energy = (net_energy + max_dance_energy)
+            if finisher and net_cps >= self.settings.finisher_threshold and remaining_energy >= finisher_cost:
+                use_cps = min(int(net_cps), self.max_spend_cps)
+                net_energy += self.relentless_strikes_energy_return_per_cp * use_cps - finisher_cost
+                attack_counts[finisher][use_cps] += 1
+                spent_cps += use_cps
+                net_cps -= use_cps
+            elif remaining_energy >= cp_builder_cost:
+                attack_counts[self.dance_cp_builder] += 1
+                net_energy -= cp_builder_cost
+                if self.dance_cp_builder == 'shadowstrike':
+                    net_cps += 2 + self.shadow_blades_uptime
+                    if self.stats.gear_buffs.rogue_t19_4pc:
+                        net_cps += 0.3
+                elif self.dance_cp_builder == 'shuriken_storm':
+                    net_cps += min(1 + self.settings.num_boss_adds + self.shadow_blades_uptime, self.max_store_cps)
+            net_cps = min(net_cps, self.max_store_cps)
+            dance_gcds -= 1
 
         return net_energy, net_cps, spent_cps, attack_counts
 
