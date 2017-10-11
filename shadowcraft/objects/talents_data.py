@@ -73,7 +73,7 @@ talents = {
     ('rogue', 'assassination'): (
         ('master_poisoner', 'elaborate_planning', 'hemorrhage'),
         ('nightstalker', 'subterfuge', 'shadow_focus'),
-        ('deeper_strategem', 'anticipation', 'vigor'),
+        ('deeper_stratagem', 'anticipation', 'vigor'),
         ('leeching_poison', 'elusiveness', 'cheat_death'),
         ('thuggee', 'prey_on_the_weak', 'internal_bleeding'),
         ('toxic_blade', 'alacrity', 'exsanguinate'),
@@ -82,7 +82,7 @@ talents = {
     ('rogue', 'outlaw'): (
         ('ghostly_strike', 'swordmaster', 'quick_draw'),
         ('grappling_hook', 'acrobatic_strikes', 'hit_and_run'),
-        ('deeper_strategem', 'anticipation', 'vigor'),
+        ('deeper_stratagem', 'anticipation', 'vigor'),
         ('iron_stomach', 'elusiveness', 'cheat_death'),
         ('parley', 'prey_on_the_weak', 'dirty_tricks'),
         ('cannonball_barrage', 'alacrity', 'killing_spree'),
@@ -91,7 +91,7 @@ talents = {
     ('rogue', 'subtlety'): (
         ('master_of_subtlety', 'weaponmaster', 'gloomblade'),
         ('nightstalker', 'subterfuge', 'shadow_focus'),
-        ('deeper_strategem', 'anticipation', 'vigor'),
+        ('deeper_stratagem', 'anticipation', 'vigor'),
         ('soothing_darkness', 'elusiveness', 'cheat_death'),
         ('strike_from_the_shadows', 'prey_on_the_weak', 'tangled_shadow'),
         ('dark_shadow', 'alacrity', 'enveloping_shadows'),

@@ -233,7 +233,7 @@ class RogueDamageCalculator(DamageCalculator):
 
     def get_damage_breakdown(self, current_stats, attacks_per_second, crit_rates, damage_procs, additional_info):
         average_ap = current_stats['ap'] + current_stats['agi'] * self.stat_multipliers['ap']
-        max_cps = 5 + int(self.talents.deeper_strategem)
+        max_cps = 5 + int(self.talents.deeper_stratagem)
 
         self.setup_unique_procs(current_stats, average_ap)
 

@@ -869,8 +869,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('nightstalker', None, ['rupture_ticks']))
         if self.talents.subterfuge:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('subterfuge_garrote', None, ['garrote_ticks']))
-        if self.talents.deeper_strategem:
-            self.damage_modifiers.register_modifier(modifiers.DamageModifier('deeper_strategem', 1.05, ['rupture_ticks', 'envenom', 'death_from_above_pulse', 'death_from_above_strike']))
+        if self.talents.deeper_stratagem:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('deeper_stratagem', 1.05, ['rupture_ticks', 'envenom', 'death_from_above_pulse', 'death_from_above_strike']))
 
         #trait specific modifiers
         if self.traits.kingsbane:
@@ -1073,7 +1073,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 else:
                     raise InputNotModeledException(_('Finisher thresholds less than 4 unimplemented'))
                 max_cps = 5
-                if self.talents.deeper_strategem:
+                if self.talents.deeper_stratagem:
                     max_cps = 6
                 builders_per_finisher = 0.0
                 avg_finisher_size = 0.0
@@ -1146,7 +1146,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             #compute cooldowned talents:
             if self.talents.marked_for_death:
                 mfd_base_count = 1 + self.settings.duration / self.get_spell_cd('marked_for_death')
-                mfd_cps = (5. + self.talents.deeper_strategem) * (mfd_base_count + self.settings.marked_for_death_resets)
+                mfd_cps = (5. + self.talents.deeper_stratagem) * (mfd_base_count + self.settings.marked_for_death_resets)
                 cp_budget += mfd_cps
 
             if self.stats.gear_buffs.the_dreadlords_deceit:
@@ -1427,8 +1427,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             'pistol_shot', 'run_through', 'saber_slash']))
 
         # Talent specific modifiers
-        if self.talents.deeper_strategem:
-            self.damage_modifiers.register_modifier(modifiers.DamageModifier('deeper_strategem', 1.05, ['between_the_eyes', 'run_through', 'death_from_above_pulse', 'death_from_above_strike']))
+        if self.talents.deeper_stratagem:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('deeper_stratagem', 1.05, ['between_the_eyes', 'run_through', 'death_from_above_pulse', 'death_from_above_strike']))
 
         # Trait specific modifiers
         if self.traits.cursed_steel:
@@ -1720,11 +1720,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             gcd_size -= .2
 
         max_cps = 5
-        if self.talents.deeper_strategem:
+        if self.talents.deeper_stratagem:
             max_cps += 1
 
         #fetch minicycle value
-        minicycle_key = (self.settings.finisher_threshold, bool(self.talents.deeper_strategem), bool(self.talents.quick_draw),
+        minicycle_key = (self.settings.finisher_threshold, bool(self.talents.deeper_stratagem), bool(self.talents.quick_draw),
                          bool(self.talents.swordmaster), broadsides, jolly)
         ss_count, ps_count, finisher_list = self.minicycle_table[minicycle_key]
 
@@ -1793,7 +1793,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #consider MfD
         if self.talents.marked_for_death:
             mfd_base_count = 1 + self.settings.duration / self.get_spell_cd('marked_for_death')
-            mfd_cps = (5. + self.talents.deeper_strategem) * (mfd_base_count + self.settings.marked_for_death_resets)
+            mfd_cps = (5. + self.talents.deeper_stratagem) * (mfd_base_count + self.settings.marked_for_death_resets)
             bonus_cps += mfd_cps
 
         #consider Curse of the Dreadblades
@@ -1869,7 +1869,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     def outlaw_attack_counts_reroll(self, current_stats, ar=False,
         jolly=False, melee=False, buried=False, broadsides=False, alacrity_stacks=0):
         #fetch minicycle value
-        minicycle_key = (self.settings.finisher_threshold, bool(self.talents.deeper_strategem), bool(self.talents.quick_draw),
+        minicycle_key = (self.settings.finisher_threshold, bool(self.talents.deeper_stratagem), bool(self.talents.quick_draw),
                          bool(self.talents.swordmaster), broadsides, jolly)
         ss_count, ps_count, finisher_list = self.minicycle_table[minicycle_key]
         reroll_energy_cost = (ss_count * self.saber_slash_energy_cost) + self.roll_the_bones_cost
@@ -1955,7 +1955,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.cp_builder = 'gloomblade'
 
         self.max_spend_cps = 5
-        if self.talents.deeper_strategem:
+        if self.talents.deeper_stratagem:
             self.max_spend_cps += 1
         self.max_store_cps = self.max_spend_cps
         if self.talents.anticipation:
@@ -2003,8 +2003,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('mos_evis', None, ['eviscerate']))
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('mos_other', None, ['shadowstrike', 'eviscerate', 'shuriken_storm', 'death_from_above_strike'], blacklist=True, all_damage=True))
 
-        if self.talents.deeper_strategem:
-            self.damage_modifiers.register_modifier(modifiers.DamageModifier('deeper_strategem', 1.05, ['nightblade_ticks', 'eviscerate', 'death_from_above_strike', 'death_from_above_pulse']))
+        if self.talents.deeper_stratagem:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('deeper_stratagem', 1.05, ['nightblade_ticks', 'eviscerate', 'death_from_above_strike', 'death_from_above_pulse']))
 
         if self.talents.dark_shadow:
             self.damage_modifiers.register_modifier(modifiers.DamageModifier('dark_shadow_ssk', None, ['shadowstrike']))
@@ -2201,7 +2201,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.cp_budget = 0
         if self.talents.marked_for_death:
             mfd_base_count = 1 + self.settings.duration / self.get_spell_cd('marked_for_death')
-            mfd_cps = (6 if self.talents.deeper_strategem else 5) * (mfd_base_count + self.settings.marked_for_death_resets)
+            mfd_cps = (6 if self.talents.deeper_stratagem else 5) * (mfd_base_count + self.settings.marked_for_death_resets)
             self.cp_budget += mfd_cps
 
         #Very VERY simple implementation for The First of the Dead legendary (this should be handled better)
