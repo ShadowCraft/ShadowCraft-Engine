@@ -65,13 +65,13 @@ class Stats(object):
             'mastery': self.mastery,
             'versatility': self.versatility,
         }
-        if buffs:
+        if buffs is not None:
             buff_bonuses = buffs.get_stat_bonuses(race.epicurean)
             for bonus in buff_bonuses:
                 base_stats[bonus] += buff_bonuses[bonus]
 
         #netherlight crucible t2
-        if traits:
+        if traits is not None:
             if traits.light_speed:
                 base_stats['haste'] += 500 * traits.light_speed
             if traits.master_of_shadows:
