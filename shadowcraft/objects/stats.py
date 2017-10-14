@@ -72,10 +72,11 @@ class Stats(object):
 
         #netherlight crucible t2
         if traits is not None:
+            insigniaMod = 1.5 if self.gear_buffs.insignia_of_the_grand_army else 1
             if traits.light_speed:
-                base_stats['haste'] += 500 * traits.light_speed
+                base_stats['haste'] += 500 * traits.light_speed * insigniaMod
             if traits.master_of_shadows:
-                base_stats['mastery'] += 500 * traits.master_of_shadows
+                base_stats['mastery'] += 500 * traits.master_of_shadows * insigniaMod
 
         # Other bonuses
         if self.gear_buffs.rogue_orderhall_6pc:
@@ -238,6 +239,7 @@ class GearBuffs(object):
         'the_first_of_the_dead',             #For 2 sec after activating Symbols of Death, Shadowstrike generates 3 additional combo points and Backstab generates 4 additional combo points.
         'the_curse_of_restlessness',         #NYI
         'soul_of_the_shadowblade',           #Gain the Vigor talent.
+        'insignia_of_the_grand_army',        #Increase the effects of Light and Shadow powers granted by the Netherlight Crucible by 50%.
         #Other
         'jeweled_signet_of_melandrus',       #Increases your autoattack damage by 10%.
         'gnawed_thumb_ring',                 #Use: Have a nibble, increasing your healing and magic damage done by 5% for 12 sec. (3 Min Cooldown)

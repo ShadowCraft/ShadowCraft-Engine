@@ -282,30 +282,31 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 self.stats.procs.concordance_of_the_legionfall.value['crit'] = 1500 * self.traits.shocklight
 
         #netherlight crucible t2 procs
+        insigniaMod = 1.5 if self.stats.gear_buffs.insignia_of_the_grand_army else 1
         self.stats.procs.del_proc('chaotic_darkness')
         if self.traits.chaotic_darkness:
             self.stats.procs.set_proc('chaotic_darkness')
-            self.stats.procs.chaotic_darkness.value *= self.traits.chaotic_darkness
+            self.stats.procs.chaotic_darkness.value *= self.traits.chaotic_darkness * insigniaMod
         self.stats.procs.del_proc('dark_sorrows')
         if self.traits.dark_sorrows:
             self.stats.procs.set_proc('dark_sorrows')
-            self.stats.procs.dark_sorrows.value *= self.traits.dark_sorrows
+            self.stats.procs.dark_sorrows.value *= self.traits.dark_sorrows * insigniaMod
         self.stats.procs.del_proc('infusion_of_light')
         if self.traits.infusion_of_light:
             self.stats.procs.set_proc('infusion_of_light')
-            self.stats.procs.infusion_of_light.value *= self.traits.infusion_of_light
+            self.stats.procs.infusion_of_light.value *= self.traits.infusion_of_light * insigniaMod
         self.stats.procs.del_proc('secure_in_the_light')
         if self.traits.secure_in_the_light:
             self.stats.procs.set_proc('secure_in_the_light')
-            self.stats.procs.secure_in_the_light.value *= self.traits.secure_in_the_light
+            self.stats.procs.secure_in_the_light.value *= self.traits.secure_in_the_light * insigniaMod
         self.stats.procs.del_proc('shadowbind')
         if self.traits.shadowbind:
             self.stats.procs.set_proc('shadowbind')
-            self.stats.procs.shadowbind.value *= self.traits.shadowbind
+            self.stats.procs.shadowbind.value *= self.traits.shadowbind * insigniaMod
         self.stats.procs.del_proc('torment_the_weak')
         if self.traits.torment_the_weak:
             self.stats.procs.set_proc('torment_the_weak')
-            self.stats.procs.torment_the_weak.value *= self.traits.torment_the_weak
+            self.stats.procs.torment_the_weak.value *= self.traits.torment_the_weak * insigniaMod
 
         #hit chances
         self.dw_mh_hit_chance = self.dual_wield_mh_hit_chance()
