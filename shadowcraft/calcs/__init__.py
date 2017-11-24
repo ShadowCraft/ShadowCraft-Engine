@@ -66,6 +66,8 @@ class DamageCalculator(object):
         self.recalculate_hit_constants()
         self.base_block_chance = .03 + .015 * self.level_difference
 
+        self.pantheon_empowerment_uptime = self.get_pantheon_empowerment_uptime(self.settings.pantheon_trinket_users)
+
     def __setattr__(self, name, value):
         object.__setattr__(self, name, value)
         if name == 'level':
@@ -697,3 +699,32 @@ class DamageCalculator(object):
         if armor is None:
             armor = self.target_base_armor
         return armor #* self.buffs.armor_reduction_multiplier()
+
+    # Antorus 7.3 Raid Pantheon Trinket Empowerment, precomputed uptimes (thanks to seriallos from raidbots)
+    # Updated 2017/11/24
+    def get_pantheon_empowerment_uptime(self, wearers):
+        uptimes = {
+            4: 0.023,
+            5: 0.061,
+            6: 0.103,
+            7: 0.141,
+            8: 0.176,
+            9: 0.205,
+            10: 0.228,
+            11: 0.248,
+            12: 0.264,
+            13: 0.276,
+            14: 0.287,
+            15: 0.295,
+            16: 0.302,
+            17: 0.306,
+            18: 0.311,
+            19: 0.313,
+            20: 0.316
+        }
+        if wearers in uptimes:
+            return uptimes[wearers]
+        elif wearers > 20:
+            return 0.316
+        else:
+            return 0

@@ -23,6 +23,7 @@ class Settings(object):
         self.adv_params = self.interpret_adv_params(kwargs.get('adv_params', defaults['adv_params']))
         self.marked_for_death_resets = int(kwargs.get('marked_for_death_resets', defaults['marked_for_death_resets']))
         self.finisher_threshold = int(kwargs.get('finisher_threshold', defaults['finisher_threshold']))
+        self.pantheon_trinket_users = int(kwargs.get('pantheon_trinket_users', defaults['pantheon_trinket_users']))
 
     def interpret_adv_params(self, s=""):
         data = {}

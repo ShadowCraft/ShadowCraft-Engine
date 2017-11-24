@@ -662,3 +662,14 @@ class RogueDamageCalculator(DamageCalculator):
         if specter_of_betrayal:
             num_torrents = (1 + 2 * (self.settings.duration / specter_of_betrayal.icd)) / self.settings.duration
             damage_breakdown[specter_of_betrayal.proc_name] = self.get_proc_damage_contribution(specter_of_betrayal, num_torrents, current_stats, ap, modifier_dict)
+
+        # Golganneth's Thunderous Wrath, use pantheon empowerment uptime value
+        golganneths_vitality_empowered = self.stats.procs.golganneths_vitality_empowered
+        if golganneths_vitality_empowered:
+            autoattacks_per_second = attacks_per_second['mh_autoattacks'] * self.dual_wield_mh_hit_chance()
+            autoattacks_per_second += attacks_per_second['oh_autoattacks'] * self.dual_wield_oh_hit_chance()
+            if 'shadow_blades' in attacks_per_second:
+                autoattacks_per_second += attacks_per_second['shadow_blades'] * 2 #both hands
+            dmg_per_aa = self.stats.mh.speed * self.get_proc_damage_contribution(golganneths_vitality_empowered, 1, current_stats, ap, modifier_dict)
+            proc_damage = dmg_per_aa * autoattacks_per_second * (1 + self.settings.num_boss_adds) * self.pantheon_empowerment_uptime
+            damage_breakdown[golganneths_vitality_empowered.proc_name] = proc_damage

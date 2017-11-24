@@ -416,6 +416,13 @@ rogue_settings = [
                 'description': '',
                 'type': 'text',
                 'default': '0',
+            },
+            {
+                'name': 'pantheon_trinket_users',
+                'label': 'Number of players with Pantheon trinkets',
+                'description': '',
+                'type': 'text',
+                'default': '0',
             }
         ]
     },

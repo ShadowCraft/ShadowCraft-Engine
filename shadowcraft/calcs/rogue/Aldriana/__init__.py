@@ -281,6 +281,15 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if self.traits.shocklight:
                 self.stats.procs.concordance_of_the_legionfall.value['crit'] = 1500 * self.traits.shocklight
 
+        # Pantheon Empowerment proc setup
+        self.stats.procs.del_proc('amanthuls_vision_empowered')
+        if self.stats.procs.amanthuls_vision and self.settings.pantheon_trinket_users >= 4:
+            self.stats.procs.set_proc('amanthuls_vision_empowered')
+            self.stats.procs.amanthuls_vision_empowered.duration = self.pantheon_empowerment_uptime * self.stats.procs.amanthuls_vision_empowered.icd
+        self.stats.procs.del_proc('golganneths_vitality_empowered')
+        if self.stats.procs.golganneths_vitality and self.settings.pantheon_trinket_users >= 4:
+            self.stats.procs.set_proc('golganneths_vitality_empowered')
+
         #netherlight crucible t2 procs
         insigniaMod = 1.5 if self.stats.gear_buffs.insignia_of_the_grand_army else 1
         self.stats.procs.del_proc('chaotic_darkness')

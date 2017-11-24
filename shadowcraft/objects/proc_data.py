@@ -877,6 +877,59 @@ allowed_procs = {
         'trigger': 'all_attacks'
     },
 
+    ### Antorus Procs ###
+    'amanthuls_vision': { #PROXY PROC, only used to set empowerment
+        'stat': 'special_model',
+        'value': 0,
+        'duration': 0,
+        'proc_name': 'Aman\'thul Proxy'
+    },
+    'amanthuls_vision_empowered': { #When empowered by the Pantheon, your primary stat is increased by X for 15 sec.
+        'stat':'stats',
+        'value': {'agi': 0}, #rpp-scaled
+        'duration': 15, #Ignored, use precomputed uptime values, set in set_constants
+        'proc_name': 'Aman\'thul\'s Grandeur',
+        'scaling': 0.639601,
+        'item_level': 1000,
+        'source': 'trinket',
+        'type': 'icd',
+        'icd': 100, #modeled as icd, duration will be set to uptime % and icd 100
+        'proc_rate': 1, #Ignore RPPM
+        'trigger': 'all_attacks'
+    },
+
+    'golganneths_vitality': { #Your damaging abilities have a chance to create a Ravaging Storm at your target's location, inflicting Nature damage split among all enemies within 6 yds over 6 sec.
+        'stat':'spell_damage',
+        'dmg_school': 'nature',
+        'value': 0, #rpp-scaled
+        'duration': 6,
+        'proc_name': 'Ravaging Storm',
+        'scaling': 14.58708 * 6, # 6 hits
+        'item_level': 940,
+        'type': 'rppm',
+        'source': 'trinket',
+        'proc_rate': 1.8,
+        'can_crit': True,
+        'haste_scales': True,
+        'trigger': 'all_attacks'
+    },
+    'golganneths_vitality_empowered': { #When empowered by the Pantheon, your autoattacks cause an explosion of lightning dealing [(Mainhand weapon base speed) * X] Nature damage to all enemies within 8 yds of the target. Lasts 15 sec.
+        'stat':'special_model',
+        'dmg_school': 'nature',
+        'aoe': True,
+        'value': 0, #rpp-scaled
+        'duration': 15, #Ignored, use precomputed uptime values
+        'proc_name': 'Golganneth\'s Thunderous Wrath',
+        'scaling': 7.98956,
+        'item_level': 940,
+        'type': 'rppm',
+        'source': 'trinket',
+        'proc_rate': 0, #Ignore RPPM, special pantheon formula in add_special_procs_damage
+        'can_crit': True,
+        'haste_scales': True,
+        'trigger': 'all_attacks'
+    },
+
     #Other Legion procs
     'jacins_ruse_2pc': { #Equip:  Your spells and attacks have a chance to increase your Mastery by 3000 for 15 sec.
         'stat':'stats',
