@@ -290,6 +290,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.stats.procs.golganneths_vitality and self.settings.pantheon_trinket_users >= 4:
             self.stats.procs.set_proc('golganneths_vitality_empowered')
 
+        # Special Antorus trinkets
+        self.stats.procs.del_proc('shadowsinged_fang_2')
+        if self.stats.procs.shadowsinged_fang:
+            self.stats.procs.set_proc('shadowsinged_fang_2')
+        self.stats.procs.del_proc('seeping_scourgewing_2')
+        if self.stats.procs.seeping_scourgewing and self.settings.num_boss_adds < 1:
+            self.stats.procs.set_proc('seeping_scourgewing_2')
+
         #netherlight crucible t2 procs
         insigniaMod = 1.5 if self.stats.gear_buffs.insignia_of_the_grand_army else 1
         self.stats.procs.del_proc('chaotic_darkness')

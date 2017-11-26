@@ -39,14 +39,14 @@ test_buffs = buffs.Buffs(
     )
 
 # Set up weapons.
-test_mh = stats.Weapon(5442.0, 1.8, 'dagger', None)
-test_oh = stats.Weapon(5442.0, 1.8, 'dagger', None)
+test_mh = stats.Weapon(10064.0, 1.8, 'dagger', None)
+test_oh = stats.Weapon(10064.0, 1.8, 'dagger', None)
 
 # Set up procs. - trinkets, other things (legendary procs)
 test_procs = procs.ProcsList(
     'mark_of_the_hidden_satyr',
-    ('convergence_of_fates', 890),
-    ('nightblooming_frond', 905),
+    ('specter_of_betrayal', 925),
+    #('forgefiends_fabricator', 930),
     #('kiljaedens_burning_wish', 940)
     #'old_war_pot',
     #'old_war_prepot',
@@ -70,7 +70,7 @@ for proc in test_procs.get_all_procs_for_stat():
 
 # Set up gear buffs.
 test_gear_buffs = stats.GearBuffs('gear_specialization',
-'the_first_of_the_dead',
+'insignia_of_ravenholdt',
 'rogue_t20_2pc',
 'rogue_t20_4pc',
 #'insignia_of_ravenholdt',
@@ -79,12 +79,12 @@ test_gear_buffs = stats.GearBuffs('gear_specialization',
 
 # Set up a calcs object..
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
-                         agi=round(31794 * 0.95238 - test_race.racial_agi), #gear spec and racial agi are added during calc again
+                         agi=round(42158 * 0.95238 - test_race.racial_agi), #gear spec and racial agi are added during calc again
                          stam=54585,
-                         crit=7010,
-                         haste=4209,
-                         mastery=6481,
-                         versatility=5428,)
+                         crit=13821,
+                         haste=4139,
+                         mastery=5600,
+                         versatility=7111,)
 
 # Initialize talents..
 test_talents = talents.Talents('1113213', test_spec, test_class, level=test_level)
@@ -110,17 +110,17 @@ test_traits = artifact.Artifact(test_spec, test_class, trait_dict={
     'shadow_nova':         1,
     'legionblade':         1,
     'shadows_of_the_uncrowned': 1,
-    'weak_point': 4,
+    'weak_point': 4+3,
     'shadows_whisper': 1,
     'feeding_frenzy': 1,
     'concordance_of_the_legionfall': 24,
     #crucible
-    #'master_of_shadows': 3,
+    'torment_the_weak': 3,
 })
 
 # Set up settings.
 test_cycle = settings.SubtletyCycle()
-test_settings = settings.Settings(test_cycle)
+test_settings = settings.Settings(test_cycle, pantheon_trinket_users=0, num_boss_adds=0)
 
 # Build a DPS object.
 calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_traits, test_buffs, test_race, test_spec, test_settings, test_level)
@@ -134,11 +134,13 @@ total_dps = sum(entry[1] for entry in list(dps_breakdown.items()))
 # Compute EP values.
 ep_values = calculator.get_ep(baseline_dps=total_dps)
 #ep_values = calculator.get_ep()
-tier_ep_values = calculator.get_other_ep(['rogue_t19_2pc', 'rogue_t19_4pc', 'denial_of_the_half_giants', 'insignia_of_ravenholdt',
-'shadow_satyrs_walk', 'convergence_of_fates', 'mantle_of_the_master_assassin'])
+tier_ep_values = calculator.get_other_ep(['rogue_t20_2pc', 'rogue_t20_4pc', 'the_first_of_the_dead', 'insignia_of_ravenholdt',
+'mantle_of_the_master_assassin', 'specter_of_betrayal',
+'golganneths_vitality', 'amanthuls_vision', 'shadowsinged_fang', 'seeping_scourgewing', 'terminus_signaling_beacon',
+'gorshalachs_legacy', 'forgefiends_fabricator'])
 
 #talent_ranks = calculator.get_talents_ranking()
-#trait_ranks = calculator.get_trait_ranking()
+trait_ranks = calculator.get_trait_ranking()
 
 def max_length(dict_list):
     max_len = 0

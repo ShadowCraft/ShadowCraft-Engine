@@ -930,6 +930,113 @@ allowed_procs = {
         'trigger': 'all_attacks'
     },
 
+    'shadowsinged_fang': { #Your melee and ranged abilities have a chance to increase your Strength or Agility by 4548 for 12 sec.
+        'stat':'stats',
+        'value': {'agi': 0}, #rpp-scaled
+        'duration': 12,
+        'proc_name': 'Flames of F\'harg',
+        'scaling': 0.833441,
+        'item_level': 930,
+        'source': 'trinket',
+        'type': 'rppm',
+        'proc_rate': 3,
+        'trigger': 'all_attacks'
+    },
+    'shadowsinged_fang_2': { #Your autoattacks have a chance to increase your Critical Strike by 2202 for 12 sec.
+        'stat':'stats',
+        'value': {'crit': 0}, #rpp+crm-scaled
+        'duration': 12,
+        'proc_name': 'Corruption of Shatug',
+        'scaling': 0.833422,
+        'crm_scales': True,
+        'item_level': 930,
+        'source': 'trinket',
+        'type': 'rppm',
+        'proc_rate': 3,
+        'trigger': 'auto_attacks'
+    },
+
+    'seeping_scourgewing': { #Your melee attacks have a chance to deal 97539 to 107806 Shadow damage to the target. If there are no other enemies within 8 yds of them, this deals an additional 52253 to 57752 damage.
+        'stat':'spell_damage',
+        'dmg_school': 'shadow',
+        'can_crit': True,
+        'value': 0, #rpp-scaled
+        'duration': 0,
+        'proc_name': 'Shadow Strike',
+        'scaling': 60.43111, #additional scaling 32.37356
+        'item_level': 930,
+        'source': 'trinket',
+        'type': 'rppm',
+        'proc_rate': 3,
+        'haste_scales': True,
+        'trigger': 'all_attacks'
+    },
+    'seeping_scourgewing_2': { #for the additional dmg part
+        'stat':'spell_damage',
+        'dmg_school': 'shadow',
+        'can_crit': True,
+        'value': 0, #rpp-scaled
+        'duration': 0,
+        'proc_name': 'Isolated Strike',
+        'scaling': 32.37356,
+        'item_level': 930,
+        'source': 'trinket',
+        'type': 'rppm',
+        'proc_rate': 3,
+        'haste_scales': True,
+        'trigger': 'all_attacks'
+    },
+
+    'terminus_signaling_beacon': { #Use: Call a Legion ship to bombard the target's location for 9 sec, dealing 353311 Fire damage to all targets within 12 yds, including the ship. (2 Min Cooldown)
+        'stat':'spell_damage',
+        'dmg_school': 'fire',
+        'can_crit': True,
+        'aoe': True,
+        'value': 0, #rpp-scaled
+        'duration': 9,
+        'proc_name': 'Legion Bombardment',
+        'scaling': 48.55859,
+        'item_level': 930,
+        'source': 'trinket',
+        'type': 'icd',
+        'icd': 120,
+        'proc_rate': 1,
+        'trigger': 'all_attacks'
+    },
+
+    'gorshalachs_legacy': { #Your melee attacks have a chance to grant an Echo of Gorshalach. On reaching 15 applications, you lash out with a devastating combination of attacks, critically striking enemies in a 15 yd cone in front of you for (578175 + 1349069) Fire damage.
+        'stat':'spell_damage',
+        'dmg_school': 'fire',
+        'can_crit': False, #always crits, included in scaling
+        'aoe': True,
+        'value': 0, #rpp-scaled
+        'duration': 0,
+        'proc_name': 'Gorshalach\'s Legacy',
+        'scaling': 105.9506 + 247.2179, #always crits, already included
+        'item_level': 930,
+        'source': 'trinket',
+        'type': 'rppm',
+        'proc_rate': 10 / 15, #dmg on 15th application
+        'haste_scales': True,
+        'trigger': 'all_attacks'
+    },
+
+    'forgefiends_fabricator': { #Your melee and ranged attacks have a chance to plant Fire Mines at the enemy's feet. Fire Mines detonate after 15 sec, inflicting 63094 Fire damage to all enemies within 12 yds. Use: Detonate all Fire Mines. (30 Sec Cooldown)
+        'stat':'spell_damage',
+        'dmg_school': 'fire',
+        'aoe': True,
+        'value': 0, #rpp-scaled
+        'duration': 0,
+        'proc_name': 'Fire Mines',
+        'scaling': 11.56199,
+        'item_level': 930,
+        'source': 'trinket',
+        'type': 'rppm',
+        'proc_rate': 7,
+        'haste_scales': True,
+        'trigger': 'all_attacks'
+    },
+
     #Other Legion procs
     'jacins_ruse_2pc': { #Equip:  Your spells and attacks have a chance to increase your Mastery by 3000 for 15 sec.
         'stat':'stats',
