@@ -767,6 +767,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         for proc in weapon_damage_procs:
             self.set_uptime(proc, attacks_per_second, crit_rates)
 
+        return current_stats, attacks_per_second, crit_rates, damage_procs, additional_info
+
+    def add_special_crit_rate_mods(self, attacks_per_second, crit_rates):
         #Mantle of the Master Assassin Legendary
         if self.stats.gear_buffs.mantle_of_the_master_assassin:
             mantle_triggers = 1 #Opener
@@ -777,7 +780,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             for attack in crit_rates:
                 crit_rates[attack] = min(crit_rates[attack] * (1. - self.mantle_uptime) + self.mantle_uptime, 1)
 
-        return current_stats, attacks_per_second, crit_rates, damage_procs, additional_info
+        #Assassination T21 2pc
+        if self.spec == 'assassination' and self.stats.gear_buffs.rogue_t21_2pc:
+            buff_uptime = 6 * sum(attacks_per_second['envenom'])
+            for attack in crit_rates:
+                if attack in ['deadly_poison', 'deadly_instant_poison', 'wound_poison']:
+                    crit_rates[attack] = min(crit_rates[attack] + buff_uptime * 0.35, 1)
 
     def add_special_aps_penalties(self, attacks_per_second):
         #Draught of Souls Trinket, 3s ability downtime per use
@@ -1042,6 +1050,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.kingsbane_cd = self.get_spell_cd('kingsbane')
         self.exsang_cd = self.get_spell_cd('exsanguinate')
 
+        #Extra energy for further passes (currently for T21 4pc)
+        self.bonus_energy = 0
+
         #convergence loop
         old_aps = {}
         for assa_loop in range(6):
@@ -1230,6 +1241,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if self.talents.vigor or self.stats.gear_buffs.soul_of_the_shadowblade:
                 max_energy += 50
             energy_budget += max_energy
+            energy_budget += self.bonus_energy
             #As of Patch 7.2 we get 60 energy + 60 over 2s, assume no loss
             if self.traits.urge_to_kill:
                 energy_budget += (self.settings.duration / self.vendetta_cd) * 120
@@ -1312,9 +1324,17 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if self.traits.from_the_shadows:
                 attacks_per_second['from_the_shadows'] = 1 / self.vendetta_cd
 
-            #Break convergence loop when it's not needed
-            if not self.traits.sinister_circulation and not self.stats.gear_buffs.duskwalkers_footpads:
-                break
+            #First pass specials
+            if assa_loop == 0:
+                #Only do this in the first pass, otherwise we will get wrong crit values
+                self.add_special_crit_rate_mods(attacks_per_second, crit_rates)
+                #Get T21 4pc bonus energy
+                if self.stats.gear_buffs.rogue_t21_4pc:
+                    for attack in ['deadly_poison', 'deadly_instant_poison', 'wound_poison']:
+                        if attack in attacks_per_second:
+                            self.bonus_energy += attacks_per_second[attack] * crit_rates[attack] * 2 * self.settings.duration
+
+
             if self.are_close_enough(old_aps, attacks_per_second):
                 break
 
@@ -1469,6 +1489,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 dmg_schools=['arcane', 'fire', 'frost', 'holy', 'nature', 'shadow']))
 
         stats, aps, crits, procs, additional_info = self.determine_stats(self.outlaw_attack_counts)
+        self.add_special_crit_rate_mods(aps, crits)
 
         self.damage_modifiers.update_modifier_value('versatility', self.stats.get_versatility_multiplier_from_rating(rating=stats['versatility']))
 
@@ -2099,6 +2120,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         # Post APS-Calculation cleanup
         del aps['nightblade'] #Only keep NB ticks, remove casts
+        self.add_special_crit_rate_mods(aps, crits)
 
         self.damage_modifiers.update_modifier_value('executioner', (1 + self.subtlety_mastery_conversion * self.stats.get_mastery_from_rating(stats['mastery'])))
         self.damage_modifiers.update_modifier_value('versatility', self.stats.get_versatility_multiplier_from_rating(rating=stats['versatility']))
