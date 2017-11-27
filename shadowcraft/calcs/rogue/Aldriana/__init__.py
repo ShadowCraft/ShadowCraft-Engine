@@ -2064,6 +2064,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         # Pre APS-Calculation setup
         two_pass = False
         self.sod_cd = self.get_spell_cd('symbols_of_death')
+        shadow_blades_duration = 15. + (3.3333 * self.traits.soul_shadows)
+        self.shadow_blades_uptime = shadow_blades_duration / self.get_spell_cd('shadow_blades')
 
         # Calculate APS
         stats, aps, crits, procs, additional_info = self.determine_stats(self.subtlety_attack_counts)
@@ -2077,6 +2079,18 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 finisher_cps += aps['eviscerate'][i] * i
                 finisher_cps += aps['nightblade'][i] * i
             self.sod_cd -= finisher_cps * 0.2 * self.sod_cd
+            two_pass = True
+
+        #Two-pass handling for Denial of the Half-Giants
+        if self.stats.gear_buffs.denial_of_the_half_giants:
+            finisher_cps = 0
+            for i in range(0, 7):
+                if self.talents.death_from_above:
+                    finisher_cps += aps['death_from_above_strike'][i] * i
+                finisher_cps += aps['eviscerate'][i] * i
+                finisher_cps += aps['nightblade'][i] * i
+            sb_extension = finisher_cps * self.shadow_blades_uptime * 0.2
+            self.shadow_blades_uptime += sb_extension
             two_pass = True
 
         # Run second-pass if necessary
@@ -2227,9 +2241,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.talents.enveloping_shadows:
             self.dance_budget += 1
         deepening_shadows_cdr_per_cp = 2.5 if self.talents.enveloping_shadows else 1.5
-
-        shadow_blades_duration = 15. + (3.3333 * self.traits.soul_shadows)
-        self.shadow_blades_uptime = shadow_blades_duration / self.get_spell_cd('shadow_blades')
 
         #swing timer
         white_swing_downtime = 0
@@ -2392,33 +2403,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             attacks_per_second[self.cp_builder] = extra_builders / self.settings.duration
         attacks_per_second['eviscerate'][self.settings.finisher_threshold] += extra_evis
 
-        #Calculate Shadow Blades extension so far
-        if self.stats.gear_buffs.denial_of_the_half_giants:
-            sb_uptime = self.shadow_blades_uptime
-            sb_extension_converged = False
-            sb_extension = 0
-            counter = 0
-            while not sb_extension_converged:
-                if counter > 50:
-                    raise ConvergenceErrorException(_('Denial Shadow Blades extension failed to converge.'))
-                finisher_cps = 0
-                for i in range(0, 7):
-                    if self.talents.death_from_above:
-                        finisher_cps += attacks_per_second['death_from_above_strike'][i] * i
-                    finisher_cps += attacks_per_second['eviscerate'][i] * i
-                    finisher_cps += attacks_per_second['nightblade'][i] * i
-                new_sb_extension = finisher_cps * sb_uptime * 0.2
-                sb_extension_converged = (new_sb_extension - sb_extension) < 10 ** -5
-                sb_uptime = self.shadow_blades_uptime + new_sb_extension
-                sb_extension = new_sb_extension
-                counter += 1
-            #Account for extra cps
-            generators = ['shadowstrike', 'shuriken_storm', 'backstab', 'goremaws_bite', 'gloomblade', 'shuriken_toss']
-            denial_extra_cps = sb_extension * sum((attacks_per_second[gen] if gen in attacks_per_second else 0) for gen in generators)
-            self.cp_budget += denial_extra_cps * self.settings.duration
-            self.shadow_blades_uptime = sb_uptime
-            cp_per_builder += sb_extension
-
         #Hopefully energy budget here isn't negative, if it is we're in trouble
         #Now we convert all the energy we have left into mini-cycles
         #Each mini-cycle contains enough 1 dance and generators+finishers for one dance
@@ -2464,14 +2448,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 new_alacrity_regen = self.energy_regen * (1 + (new_alacrity_stacks *0.02))
                 self.energy_budget += (new_alacrity_regen - old_alacrity_regen) * self.settings.duration
                 alacrity_stacks = new_alacrity_stacks
-            #Update Shadow Blades extension from Denial
-            if self.stats.gear_buffs.denial_of_the_half_giants:
-                new_sb_extension = mini_cycle_count * sum(attack_counts_mini_cycle['eviscerate']) * self.settings.finisher_threshold * self.shadow_blades_uptime * 0.2 / self.settings.duration
-                generators = ['shadowstrike', 'shuriken_storm', 'backstab', 'goremaws_bite', 'gloomblade', 'shuriken_toss']
-                denial_extra_cps = new_sb_extension * sum((attacks_per_second[gen] if gen in attacks_per_second else 0) for gen in generators)
-                self.shadow_blades_uptime += new_sb_extension
-                self.cp_budget += denial_extra_cps * self.settings.duration
-                cp_per_builder += new_sb_extension
 
         #Now fixup attacks_per_second
         #convert nightblade casts into nightblade ticks
