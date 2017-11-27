@@ -216,6 +216,8 @@ class GearBuffs(object):
         'rogue_t19_4pc',                # 10% envenom damage per bleed, 30% SSk generates additional CP if nightblade up
         'rogue_t20_2pc',                # Garrote deals 40% increased damage, Symbols of Death increases your damage done by an additional 10%.
         'rogue_t20_4pc',                # Garrote's cost is reduced by 25 Energy and cooldown is reduced by 12 sec, Symbols of Death has 5 sec reduced cooldown and generates 2 Energy per sec while active.
+        'rogue_t21_2pc',                # After Envenom, 35% increased crit chance for DP/WP for 6s. Each CP reduces SoD cooldown by 0.2s.
+        'rogue_t21_4pc',                # DP/WP crits give 2 Energy. BS/GB/SS have a 3% chance to grant Shadow gestures which will refund all CPs on next finisher.
         'jacins_ruse_2pc',              # Proc 3000 mastery for 15s, 1 rppm
         'march_of_the_legion_2pc',      # Proc 35K damage when fighting demons, 6+Haste RPPM
         'journey_through_time_2pc',     # The effect from Chrono Shard now increases your movement speed by 30%, and grants an additional 1000 Haste.

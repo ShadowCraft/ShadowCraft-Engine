@@ -1987,7 +1987,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('armor', self.armor_mitigation_multiplier(), ['death_from_above_pulse',
             'death_from_above_strike', 'shuriken_storm', 'eviscerate', 'backstab', 'shadowstrike', 'shuriken_toss', 'autoattacks'], dmg_schools=['physical']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('executioner', None, ['eviscerate', 'nightblade_ticks', 'death_from_above_strike', 'death_from_above_pulse']))
-        self.damage_modifiers.register_modifier(modifiers.DamageModifier('symbols_of_death', None, [], all_damage=True))
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('symbols_of_death', None, ['death_from_above_strike'], blacklist=True, all_damage=True))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('stealth_shuriken_storm', None, ['shuriken_storm', 'second_shuriken']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('backstab_positional', 1 + 0.2 * self.settings.cycle.positional_uptime, ['backstab']))
 
@@ -2061,7 +2061,30 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 ['gloomblade', 'goremaws_bite', 'shadow_blades', 'nightblade_ticks', 'soul_rip', 'shadow_nova'],
                 dmg_schools=['arcane', 'fire', 'frost', 'holy', 'nature', 'shadow']))
 
+        # Pre APS-Calculation setup
+        two_pass = False
+        self.sod_cd = self.get_spell_cd('symbols_of_death')
+
+        # Calculate APS
         stats, aps, crits, procs, additional_info = self.determine_stats(self.subtlety_attack_counts)
+
+        #Simple two-pass handling of SoD-CDR for T21 2pc
+        if self.stats.gear_buffs.rogue_t21_2pc:
+            finisher_cps = 0
+            for i in range(0, 7):
+                if self.talents.death_from_above:
+                    finisher_cps += aps['death_from_above_strike'][i] * i
+                finisher_cps += aps['eviscerate'][i] * i
+                finisher_cps += aps['nightblade'][i] * i
+            self.sod_cd -= finisher_cps * 0.2 * self.sod_cd
+            two_pass = True
+
+        # Run second-pass if necessary
+        if two_pass:
+            stats, aps, crits, procs, additional_info = self.determine_stats(self.subtlety_attack_counts)
+
+        # Post APS-Calculation cleanup
+        del aps['nightblade'] #Only keep NB ticks, remove casts
 
         self.damage_modifiers.update_modifier_value('executioner', (1 + self.subtlety_mastery_conversion * self.stats.get_mastery_from_rating(stats['mastery'])))
         self.damage_modifiers.update_modifier_value('versatility', self.stats.get_versatility_multiplier_from_rating(rating=stats['versatility']))
@@ -2075,7 +2098,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 infallible_trinket_mod = 1+(ift.uptime *0.10)
 
         #Symbols of Death
-        sod_uptime = 10 / self.get_spell_cd('symbols_of_death')
+        sod_uptime = 10 / self.sod_cd
         sod_modifier = 0.25 if self.stats.gear_buffs.rogue_t20_2pc else 0.15
         self.damage_modifiers.update_modifier_value('symbols_of_death', 1 + sod_modifier * sod_uptime)
 
@@ -2139,7 +2162,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.talents.death_from_above:
             dfa_mod = 1
             if self.talents.dark_shadow:
-                dfa_mod *= 1.3
+                dfa_mod *= 1.3 * (1 + sod_modifier)
                 if self.talents.nightstalker:
                     dfa_mod *= 1.12
                 if self.talents.master_of_subtlety:
@@ -2193,10 +2216,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.energy_budget = self.settings.duration * self.energy_regen + self.max_energy
 
         #Symbols of Death
-        sod_casts = 1 + self.settings.duration / self.get_spell_cd('symbols_of_death')
-        self.energy_budget += 40 * sod_casts
+        sod_casts = 1 + self.settings.duration / self.sod_cd
+        energy_per_sod = 40
         if self.stats.gear_buffs.rogue_t20_4pc:
-            self.energy_budget += 20 * sod_casts
+            energy_per_sod += 20
+        self.energy_budget += energy_per_sod * sod_casts
 
         #set initial dance budget
         self.dance_budget = 2 + self.settings.duration / 60
@@ -2259,7 +2283,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.talents.death_from_above:
             dfa_cd = self.get_spell_cd('death_from_above') + self.settings.response_time
             if self.talents.dark_shadow:
-                dfa_cd = self.get_spell_cd('symbols_of_death') + self.settings.response_time
+                dfa_cd = self.sod_cd + self.settings.response_time
             dfa_count = self.settings.duration / dfa_cd
 
             lost_swings_mh = self.lost_swings_from_swing_delay(1.475, self.stats.mh.speed / haste_multiplier)
@@ -2323,6 +2347,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.cp_builder == 'shuriken_storm':
             cp_per_builder += self.settings.num_boss_adds
         cp_per_builder = min(self.max_store_cps, cp_per_builder)
+        # Model T21 4pc as additional CP per generator for now
+        if self.stats.gear_buffs.rogue_t21_4pc:
+            cp_per_builder += 0.03 * self.settings.finisher_threshold
         energy_per_cp = self.get_spell_cost(self.cp_builder) / cp_per_builder
 
         extra_evis = 0
@@ -2454,7 +2481,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 attacks_per_second['nightblade_ticks'][cp] = (3 + cp) * attacks_per_second['nightblade'][cp]
                 if self.stats.gear_buffs.rogue_t19_2pc:
                     attacks_per_second['nightblade_ticks'][cp] = (3 + (2 * cp)) * attacks_per_second['nightblade'][cp]
-            del attacks_per_second['nightblade']
+            #Moved to dps breakdown function so we are able to count NB before deletion
+            #del attacks_per_second['nightblade']
 
         #convert some white swings into shadowblades
         #since weapon speeds are now fixed just handle a single shadowblades
