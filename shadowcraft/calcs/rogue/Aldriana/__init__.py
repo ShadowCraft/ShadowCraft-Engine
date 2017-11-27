@@ -1041,7 +1041,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attacks_per_second = {}
         additional_info = {}
 
+        new_crit_rates = False
         if crit_rates == None:
+            new_crit_rates = True
             crit_rates = self.get_crit_rates(current_stats)
 
         #Vendetta cd, modified by Duskwalker Legendary, used for damage modifier
@@ -1055,8 +1057,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         #convergence loop
         old_aps = {}
-        for assa_loop in range(6):
-            if assa_loop >= 5:
+        for assa_loop in range(11):
+            if assa_loop >= 10:
                 raise ConvergenceErrorException(_('Assassination aps failed to converge.'))
 
             #cd stacking handlers
@@ -1324,8 +1326,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if self.traits.from_the_shadows:
                 attacks_per_second['from_the_shadows'] = 1 / self.vendetta_cd
 
-            #First pass specials
-            if assa_loop == 0:
+            if new_crit_rates:
                 #Only do this in the first pass, otherwise we will get wrong crit values
                 self.add_special_crit_rate_mods(attacks_per_second, crit_rates)
                 #Get T21 4pc bonus energy
@@ -2082,45 +2083,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 ['gloomblade', 'goremaws_bite', 'shadow_blades', 'nightblade_ticks', 'soul_rip', 'shadow_nova'],
                 dmg_schools=['arcane', 'fire', 'frost', 'holy', 'nature', 'shadow']))
 
-        # Pre APS-Calculation setup
-        two_pass = False
-        self.sod_cd = self.get_spell_cd('symbols_of_death')
-        shadow_blades_duration = 15. + (3.3333 * self.traits.soul_shadows)
-        self.shadow_blades_uptime = shadow_blades_duration / self.get_spell_cd('shadow_blades')
-
-        # Calculate APS
         stats, aps, crits, procs, additional_info = self.determine_stats(self.subtlety_attack_counts)
-
-        #Simple two-pass handling of SoD-CDR for T21 2pc
-        if self.stats.gear_buffs.rogue_t21_2pc:
-            finisher_cps = 0
-            for i in range(0, 7):
-                if self.talents.death_from_above:
-                    finisher_cps += aps['death_from_above_strike'][i] * i
-                finisher_cps += aps['eviscerate'][i] * i
-                finisher_cps += aps['nightblade'][i] * i
-            self.sod_cd -= finisher_cps * 0.2 * self.sod_cd
-            two_pass = True
-
-        #Two-pass handling for Denial of the Half-Giants
-        if self.stats.gear_buffs.denial_of_the_half_giants:
-            finisher_cps = 0
-            for i in range(0, 7):
-                if self.talents.death_from_above:
-                    finisher_cps += aps['death_from_above_strike'][i] * i
-                finisher_cps += aps['eviscerate'][i] * i
-                finisher_cps += aps['nightblade'][i] * i
-            sb_extension = finisher_cps * self.shadow_blades_uptime * 0.2
-            self.shadow_blades_uptime += sb_extension
-            two_pass = True
-
-        # Run second-pass if necessary
-        if two_pass:
-            stats, aps, crits, procs, additional_info = self.determine_stats(self.subtlety_attack_counts)
-
-        # Post APS-Calculation cleanup
-        del aps['nightblade'] #Only keep NB ticks, remove casts
-        self.add_special_crit_rate_mods(aps, crits)
 
         self.damage_modifiers.update_modifier_value('executioner', (1 + self.subtlety_mastery_conversion * self.stats.get_mastery_from_rating(stats['mastery'])))
         self.damage_modifiers.update_modifier_value('versatility', self.stats.get_versatility_multiplier_from_rating(rating=stats['versatility']))
@@ -2155,7 +2118,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             else:
                 storms_per_evis = aps['shuriken_storm'] / sum(aps['eviscerate'])
             stacks_per_evis = min(5, storms_per_evis * self.settings.num_boss_adds)
-            print(stacks_per_evis)
             self.damage_modifiers.update_modifier_value('focused_shurikens', 1 + (0.1 * stacks_per_evis))
         else:
             self.damage_modifiers.update_modifier_value('focused_shurikens', 1)
@@ -2239,312 +2201,358 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     def subtlety_attack_counts(self, current_stats, crit_rates=None):
         attacks_per_second = {}
         additional_info = {}
+
+        new_crit_rates = False
         if crit_rates == None:
+            new_crit_rates = True
             crit_rates = self.get_crit_rates(current_stats)
 
-        #Set up initial energy budget
-        haste_multiplier = self.get_haste_multiplier(current_stats)
-        self.energy_regen = self.get_energy_regen(current_stats)
+        # Pre multi-pass setup
+        self.sod_cd = self.get_spell_cd('symbols_of_death')
+        shadow_blades_duration = 15. + (3.3333 * self.traits.soul_shadows)
+        self.shadow_blades_uptime = shadow_blades_duration / self.get_spell_cd('shadow_blades')
 
-        self.max_energy = 100.
-        if self.talents.vigor or self.stats.gear_buffs.soul_of_the_shadowblade:
-            self.max_energy += 50
-        self.energy_budget = self.settings.duration * self.energy_regen + self.max_energy
+        #Init Extension for Denial of the half-giants with base uptime
+        if self.stats.gear_buffs.denial_of_the_half_giants:
+            sb_extension = self.shadow_blades_uptime
 
-        #Symbols of Death
-        sod_casts = 1 + self.settings.duration / self.sod_cd
-        energy_per_sod = 40
-        if self.stats.gear_buffs.rogue_t20_4pc:
-            energy_per_sod += 20
-        self.energy_budget += energy_per_sod * sod_casts
+        #convergence loop
+        old_aps = {}
+        for sub_loop in range(11):
+            if sub_loop >= 10:
+                raise ConvergenceErrorException(_('Assassination aps failed to converge.'))
 
-        #set initial dance budget
-        self.dance_budget = 2 + self.settings.duration / 60
-        if self.talents.enveloping_shadows:
-            self.dance_budget += 1
-        deepening_shadows_cdr_per_cp = 2.5 if self.talents.enveloping_shadows else 1.5
+            #Set up initial energy budget
+            haste_multiplier = self.get_haste_multiplier(current_stats)
+            self.energy_regen = self.get_energy_regen(current_stats)
 
-        #swing timer
-        white_swing_downtime = 0
-        self.swing_reset_spacing = self.get_spell_cd('vanish')
-        if self.swing_reset_spacing is not None:
-            white_swing_downtime += self.settings.response_time / self.swing_reset_spacing
-        attacks_per_second['mh_autoattacks'] = haste_multiplier / self.stats.mh.speed * (1 - white_swing_downtime)
-        attacks_per_second['oh_autoattacks'] = haste_multiplier / self.stats.oh.speed * (1 - white_swing_downtime)
+            self.max_energy = 100.
+            if self.talents.vigor or self.stats.gear_buffs.soul_of_the_shadowblade:
+                self.max_energy += 50
+            self.energy_budget = self.settings.duration * self.energy_regen + self.max_energy
 
-        #Set up initial combo point budget
-        self.cp_budget = 0
-        if self.talents.marked_for_death:
-            mfd_base_count = 1 + self.settings.duration / self.get_spell_cd('marked_for_death')
-            mfd_cps = (6 if self.talents.deeper_stratagem else 5) * (mfd_base_count + self.settings.marked_for_death_resets)
-            self.cp_budget += mfd_cps
+            #Symbols of Death
+            sod_casts = 1 + self.settings.duration / self.sod_cd
+            energy_per_sod = 40
+            if self.stats.gear_buffs.rogue_t20_4pc:
+                energy_per_sod += 20
+            self.energy_budget += energy_per_sod * sod_casts
 
-        #Very VERY simple implementation for The First of the Dead legendary (this should be handled better)
-        if self.stats.gear_buffs.the_first_of_the_dead:
-            self.cp_budget += (6 if self.talents.anticipation else 3) * sod_casts
+            #set initial dance budget
+            self.dance_budget = 2 + self.settings.duration / 60
+            if self.talents.enveloping_shadows:
+                self.dance_budget += 1
+            deepening_shadows_cdr_per_cp = 2.5 if self.talents.enveloping_shadows else 1.5
 
-        #setup timelines
-        nightblade_duration = 6 + (2 * self.settings.finisher_threshold)
-        if self.stats.gear_buffs.rogue_t19_2pc:
-            nightblade_duration = 6 + (4 * self.settings.finisher_threshold)
+            #swing timer
+            white_swing_downtime = 0
+            self.swing_reset_spacing = self.get_spell_cd('vanish')
+            if self.swing_reset_spacing is not None:
+                white_swing_downtime += self.settings.response_time / self.swing_reset_spacing
+            attacks_per_second['mh_autoattacks'] = haste_multiplier / self.stats.mh.speed * (1 - white_swing_downtime)
+            attacks_per_second['oh_autoattacks'] = haste_multiplier / self.stats.oh.speed * (1 - white_swing_downtime)
 
-        #Add attacks that could occur during first pass to aps
-        attacks_per_second[self.dance_cp_builder] = 0
-        attacks_per_second['shadow_dance'] = 0
-        attacks_per_second['vanish'] = 0
-
-        nightblade_timeline = list(range(nightblade_duration, self.settings.duration, nightblade_duration))
-        for finisher in ['nightblade', 'eviscerate']:
-            attacks_per_second[finisher] = [0, 0, 0, 0, 0, 0, 0]
-        nightblade_count = len(nightblade_timeline)
-        attacks_per_second['nightblade'][self.settings.finisher_threshold] += nightblade_count / self.settings.duration
-        self.cp_budget -= self.settings.finisher_threshold * nightblade_count
-        self.energy_budget += (self.relentless_strikes_energy_return_per_cp * self.settings.finisher_threshold - self.get_spell_cost('nightblade')) * nightblade_count
-        self.dance_budget += (deepening_shadows_cdr_per_cp * self.settings.finisher_threshold * nightblade_count) / self.get_spell_cd('shadow_dance')
-
-        #Add in various cooldown abilities
-        #This could be made better with timelining but for now simple time average will do
-        if self.traits.goremaws_bite:
-            goremaws_bite_cd = self.get_spell_cd('goremaws_bite') + self.settings.response_time
-            attacks_per_second['goremaws_bite'] = 1 / goremaws_bite_cd
-            self.cp_budget += (3 + self.shadow_blades_uptime) * (self.settings.duration / goremaws_bite_cd)
-            self.energy_budget += 30 * (self.settings.duration / goremaws_bite_cd)
-            if self.traits.feeding_frenzy:
-                #assume we time it so we can get three free eviscerates
-                self.energy_budget += self.get_spell_cost('eviscerate') * (self.settings.duration / goremaws_bite_cd)
-
-        if self.talents.death_from_above:
-            dfa_cd = self.get_spell_cd('death_from_above') + self.settings.response_time
-            if self.talents.dark_shadow:
-                dfa_cd = self.sod_cd + self.settings.response_time
-            dfa_count = self.settings.duration / dfa_cd
-
-            lost_swings_mh = self.lost_swings_from_swing_delay(1.475, self.stats.mh.speed / haste_multiplier)
-            lost_swings_oh = self.lost_swings_from_swing_delay(1.475, self.stats.oh.speed / haste_multiplier)
-
-            attacks_per_second['mh_autoattacks'] -= lost_swings_mh / dfa_cd
-            attacks_per_second['oh_autoattacks'] -= lost_swings_oh / dfa_cd
-
-            attacks_per_second['death_from_above_strike'] = [0, 0, 0, 0, 0, 0, 0]
-            attacks_per_second['death_from_above_strike'][self.settings.finisher_threshold] += 1 / dfa_cd
-            attacks_per_second['death_from_above_pulse'] = [0, 0, 0, 0, 0, 0, 0]
-            attacks_per_second['death_from_above_pulse'][self.settings.finisher_threshold] += 1 / dfa_cd
-
-            self.cp_budget -= self.settings.finisher_threshold * dfa_count
-            self.energy_budget += (self.relentless_strikes_energy_return_per_cp * self.settings.finisher_threshold - self.get_spell_cost('death_from_above')) * dfa_count
-            self.dance_budget += (deepening_shadows_cdr_per_cp * self.settings.finisher_threshold * dfa_count) / self.get_spell_cd('shadow_dance')
-
-        #Need to handle shadow techniques now to account for swing timer loss
-        attacks_per_second['mh_autoattack_hits'] = attacks_per_second['mh_autoattacks'] * self.dw_mh_hit_chance
-        attacks_per_second['oh_autoattack_hits'] = attacks_per_second['oh_autoattacks'] * self.dw_oh_hit_chance
-
-        # Shadow Techniques have a 50% chance to proc on fourth autohit and are guaranteed on fifth
-        shadow_techniques_cps_per_proc = 1 + (0.05 * self.traits.fortunes_bite)
-        shadow_techniques_procs = self.settings.duration * (attacks_per_second['mh_autoattack_hits'] + attacks_per_second['oh_autoattack_hits']) / 4.5
-        shadow_techniques_cps = shadow_techniques_procs * shadow_techniques_cps_per_proc
-        self.cp_budget += shadow_techniques_cps
-        if self.traits.shadows_whisper:
-            self.energy_budget += 8 * shadow_techniques_procs
-
-        # Init stealth evis counter
-        stealth_evis_per_vanish = 0
-        stealth_evis_per_dance = 0
-
-        #vanish handling
-        vanish_count = self.settings.duration / self.get_spell_cd('vanish')
-        #Treat subterfuge as a mini-dance
-        if self.talents.subterfuge or self.talents.nightstalker:
-            net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(finisher='eviscerate', vanish=True)
-            stealth_evis_per_vanish += sum(attack_counts['eviscerate'])
-        else:
-           net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(finisher=None, vanish=True)
-        self.energy_budget += vanish_count * net_energy
-        self.cp_budget += vanish_count * net_cps
-        self.dance_budget += (deepening_shadows_cdr_per_cp * spent_cps * vanish_count) / self.get_spell_cd('shadow_dance')
-        self.rotation_merge(attacks_per_second, attack_counts, vanish_count)
-
-        #Generate one final dance templates
-        if self.settings.cycle.dance_finishers_allowed:
-            net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(finisher='eviscerate')
-            stealth_evis_per_dance += sum(attack_counts['eviscerate'])
-        else:
-            net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(finisher=None)
-
-        #Remember dark shadow buffed abilties per one dance
-        self.dark_shadow_attacks_per_dance = {}
-        if self.talents.dark_shadow:
-            self.dark_shadow_attacks_per_dance = dict(attack_counts)
-
-        #Now lets make sure all our budgets are positive
-        cp_per_builder = 1 + self.shadow_blades_uptime
-        if self.cp_builder == 'shuriken_storm':
-            cp_per_builder += self.settings.num_boss_adds
-        cp_per_builder = min(self.max_store_cps, cp_per_builder)
-        # Model T21 4pc as additional CP per generator for now
-        if self.stats.gear_buffs.rogue_t21_4pc:
-            cp_per_builder += 0.03 * self.settings.finisher_threshold
-        energy_per_cp = self.get_spell_cost(self.cp_builder) / cp_per_builder
-
-        extra_evis = 0
-        extra_builders = 0
-        #Not enough dances, generate some more
-        cps_per_dance = self.get_spell_cd('shadow_dance') / deepening_shadows_cdr_per_cp
-        net_evis_cost = self.relentless_strikes_energy_return_per_cp * self.settings.finisher_threshold - self.get_spell_cost('eviscerate')
-        if self.dance_budget<0:
-            cps_required = abs(self.dance_budget) * cps_per_dance
-            extra_evis += cps_required / self.settings.finisher_threshold
-            self.energy_budget += net_evis_cost
-            #just subtract the cps because we'll fix those next
-            self.cp_budget -= cps_required
-            self.dance_budget = 0
-        #If we have too many dances just spend them now
-        elif self.dance_budget > 0:
-            #quick convergence loop
-            loop_counter = 0
-            while self.dance_budget > 0.0001:
-                if loop_counter > 100:
-                   raise ConvergenceErrorException(_('Dance fixup failed to converge.'))
-                dance_count = abs(self.dance_budget)
-                self.energy_budget += dance_count * net_energy
-                self.cp_budget += dance_count * net_cps
-                self.dance_budget += (deepening_shadows_cdr_per_cp * spent_cps * dance_count / self.get_spell_cd('shadow_dance')) - dance_count
-                #merge attack counts into attacks_per_second
-                self.rotation_merge(attacks_per_second, attack_counts, dance_count)
-                loop_counter += 1
-
-        #if we don't have enough cps lets build some
-        if self.cp_budget <0:
-            #can add since we know cp_budget is negative
-            self.energy_budget += self.cp_budget * energy_per_cp
-            extra_builders += abs(self.cp_budget) / cp_per_builder
+            #Set up initial combo point budget
             self.cp_budget = 0
+            if self.talents.marked_for_death:
+                mfd_base_count = 1 + self.settings.duration / self.get_spell_cd('marked_for_death')
+                mfd_cps = (6 if self.talents.deeper_stratagem else 5) * (mfd_base_count + self.settings.marked_for_death_resets)
+                self.cp_budget += mfd_cps
 
-        if self.cp_builder == 'shuriken_storm':
-            attacks_per_second['shuriken_storm-no-dance'] = extra_builders / self.settings.duration
-        else:
-            attacks_per_second[self.cp_builder] = extra_builders / self.settings.duration
-        attacks_per_second['eviscerate'][self.settings.finisher_threshold] += extra_evis
+            #Very VERY simple implementation for The First of the Dead legendary (this should be handled better)
+            if self.stats.gear_buffs.the_first_of_the_dead:
+                self.cp_budget += (6 if self.talents.anticipation else 3) * sod_casts
 
-        #Hopefully energy budget here isn't negative, if it is we're in trouble
-        #Now we convert all the energy we have left into mini-cycles
-        #Each mini-cycle contains enough 1 dance and generators+finishers for one dance
-        finishers_per_minicycle = cps_per_dance / self.settings.finisher_threshold
+            #setup timelines
+            nightblade_duration = 6 + (2 * self.settings.finisher_threshold)
+            if self.stats.gear_buffs.rogue_t19_2pc:
+                nightblade_duration = 6 + (4 * self.settings.finisher_threshold)
 
-        attack_counts_mini_cycle = attack_counts
-        if 'eviscerate' in attack_counts_mini_cycle:
-            attack_counts_mini_cycle['eviscerate'][self.settings.finisher_threshold] += finishers_per_minicycle
-        else:
-            attack_counts_mini_cycle['eviscerate'][self.settings.finisher_threshold] = finishers_per_minicycle
-        loop_counter = 0
+            #Add attacks that could occur during first pass to aps
+            attacks_per_second[self.dance_cp_builder] = 0
+            attacks_per_second['shadow_dance'] = 0
+            attacks_per_second['vanish'] = 0
 
-        alacrity_stacks = 0
-        while self.energy_budget > 0.1:
-            if loop_counter > 50:
-                   raise ConvergenceErrorException(_('Mini-cycles failed to converge.'))
-            loop_counter += 1
-            cps_to_generate = max(cps_per_dance - self.cp_budget, 0)
-            builders_per_minicycle = cps_to_generate / cp_per_builder
-            mini_cycle_energy = net_evis_cost * finishers_per_minicycle - (cps_to_generate * energy_per_cp)
-            #add in dance energy
-            mini_cycle_energy += net_energy
-            if cps_to_generate:
-                mini_cycle_count = self.energy_budget / abs(mini_cycle_energy)
+            nightblade_timeline = list(range(nightblade_duration, self.settings.duration, nightblade_duration))
+            for finisher in ['nightblade', 'eviscerate']:
+                attacks_per_second[finisher] = [0, 0, 0, 0, 0, 0, 0]
+            nightblade_count = len(nightblade_timeline)
+            attacks_per_second['nightblade'][self.settings.finisher_threshold] += nightblade_count / self.settings.duration
+            self.cp_budget -= self.settings.finisher_threshold * nightblade_count
+            self.energy_budget += (self.relentless_strikes_energy_return_per_cp * self.settings.finisher_threshold - self.get_spell_cost('nightblade')) * nightblade_count
+            self.dance_budget += (deepening_shadows_cdr_per_cp * self.settings.finisher_threshold * nightblade_count) / self.get_spell_cd('shadow_dance')
+
+            #Add in various cooldown abilities
+            #This could be made better with timelining but for now simple time average will do
+            if self.traits.goremaws_bite:
+                goremaws_bite_cd = self.get_spell_cd('goremaws_bite') + self.settings.response_time
+                attacks_per_second['goremaws_bite'] = 1 / goremaws_bite_cd
+                self.cp_budget += (3 + self.shadow_blades_uptime) * (self.settings.duration / goremaws_bite_cd)
+                self.energy_budget += 30 * (self.settings.duration / goremaws_bite_cd)
+                if self.traits.feeding_frenzy:
+                    #assume we time it so we can get three free eviscerates
+                    self.energy_budget += self.get_spell_cost('eviscerate') * (self.settings.duration / goremaws_bite_cd)
+
+            if self.talents.death_from_above:
+                dfa_cd = self.get_spell_cd('death_from_above') + self.settings.response_time
+                if self.talents.dark_shadow:
+                    dfa_cd = self.sod_cd + self.settings.response_time
+                dfa_count = self.settings.duration / dfa_cd
+
+                lost_swings_mh = self.lost_swings_from_swing_delay(1.475, self.stats.mh.speed / haste_multiplier)
+                lost_swings_oh = self.lost_swings_from_swing_delay(1.475, self.stats.oh.speed / haste_multiplier)
+
+                attacks_per_second['mh_autoattacks'] -= lost_swings_mh / dfa_cd
+                attacks_per_second['oh_autoattacks'] -= lost_swings_oh / dfa_cd
+
+                attacks_per_second['death_from_above_strike'] = [0, 0, 0, 0, 0, 0, 0]
+                attacks_per_second['death_from_above_strike'][self.settings.finisher_threshold] += 1 / dfa_cd
+                attacks_per_second['death_from_above_pulse'] = [0, 0, 0, 0, 0, 0, 0]
+                attacks_per_second['death_from_above_pulse'][self.settings.finisher_threshold] += 1 / dfa_cd
+
+                self.cp_budget -= self.settings.finisher_threshold * dfa_count
+                self.energy_budget += (self.relentless_strikes_energy_return_per_cp * self.settings.finisher_threshold - self.get_spell_cost('death_from_above')) * dfa_count
+                self.dance_budget += (deepening_shadows_cdr_per_cp * self.settings.finisher_threshold * dfa_count) / self.get_spell_cd('shadow_dance')
+
+            #Need to handle shadow techniques now to account for swing timer loss
+            attacks_per_second['mh_autoattack_hits'] = attacks_per_second['mh_autoattacks'] * self.dw_mh_hit_chance
+            attacks_per_second['oh_autoattack_hits'] = attacks_per_second['oh_autoattacks'] * self.dw_oh_hit_chance
+
+            # Shadow Techniques have a 50% chance to proc on fourth autohit and are guaranteed on fifth
+            shadow_techniques_cps_per_proc = 1 + (0.05 * self.traits.fortunes_bite)
+            shadow_techniques_procs = self.settings.duration * (attacks_per_second['mh_autoattack_hits'] + attacks_per_second['oh_autoattack_hits']) / 4.5
+            shadow_techniques_cps = shadow_techniques_procs * shadow_techniques_cps_per_proc
+            self.cp_budget += shadow_techniques_cps
+            if self.traits.shadows_whisper:
+                self.energy_budget += 8 * shadow_techniques_procs
+
+            # Init stealth evis counter
+            stealth_evis_per_vanish = 0
+            stealth_evis_per_dance = 0
+
+            #vanish handling
+            vanish_count = self.settings.duration / self.get_spell_cd('vanish')
+            #Treat subterfuge as a mini-dance
+            if self.talents.subterfuge or self.talents.nightstalker:
+                net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(finisher='eviscerate', vanish=True)
+                stealth_evis_per_vanish += sum(attack_counts['eviscerate'])
             else:
-                mini_cycle_count = 1
+                net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(finisher=None, vanish=True)
+            self.energy_budget += vanish_count * net_energy
+            self.cp_budget += vanish_count * net_cps
+            self.dance_budget += (deepening_shadows_cdr_per_cp * spent_cps * vanish_count) / self.get_spell_cd('shadow_dance')
+            self.rotation_merge(attacks_per_second, attack_counts, vanish_count)
 
-            mini_cycle_count = min(mini_cycle_count, 1)
-            #print loop_counter, mini_cycle_count
-            #mini_cycle_count = 1
-            #build the minicycle attack_counts
+            #Generate one final dance templates
+            if self.settings.cycle.dance_finishers_allowed:
+                net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(finisher='eviscerate')
+                stealth_evis_per_dance += sum(attack_counts['eviscerate'])
+            else:
+                net_energy, net_cps, spent_cps, attack_counts = self.get_dance_resources(finisher=None)
+
+            #Remember dark shadow buffed abilties per one dance
+            self.dark_shadow_attacks_per_dance = {}
+            if self.talents.dark_shadow:
+                self.dark_shadow_attacks_per_dance = dict(attack_counts)
+
+            #Now lets make sure all our budgets are positive
+            cp_per_builder = 1 + self.shadow_blades_uptime
             if self.cp_builder == 'shuriken_storm':
-                attack_counts_mini_cycle['shuriken_storm-no-dance'] = builders_per_minicycle
+                cp_per_builder += self.settings.num_boss_adds
+            cp_per_builder = min(self.max_store_cps, cp_per_builder)
+            # Model T21 4pc as additional CP per generator for now
+            if self.stats.gear_buffs.rogue_t21_4pc:
+                cp_per_builder += 0.03 * self.settings.finisher_threshold
+            energy_per_cp = self.get_spell_cost(self.cp_builder) / cp_per_builder
+
+            extra_evis = 0
+            extra_builders = 0
+            #Not enough dances, generate some more
+            cps_per_dance = self.get_spell_cd('shadow_dance') / deepening_shadows_cdr_per_cp
+            net_evis_cost = self.relentless_strikes_energy_return_per_cp * self.settings.finisher_threshold - self.get_spell_cost('eviscerate')
+            if self.dance_budget<0:
+                cps_required = abs(self.dance_budget) * cps_per_dance
+                extra_evis += cps_required / self.settings.finisher_threshold
+                self.energy_budget += net_evis_cost
+                #just subtract the cps because we'll fix those next
+                self.cp_budget -= cps_required
+                self.dance_budget = 0
+            #If we have too many dances just spend them now
+            elif self.dance_budget > 0:
+                #quick convergence loop
+                loop_counter = 0
+                while self.dance_budget > 0.0001:
+                    if loop_counter > 100:
+                        raise ConvergenceErrorException(_('Dance fixup failed to converge.'))
+                    dance_count = abs(self.dance_budget)
+                    self.energy_budget += dance_count * net_energy
+                    self.cp_budget += dance_count * net_cps
+                    self.dance_budget += (deepening_shadows_cdr_per_cp * spent_cps * dance_count / self.get_spell_cd('shadow_dance')) - dance_count
+                    #merge attack counts into attacks_per_second
+                    self.rotation_merge(attacks_per_second, attack_counts, dance_count)
+                    loop_counter += 1
+
+            #if we don't have enough cps lets build some
+            if self.cp_budget <0:
+                #can add since we know cp_budget is negative
+                self.energy_budget += self.cp_budget * energy_per_cp
+                extra_builders += abs(self.cp_budget) / cp_per_builder
+                self.cp_budget = 0
+
+            if self.cp_builder == 'shuriken_storm':
+                attacks_per_second['shuriken_storm-no-dance'] = extra_builders / self.settings.duration
             else:
-                attack_counts_mini_cycle[self.cp_builder] = builders_per_minicycle
-            self.rotation_merge(attacks_per_second, attack_counts_mini_cycle, mini_cycle_count)
-            self.energy_budget += mini_cycle_energy * mini_cycle_count
-            self.cp_budget += (net_cps - cps_per_dance + cps_to_generate) * mini_cycle_count
-            #Update energy budget with alacrity and haste procs
-            if self.talents.alacrity:
-                old_alacrity_regen = self.energy_regen * (1 + (alacrity_stacks *0.02))
-                new_alacrity_stacks = self.get_average_alacrity(attacks_per_second)
-                new_alacrity_regen = self.energy_regen * (1 + (new_alacrity_stacks *0.02))
-                self.energy_budget += (new_alacrity_regen - old_alacrity_regen) * self.settings.duration
-                alacrity_stacks = new_alacrity_stacks
+                attacks_per_second[self.cp_builder] = extra_builders / self.settings.duration
+            attacks_per_second['eviscerate'][self.settings.finisher_threshold] += extra_evis
 
-        #Now fixup attacks_per_second
-        #convert nightblade casts into nightblade ticks
-        if 'nightblade' in attacks_per_second:
-            attacks_per_second['nightblade_ticks'] = [0, 0, 0, 0, 0, 0, 0]
-            for cp in range(7):
-                attacks_per_second['nightblade_ticks'][cp] = (3 + cp) * attacks_per_second['nightblade'][cp]
-                if self.stats.gear_buffs.rogue_t19_2pc:
-                    attacks_per_second['nightblade_ticks'][cp] = (3 + (2 * cp)) * attacks_per_second['nightblade'][cp]
-            #Moved to dps breakdown function so we are able to count NB before deletion
-            #del attacks_per_second['nightblade']
+            #Hopefully energy budget here isn't negative, if it is we're in trouble
+            #Now we convert all the energy we have left into mini-cycles
+            #Each mini-cycle contains enough 1 dance and generators+finishers for one dance
+            finishers_per_minicycle = cps_per_dance / self.settings.finisher_threshold
 
-        #convert some white swings into shadowblades
-        #since weapon speeds are now fixed just handle a single shadowblades
-        attacks_per_second['shadow_blades'] = self.shadow_blades_uptime * attacks_per_second['mh_autoattacks']
-        attacks_per_second['mh_autoattacks'] -= attacks_per_second['shadow_blades']
-        attacks_per_second['oh_autoattacks'] -= attacks_per_second['shadow_blades']
+            attack_counts_mini_cycle = attack_counts
+            if 'eviscerate' in attack_counts_mini_cycle:
+                attack_counts_mini_cycle['eviscerate'][self.settings.finisher_threshold] += finishers_per_minicycle
+            else:
+                attack_counts_mini_cycle['eviscerate'][self.settings.finisher_threshold] = finishers_per_minicycle
+            loop_counter = 0
 
-        if self.traits.akarris_soul and 'shadowstrike' in attacks_per_second:
-            attacks_per_second['soul_rip'] = attacks_per_second['shadowstrike']
-        if self.traits.shadow_nova:
-            attacks_per_second['shadow_nova'] = min(attacks_per_second['shadow_dance'], 1 / 5)
-
-        #FIXME: Kinda hackish, better approach would be to compute a seperate dance rotation
-        if self.stats.gear_buffs.the_dreadlords_deceit and (self.cp_builder =='backstab' or self.cp_builder == 'gloomblade'):
-            shuriken_interval = 1 / 60
-            attacks_per_second['shadowstrike'] -= shuriken_interval
-            attacks_per_second['shuriken_storm'] = shuriken_interval
-            self.stealth_shuriken_uptime = 1.
-
-        self.stealth_shuriken_uptime = 0.
-        if self.cp_builder == 'shuriken_storm':
-            self.stealth_shuriken_uptime = attacks_per_second['shuriken_storm'] / (attacks_per_second['shuriken_storm'] + attacks_per_second['shuriken_storm-no-dance'])
-            attacks_per_second['shuriken_storm'] = attacks_per_second['shuriken_storm'] + attacks_per_second['shuriken_storm-no-dance']
-            del attacks_per_second['shuriken_storm-no-dance']
-
-        self.stealthed_uptime = 4 * attacks_per_second['shadow_dance']
-        if self.talents.subterfuge:
-            self.stealthed_uptime += 1 * attacks_per_second['shadow_dance'] + 3 * attacks_per_second['vanish']
-
-        #Full additive assumption for now
-        if self.talents.master_of_subtlety:
-            self.mos_uptime = self.stealthed_uptime + 5 * attacks_per_second['shadow_dance'] + 5 * attacks_per_second['vanish']
-
-        for ability in list(attacks_per_second.keys()):
-            if not attacks_per_second[ability]:
-                del attacks_per_second[ability]
-            elif isinstance(attacks_per_second[ability], list) and not any(attacks_per_second[ability]):
-                del attacks_per_second[ability]
-
-        #determine how many evis used during stealth
-        if self.settings.cycle.dance_finishers_allowed:
-            stealth_evis = stealth_evis_per_dance * attacks_per_second['shadow_dance']
-            if self.talents.subterfuge:
-                stealth_evis += stealth_evis_per_vanish * attacks_per_second['vanish']
-        else:
-            stealth_evis = 0
-        self.stealth_evis_uptime = stealth_evis / sum(attacks_per_second['eviscerate'])
-
-        if self.traits.second_shuriken and 'shuriken_toss' in attacks_per_second:
-            attacks_per_second['second_shuriken'] = 0.1 * attacks_per_second['shuriken_toss']
-
-        if self.talents.weaponmaster:
-            for ability in attacks_per_second:
-                if isinstance(attacks_per_second[ability], list):
-                    for cp in range(7):
-                        attacks_per_second[ability][cp] *= 1.06
+            alacrity_stacks = 0
+            while self.energy_budget > 0.1:
+                if loop_counter > 50:
+                    raise ConvergenceErrorException(_('Mini-cycles failed to converge.'))
+                loop_counter += 1
+                cps_to_generate = max(cps_per_dance - self.cp_budget, 0)
+                builders_per_minicycle = cps_to_generate / cp_per_builder
+                mini_cycle_energy = net_evis_cost * finishers_per_minicycle - (cps_to_generate * energy_per_cp)
+                #add in dance energy
+                mini_cycle_energy += net_energy
+                if cps_to_generate:
+                    mini_cycle_count = self.energy_budget / abs(mini_cycle_energy)
                 else:
-                    attacks_per_second[ability] *= 1.06
+                    mini_cycle_count = 1
 
-        #for a in attacks_per_second:
-        #    if isinstance(attacks_per_second[a], list):
-        #        print a, 1./sum(attacks_per_second[a])
-        #    else:
-        #        print a, 1./attacks_per_second[a]
+                mini_cycle_count = min(mini_cycle_count, 1)
+                #print loop_counter, mini_cycle_count
+                #mini_cycle_count = 1
+                #build the minicycle attack_counts
+                if self.cp_builder == 'shuriken_storm':
+                    attack_counts_mini_cycle['shuriken_storm-no-dance'] = builders_per_minicycle
+                else:
+                    attack_counts_mini_cycle[self.cp_builder] = builders_per_minicycle
+                self.rotation_merge(attacks_per_second, attack_counts_mini_cycle, mini_cycle_count)
+                self.energy_budget += mini_cycle_energy * mini_cycle_count
+                self.cp_budget += (net_cps - cps_per_dance + cps_to_generate) * mini_cycle_count
+                #Update energy budget with alacrity and haste procs
+                if self.talents.alacrity:
+                    old_alacrity_regen = self.energy_regen * (1 + (alacrity_stacks *0.02))
+                    new_alacrity_stacks = self.get_average_alacrity(attacks_per_second)
+                    new_alacrity_regen = self.energy_regen * (1 + (new_alacrity_stacks *0.02))
+                    self.energy_budget += (new_alacrity_regen - old_alacrity_regen) * self.settings.duration
+                    alacrity_stacks = new_alacrity_stacks
+
+            #Now fixup attacks_per_second
+            #convert nightblade casts into nightblade ticks
+            if 'nightblade' in attacks_per_second:
+                attacks_per_second['nightblade_ticks'] = [0, 0, 0, 0, 0, 0, 0]
+                for cp in range(7):
+                    attacks_per_second['nightblade_ticks'][cp] = (3 + cp) * attacks_per_second['nightblade'][cp]
+                    if self.stats.gear_buffs.rogue_t19_2pc:
+                        attacks_per_second['nightblade_ticks'][cp] = (3 + (2 * cp)) * attacks_per_second['nightblade'][cp]
+                #Moved to dps breakdown function so we are able to count NB before deletion
+                #del attacks_per_second['nightblade']
+
+            #convert some white swings into shadowblades
+            #since weapon speeds are now fixed just handle a single shadowblades
+            attacks_per_second['shadow_blades'] = self.shadow_blades_uptime * attacks_per_second['mh_autoattacks']
+            attacks_per_second['mh_autoattacks'] -= attacks_per_second['shadow_blades']
+            attacks_per_second['oh_autoattacks'] -= attacks_per_second['shadow_blades']
+
+            if self.traits.akarris_soul and 'shadowstrike' in attacks_per_second:
+                attacks_per_second['soul_rip'] = attacks_per_second['shadowstrike']
+            if self.traits.shadow_nova:
+                attacks_per_second['shadow_nova'] = min(attacks_per_second['shadow_dance'], 1 / 5)
+
+            #FIXME: Kinda hackish, better approach would be to compute a seperate dance rotation
+            if self.stats.gear_buffs.the_dreadlords_deceit and (self.cp_builder =='backstab' or self.cp_builder == 'gloomblade'):
+                shuriken_interval = 1 / 60
+                attacks_per_second['shadowstrike'] -= shuriken_interval
+                attacks_per_second['shuriken_storm'] = shuriken_interval
+                self.stealth_shuriken_uptime = 1.
+
+            self.stealth_shuriken_uptime = 0.
+            if self.cp_builder == 'shuriken_storm':
+                self.stealth_shuriken_uptime = attacks_per_second['shuriken_storm'] / (attacks_per_second['shuriken_storm'] + attacks_per_second['shuriken_storm-no-dance'])
+                attacks_per_second['shuriken_storm'] = attacks_per_second['shuriken_storm'] + attacks_per_second['shuriken_storm-no-dance']
+                del attacks_per_second['shuriken_storm-no-dance']
+
+            self.stealthed_uptime = 4 * attacks_per_second['shadow_dance']
+            if self.talents.subterfuge:
+                self.stealthed_uptime += 1 * attacks_per_second['shadow_dance'] + 3 * attacks_per_second['vanish']
+
+            #Full additive assumption for now
+            if self.talents.master_of_subtlety:
+                self.mos_uptime = self.stealthed_uptime + 5 * attacks_per_second['shadow_dance'] + 5 * attacks_per_second['vanish']
+
+            for ability in list(attacks_per_second.keys()):
+                if not attacks_per_second[ability]:
+                    del attacks_per_second[ability]
+                elif isinstance(attacks_per_second[ability], list) and not any(attacks_per_second[ability]):
+                    del attacks_per_second[ability]
+
+            #determine how many evis used during stealth
+            if self.settings.cycle.dance_finishers_allowed:
+                stealth_evis = stealth_evis_per_dance * attacks_per_second['shadow_dance']
+                if self.talents.subterfuge:
+                    stealth_evis += stealth_evis_per_vanish * attacks_per_second['vanish']
+            else:
+                stealth_evis = 0
+            self.stealth_evis_uptime = stealth_evis / sum(attacks_per_second['eviscerate'])
+
+            if self.traits.second_shuriken and 'shuriken_toss' in attacks_per_second:
+                attacks_per_second['second_shuriken'] = 0.1 * attacks_per_second['shuriken_toss']
+
+            if self.talents.weaponmaster:
+                for ability in attacks_per_second:
+                    if isinstance(attacks_per_second[ability], list):
+                        for cp in range(7):
+                            attacks_per_second[ability][cp] *= 1.06
+                    else:
+                        attacks_per_second[ability] *= 1.06
+
+            #Handle SoD-CDR for T21 2pc
+            if self.stats.gear_buffs.rogue_t21_2pc:
+                finisher_cps = 0
+                for i in range(0, 7):
+                    if self.talents.death_from_above:
+                        finisher_cps += attacks_per_second['death_from_above_strike'][i] * i
+                    finisher_cps += attacks_per_second['eviscerate'][i] * i
+                    finisher_cps += attacks_per_second['nightblade'][i] * i
+                self.sod_cd = self.get_spell_cd('symbols_of_death') - finisher_cps * 0.2 * self.get_spell_cd('symbols_of_death')
+
+            #Handle Denial of the Half-Giants
+            if self.stats.gear_buffs.denial_of_the_half_giants:
+                finisher_cps = 0
+                for i in range(0, 7):
+                    if self.talents.death_from_above:
+                        finisher_cps += attacks_per_second['death_from_above_strike'][i] * i
+                    finisher_cps += attacks_per_second['eviscerate'][i] * i
+                    finisher_cps += attacks_per_second['nightblade'][i] * i
+                sb_extension = finisher_cps * sb_extension * 0.2
+                self.shadow_blades_uptime += sb_extension
+
+            if self.are_close_enough(old_aps, attacks_per_second):
+                break
+
+            old_aps = attacks_per_second
+
+        #end convergence loop
+
+        #Post multi-pass cleanup
+        del attacks_per_second['nightblade'] #Only keep NB ticks, remove casts
+        if new_crit_rates:
+            self.add_special_crit_rate_mods(attacks_per_second, crit_rates)
+
         return attacks_per_second, crit_rates, additional_info
 
     #Computes the net energy and combo points from a shadow dance rotation
