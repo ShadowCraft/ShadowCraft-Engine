@@ -1333,7 +1333,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 if self.stats.gear_buffs.rogue_t21_4pc:
                     for attack in ['deadly_poison', 'deadly_instant_poison', 'wound_poison']:
                         if attack in attacks_per_second:
-                            self.bonus_energy += attacks_per_second[attack] * crit_rates[attack] * 2 * self.settings.duration
+                            self.bonus_energy += attacks_per_second[attack] * crit_rates[attack] * 3 * self.settings.duration
 
 
             if self.are_close_enough(old_aps, attacks_per_second):
@@ -2220,7 +2220,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         old_aps = {}
         for sub_loop in range(11):
             if sub_loop >= 10:
-                raise ConvergenceErrorException(_('Assassination aps failed to converge.'))
+                raise ConvergenceErrorException(_('Subtlety aps failed to converge.'))
 
             #Set up initial energy budget
             haste_multiplier = self.get_haste_multiplier(current_stats)
@@ -2362,7 +2362,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             cp_per_builder = min(self.max_store_cps, cp_per_builder)
             # Model T21 4pc as additional CP per generator for now
             if self.stats.gear_buffs.rogue_t21_4pc:
-                cp_per_builder += 0.03 * self.settings.finisher_threshold
+                cp_per_builder += 0.04 * self.settings.finisher_threshold
             energy_per_cp = self.get_spell_cost(self.cp_builder) / cp_per_builder
 
             extra_evis = 0
