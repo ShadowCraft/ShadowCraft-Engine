@@ -1461,7 +1461,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             'pistol_shot', 'run_through', 'saber_slash', 'autoattacks'], dmg_schools=['physical']))
 
         # Generic tuning aura
-        self.damage_modifiers.register_modifier(modifiers.DamageModifier('outlaw_aura', 1.06, ['death_from_above_pulse', 'death_from_above_strike',
+        self.damage_modifiers.register_modifier(modifiers.DamageModifier('outlaw_aura', 1.10, ['death_from_above_pulse', 'death_from_above_strike',
             'ambush', 'between_the_eyes', 'blunderbuss', 'cannonball_barrage', 'ghostly_strike', 'killing_spree',
             'pistol_shot', 'run_through', 'saber_slash']))
 
