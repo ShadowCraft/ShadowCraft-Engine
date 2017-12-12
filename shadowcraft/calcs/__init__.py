@@ -105,7 +105,7 @@ class DamageCalculator(object):
             build = subprocess.check_output(['git', 'rev-list', '--count', 'HEAD'], cwd=thisdir).strip()
             commit = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD'], cwd=thisdir).strip()
             if build.isdigit() and commit:
-                return '{0} ({1})'.format(build, commit)
+                return '{0} ({1})'.format(build.decode('ascii'), commit.decode('ascii'))
         except:
             pass
         return 'UNKNOWN'
