@@ -20,6 +20,9 @@ from shadowcraft.objects import artifact
 
 from shadowcraft.core import i18n
 
+import timeit
+start_time = timeit.default_timer()
+
 # Set up language. Use 'en_US', 'es_ES', 'fr' for specific languages.
 test_language = 'local'
 i18n.set_language(test_language)
@@ -71,8 +74,8 @@ for proc in test_procs.get_all_procs_for_stat():
 # Set up gear buffs.
 test_gear_buffs = stats.GearBuffs('gear_specialization',
 'insignia_of_ravenholdt',
-'rogue_t20_2pc',
-'rogue_t20_4pc',
+'rogue_t21_2pc',
+'rogue_t21_4pc',
 #'insignia_of_ravenholdt',
 'mantle_of_the_master_assassin',
 ) #tier buffs located here
@@ -134,10 +137,19 @@ total_dps = sum(entry[1] for entry in list(dps_breakdown.items()))
 # Compute EP values.
 ep_values = calculator.get_ep(baseline_dps=total_dps)
 #ep_values = calculator.get_ep()
+"""
 tier_ep_values = calculator.get_other_ep(['rogue_t20_2pc', 'rogue_t20_4pc', 'the_first_of_the_dead', 'insignia_of_ravenholdt',
-'mantle_of_the_master_assassin', 'specter_of_betrayal',
+'mantle_of_the_master_assassin', 'denial_of_the_half_giants', 'specter_of_betrayal',
 'golganneths_vitality', 'amanthuls_vision', 'shadowsinged_fang', 'seeping_scourgewing', 'terminus_signaling_beacon',
-'gorshalachs_legacy', 'forgefiends_fabricator'])
+'gorshalachs_legacy', 'forgefiends_fabricator', 'rogue_t21_2pc', 'rogue_t21_4pc'])
+"""
+
+
+from shadowcraft.core.multithreading import get_ep_multithreaded
+tier_ep_values = get_ep_multithreaded(calculator, ['rogue_t20_2pc', 'rogue_t20_4pc', 'the_first_of_the_dead', 'insignia_of_ravenholdt',
+'mantle_of_the_master_assassin', 'denial_of_the_half_giants', 'specter_of_betrayal',
+'golganneths_vitality', 'amanthuls_vision', 'shadowsinged_fang', 'seeping_scourgewing', 'terminus_signaling_beacon',
+'gorshalachs_legacy', 'forgefiends_fabricator', 'rogue_t21_2pc', 'rogue_t21_4pc'])
 
 #talent_ranks = calculator.get_talents_ranking()
 trait_ranks = calculator.get_trait_ranking()
@@ -184,3 +196,6 @@ for value in list(aps.items()):
 """
 
 #pprint(trait_ranks)
+
+elapsed = timeit.default_timer() - start_time
+print(elapsed)

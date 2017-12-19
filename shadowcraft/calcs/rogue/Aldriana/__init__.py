@@ -61,7 +61,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     # General object manipulation functions that we'll use multiple places.
     ###########################################################################
 
-    PRECISION_REQUIRED = 10 ** -7
+    PRECISION_REQUIRED = 10 ** -4
 
     def are_close_enough(self, old_dist, new_dist, precision=PRECISION_REQUIRED):
         for item in new_dist:
