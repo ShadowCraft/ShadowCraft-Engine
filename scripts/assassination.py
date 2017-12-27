@@ -44,61 +44,33 @@ test_oh = stats.Weapon(7063.0, 1.8, 'dagger', None)
 #test_procs = procs.ProcsList(('scales_of_doom', 691), ('beating_heart_of_the_mountain', 701),
 #                             'draenic_agi_pot', 'draenic_agi_prepot', 'archmages_greater_incandescence')
 test_procs = procs.ProcsList('old_war_pot', 'old_war_prepot',
-    #'convergence_of_fates',
-    ('draught_of_souls', 910),
-    #('chaos_talisman', 890),
-    ('nightblooming_frond', 910),
+                             ('engine_of_eradication', 920),
+                             ('specter_of_betrayal', 915)
 )
 
 # Set up gear buffs.
 test_gear_buffs = stats.GearBuffs('gear_specialization',
-#'the_dreadlords_deceit',
-'rogue_t19_2pc',
-'rogue_t19_4pc',
+'rogue_t20_2pc',
+'rogue_t20_4pc',
 'zoldyck_family_training_shackles',
 'mantle_of_the_master_assassin',
-#'duskwalkers_footpads',
-#'cinidaria_the_symbiote',
 )
 
 # Set up a calcs object..
 test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
-                         agi=21964,
-                         stam=32801,
-                         crit=8749,
-                         haste=1935,
-                         mastery=9729,
-                         versatility=4382,)
+                         agi=26271,
+                         stam=43292,
+                         crit=8206,
+                         haste=3629,
+                         mastery=11384,
+                         versatility=4237)
+
 # Initialize talents..
 #test_talents = talents.Talents('2110031', test_spec, test_class, level=test_level)
 test_talents = talents.Talents('1230011', test_spec, test_class, level=test_level)
 
 #initialize artifact traits..
-test_traits = artifact.Artifact(test_spec, test_class, trait_dict={
-    'kingsbane':                 1,
-    'assassins_blades':          1,
-    'toxic_blades':              3,
-    'poison_knives':             3,
-    'urge_to_kill':              1,
-    'balanced_blades ':          3,
-    'surge_of_toxins':           1,
-    'shadow_walker':             3,
-    'master_assassin':           3+2,
-    'shadow_swiftness':          1,
-    'serrated_edge':             3,
-    'bag_of_tricks':             1,
-    'master_alchemist':          3,
-    'gushing_wounds':            3+1,
-    'fade_into_shadows':         3,
-    'from_the_shadows':          1,
-    'blood_of_the_assassinated': 1,
-    'slayers_precision':         1,
-    'silence_of_the_uncrowned':  1,
-    'strangler': 4,
-    'dense_concoction': 0,
-    'sinister_circulation': 0,
-    'concordance_of_the_legionfall': 0,
-})
+test_traits = artifact.Artifact(test_spec, test_class, trait_dict={'assassins_blades': 1, 'bag_of_tricks': 1, 'balanced_blades': 4, 'blood_of_the_assassinated': 1, 'fade_into_shadows': 4, 'from_the_shadows': 1, 'kingsbane': 1, 'gushing_wounds': 4, 'master_alchemist': 6, 'master_assassin': 5, 'poison_knives': 4, 'serrated_edge': 4, 'shadow_swiftness': 1, 'shadow_walker': 4, 'surge_of_toxins': 1, 'toxic_blades': 4, 'urge_to_kill': 1, 'slayers_precision': 1, 'silence_of_the_uncrowned': 1, 'strangler': 4, 'dense_concoction': 1, 'sinister_circulation': 1, 'concordance_of_the_legionfall': 24})
 
 # Set up settings.
 test_cycle = settings.AssassinationCycle()
@@ -116,9 +88,13 @@ total_dps = sum(entry[1] for entry in list(dps_breakdown.items()))
 
 # Compute EP values.
 ep_values = calculator.get_ep(baseline_dps=total_dps)
-tier_ep_values = calculator.get_other_ep(['rogue_t19_4pc', 'rogue_t19_2pc',
-'duskwalkers_footpads', 'zoldyck_family_training_shackles', 'mantle_of_the_master_assassin'
-])
+tier_ep_values = calculator.get_other_ep(['rogue_t19_2pc', 'rogue_t19_4pc', 'rogue_orderhall_8pc',
+                                          'rogue_t20_2pc', 'rogue_t20_4pc',
+                                          'rogue_t21_2pc', 'rogue_t21_4pc',
+                                          'mark_of_the_hidden_satyr', 'mark_of_the_distant_army',
+                                          'mark_of_the_claw', 'march_of_the_legion_2pc',
+                                          'journey_through_time_2pc', 'jacins_ruse_2pc',
+                                          'kara_empowered_2pc'])
 
 
 #talent_ranks = calculator.get_talents_ranking()
