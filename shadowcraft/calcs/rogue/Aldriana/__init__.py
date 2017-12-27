@@ -9,6 +9,7 @@ import builtins
 import math
 from operator import add
 from copy import copy
+import numpy
 
 _ = gettext.gettext
 
@@ -1036,7 +1037,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             damage_breakdown['symbiote_strike'] = self.compute_symbiote_strike_damage(damage_breakdown)
 
         return damage_breakdown
-
+    #@profile
     def assassination_attack_counts(self, current_stats, crit_rates=None):
         attacks_per_second = {}
         additional_info = {}
@@ -1088,7 +1089,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 avg_cp_per_builder = sum([cp * cpg_cps[cp] for cp in cpg_cps])
                 builders_per_finisher =  self.settings.finisher_threshold / avg_cp_per_builder
                 avg_finisher_size = self.settings.finisher_threshold
-                finisher_list = [0, 0, 0, 0, 0, 0, 0]
+                finisher_list = numpy.zeros(7)
                 finisher_list[self.settings.finisher_threshold] = 1.0
             #otherwise we need to enumerate paths to determine amount of waste given cp threshold
             else:
@@ -1108,7 +1109,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                     max_cps = 6
                 builders_per_finisher = 0.0
                 avg_finisher_size = 0.0
-                finisher_list = [0., 0., 0., 0., 0., 0., 0.]
+                finisher_list = numpy.zeros(7)
 
                 for path in paths:
                     chance = 1.0
@@ -1126,8 +1127,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             energy_regen = self.get_energy_regen(current_stats)
 
             #set up rupture
-            attacks_per_second['rupture'] = [0, 0, 0, 0, 0, 0, 0]
-            attacks_per_second['rupture_ticks'] = [0, 0, 0, 0, 0, 0, 0]
+            attacks_per_second['rupture'] = numpy.zeros(7)
+            attacks_per_second['rupture_ticks'] = numpy.zeros(7)
             base_rupture_duration = 4 * (1 + avg_finisher_size)
             if self.talents.exsanguinate:
                 #assume full pandemic on exsanged ruptures
@@ -1142,9 +1143,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 ruptures_per_second = 1 / base_rupture_duration
                 rupture_ticks_per_second = 0.5
 
-            for cp in range(7):
-                attacks_per_second['rupture'][cp] = ruptures_per_second * finisher_list[cp]
-                attacks_per_second['rupture_ticks'][cp] = rupture_ticks_per_second * finisher_list[cp]
+            attacks_per_second['rupture'] = ruptures_per_second * finisher_list
+            attacks_per_second['rupture_ticks'] = rupture_ticks_per_second * finisher_list
             rupture_cost_per_second = self.get_spell_cost('rupture') * ruptures_per_second
             rupture_cost_per_second += cp_builder_energy_per_finisher * ruptures_per_second
             attacks_per_second[self.cp_builder] = ruptures_per_second * builders_per_finisher
@@ -1252,15 +1252,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 energy_budget += 0.75 * self.get_spell_cost('garrote') #Opener
                 energy_budget += 0.75 * self.get_spell_cost(self.cp_builder) * self.settings.duration / self.get_spell_cd('vanish')
 
-            attacks_per_second['envenom'] = [0, 0, 0, 0, 0, 0, 0]
+            attacks_per_second['envenom'] = numpy.zeros(7)
             #spend those extra cps
             if cp_budget > 0:
                 extra_envenom = cp_budget / avg_finisher_size
                 energy_budget -= self.get_spell_cost('envenom') * extra_envenom
                 duskwalker_expended_energy += self.get_spell_cost('envenom') * extra_envenom
                 extra_envenom_per_second = extra_envenom / self.settings.duration
-                for cp in range(7):
-                    attacks_per_second['envenom'][cp] = extra_envenom_per_second * finisher_list[cp]
+                attacks_per_second['envenom'] = extra_envenom_per_second * finisher_list
 
             #now burn whats left in a minicycle
             mini_cycle_energy = self.get_spell_cost('envenom') + cp_builder_energy_per_finisher
@@ -1275,8 +1274,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 total_minicycles = energy_budget / mini_cycle_energy
                 attacks_per_second[self.cp_builder] += total_minicycles * builders_per_finisher / self.settings.duration
                 finishers_per_second = total_minicycles / self.settings.duration
-                for cp in range(7):
-                    attacks_per_second['envenom'][cp] += finisher_list[cp] * finishers_per_second
+                attacks_per_second['envenom'] += finisher_list * finishers_per_second
                 energy_budget -= total_minicycles * mini_cycle_energy
                 duskwalker_expended_energy += total_minicycles * mini_cycle_energy
 
@@ -1348,6 +1346,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #         print a, 1./attacks_per_second[a]
         # print "--------"
 
+        attacks_per_second['rupture'] = attacks_per_second['rupture'].tolist()
+        attacks_per_second['rupture_ticks'] = attacks_per_second['rupture_ticks'].tolist()
+        attacks_per_second['envenom'] = attacks_per_second['envenom'].tolist()
+        
         return attacks_per_second, crit_rates, additional_info
 
     ###########################################################################
