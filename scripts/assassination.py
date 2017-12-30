@@ -189,6 +189,7 @@ trinketGroups = {
     'gorshalachs_legacy': range(915, RANGE_MAX, 5),
     'shadowsinged_fang': range(915, RANGE_MAX, 5),
 }
+
 gear_rankings = calculator.get_upgrades_ep_fast(trinketGroups)
 
 dicts_for_pretty_print = [
@@ -198,10 +199,13 @@ dicts_for_pretty_print = [
     #trinkets_ep_value,
     dps_breakdown,
     #trait_ranks,
-    gear_rankings
 ]
+pretty_print(dicts_for_pretty_print)
+pprint(gear_rankings)
 
 #pretty_print([dps_breakdown], total_sum=total_dps, show_percent=True)
 print(' ' * (max_length([dps_breakdown]) + 1), total_dps, ("total damage per second."))
 
 #pprint(talent_ranks)
+
+
