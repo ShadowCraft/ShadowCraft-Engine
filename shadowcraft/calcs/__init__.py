@@ -10,6 +10,9 @@ import math
 import os
 import subprocess
 
+import traceback
+from concurrent import futures
+
 _ = gettext.gettext
 
 from shadowcraft.core import exceptions
@@ -501,49 +504,67 @@ class DamageCalculator(object):
         baseline_dps = self.get_dps()
         normalize_dps = self.ep_helper(normalize_ep_stat)
 
+        # Build a ten-thread worker for processing all of these in parallel
+        executor = futures.ThreadPoolExecutor(max_workers=10)
+        fs = {}
         for i in procs_list:
             proc_name, item_levels = i
-            ep_values[proc_name] = {}
-            try:
-                if getattr(self.stats.procs, proc_name):
-                    old_proc = getattr(self.stats.procs, proc_name)
-                    delattr(self.stats.procs, proc_name)
-                    base_dps = self.get_dps()
-                    base_normalize_dps = self.ep_helper(normalize_ep_stat)
-                else:
-                    old_proc = False
-                    base_dps = baseline_dps
-                    base_normalize_dps = normalize_dps
-                self.stats.procs.set_proc(proc_name)
-                proc = getattr(self.stats.procs, proc_name)
-                for group in item_levels:
-                    if not isinstance(group, (list,tuple)):
-                        group = group,
-                    if proc.scaling:
-                        proc.item_level = group[0]
-                        proc.update_proc_value() # after setting item_level re-set the proc value
-                        item_level = proc.item_level
-                        scale_factor = self.tools.get_random_prop_point(item_level)
-                    new_dps = self.get_dps()
-                    if new_dps != base_dps:
-                        for l in group:
-                            ep = abs(new_dps - base_dps) / (base_normalize_dps - base_dps)
-                            if l > proc.item_level:
-                                upgraded_scale_factor = self.tools.get_random_prop_point(l)
-                                ep *= upgraded_scale_factor / scale_factor
-                            ep_values[proc_name][l] = ep
-                if old_proc:
-                    self.stats.procs.set_proc(proc_name)
-                else:
-                    delattr(self.stats.procs, proc_name)
-            except InvalidProcException:
-                # Data for these procs is not complete/correct
-                ep_values[i].append(_('not supported'))
-                delattr(self.stats.procs, i)
+            fs[executor.submit(self.get_proc_ep_for_future, proc_name, item_levels, baseline_dps, normalize_dps)] = proc_name
+
+        for future in futures.as_completed(fs):
+            proc_name = fs[future]
+            if future.exception() is not None:
+                print('failed trinket EP future for %s: %s' % (proc_name, future.exception()))
+            else:
+                ep_values[proc_name] = future.result()
+        fs.clear()
 
         for proc in active_procs_cache:
             self.stats.procs.set_proc(proc[0])
             getattr(self.stats.procs, proc[0]).item_level = proc[1]
+
+        return ep_values
+
+    def get_proc_ep_for_future(self, proc_name, item_levels, baseline_dps, normalize_dps):
+        ep_values = {}
+        try:
+            if getattr(self.stats.procs, proc_name):
+                old_proc = getattr(self.stats.procs, proc_name)
+                delattr(self.stats.procs, proc_name)
+                base_dps = self.get_dps()
+                base_normalize_dps = self.ep_helper(normalize_ep_stat)
+            else:
+                old_proc = False
+                base_dps = baseline_dps
+                base_normalize_dps = normalize_dps
+            self.stats.procs.set_proc(proc_name)
+            proc = getattr(self.stats.procs, proc_name)
+            for group in item_levels:
+                if not isinstance(group, (list,tuple)):
+                    group = group,
+
+                scale_factor = 1
+                if proc.scaling:
+                    proc.item_level = group[0]
+                    proc.update_proc_value() # after setting item_level re-set the proc value
+                    item_level = proc.item_level
+                    scale_factor = self.tools.get_random_prop_point(item_level)
+                new_dps = self.get_dps()
+                if new_dps != base_dps:
+                    for l in group:
+                        ep = abs(new_dps - base_dps) / (base_normalize_dps - base_dps)
+                        if l > proc.item_level:
+                            upgraded_scale_factor = self.tools.get_random_prop_point(l)
+                            ep *= upgraded_scale_factor / scale_factor
+                        ep_values[l] = ep
+            if old_proc:
+                self.stats.procs.set_proc(proc_name)
+            else:
+                delattr(self.stats.procs, proc_name)
+        except InvalidProcException:
+            # Data for these procs is not complete/correct
+            ep_values.append(_('not supported'))
+            delattr(self.stats.procs, i)
 
         return ep_values
 

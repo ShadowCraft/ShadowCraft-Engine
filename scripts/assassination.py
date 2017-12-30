@@ -122,15 +122,84 @@ def pretty_print(dict_list):
                 print(value[0] + ':' + ' ' * (max_len - len(value[0])), str(value[1]))
         print('-' * (max_len + 15))
 
+# This is the maximum ilvl + 5, because python range method doesn't include
+# the max value passed in as one of the steps.
+RANGE_MAX = 990
+
+trinketGroups = {
+    # Alchemist trinket
+    'infernal_alchemist_stone': range(815, 885, 5),
+
+    # Dungeon trinkets
+    'chaos_talisman': range(820, RANGE_MAX, 5),
+    'chrono_shard': range(820, RANGE_MAX, 5),
+    'darkmoon_deck_dominion': range(815, RANGE_MAX, 5),
+    'faulty_countermeasure': range(820, RANGE_MAX, 5),
+    'giant_ornamental_pearl': range(820, RANGE_MAX, 5),
+    'horn_of_valor': range(820, RANGE_MAX, 5),
+    'mark_of_dargrul': range(820, RANGE_MAX, 5),
+    'memento_of_angerboda': range(820, RANGE_MAX, 5),
+    'nightmare_egg_shell': range(820, RANGE_MAX, 5),
+    'spiked_counterweight': range(820, RANGE_MAX, 5),
+    'tempered_egg_of_serpentrix': range(820, RANGE_MAX, 5),
+    'terrorbound_nexus': range(820, RANGE_MAX, 5),
+    'tiny_oozeling_in_a_jar': range(820, RANGE_MAX, 5),
+    'tirathons_betrayal': range(820, RANGE_MAX, 5),
+    'windscar_whetstone': range(820, RANGE_MAX, 5),
+
+    # Emerald Nightmare
+    'ravaged_seed_pod': range(850, RANGE_MAX, 5),
+    'spontaneous_appendages': range(850, RANGE_MAX, 5),
+    'natures_call': range(850, RANGE_MAX, 5),
+    'bloodthirsty_instinct': range(850, RANGE_MAX, 5),
+
+    # Return to Karazhan
+    'bloodstained_handkerchief': range(855, RANGE_MAX, 5),
+    'eye_of_command': range(860, RANGE_MAX, 5),
+    'toe_knees_promise': range(855, RANGE_MAX, 5),
+
+    # Nighthold trinkets
+    'arcanogolem_digit': range(855, RANGE_MAX, 5),
+    'convergence_of_fates': range(860, RANGE_MAX, 5),
+    'entwined_elemental_foci': range(860, RANGE_MAX, 5),
+    'nightblooming_frond': range(860, RANGE_MAX, 5),
+    'draught_of_souls': range(865, RANGE_MAX, 5),
+
+    # Legendary trinkets
+    'kiljaedens_burning_wish': [910, 940, 970, 1000],
+
+    # 7.2/Tomb of Sargeras
+    'splinters_of_agronax': range(845, RANGE_MAX, 5),
+    'infernal_cinders': range(885, RANGE_MAX, 5),
+    'cradle_of_anguish': range(885, RANGE_MAX, 5),
+    'vial_of_ceaseless_toxins': range(885, RANGE_MAX, 5),
+    'umbral_moonglaives': range(885, RANGE_MAX, 5),
+    'engine_of_eradication': range(885, RANGE_MAX, 5),
+    'specter_of_betrayal': range(895, RANGE_MAX, 5),
+
+    # Seat of the Triumvirate
+    'void_stalkers_contract': range(865, RANGE_MAX, 5),
+
+    # Antorus, The Burning Throne
+    'amanthuls_vision': range(915, RANGE_MAX, 5),
+    'golganneths_vitality': range(915, RANGE_MAX, 5),
+    'terminus_signaling_beacon': range(915, RANGE_MAX, 5),
+    'forgefiends_fabricator': range(915, RANGE_MAX, 5),
+    'seeping_scourgewing': range(915, RANGE_MAX, 5),
+    'gorshalachs_legacy': range(915, RANGE_MAX, 5),
+    'shadowsinged_fang': range(915, RANGE_MAX, 5),
+}
+gear_rankings = calculator.get_upgrades_ep_fast(trinketGroups)
+
 dicts_for_pretty_print = [
     ep_values,
     tier_ep_values,
     #talent_ranks,
     #trinkets_ep_value,
     dps_breakdown,
-    #trait_ranks
+    #trait_ranks,
+    gear_rankings
 ]
-pretty_print(dicts_for_pretty_print)
 
 #pretty_print([dps_breakdown], total_sum=total_dps, show_percent=True)
 print(' ' * (max_length([dps_breakdown]) + 1), total_dps, ("total damage per second."))
