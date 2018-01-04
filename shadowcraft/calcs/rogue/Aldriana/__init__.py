@@ -621,7 +621,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         for finisher in self.finisher_damage_sources:
             #Don't double count DfA
             if finisher in attacks_per_second and finisher != 'death_from_above_pulse':
-                for cp in range(7):
+                for cp in range(1, 7):
                     stacks_per_second += 0.2 * cp * attacks_per_second[finisher][cp]
         stack_time = 10 / stacks_per_second
         if stack_time > self.settings.duration:
@@ -1298,7 +1298,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if self.traits.bag_of_tricks:
                 #2.5% chance per cp on envenom and rupture
                 attacks_per_second['poison_bomb'] = 0
-                for i in range(7):
+                for i in range(1, 7):
                     attacks_per_second['poison_bomb'] += attacks_per_second['envenom'][i] * i * 0.025
                     attacks_per_second['poison_bomb'] += attacks_per_second['rupture'][i] * i * 0.025
 
@@ -1684,7 +1684,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 cp_spend_per_second = 0
                 for ability in attacks_per_second:
                     if ability in self.finisher_damage_sources:
-                        for cp in range(7):
+                        for cp in range(1, 7):
                             cp_spend_per_second += attacks_per_second[ability][cp] * cp
                 #tb_seconds_per_second = 2 * cp_spend_per_second * tb_uptime
                 ar_cd_modifier = (1 - (2 * tb_uptime) / (1 / cp_spend_per_second + 2 * tb_uptime))
@@ -1935,14 +1935,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             for ability in aps:
                 if ability in attacks_per_second:
                     if isinstance(attacks_per_second[ability], list):
-                        for cp in range(7):
+                        for cp in range(1, 7):
                             attacks_per_second[ability][cp] += uptime * aps[ability][cp]
                     else:
                         attacks_per_second[ability] += uptime * aps[ability]
                 else:
                     if isinstance(aps[ability], list):
                         attacks_per_second[ability] = copy(aps[ability])
-                        for cp in range(7):
+                        for cp in range(1, 7):
                             attacks_per_second[ability][cp] *= uptime
                     else:
                         attacks_per_second[ability] = uptime * aps[ability]
@@ -2455,10 +2455,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             #convert nightblade casts into nightblade ticks
             if 'nightblade' in attacks_per_second:
                 attacks_per_second['nightblade_ticks'] = [0, 0, 0, 0, 0, 0, 0]
-                for cp in range(7):
-                    attacks_per_second['nightblade_ticks'][cp] = (3 + cp) * attacks_per_second['nightblade'][cp]
-                    if self.stats.gear_buffs.rogue_t19_2pc:
+                if self.stats.gear_buffs.rogue_t19_2pc:
+                    for cp in range(1, 7):
                         attacks_per_second['nightblade_ticks'][cp] = (3 + (2 * cp)) * attacks_per_second['nightblade'][cp]
+                else:
+                    for cp in range(1, 7):
+                        attacks_per_second['nightblade_ticks'][cp] = (3 + cp) * attacks_per_second['nightblade'][cp]
                 #Moved to dps breakdown function so we are able to count NB before deletion
                 #del attacks_per_second['nightblade']
 
