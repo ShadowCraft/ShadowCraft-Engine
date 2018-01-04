@@ -15,10 +15,11 @@ How To
 ------
 
 In order to support both Python 2 and 3, ShadowCraft-Engine depends on
-the *future* library. You can install it by running:
+the *future* library. For maths optimizations, we use *numpy*.
+You can install everything by running:
 
 ```
-pip install future
+pip install -r requirements.txt
 ```
 
 To run a simple calculation for the rogue spec of your choice you can

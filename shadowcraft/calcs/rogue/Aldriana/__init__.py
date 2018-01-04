@@ -1212,11 +1212,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if self.talents.death_from_above:
                 dfa_cd = self.get_spell_cd('death_from_above') + self.settings.response_time
                 dfa_per_second = 1 / dfa_cd
-                attacks_per_second['death_from_above_strike'] = [0, 0, 0, 0, 0, 0, 0]
-                attacks_per_second['death_from_above_pulse'] = [0, 0, 0, 0, 0, 0, 0]
-                for cp in range(7):
-                    attacks_per_second['death_from_above_pulse'][cp] = dfa_per_second * finisher_list[cp]
-                    attacks_per_second['death_from_above_strike'][cp] = dfa_per_second * finisher_list[cp]
+                attacks_per_second['death_from_above_strike'] = numpy.zeros(7)
+                attacks_per_second['death_from_above_pulse'] = numpy.zeros(7)
+                attacks_per_second['death_from_above_pulse'] = dfa_per_second * finisher_list
+                attacks_per_second['death_from_above_strike'] = dfa_per_second * finisher_list
                 attacks_per_second[self.cp_builder] += dfa_per_second * builders_per_finisher
                 dfa_cost_per_second = self.get_spell_cost('death_from_above') * dfa_per_second
                 dfa_cost_per_second += cp_builder_energy_per_finisher * dfa_per_second
@@ -1349,7 +1348,11 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attacks_per_second['rupture'] = attacks_per_second['rupture'].tolist()
         attacks_per_second['rupture_ticks'] = attacks_per_second['rupture_ticks'].tolist()
         attacks_per_second['envenom'] = attacks_per_second['envenom'].tolist()
-        
+        if 'death_from_above_strike' in attacks_per_second:
+            attacks_per_second['death_from_above_strike'] = attacks_per_second['death_from_above_strike'].tolist()
+        if 'death_from_above_pulse' in attacks_per_second:
+            attacks_per_second['death_from_above_pulse'] = attacks_per_second['death_from_above_pulse'].tolist()
+
         return attacks_per_second, crit_rates, additional_info
 
     ###########################################################################
@@ -2277,7 +2280,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
             nightblade_timeline = list(range(nightblade_duration, self.settings.duration, nightblade_duration))
             for finisher in ['nightblade', 'eviscerate']:
-                attacks_per_second[finisher] = [0, 0, 0, 0, 0, 0, 0]
+                attacks_per_second[finisher] = numpy.zeros(7)
             nightblade_count = len(nightblade_timeline)
             attacks_per_second['nightblade'][self.settings.finisher_threshold] += nightblade_count / self.settings.duration
             self.cp_budget -= self.settings.finisher_threshold * nightblade_count
@@ -2307,9 +2310,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 attacks_per_second['mh_autoattacks'] -= lost_swings_mh / dfa_cd
                 attacks_per_second['oh_autoattacks'] -= lost_swings_oh / dfa_cd
 
-                attacks_per_second['death_from_above_strike'] = [0, 0, 0, 0, 0, 0, 0]
+                attacks_per_second['death_from_above_strike'] = numpy.zeros(7)
                 attacks_per_second['death_from_above_strike'][self.settings.finisher_threshold] += 1 / dfa_cd
-                attacks_per_second['death_from_above_pulse'] = [0, 0, 0, 0, 0, 0, 0]
+                attacks_per_second['death_from_above_pulse'] = numpy.zeros(7)
                 attacks_per_second['death_from_above_pulse'][self.settings.finisher_threshold] += 1 / dfa_cd
 
                 self.cp_budget -= self.settings.finisher_threshold * dfa_count
@@ -2456,11 +2459,13 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             #Now fixup attacks_per_second
             #convert nightblade casts into nightblade ticks
             if 'nightblade' in attacks_per_second:
-                attacks_per_second['nightblade_ticks'] = [0, 0, 0, 0, 0, 0, 0]
-                for cp in range(7):
-                    attacks_per_second['nightblade_ticks'][cp] = (3 + cp) * attacks_per_second['nightblade'][cp]
-                    if self.stats.gear_buffs.rogue_t19_2pc:
+                attacks_per_second['nightblade_ticks'] = numpy.zeros(7)
+                if self.stats.gear_buffs.rogue_t19_2pc:
+                    for cp in range(7):
                         attacks_per_second['nightblade_ticks'][cp] = (3 + (2 * cp)) * attacks_per_second['nightblade'][cp]
+                else:
+                    for cp in range(7):
+                        attacks_per_second['nightblade_ticks'][cp] = (3 + cp) * attacks_per_second['nightblade'][cp]
                 #Moved to dps breakdown function so we are able to count NB before deletion
                 #del attacks_per_second['nightblade']
 
@@ -2496,12 +2501,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if self.talents.master_of_subtlety:
                 self.mos_uptime = self.stealthed_uptime + 5 * attacks_per_second['shadow_dance'] + 5 * attacks_per_second['vanish']
 
-            for ability in list(attacks_per_second.keys()):
-                if not attacks_per_second[ability]:
-                    del attacks_per_second[ability]
-                elif isinstance(attacks_per_second[ability], list) and not any(attacks_per_second[ability]):
-                    del attacks_per_second[ability]
-
             #determine how many evis used during stealth
             if self.settings.cycle.dance_finishers_allowed:
                 stealth_evis = stealth_evis_per_dance * attacks_per_second['shadow_dance']
@@ -2516,30 +2515,21 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
             if self.talents.weaponmaster:
                 for ability in attacks_per_second:
-                    if isinstance(attacks_per_second[ability], list):
-                        for cp in range(7):
-                            attacks_per_second[ability][cp] *= 1.06
-                    else:
-                        attacks_per_second[ability] *= 1.06
+                    attacks_per_second[ability] *= 1.06
+
+            #Get finisher cp sum for T21 2pc or Bracers
+            if self.stats.gear_buffs.rogue_t21_2pc or self.stats.gear_buffs.denial_of_the_half_giants:
+                finisher_cps = attacks_per_second['eviscerate'] + attacks_per_second['nightblade']
+                if self.talents.death_from_above:
+                    finisher_cps += attacks_per_second['death_from_above_strike']
+                finisher_cps = numpy.sum(finisher_cps * numpy.arange(7))
 
             #Handle SoD-CDR for T21 2pc
-            if self.stats.gear_buffs.rogue_t21_2pc:
-                finisher_cps = 0
-                for i in range(0, 7):
-                    if self.talents.death_from_above:
-                        finisher_cps += attacks_per_second['death_from_above_strike'][i] * i
-                    finisher_cps += attacks_per_second['eviscerate'][i] * i
-                    finisher_cps += attacks_per_second['nightblade'][i] * i
+            if self.stats.gear_buffs.rogue_t21_2pc or self.stats.gear_buffs.denial_of_the_half_giants:
                 self.sod_cd = self.get_spell_cd('symbols_of_death') - finisher_cps * 0.2 * self.get_spell_cd('symbols_of_death')
 
             #Handle Denial of the Half-Giants
             if self.stats.gear_buffs.denial_of_the_half_giants:
-                finisher_cps = 0
-                for i in range(0, 7):
-                    if self.talents.death_from_above:
-                        finisher_cps += attacks_per_second['death_from_above_strike'][i] * i
-                    finisher_cps += attacks_per_second['eviscerate'][i] * i
-                    finisher_cps += attacks_per_second['nightblade'][i] * i
                 sb_extension = finisher_cps * sb_extension * 0.2
                 self.shadow_blades_uptime += sb_extension
 
@@ -2552,6 +2542,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         #Post multi-pass cleanup
         del attacks_per_second['nightblade'] #Only keep NB ticks, remove casts
+        attacks_per_second['nightblade_ticks'] = attacks_per_second['nightblade_ticks'].tolist()
+        attacks_per_second['eviscerate'] = attacks_per_second['eviscerate'].tolist()
+        if 'death_from_above_strike' in attacks_per_second:
+            attacks_per_second['death_from_above_strike'] = attacks_per_second['death_from_above_strike'].tolist()
+        if 'death_from_above_pulse' in attacks_per_second:
+            attacks_per_second['death_from_above_pulse'] = attacks_per_second['death_from_above_pulse'].tolist()
         if new_crit_rates:
             self.add_special_crit_rate_mods(attacks_per_second, crit_rates)
 
@@ -2592,7 +2588,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attack_counts[self.dance_cp_builder] = 0
         if finisher:
             finisher_cost = self.get_spell_cost(finisher, cost_mod=cost_mod)
-            attack_counts[finisher] = [0, 0, 0, 0, 0, 0, 0]
+            attack_counts[finisher] = numpy.zeros(7)
 
         while dance_gcds > 0:
             remaining_energy = (net_energy + max_dance_energy)
@@ -2642,8 +2638,4 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     def rotation_merge (self, attacks_per_second, attack_counts, count):
         rotations_per_second = count / self.settings.duration
         for ability in attack_counts:
-            if ability in self.finisher_damage_sources:
-                for cp in range(7):
-                    attacks_per_second[ability][cp] += rotations_per_second *  attack_counts[ability][cp]
-            else:
-                attacks_per_second[ability] += rotations_per_second * attack_counts[ability]
+            attacks_per_second[ability] += rotations_per_second * attack_counts[ability]
