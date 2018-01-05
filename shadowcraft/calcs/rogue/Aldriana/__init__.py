@@ -61,7 +61,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     # General object manipulation functions that we'll use multiple places.
     ###########################################################################
 
-    PRECISION_REQUIRED = 10 ** -7
+    PRECISION_REQUIRED = 10 ** -4
 
     def are_close_enough(self, old_dist, new_dist, precision=PRECISION_REQUIRED):
         for item in new_dist:
@@ -209,6 +209,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.settings.feint_interval != 0:
             self.bonus_energy_regen -= self.get_spell_stats('feint')[0] / self.settings.feint_interval
 
+        # Builds a phony 'poison' proc object to count triggers through the proc methods.
+        self.poison_proc = procs.Proc(**proc_data.allowed_procs['rogue_poison'])
 
         #only include if general multiplier applies to spec calculations
         self.true_haste_mod *= self.get_heroism_haste_multiplier()
@@ -592,14 +594,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             getattr(self.stats.procs, 'touch_of_the_grave').value = 8 * self.tools.get_constant_scaling_point(self.level) # +/- 15% spread
 
     def get_poison_counts(self, attacks_per_second, current_stats):
-        # Builds a phony 'poison' proc object to count triggers through the proc
-        # methods.
-        poison = procs.Proc(**proc_data.allowed_procs['rogue_poison'])
-        mh_hits_per_second = self.get_mh_procs_per_second(poison, attacks_per_second, None)
-        oh_hits_per_second = self.get_oh_procs_per_second(poison, attacks_per_second, None)
+        mh_hits_per_second = self.get_mh_procs_per_second(self.poison_proc, attacks_per_second, None)
+        oh_hits_per_second = self.get_oh_procs_per_second(self.poison_proc, attacks_per_second, None)
         total_hits_per_second = mh_hits_per_second + oh_hits_per_second
-        if not poison:
-            return
 
         poison_base_proc_rate = 0.5 #Improved Poisons passive for Deadly and Wound Poison
         poison_envenom_proc_rate = poison_base_proc_rate + 0.3
