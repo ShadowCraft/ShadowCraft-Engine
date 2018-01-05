@@ -434,18 +434,22 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 if 'mh_autoattacks' in attacks_per_second:
                     triggers_per_second += attacks_per_second['mh_autoattacks'] * crit_rates['mh_autoattacks']
             else:
+                if 'shadow_blades' in attacks_per_second:
+                    triggers_per_second += attacks_per_second['shadow_blades']
                 if 'mh_autoattack_hits' in attacks_per_second:
                     triggers_per_second += attacks_per_second['mh_autoattack_hits']
                 elif 'mh_autoattacks' in attacks_per_second:
                     triggers_per_second += attacks_per_second['mh_autoattacks'] * self.dw_mh_hit_chance
         if proc.procs_off_strikes():
-            for ability in ('mutilate', 'dispatch', 'backstab', 'pistol_shot', 'saber_slash', 'ambush', 'hemorrhage', 'mh_killing_spree', 'shuriken_toss'):
+            for ability in ('mutilate', 'backstab', 'pistol_shot', 'saber_slash', 'ambush', 'hemorrhage', 'killing_spree', 'shuriken_toss',
+                'fan_of_knives', 'kingsbane', 'poisoned_knife', 'toxic_blade', 'between_the_eyes', 'blunderbuss', 'cannonball_barrage',
+                'ghostly_strike', 'greed', 'gloomblade', 'goremaws_bite', 'shadowstrike', 'shuriken_storm'):
                 if ability in attacks_per_second:
                     if proc.procs_off_crit_only():
                         triggers_per_second += attacks_per_second[ability] * crit_rates[ability]
                     else:
                         triggers_per_second += attacks_per_second[ability]
-            for ability in ('envenom', 'eviscerate', 'run_through'):
+            for ability in ('envenom', 'eviscerate', 'run_through', 'death_from_above_strike', 'death_from_above_pulse'):
                 if ability in attacks_per_second:
                     if proc.procs_off_crit_only():
                         triggers_per_second += sum(attacks_per_second[ability]) * crit_rates[ability]
@@ -467,12 +471,14 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 if 'oh_autoattacks' in attacks_per_second:
                     triggers_per_second += attacks_per_second['oh_autoattacks'] * crit_rates['oh_autoattacks']
             else:
+                if 'shadow_blades' in attacks_per_second:
+                    triggers_per_second += attacks_per_second['shadow_blades']
                 if 'oh_autoattack_hits' in attacks_per_second:
                     triggers_per_second += attacks_per_second['oh_autoattack_hits']
                 elif 'oh_autoattacks' in attacks_per_second:
                     triggers_per_second += attacks_per_second['oh_autoattacks'] * self.dw_oh_hit_chance
         if proc.procs_off_strikes():
-            for ability in ('mutilate', 'oh_killing_spree'):
+            for ability in ('mutilate', 'kingsbane', 'killing_spree', 'goremaws_bite', 'main_gauche'):
                 if ability in attacks_per_second:
                     if proc.procs_off_crit_only():
                         triggers_per_second += attacks_per_second[ability] * crit_rates[ability]
@@ -483,18 +489,19 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
     def get_other_procs_per_second(self, proc, attacks_per_second, crit_rates):
         triggers_per_second = 0
         if proc.procs_off_harmful_spells():
-            for ability in ('deadly_instant_poison', 'wound_poison', 'venomous_wounds'):
+            for ability in ('deadly_instant_poison', 'wound_poison', 'venomous_wounds', 'soul_rip', 'shadow_nova', 'second_shuriken'):
                 if ability in attacks_per_second:
                     if proc.procs_off_crit_only():
                         triggers_per_second += attacks_per_second[ability] * crit_rates[ability]
                     else:
                         triggers_per_second += attacks_per_second[ability]
         if proc.procs_off_periodic_spell_damage():
-            if 'deadly_poison' in attacks_per_second:
-                if proc.procs_off_crit_only():
-                    triggers_per_second += attacks_per_second['deadly_poison'] * crit_rates['deadly_poison']
-                else:
-                    triggers_per_second += attacks_per_second['deadly_poison']
+            for ability in ('deadly_poison', 'kingsbane_ticks', 'poison_bomb', 'from_the_shadows'):
+                if ability in attacks_per_second:
+                    if proc.procs_off_crit_only():
+                        triggers_per_second += attacks_per_second[ability] * crit_rates[ability]
+                    else:
+                        triggers_per_second += attacks_per_second[ability]
         if proc.procs_off_bleeds():
             if 'rupture_ticks' in attacks_per_second:
                 if proc.procs_off_crit_only():
