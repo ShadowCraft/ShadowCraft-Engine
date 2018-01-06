@@ -9,7 +9,7 @@ import builtins
 import math
 from operator import add
 from copy import copy
-import numpy
+from numpy import zeros
 
 _ = gettext.gettext
 
@@ -1093,7 +1093,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 avg_cp_per_builder = sum([cp * cpg_cps[cp] for cp in cpg_cps])
                 builders_per_finisher =  self.settings.finisher_threshold / avg_cp_per_builder
                 avg_finisher_size = self.settings.finisher_threshold
-                finisher_list = numpy.zeros(7)
+                finisher_list = zeros(7)
                 finisher_list[self.settings.finisher_threshold] = 1.0
             #otherwise we need to enumerate paths to determine amount of waste given cp threshold
             else:
@@ -1113,7 +1113,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                     max_cps = 6
                 builders_per_finisher = 0.0
                 avg_finisher_size = 0.0
-                finisher_list = numpy.zeros(7)
+                finisher_list = zeros(7)
 
                 for path in paths:
                     chance = 1.0
@@ -1131,8 +1131,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             energy_regen = self.get_energy_regen(current_stats)
 
             #set up rupture
-            attacks_per_second['rupture'] = numpy.zeros(7)
-            attacks_per_second['rupture_ticks'] = numpy.zeros(7)
+            attacks_per_second['rupture'] = zeros(7)
+            attacks_per_second['rupture_ticks'] = zeros(7)
             base_rupture_duration = 4 * (1 + avg_finisher_size)
             if self.talents.exsanguinate:
                 #assume full pandemic on exsanged ruptures
@@ -1216,8 +1216,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             if self.talents.death_from_above:
                 dfa_cd = self.get_spell_cd('death_from_above') + self.settings.response_time
                 dfa_per_second = 1 / dfa_cd
-                attacks_per_second['death_from_above_strike'] = numpy.zeros(7)
-                attacks_per_second['death_from_above_pulse'] = numpy.zeros(7)
+                attacks_per_second['death_from_above_strike'] = zeros(7)
+                attacks_per_second['death_from_above_pulse'] = zeros(7)
                 attacks_per_second['death_from_above_pulse'] = dfa_per_second * finisher_list
                 attacks_per_second['death_from_above_strike'] = dfa_per_second * finisher_list
                 attacks_per_second[self.cp_builder] += dfa_per_second * builders_per_finisher
@@ -1255,7 +1255,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 energy_budget += 0.75 * self.get_spell_cost('garrote') #Opener
                 energy_budget += 0.75 * self.get_spell_cost(self.cp_builder) * self.settings.duration / self.get_spell_cd('vanish')
 
-            attacks_per_second['envenom'] = numpy.zeros(7)
+            attacks_per_second['envenom'] = zeros(7)
             #spend those extra cps
             if cp_budget > 0:
                 extra_envenom = cp_budget / avg_finisher_size
@@ -2284,7 +2284,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
             nightblade_timeline = list(range(nightblade_duration, self.settings.duration, nightblade_duration))
             for finisher in ['nightblade', 'eviscerate']:
-                attacks_per_second[finisher] = numpy.zeros(7)
+                attacks_per_second[finisher] = zeros(7)
             nightblade_count = len(nightblade_timeline)
             attacks_per_second['nightblade'][self.settings.finisher_threshold] += nightblade_count / self.settings.duration
             self.cp_budget -= self.settings.finisher_threshold * nightblade_count
@@ -2314,9 +2314,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 attacks_per_second['mh_autoattacks'] -= lost_swings_mh / dfa_cd
                 attacks_per_second['oh_autoattacks'] -= lost_swings_oh / dfa_cd
 
-                attacks_per_second['death_from_above_strike'] = numpy.zeros(7)
+                attacks_per_second['death_from_above_strike'] = zeros(7)
                 attacks_per_second['death_from_above_strike'][self.settings.finisher_threshold] += 1 / dfa_cd
-                attacks_per_second['death_from_above_pulse'] = numpy.zeros(7)
+                attacks_per_second['death_from_above_pulse'] = zeros(7)
                 attacks_per_second['death_from_above_pulse'][self.settings.finisher_threshold] += 1 / dfa_cd
 
                 self.cp_budget -= self.settings.finisher_threshold * dfa_count
@@ -2463,7 +2463,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             #Now fixup attacks_per_second
             #convert nightblade casts into nightblade ticks
             if 'nightblade' in attacks_per_second:
-                attacks_per_second['nightblade_ticks'] = numpy.zeros(7)
+                attacks_per_second['nightblade_ticks'] = zeros(7)
                 if self.stats.gear_buffs.rogue_t19_2pc:
                     for cp in range(1, 7):
                         attacks_per_second['nightblade_ticks'][cp] = (3 + (2 * cp)) * attacks_per_second['nightblade'][cp]
@@ -2526,7 +2526,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 finisher_cps = attacks_per_second['eviscerate'] + attacks_per_second['nightblade']
                 if self.talents.death_from_above:
                     finisher_cps += attacks_per_second['death_from_above_strike']
-                finisher_cps = numpy.sum(finisher_cps * numpy.arange(7))
+                finisher_cps = numpy.sum(finisher_cps * arange(7))
 
             #Handle SoD-CDR for T21 2pc
             if self.stats.gear_buffs.rogue_t21_2pc or self.stats.gear_buffs.denial_of_the_half_giants:
@@ -2592,7 +2592,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         attack_counts[self.dance_cp_builder] = 0
         if finisher:
             finisher_cost = self.get_spell_cost(finisher, cost_mod=cost_mod)
-            attack_counts[finisher] = numpy.zeros(7)
+            attack_counts[finisher] = zeros(7)
 
         while dance_gcds > 0:
             remaining_energy = (net_energy + max_dance_energy)
