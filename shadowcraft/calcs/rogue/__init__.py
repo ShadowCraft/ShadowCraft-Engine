@@ -376,7 +376,7 @@ class RogueDamageCalculator(DamageCalculator):
         return 0.3575 * ap * (1 + (0.05 * self.traits.master_alchemist)) * (1 + (0.3 * self.talents.master_poisoner))
 
     def deadly_instant_poison_damage(self, ap):
-        return 0.221 * ap * (1 + (0.05 * self.traits.master_alchemist)) * (1 + (0.3 * self.talents.master_poisoner))
+        return 0.25415 * ap * (1 + (0.05 * self.traits.master_alchemist)) * (1 + (0.3 * self.talents.master_poisoner))
 
     #Maybe add better handling for 'rule of three' for artifact traits
     def envenom_damage(self, ap, cp):
@@ -402,10 +402,10 @@ class RogueDamageCalculator(DamageCalculator):
     def kingsbane_tick_damage(self, ap):
         return 0.36 * ap * (1 + (0.3 * self.talents.master_poisoner))
     def mh_mutilate_damage(self, ap):
-        return 3.6 * self.get_weapon_damage('mh', ap) * (1 + (0.15 * self.traits.assassins_blades))
+        return 4.32 * self.get_weapon_damage('mh', ap) * (1 + (0.15 * self.traits.assassins_blades))
 
     def oh_mutilate_damage(self, ap):
-        return 3.6 * self.oh_penalty() * self.get_weapon_damage('oh', ap) * (1 + (0.15 * self.traits.assassins_blades))
+        return 4.32 * self.oh_penalty() * self.get_weapon_damage('oh', ap) * (1 + (0.15 * self.traits.assassins_blades))
 
     def poisoned_knife_damage(self, ap):
         return 0.6 * ap

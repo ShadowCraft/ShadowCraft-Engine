@@ -145,7 +145,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         for attack in spec_attacks:
             #for handling odd crit rates
             if attack == 'mutilate' and self.traits.balanced_blades:
-                crit_rates[attack] = base_melee_crit_rate + (0.02 * self.traits.balanced_blades)
+                crit_rates[attack] = base_melee_crit_rate + (0.04 * self.traits.balanced_blades)
             elif attack == 'rupture_ticks' and self.traits.serrated_edge:
                 crit_rates[attack] = base_melee_crit_rate + (0.03333 * self.traits.serrated_edge)
             elif attack  in ('pistol_shot', 'blunderbuss') and self.traits.gunslinger:
