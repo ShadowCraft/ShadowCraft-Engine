@@ -9,7 +9,7 @@ import builtins
 import math
 from operator import add
 from copy import copy
-from numpy import zeros
+from numpy import zeros, arange, sum as npsum
 
 _ = gettext.gettext
 
@@ -2526,7 +2526,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
                 finisher_cps = attacks_per_second['eviscerate'] + attacks_per_second['nightblade']
                 if self.talents.death_from_above:
                     finisher_cps += attacks_per_second['death_from_above_strike']
-                finisher_cps = numpy.sum(finisher_cps * arange(7))
+                finisher_cps = npsum(finisher_cps * arange(7))
 
             #Handle SoD-CDR for T21 2pc
             if self.stats.gear_buffs.rogue_t21_2pc or self.stats.gear_buffs.denial_of_the_half_giants:
