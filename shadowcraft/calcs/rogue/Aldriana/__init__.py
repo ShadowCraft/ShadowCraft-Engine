@@ -598,7 +598,7 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.stats.procs.rocket_barrage:
             getattr(self.stats.procs, 'rocket_barrage').value = 0.42900 * current_stats['int'] + .5 * average_ap + 1 + self.level * 2 #need to update
         if self.stats.procs.touch_of_the_grave:
-            getattr(self.stats.procs, 'touch_of_the_grave').value = 8 * self.tools.get_constant_scaling_point(self.level) # +/- 15% spread
+            getattr(self.stats.procs, 'touch_of_the_grave').value = average_ap * 1.25
 
     def get_poison_counts(self, attacks_per_second, current_stats):
         mh_hits_per_second = self.get_mh_procs_per_second(self.poison_proc, attacks_per_second, None)
