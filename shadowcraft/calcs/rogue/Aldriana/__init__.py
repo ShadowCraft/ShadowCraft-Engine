@@ -1036,6 +1036,12 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         if self.stats.gear_buffs.insignia_of_ravenholdt:
             damage_breakdown['insignia_of_ravenholdt'] = self.compute_insignia_of_ravenholdt_damage(stats, damage_breakdown)
 
+        #add AoE damage sources:
+        if self.settings.num_boss_adds:
+            for key in damage_breakdown:
+                if key in ['poison_bomb']: #TODO: Add FoK and PK
+                    damage_breakdown[key] *= 1 + self.settings.num_boss_adds
+
         if self.stats.gear_buffs.cinidaria_the_symbiote:
             damage_breakdown['symbiote_strike'] = self.compute_symbiote_strike_damage(damage_breakdown)
 
