@@ -875,8 +875,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('assassins_resolve', 1.17, [], all_damage=True))
 
         #Generic tuning aura
+        # Note: spec aura does not affect deadly_instant_poison
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('assassination_aura', 1.28, ['death_from_above_pulse', 'death_from_above_strike',
-            'deadly_poison', 'deadly_instant_poison', 'envenom', 'fan_of_knives', 'garrote_ticks', 'hemorrhage',
+            'deadly_poison', 'envenom', 'fan_of_knives', 'garrote_ticks', 'hemorrhage',
             'kingsbane', 'kingsbane_ticks', 'mutilate', 'poisoned_knife', 'rupture_ticks', 'toxic_blade']))
 
         #time averaged vendetta modifier used for most things
