@@ -70,6 +70,7 @@ allowed_procs = {
     #racials
     'touch_of_the_grave': {
         'stat': 'spell_damage',
+        'dmg_school': 'shadow',
         'value': 0,
         'duration': 0,
         'max_stacks': 0,
@@ -81,6 +82,7 @@ allowed_procs = {
     },
     'rocket_barrage': {
         'stat': 'spell_damage',
+        'dmg_school': 'fire',
         'value': 0,
         'duration': 0,
         'max_stacks': 0,
@@ -88,6 +90,28 @@ allowed_procs = {
         'type': 'icd',
         'icd': 120,
         'proc_rate': 1.0,
+        'trigger': 'all_attacks'
+    },
+    'arcane_pulse': {
+        'stat': 'spell_damage',
+        'dmg_school': 'arcane',
+        'value': 0,
+        'duration': 0,
+        'aoe': True,
+        'proc_name': 'Arcane Pulse',
+        'type': 'icd',
+        'icd': 180,
+        'proc_rate': 1.0,
+        'trigger': 'all_attacks'
+    },
+    'entropic_embrace': {
+        'stat': 'spell_damage',
+        'value': 1, #Placeholder for uptime calculation, converted to % mod in damage breakdown
+        'duration': 12,
+        'proc_name': 'Entropic Embrace',
+        'type': 'icd',
+        'icd': 60,
+        'proc_rate': 0.33,
         'trigger': 'all_attacks'
     },
     #netherlight crucible

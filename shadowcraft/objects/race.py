@@ -55,6 +55,10 @@ class Race(object):
         "troll":        ( 1,  2,  0, -4,  1),
         "blood_elf":    (-3,  2,  0,  3, -2),
         "goblin":       (-3,  2,  0,  3, -2),
+        "nightborne" :  (-4,  4,  0,  0,  0),
+        "highmountain_tauren": (-1, -2,  1, -2,  0),
+        "void_elf":     (-3,  2,  0,  3,  2),
+        "lightforged_draenei": ( 1, -3,  0,  0,  2),
         "none":         ( 0,  0,  0,  0,  0),
     }
 
@@ -79,6 +83,9 @@ class Race(object):
         "time_is_money",            #Goblin (1% haste)
         "epicurean",                #Pandaren (doubles food buff)
         "touch_of_the_grave",       #Undead (shadow damage chance to proc)
+        "arcane_pulse",             #Nightborne: 2*AP AoE Arcane dmg
+        "arcane_affinity",          #Nightborne: 1% increased magic damage
+        "entropic_embrace",         #Void Elf: 60s ICD, 33% proc chance, 5% damage/healing for 12s
     ])
 
     activated_racial_data = {
@@ -104,6 +111,10 @@ class Race(object):
         "blood_elf":    ["arcane_torrent", "arcane_acuity"],
         "goblin":       ["rocket_barrage", "time_is_money"],
         "pandaren":     ["epicurean"],
+        "nightborne" :  ["arcane_pulse", "arcane_affinity"],
+        "highmountain_tauren": [],
+        "void_elf":     ["entropic_embrace"],
+        "lightforged_draenei": [],
         "none":         [],
     }
 

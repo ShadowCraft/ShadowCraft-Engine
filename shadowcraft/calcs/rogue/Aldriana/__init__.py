@@ -599,6 +599,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             getattr(self.stats.procs, 'rocket_barrage').value = 0.42900 * current_stats['int'] + .5 * average_ap + 1 + self.level * 2 #need to update
         if self.stats.procs.touch_of_the_grave:
             getattr(self.stats.procs, 'touch_of_the_grave').value = average_ap * 1.25
+        if self.stats.procs.arcane_pulse:
+            getattr(self.stats.procs, 'arcane_pulse').value = average_ap * 2
 
     def get_poison_counts(self, attacks_per_second, current_stats):
         mh_hits_per_second = self.get_mh_procs_per_second(self.poison_proc, attacks_per_second, None)
@@ -867,6 +869,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #assassination specific constants
         #set up damage modifier list and all relevant modifiers, use None for placeholder values
         self.damage_modifiers = modifiers.ModifierList(self.assassination_damage_sources + ['autoattacks'])
+        if self.race.arcane_affinity: #From spell data this seems to be all damage atm
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('arcane_affinity', 1.01, [], all_damage=True))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('versatility', None, [], all_damage=True))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('armor', self.armor_mitigation_multiplier(), ['death_from_above_pulse',
             'fan_of_knives', 'hemorrhage', 'mutilate', 'poisoned_knife', 'autoattacks'], dmg_schools=['physical']))
@@ -1045,6 +1049,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         if self.stats.gear_buffs.cinidaria_the_symbiote:
             damage_breakdown['symbiote_strike'] = self.compute_symbiote_strike_damage(damage_breakdown)
+
+        if self.stats.procs.entropic_embrace:
+            damage_breakdown['Entropic Embrace'] = sum(damage_breakdown.values()) * 0.05 * aps['Entropic Embrace'] * self.stats.procs.entropic_embrace.duration
 
         return damage_breakdown
 
@@ -1465,6 +1472,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         }
 
         self.damage_modifiers = modifiers.ModifierList(self.outlaw_damage_sources + ['autoattacks'])
+        if self.race.arcane_affinity: #From spell data this seems to be all damage atm
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('arcane_affinity', 1.01, [], all_damage=True))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('versatility', None, [], all_damage=True))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('armor', self.armor_mitigation_multiplier(), ['death_from_above_pulse',
             'death_from_above_strike', 'ambush', 'between_the_eyes', 'blunderbuss', 'cannonball_barrage',
@@ -1532,6 +1541,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         if self.stats.gear_buffs.cinidaria_the_symbiote:
             damage_breakdown['symbiote_strike'] = self.compute_symbiote_strike_damage(damage_breakdown)
+
+        if self.stats.procs.entropic_embrace:
+            damage_breakdown['Entropic Embrace'] = sum(damage_breakdown.values()) * 0.05 * aps['Entropic Embrace'] * self.stats.procs.entropic_embrace.duration
 
         return damage_breakdown
 
@@ -2016,6 +2028,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         #set up damage modifier list and all relevant modifiers, use None for placeholder values
         self.damage_modifiers = modifiers.ModifierList(self.subtlety_damage_sources + ['autoattacks'])
+        if self.race.arcane_affinity: #From spell data this seems to be all damage atm
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('arcane_affinity', 1.01, [], all_damage=True))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('versatility', None, [], all_damage=True))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('armor', self.armor_mitigation_multiplier(), ['death_from_above_pulse',
             'death_from_above_strike', 'shuriken_storm', 'eviscerate', 'backstab', 'shadowstrike', 'shuriken_toss', 'autoattacks'], dmg_schools=['physical']))
@@ -2206,6 +2220,9 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         if self.stats.gear_buffs.cinidaria_the_symbiote:
             damage_breakdown['symbiote_strike'] = self.compute_symbiote_strike_damage(damage_breakdown)
+
+        if self.stats.procs.entropic_embrace:
+            damage_breakdown['Entropic Embrace'] = sum(damage_breakdown.values()) * 0.05 * aps['Entropic Embrace'] * self.stats.procs.entropic_embrace.duration
 
         return damage_breakdown
 

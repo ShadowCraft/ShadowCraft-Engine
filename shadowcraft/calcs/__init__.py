@@ -49,10 +49,14 @@ class DamageCalculator(object):
         self.target_level = target_level if target_level else level+3 #assumes 3 levels higher if not explicit
 
         #racials
-        if self.race.race_name == 'undead':
+        if self.race.touch_of_the_grave:
             self.stats.procs.set_proc('touch_of_the_grave')
-        if self.race.race_name == 'goblin':
+        if self.race.rocket_barrage:
             self.stats.procs.set_proc('rocket_barrage')
+        if self.race.arcane_pulse:
+            self.stats.procs.set_proc('arcane_pulse')
+        if self.race.entropic_embrace:
+            self.stats.procs.set_proc('entropic_embrace')
 
         self.level_difference = max(self.target_level - level, 0)
         self.base_one_hand_miss_rate = 0

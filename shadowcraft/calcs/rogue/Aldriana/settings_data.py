@@ -369,6 +369,8 @@ rogue_settings = [
                     'undead': 'Undead',
                     'goblin': 'Goblin',
                     'pandaren': 'Pandaren',
+                    'void_elf': 'Void Elf',
+                    'nightborne': 'Nightborne'
                 }
             },
             {
