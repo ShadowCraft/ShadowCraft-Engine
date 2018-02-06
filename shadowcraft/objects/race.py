@@ -41,25 +41,25 @@ class Race(object):
         return 1 + 0.25 * ap + .429 * spfi + self.level * 2 + int * 0.50193
 
     racial_stat_offset = {
-                       #str,agi,sta,int,spi
-        "human":        ( 0,  0,  0,  0,  0),
-        "dwarf":        ( 5, -4,  1, -1, -1),
-        "night_elf":    (-4,  4,  0,  0,  0),
-        "gnome":        (-5,  2,  0,  3,  0),
-        "draenei":      ( 1, -3,  0,  0,  2),
-        "worgen":       ( 3,  2,  0, -4, -1),
-        "pandaren":     ( 0, -2,  1, -1,  2),
-        "orc":          ( 3, -3,  1, -3,  2),
-        "undead":       (-1, -2,  0, -2,  5),
-        "tauren":       ( 5, -4,  1, -4,  2),
-        "troll":        ( 1,  2,  0, -4,  1),
-        "blood_elf":    (-3,  2,  0,  3, -2),
-        "goblin":       (-3,  2,  0,  3, -2),
-        "nightborne" :  (-4,  4,  0,  0,  0),
-        "highmountain_tauren": (-1, -2,  1, -2,  0),
-        "void_elf":     (-3,  2,  0,  3,  2),
-        "lightforged_draenei": ( 1, -3,  0,  0,  2),
-        "none":         ( 0,  0,  0,  0,  0),
+                               #str,agi,sta,int,spi
+        "human":               ( 0,  0,  0,  0,  0),
+        "dwarf":               ( 2, -2,  1, -1,  0),
+        "night_elf":           (-4,  4,  0,  0,  0),
+        "gnome":               (-3,  1, -1,  3,  0),
+        "draenei":             ( 1, -3,  2,  0,  0),
+        "worgen":              ( 2,  1,  0, -3,  0),
+        "pandaren":            ( 0, -2,  2,  0,  0),
+        "orc":                 ( 3, -3,  1, -1,  0),
+        "undead":              ( 2, -1,  1, -2,  0),
+        "tauren":              ( 2, -2,  2, -2,  0),
+        "troll":               ( 1,  2,  0, -3,  0),
+        "blood_elf":           (-3,  1,  0,  2,  0),
+        "goblin":              (-3,  1, -1,  3,  0),
+        "nightborne" :         ( 0, -1,  1,  3,  0),
+        "highmountain_tauren": ( 1, -2,  2, -1,  0),
+        "void_elf":            (-3,  1,  0,  2,  0),
+        "lightforged_draenei": (-2,  1, -1,  2,  0),
+        "none":                ( 0,  0,  0,  0,  0),
     }
 
     allowed_racials = frozenset([
