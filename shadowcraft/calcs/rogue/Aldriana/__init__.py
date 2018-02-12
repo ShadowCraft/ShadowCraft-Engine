@@ -869,8 +869,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #assassination specific constants
         #set up damage modifier list and all relevant modifiers, use None for placeholder values
         self.damage_modifiers = modifiers.ModifierList(self.assassination_damage_sources + ['autoattacks'])
-        if self.race.arcane_affinity: #From spell data this seems to be all damage atm
-            self.damage_modifiers.register_modifier(modifiers.DamageModifier('arcane_affinity', 1.01, [], all_damage=True))
+        if self.race.magical_affinity:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('magical_affinity', 1.01, ['deadly_poison', 'deadly_instant_poison', 'envenom', 'kingsbane', 'kingsbane_ticks', 'poison_bomb', 'from_the_shadows', 'wound_poison'], dmg_schools=['arcane', 'fire', 'frost', 'holy', 'nature', 'shadow']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('versatility', None, [], all_damage=True))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('armor', self.armor_mitigation_multiplier(), ['death_from_above_pulse',
             'fan_of_knives', 'hemorrhage', 'mutilate', 'poisoned_knife', 'autoattacks'], dmg_schools=['physical']))
@@ -1472,8 +1472,8 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         }
 
         self.damage_modifiers = modifiers.ModifierList(self.outlaw_damage_sources + ['autoattacks'])
-        if self.race.arcane_affinity: #From spell data this seems to be all damage atm
-            self.damage_modifiers.register_modifier(modifiers.DamageModifier('arcane_affinity', 1.01, [], all_damage=True))
+        if self.race.magical_affinity:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('magical_affinity', 1.01, [], dmg_schools=['arcane', 'fire', 'frost', 'holy', 'nature', 'shadow']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('versatility', None, [], all_damage=True))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('armor', self.armor_mitigation_multiplier(), ['death_from_above_pulse',
             'death_from_above_strike', 'ambush', 'between_the_eyes', 'blunderbuss', 'cannonball_barrage',
@@ -2028,8 +2028,10 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
 
         #set up damage modifier list and all relevant modifiers, use None for placeholder values
         self.damage_modifiers = modifiers.ModifierList(self.subtlety_damage_sources + ['autoattacks'])
-        if self.race.arcane_affinity: #From spell data this seems to be all damage atm
-            self.damage_modifiers.register_modifier(modifiers.DamageModifier('arcane_affinity', 1.01, [], all_damage=True))
+        if self.race.magical_affinity:
+            self.damage_modifiers.register_modifier(modifiers.DamageModifier('magical_affinity', 1.01,
+            ['gloomblade', 'goremaws_bite', 'shadow_blades', 'nightblade_ticks', 'soul_rip', 'shadow_nova'],
+            dmg_schools=['arcane', 'fire', 'frost', 'holy', 'nature', 'shadow']))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('versatility', None, [], all_damage=True))
         self.damage_modifiers.register_modifier(modifiers.DamageModifier('armor', self.armor_mitigation_multiplier(), ['death_from_above_pulse',
             'death_from_above_strike', 'shuriken_storm', 'eviscerate', 'backstab', 'shadowstrike', 'shuriken_toss', 'autoattacks'], dmg_schools=['physical']))
