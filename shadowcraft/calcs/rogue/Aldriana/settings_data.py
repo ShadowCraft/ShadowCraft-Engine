@@ -288,6 +288,20 @@ rogue_settings = [
                 'default': False
             },
             {
+                'name': 'spell_damage_debuff',
+                'label': '+5% Magic Damage',
+                'description': 'Chaos Brand (Demon Hunter buff)',
+                'type': 'checkbox',
+                'default': False
+            },
+            {
+                'name': 'attack_power_buff',
+                'label': '+10% Attack Power',
+                'description': 'Battle Shout (Warrior buff)',
+                'type': 'checkbox',
+                'default': False
+            },
+            {
                 'name': 'food_buff',
                 'label': 'Food',
                 'description': '',

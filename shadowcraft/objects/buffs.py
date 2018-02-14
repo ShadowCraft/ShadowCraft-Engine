@@ -10,21 +10,21 @@ class InvalidBuffException(exceptions.InvalidInputException):
 class Buffs(object):
 
     allowed_buffs = frozenset([
-        'short_term_haste_buff',           # Heroism/Blood Lust, Time Warp
+        'short_term_haste_buff',            # Heroism/Blood Lust, Time Warp
+        'spell_damage_debuff',              # Chaos Brand
+        'physical_vulnerability_debuff',    # Expose Armor
+        'attack_power_buff',                # Battle Shout
         #'stat_multiplier_buff',            # Mark of the Wild, Blessing of Kings, Legacy of the Emperor
-        #'crit_chance_buff',                # Leader of the Pack, Legacy of the White Tiger, Arcane Brillance
-        #'haste_buff',                      # Swiftblade's Cunning, Unholy Aura
-        #'multistrike_buff',                # Swiftblade's Cunning, ...
-        #'attack_power_buff',               # Horn of Winter, Trueshot Aura, Battle Shout
-        #'mastery_buff',                    # Blessing of Might, Grace of Air
-        #'stamina_buff',                    # PW: Fortitude, Blood Pact, Commanding Shout
-        #'versatility_buff',                #
-        #'spell_power_buff',                # Dark Intent, Arcane Brillance
+        #'crit_chance_buff',                 # Leader of the Pack, Legacy of the White Tiger, Arcane Brillance
+        #'stamina_buff',                     # PW: Fortitude, Blood Pact, Commanding Shout
+        #'spell_power_buff',                 # Dark Intent, Arcane Brillance
         #'armor_debuff',                     # Sunder, Expose Armor, Faerie Fire
-        #'physical_vulnerability_debuff',    # Brittle Bones, Ebon Plaguebringer, Judgments of the Bold, Colossus Smash
-        #'spell_damage_debuff',              # Master Poisoner, Curse of Elements
         #'slow_casting_debuff',
-        'mortal_wounds_debuff',
+        #'haste_buff',                       # Demon Speed
+        #'versatility_buff',                 # Mark of the Wild
+        #'mastery_buff',                     # Legacy of the Emperor
+        #'primary_stat_buff',                # Battle Shout
+
         # consumables
         ###LEGION###
         'flask_legion_agi',                 # Flask of the Seventh Demon
@@ -49,18 +49,18 @@ class Buffs(object):
 
     buffs_debuffs = frozenset([
         'short_term_haste_buff',            # Heroism/Blood Lust, Time Warp
+        'spell_damage_debuff',              # Curse of the Elements
+        'physical_vulnerability_debuff',    # Expose Armor
+        'attack_power_buff',                # Battle Shout
         #'stat_multiplier_buff',             # Mark of the Wild, Blessing of Kings, Legacy of the Emperor
         #'crit_chance_buff',                 # Leader of the Pack, Legacy of the White Tiger, Arcane Brillance
-        #'haste_buff',                       # Swiftblade's Cunning, Unholy Aura
         #'multistrike_buff',                 # Swiftblade's Cunning, ...
-        #'attack_power_buff',                # Horn of Winter, Trueshot Aura, Battle Shout
-        #'mastery_buff',                     # Blessing of Might, Grace of Air
         #'spell_power_buff',                 # Dark Intent, Arcane Brillance
-        #'versatility_buff',
         #'stamina_buff',                     # PW: Fortitude, Blood Pact, Commanding Shout
-        #'physical_vulnerability_debuff',    # Brittle Bones, Ebon Plaguebringer, Judgments of the Bold, Colossus Smash
-        #'spell_damage_debuff',              # Master Poisoner, Curse of Elements
-        'mortal_wounds_debuff',
+        #'haste_buff',                       # Demon Speed
+        #'versatility_buff',                 # Mark of the Wild
+        #'mastery_buff',                     # Legacy of the Emperor
+        #'primary_stat_buff',                # Battle Shout
     ])
 
     def __init__(self, *args, **kwargs):
