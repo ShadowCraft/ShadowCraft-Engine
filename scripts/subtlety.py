@@ -16,7 +16,6 @@ from shadowcraft.objects import race
 from shadowcraft.objects import stats
 from shadowcraft.objects import procs
 from shadowcraft.objects import talents
-from shadowcraft.objects import artifact
 
 from shadowcraft.core import i18n
 
@@ -89,43 +88,14 @@ test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
 # Initialize talents..
 test_talents = talents.Talents('1113213', test_spec, test_class, level=test_level)
 
-#initialize artifact traits..
-test_traits = artifact.Artifact(test_spec, test_class, trait_dict={
-    'goremaws_bite':       1,
-    'shadow_fangs':        1,
-    'gutripper':           4,
-    'fortunes_bite':       4,
-    'catlike_reflexes':    4,
-    'embrace_of_darkness': 1,
-    'ghost_armor':         4,
-    'precision_strike':    4,
-    'energetic_stabbing':  4+3,
-    'flickering_shadows':  1,
-    'second_shuriken':     1,
-    'demons_kiss':         4,
-    'finality':            1,
-    'the_quiet_knife':     4,
-    'akarris_soul':        1,
-    'soul_shadows':        4,
-    'shadow_nova':         1,
-    'legionblade':         1,
-    'shadows_of_the_uncrowned': 1,
-    'weak_point': 4+3,
-    'shadows_whisper': 1,
-    'feeding_frenzy': 1,
-    'concordance_of_the_legionfall': 24,
-    #crucible
-    'torment_the_weak': 3,
-})
-
 # Set up settings.
 test_cycle = settings.SubtletyCycle()
 test_settings = settings.Settings(test_cycle, pantheon_trinket_users=0, num_boss_adds=0)
 
 # Build a DPS object.
-calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_traits, test_buffs, test_race, test_spec, test_settings, test_level)
+calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_buffs, test_race, test_spec, test_settings, test_level)
 
-print(str(test_stats.get_character_stats(test_race, test_traits)))
+print(str(test_stats.get_character_stats(test_race)))
 
 # Compute DPS Breakdown.
 dps_breakdown = calculator.get_dps_breakdown()
@@ -140,7 +110,6 @@ tier_ep_values = calculator.get_other_ep(['rogue_t20_2pc', 'rogue_t20_4pc', 'the
 'gorshalachs_legacy', 'forgefiends_fabricator'])
 
 #talent_ranks = calculator.get_talents_ranking()
-trait_ranks = calculator.get_trait_ranking()
 
 def max_length(dict_list):
     max_len = 0
@@ -169,7 +138,6 @@ dicts_for_pretty_print = [
     tier_ep_values,
     #trinkets_ep_value,
     dps_breakdown,
-    #trait_ranks
 ]
 pretty_print(dicts_for_pretty_print)
 print(' ' * (max_length(dicts_for_pretty_print) + 1), total_dps, ("total damage per second."))
@@ -182,5 +150,3 @@ for value in list(aps.items()):
         val = sum(value[1]) * 300.
     print(str(value[0]) + ' - ' + str(val))
 """
-
-#pprint(trait_ranks)

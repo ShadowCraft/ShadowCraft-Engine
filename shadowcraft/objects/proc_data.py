@@ -1102,18 +1102,6 @@ allowed_procs = {
         'trigger': 'all_attacks' #should be only finishing moves, but since it's rppm that doesn't matter
     },
 
-    'concordance_of_the_legionfall': {
-        'stat': 'stats',
-        'value': {}, #set depending on traits in determine_stats
-        'duration': 10,
-        'proc_name': 'Concordance of the Legionfall',
-        'type': 'rppm',
-        'source': 'trait',
-        'proc_rate': 1.37,
-        'icd': 10,
-        'trigger': 'all_attacks'
-    },
-
     #6.2.3 procs
     'infallible_tracking_charm': {
         'stat':'spell_damage',

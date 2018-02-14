@@ -15,7 +15,6 @@ from shadowcraft.objects import race
 from shadowcraft.objects import stats
 from shadowcraft.objects import procs
 from shadowcraft.objects import talents
-from shadowcraft.objects import artifact
 
 from shadowcraft.core import i18n
 
@@ -69,18 +68,15 @@ test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
 #test_talents = talents.Talents('2110031', test_spec, test_class, level=test_level)
 test_talents = talents.Talents('1230011', test_spec, test_class, level=test_level)
 
-#initialize artifact traits..
-test_traits = artifact.Artifact(test_spec, test_class, trait_dict={'assassins_blades': 1, 'bag_of_tricks': 1, 'balanced_blades': 4, 'blood_of_the_assassinated': 1, 'fade_into_shadows': 4, 'from_the_shadows': 1, 'kingsbane': 1, 'gushing_wounds': 4, 'master_alchemist': 6, 'master_assassin': 5, 'poison_knives': 4, 'serrated_edge': 4, 'shadow_swiftness': 1, 'shadow_walker': 4, 'surge_of_toxins': 1, 'toxic_blades': 4, 'urge_to_kill': 1, 'slayers_precision': 1, 'silence_of_the_uncrowned': 1, 'strangler': 4, 'dense_concoction': 1, 'sinister_circulation': 1, 'concordance_of_the_legionfall': 24})
-
 # Set up settings.
 test_cycle = settings.AssassinationCycle()
 test_settings = settings.Settings(test_cycle, response_time=.5, duration=300,
                                   finisher_threshold=4)
 
 # Build a DPS object.
-calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_traits, test_buffs, test_race, test_spec, test_settings, test_level)
+calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_buffs, test_race, test_spec, test_settings, test_level)
 
-print(str(calculator.stats.get_character_stats(calculator.race, test_traits)))
+print(str(calculator.stats.get_character_stats(calculator.race)))
 
 # Compute DPS Breakdown.
 dps_breakdown = calculator.get_dps_breakdown()
@@ -98,7 +94,6 @@ tier_ep_values = calculator.get_other_ep(['rogue_t19_2pc', 'rogue_t19_4pc', 'rog
 
 
 #talent_ranks = calculator.get_talents_ranking()
-#trait_ranks = calculator.get_trait_ranking()
 
 def max_length(dict_list):
     max_len = 0
@@ -128,7 +123,6 @@ dicts_for_pretty_print = [
     #talent_ranks,
     #trinkets_ep_value,
     dps_breakdown,
-    #trait_ranks
 ]
 pretty_print(dicts_for_pretty_print)
 

@@ -151,32 +151,6 @@ class RogueDamageCalculator(DamageCalculator):
             'symbols_of_death':          30.,
         }
 
-    # Vendetta CDR for number of points in trait
-    master_assassin_cdr = {
-            0: 0,
-            1: 10,
-            2: 20,
-            3: 30,
-            4: 38,
-            5: 44,
-            6: 48,
-            7: 52,
-            8: 56
-    }
-
-    # Adrenaline Rush CDR for number of points in trait
-    fortunes_boon_cdr = {
-            0: 0,
-            1: 10,
-            2: 18,
-            3: 25,
-            4: 31,
-            5: 37,
-            6: 42,
-            7: 46,
-            8: 49
-    }
-
     def __setattr__(self, name, value):
         object.__setattr__(self, name, value)
         if name == 'level':
@@ -321,8 +295,6 @@ class RogueDamageCalculator(DamageCalculator):
                 #http://beta.askmrrobot.com/wow/simulator/docs/critdamage
                 if ability == 'between_the_eyes':
                     crit_mod = self.crit_damage_modifiers(3)
-                if ability == 'saber_slash' and self.traits.sabermetrics:
-                    crit_mod = self.crit_damage_modifiers(1 + self.traits.sabermetrics * 0.05)
                 if ability in damage_breakdown:
                     damage_breakdown[ability] += self.get_ability_dps(average_ap, ability, aps, crits, modifier, crit_mod, both_hands, cps)
                 else:
@@ -346,8 +318,6 @@ class RogueDamageCalculator(DamageCalculator):
                 if ability == 'death_from_above_strike':
                     modifier *= 1.5
                     ability = 'eviscerate'
-                if ability in ['shadowstrike', 'backstab']:
-                    crit_mod *= 1.0 + (0.08 * self.traits.weak_point)
 
                 if ability in damage_breakdown:
                     damage_breakdown[ability] += self.get_ability_dps(average_ap, ability, aps, crits, modifier, crit_mod, both_hands, cps)
@@ -373,14 +343,13 @@ class RogueDamageCalculator(DamageCalculator):
 
     #assassination
     def deadly_poison_tick_damage(self, ap):
-        return 0.3575 * ap * (1 + (0.05 * self.traits.master_alchemist)) * (1 + (0.3 * self.talents.master_poisoner))
+        return 0.3575 * ap * (1 + (0.3 * self.talents.master_poisoner))
 
     def deadly_instant_poison_damage(self, ap):
-        return 0.25415 * ap * (1 + (0.05 * self.traits.master_alchemist)) * (1 + (0.3 * self.talents.master_poisoner))
+        return 0.25415 * ap * (1 + (0.3 * self.talents.master_poisoner))
 
-    #Maybe add better handling for 'rule of three' for artifact traits
     def envenom_damage(self, ap, cp):
-        return .6 * cp * ap * (1 + (0.0333 * self.traits.toxic_blades))
+        return .6 * cp * ap
 
     def fan_of_knives_damage(self, ap):
         return 1.5 * ap
@@ -390,7 +359,7 @@ class RogueDamageCalculator(DamageCalculator):
         return 40 * 0.35 * ap
 
     def garrote_tick_damage(self, ap):
-        return .9 * ap * (1 + 0.04 * self.traits.strangler)
+        return .9 * ap
 
     def hemorrhage_damage(self, ap):
         return 1 * self.get_weapon_damage('mh', ap)
@@ -402,10 +371,10 @@ class RogueDamageCalculator(DamageCalculator):
     def kingsbane_tick_damage(self, ap):
         return 0.36 * ap * (1 + (0.3 * self.talents.master_poisoner))
     def mh_mutilate_damage(self, ap):
-        return 4.32 * self.get_weapon_damage('mh', ap) * (1 + (0.15 * self.traits.assassins_blades))
+        return 4.32 * self.get_weapon_damage('mh', ap)
 
     def oh_mutilate_damage(self, ap):
-        return 4.32 * self.oh_penalty() * self.get_weapon_damage('oh', ap) * (1 + (0.15 * self.traits.assassins_blades))
+        return 4.32 * self.oh_penalty() * self.get_weapon_damage('oh', ap)
 
     def poisoned_knife_damage(self, ap):
         return 0.6 * ap
@@ -418,17 +387,17 @@ class RogueDamageCalculator(DamageCalculator):
         return 6 * 1.2 * ap * (1 + (0.3 * self.talents.master_poisoner))
 
     def rupture_tick_damage(self, ap, cp):
-        return 1.5 * ap * (1 + (0.0333 * self.traits.gushing_wounds))
+        return 1.5 * ap
 
     def wound_poison_damage(self, ap):
-        return 0.13 * ap * (1 + (0.05 * self.traits.master_alchemist)) * (1 + (0.3 * self.talents.master_poisoner))
+        return 0.13 * ap * (1 + (0.3 * self.talents.master_poisoner))
 
     #outlaw
     def ambush_damage(self, ap):
         return 4.5 * self.get_weapon_damage('mh', ap)
 
     def between_the_eyes_damage(self, ap, cp):
-        return .85 * cp * ap * (1 + (0.06 * self.traits.black_powder))
+        return .85 * cp * ap
 
     #7*121% AP
     def blunderbuss_damage(self, ap):
@@ -455,28 +424,28 @@ class RogueDamageCalculator(DamageCalculator):
         return 2.6 * self.oh_penalty() * self.get_weapon_damage('oh', ap)
 
     def main_gauche_damage(self, ap):
-        return 2.1 * self.oh_penalty() * self.get_weapon_damage('oh', ap) * (1 + (0.1 * self.traits.fortunes_strike))
+        return 2.1 * self.oh_penalty() * self.get_weapon_damage('oh', ap)
 
     def pistol_shot_damage(self, ap):
         return 1.65 * ap
 
     def run_through_damage(self, ap, cp):
-        return 1.42 * ap * cp * (1 + (0.04 * self.traits.fates_thirst))
+        return 1.42 * ap * cp
 
     def saber_slash_damage(self, ap):
-        return 3.02 * self.get_weapon_damage('mh', ap) * (1 + (0.15 * self.traits.cursed_edges))
+        return 3.02 * self.get_weapon_damage('mh', ap)
 
     #subtlety
     #Ignore positional modifier for now
     def backstab_damage(self, ap):
-        return 5 * self.get_weapon_damage('mh', ap) * (1 + (0.05 * self.traits.the_quiet_knife))
+        return 5 * self.get_weapon_damage('mh', ap)
 
     #has two ranks
     def eviscerate_damage(self, ap, cp):
         return 1.472 * cp * ap
 
     def gloomblade_damage(self, ap):
-        return 5.75 * self.get_weapon_damage('mh', ap) * (1 + (0.05 * self.traits.the_quiet_knife))
+        return 5.75 * self.get_weapon_damage('mh', ap)
 
     def mh_goremaws_bite_damage(self, ap):
         return 10 * self.get_weapon_damage('mh', ap)
@@ -486,10 +455,10 @@ class RogueDamageCalculator(DamageCalculator):
 
     #Nightblade doesn't actually scale with cps but passing cps for simplicity
     def nightblade_tick_damage(self, ap, cp):
-        return 0.9 * ap * (1 + (0.05 * self.traits.demons_kiss))
+        return 0.9 * ap
 
     def shadowstrike_damage(self, ap):
-        return 8.5 * self.get_weapon_damage('mh', ap) * (1 + (0.05 * self.traits.precision_strike))
+        return 8.5 * self.get_weapon_damage('mh', ap)
 
     def mh_shadow_blades_damage(self, ap):
         return self.get_weapon_damage('mh', ap, is_normalized=False)
@@ -571,25 +540,16 @@ class RogueDamageCalculator(DamageCalculator):
     def get_spell_cost(self, ability, cost_mod=1.0):
         cost = self.ability_info[ability][0] * cost_mod
         if ability == 'shadowstrike':
-            cost -= 0.5 * (2 * self.traits.energetic_stabbing)
             #Assume 5 yards away so 3 + 5/3
             if self.stats.gear_buffs.shadow_satyrs_walk:
                 cost -= 4.67
-        elif ability == 'backstab':
-            cost -= 0.5 * (2 * self.traits.energetic_stabbing)
         elif ability == 'garrote' and self.stats.gear_buffs.rogue_t20_4pc:
             cost -= 25
         return cost
 
     def get_spell_cd(self, ability):
         cd = self.ability_cds[ability]
-        if ability == 'adrenaline_rush':
-            cd -= self.fortunes_boon_cdr[self.traits.fortunes_boon]
-        elif ability == 'vendetta':
-            cd -= self.master_assassin_cdr[self.traits.master_assassin]
-        elif ability == 'vanish' and self.traits.flickering_shadows:
-            cd -= 30
-        elif self.spec == 'subtlety' and ability == 'marked_for_death':
+        if self.spec == 'subtlety' and ability == 'marked_for_death':
             cd = 40
         elif ability == 'garrote' and self.stats.gear_buffs.rogue_t20_4pc:
             cd -= 12

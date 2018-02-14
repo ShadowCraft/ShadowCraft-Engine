@@ -6,7 +6,6 @@ from shadowcraft.objects import race
 from shadowcraft.objects import stats
 from shadowcraft.objects import procs
 from shadowcraft.objects import talents
-from shadowcraft.objects import artifact
 
 class TestDamageCalculator(unittest.TestCase):
     def make_calculator(self, buffs_list=[], gear_buffs_list=[], race_name='night_elf', test_spec='outlaw'):
@@ -25,8 +24,7 @@ class TestDamageCalculator(unittest.TestCase):
                          versatility=1515)
         test_race = race.Race(race_name)
         test_talents = talents.Talents('1000000', test_spec, 'rogue', level=110)
-        test_traits = artifact.Artifact(test_spec, 'rogue', '000000000000000000')
-        return calcs.DamageCalculator(test_stats, test_talents, test_traits, test_buffs, test_race, 'outlaw')
+        return calcs.DamageCalculator(test_stats, test_talents, test_buffs, test_race, 'outlaw')
 
     def setUp(self):
         self.calculator = self.make_calculator()

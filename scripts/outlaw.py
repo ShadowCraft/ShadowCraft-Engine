@@ -15,7 +15,6 @@ from shadowcraft.objects import race
 from shadowcraft.objects import stats
 from shadowcraft.objects import procs
 from shadowcraft.objects import talents
-from shadowcraft.objects import artifact
 
 from shadowcraft.core import i18n
 
@@ -73,33 +72,6 @@ test_stats = stats.Stats(test_mh, test_oh, test_procs, test_gear_buffs,
 # Initialize talents..
 test_talents = talents.Talents('3213122', test_spec, test_class, level=test_level)
 
-#initialize artifact traits..
-test_traits = artifact.Artifact(test_spec, test_class, trait_dict={
-        'curse_of_the_dreadblades': 1,
-        'cursed_edges': 1,
-        'fates_thirst': 4,
-        'blade_dancer': 3,
-        'fatebringer': 4,
-        'gunslinger': 3,
-        'hidden_blade': 1,
-        'fortune_strikes': 3,
-        'ghostly_shell': 3,
-        'deception': 1,
-        'black_powder': 4,
-        'greed': 1,
-        'blurred_time': 1,
-        'fortunes_boon': 3,
-        'fortunes_strike': 3,
-        'blademaster': 1,
-        'blunderbuss': 1,
-        'cursed_steel': 1,
-        'bravado_of_the_uncrowned': 1,
-        'sabermetrics': 0,
-        'dreadblades_vigor': 0,
-        'loaded_dice': 0,
-        'concordance_of_the_legionfall': 0,
-})
-
 # Set up settings.
 test_cycle = settings.OutlawCycle(blade_flurry=False,
                                   jolly_roger_reroll=2,
@@ -115,9 +87,9 @@ test_settings = settings.Settings(test_cycle, response_time=.5, duration=300,
                                  finisher_threshold=5)
 
 # Build a DPS object.
-calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_traits, test_buffs, test_race, test_spec, test_settings, test_level)
+calculator = AldrianasRogueDamageCalculator(test_stats, test_talents, test_buffs, test_race, test_spec, test_settings, test_level)
 
-print(str(test_stats.get_character_stats(test_race, test_traits)))
+print(str(test_stats.get_character_stats(test_race)))
 
 # Compute DPS Breakdown.
 dps_breakdown = calculator.get_dps_breakdown()
@@ -130,7 +102,6 @@ tier_ep_values = calculator.get_other_ep(['rogue_t16_2pc', 'rogue_t16_4pc', 'man
 #calculator.get_weapon_ep(dps=True, enchants=True)
 
 #talent_ranks = calculator.get_talents_ranking()
-#trait_ranks = calculator.get_trait_ranking()
 
 def max_length(dict_list):
     max_len = 0
@@ -161,7 +132,6 @@ dicts_for_pretty_print = [ep_values,
     #talent_ranks,
     #trinkets_ep_value,
     dps_breakdown,
-    #trait_ranks
 ]
 pretty_print(dicts_for_pretty_print)
 print(' ' * (max_length(dicts_for_pretty_print) + 1), total_dps, ("total damage per second."))

@@ -15,7 +15,6 @@ _ = gettext.gettext
 from shadowcraft.core import exceptions
 from shadowcraft.objects import class_data
 from shadowcraft.objects import talents
-from shadowcraft.objects import artifact
 from shadowcraft.objects import procs
 from shadowcraft.objects.procs import InvalidProcException
 
@@ -34,13 +33,12 @@ class DamageCalculator(object):
     # normalize_ep_stat is the stat with value 1 EP, override in your subclass
     normalize_ep_stat = None
 
-    def __init__(self, stats, talents, traits, buffs, race, spec, settings=None, level=110, target_level=None, char_class='rogue'):
+    def __init__(self, stats, talents, buffs, race, spec, settings=None, level=110, target_level=None, char_class='rogue'):
         self.WOW_BUILD_TARGET = '7.3.5' # should reflect the game patch being targetted
         self.SHADOWCRAFT_BUILD = self.get_version_string()
         self.tools = class_data.Util()
         self.stats = stats
         self.talents = talents
-        self.traits = traits
         self.buffs = buffs
         self.race = race
         self.char_class = char_class
@@ -577,33 +575,6 @@ class DamageCalculator(object):
             talents_ranking[level] = tier_ranking #place each tier into the talent tree
         self.talents.initialize_talents(existing_talents)
         return talents_ranking
-
-    def get_trait_ranking(self, list=None):
-        trait_ranking = {}
-        baseline_dps = self.get_dps()
-        trait_list = []
-
-        if not list:
-            trait_list = self.traits.get_trait_list()
-        else:
-            trait_list = list
-
-        single_rank = self.traits.get_single_rank_trait_list()
-
-        for trait in trait_list:
-            base_trait_rank = getattr(self.traits, trait)
-            if trait in single_rank and base_trait_rank:
-                setattr(self.traits, trait, 0)
-            else:
-                setattr(self.traits, trait, base_trait_rank+1)
-            try:
-                new_dps = self.get_dps()
-                if new_dps != baseline_dps:
-                    trait_ranking[trait] = abs(new_dps-baseline_dps)
-            except:
-                trait_ranking[trait] = _('not_implemented')
-            setattr(self.traits, trait, base_trait_rank)
-        return trait_ranking
 
     def get_engine_info(self):
         data = {
