@@ -40,8 +40,6 @@ test_mh = stats.Weapon(7063.0, 1.8, 'dagger', None)
 test_oh = stats.Weapon(7063.0, 1.8, 'dagger', None)
 
 # Set up procs.
-#test_procs = procs.ProcsList(('scales_of_doom', 691), ('beating_heart_of_the_mountain', 701),
-#                             'draenic_agi_pot', 'draenic_agi_prepot', 'archmages_greater_incandescence')
 test_procs = procs.ProcsList('old_war_pot', 'old_war_prepot',
                              ('engine_of_eradication', 920),
                              ('specter_of_betrayal', 915)

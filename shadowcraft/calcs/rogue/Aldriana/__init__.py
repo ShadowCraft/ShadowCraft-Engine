@@ -239,9 +239,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
         #For other procs, the specific EP ranking function is responsible.
 
         #set additional procs
-        self.stats.procs.del_proc('felmouth_frenzy')
-        if self.buffs.felmouth_food():
-            self.stats.procs.set_proc('felmouth_frenzy')
         self.stats.procs.del_proc('jacins_ruse_2pc')
         if self.stats.gear_buffs.jacins_ruse_2pc:
             self.stats.procs.set_proc('jacins_ruse_2pc')
@@ -317,29 +314,6 @@ class AldrianasRogueDamageCalculator(RogueDamageCalculator):
             crit_rate = min(crit_rate * (1. - self.mantle_uptime) + self.mantle_uptime, 1)
 
         proc_value = proc.value
-        #280+75% AP
-        if proc is getattr(self.stats.procs, 'legendary_capacitive_meta'):
-            crit_rate = self.crit_rate(crit=current_stats['crit'])
-            proc_value = average_ap * 1.5 + 50
-
-        if proc is getattr(self.stats.procs, 'fury_of_xuen'):
-            crit_rate = self.crit_rate(crit=current_stats['crit'])
-            proc_value = (average_ap * .40 + 1) * 10 * (1 + min(4., self.settings.num_boss_adds))
-
-        if proc is getattr(self.stats.procs, 'mirror_of_the_blademaster'):
-            crit_rate = self.crit_rate(crit=current_stats['crit'])
-            # Each mirror produces 10 swings scaling with haste
-            # There are 4 mirrors, 2 spawn in front of the get and are parryable
-            # Each mirror swings a weapon with weapon damage based on 100% of AP
-            haste_mult = self.stats.get_haste_multiplier_from_rating(current_stats['haste'])
-            swings_per_mirror = 20 / (2 / haste_mult)
-            total_swings = 2 * swings_per_mirror + 2 * (1 - self.base_parry_chance) * swings_per_mirror
-            proc_value = total_swings*(average_ap / 3.5) * (1 + self.settings.num_boss_adds)
-
-        #.424*max(AP, SP)
-        if proc is getattr(self.stats.procs, 'felmouth_frenzy'):
-            proc_value = average_ap * 0.424 * 5
-
         average_hit = proc_value + proc.ap_coefficient * average_ap
         average_damage = average_hit * (1 + crit_rate * (crit_multiplier - 1)) * proc_count * multiplier
 

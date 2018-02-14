@@ -11,7 +11,7 @@ class TestBuffsTrue(unittest.TestCase):
 
     def test__getattr__(self):
         self.assertRaises(AttributeError, self.buffs.__getattr__, 'fake_buff')
-        self.assertTrue(self.buffs.flask_wod_agi_200)
+        self.assertTrue(self.buffs.flask_legion_agi_200)
 
     def test_buff_agi(self):
         self.assertEqual(self.buffs.buff_agi(), 2100)

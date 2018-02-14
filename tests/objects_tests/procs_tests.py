@@ -3,16 +3,16 @@ from shadowcraft.objects import procs
 
 class TestProcsList(unittest.TestCase):
     def setUp(self):
-        self.procsList = procs.ProcsList('fury_of_xuen','legendary_capacitive_meta')
+        self.procsList = procs.ProcsList('arcanogolem_digit','rocket_barrage')
 
     def test__init__(self):
         self.assertRaises(procs.InvalidProcException, procs.ProcsList, 'fake_proc')
-        self.procsList = procs.ProcsList('fury_of_xuen')
+        self.procsList = procs.ProcsList('arcanogolem_digit')
         self.assertEqual(len(self.procsList.get_all_procs_for_stat(stat=None)), 1)
 
     def test__getattr__(self):
         self.assertRaises(AttributeError, self.procsList.__getattr__, 'fake_proc')
-        self.assertTrue(self.procsList.fury_of_xuen)
+        self.assertTrue(self.procsList.arcanogolem_digit)
         self.assertFalse(self.procsList.touch_of_the_grave)
 
     def test_get_all_procs_for_stat(self):

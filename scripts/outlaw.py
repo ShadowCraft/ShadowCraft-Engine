@@ -40,9 +40,6 @@ test_mh = stats.Weapon(4821.0, 2.6, 'sword', None)
 test_oh = stats.Weapon(4821.0, 2.6, 'sword', None)
 
 # Set up procs.
-#test_procs = procs.ProcsList(('assurance_of_consequence', 588),
-#('draenic_philosophers_stone', 620), 'virmens_bite', 'virmens_bite_prepot',
-#'archmages_incandescence') #trinkets, other things (legendary procs)
 test_procs = procs.ProcsList(
     'mark_of_the_hidden_satyr',
     'old_war_pot',

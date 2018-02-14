@@ -13,7 +13,7 @@ class RogueDamageCalculatorFactory(object):
     def __init__(self, spec, **kwargs):
         self.class_name = 'rogue'
         self.talent_str = '0000000'
-        self.buffs = _buffs.Buffs('short_term_haste_buff', 'flask_wod_agi', 'food_wod_versatility')
+        self.buffs = _buffs.Buffs('short_term_haste_buff', 'flask_legion_agi', 'food_legion_versatility_225')
         self.procs = _procs.ProcsList()
         self.gear_buffs = _stats.GearBuffs('gear_specialization')
         self.level = 110

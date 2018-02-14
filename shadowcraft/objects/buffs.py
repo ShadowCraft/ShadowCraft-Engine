@@ -26,21 +26,6 @@ class Buffs(object):
         #'slow_casting_debuff',
         'mortal_wounds_debuff',
         # consumables
-        'flask_wod_agi_200',                #
-        'flask_wod_agi',                    # 250
-        'food_wod_mastery',                 # 100
-        'food_wod_mastery_75',              # 75
-        'food_wod_mastery_125',             # 125
-        'food_wod_crit',                    #
-        'food_wod_crit_75',                 #
-        'food_wod_crit_125',                #
-        'food_wod_haste',                   #
-        'food_wod_haste_75',                #
-        'food_wod_haste_125',               #
-        'food_wod_versatility',             #
-        'food_wod_versatility_75',          #
-        'food_wod_versatility_125',         #
-        'food_felmouth_frenzy',             # Felmouth frenzy, 2 haste scaling RPPM dealing 0.424 AP in damage
         ###LEGION###
         'flask_legion_agi',                 # Flask of the Seventh Demon
         'food_legion_mastery_225',          # Pickeled Stormray
@@ -105,8 +90,6 @@ class Buffs(object):
 
     def buff_agi(self, race=False):
         bonus_agi = 0
-        bonus_agi += 200 * self.flask_wod_agi_200
-        bonus_agi += 250 * self.flask_wod_agi
         bonus_agi += 1300 * self.flask_legion_agi
         bonus_agi += 400 * self.food_legion_feast_400 * [1, 2][race]
         bonus_agi += 500 * self.food_legion_feast_500 * [1, 2][race]
@@ -114,9 +97,6 @@ class Buffs(object):
 
     def buff_haste(self, race=False):
         bonus_haste = 0
-        bonus_haste += 125 * self.food_wod_haste_125 * [1, 2][race]
-        bonus_haste += 100 * self.food_wod_haste * [1, 2][race]
-        bonus_haste += 75 * self.food_wod_haste_75 * [1, 2][race]
         bonus_haste += 225 * self.food_legion_haste_225 * [1, 2][race]
         bonus_haste += 300 * self.food_legion_haste_300 * [1, 2][race]
         bonus_haste += 375 * self.food_legion_haste_375 * [1, 2][race]
@@ -124,9 +104,6 @@ class Buffs(object):
 
     def buff_crit(self, race=False):
         bonus_crit = 0
-        bonus_crit += 125 * self.food_wod_crit_125 * [1, 2][race]
-        bonus_crit += 100 * self.food_wod_crit * [1, 2][race]
-        bonus_crit += 75 * self.food_wod_crit_75 * [1, 2][race]
         bonus_crit += 225 * self.food_legion_crit_225 * [1, 2][race]
         bonus_crit += 300 * self.food_legion_crit_300 * [1, 2][race]
         bonus_crit += 375 * self.food_legion_crit_375 * [1, 2][race]
@@ -134,9 +111,6 @@ class Buffs(object):
 
     def buff_mast(self, race=False):
         bonus_mastery = 0
-        bonus_mastery += 125 * self.food_wod_mastery_125 * [1, 2][race]
-        bonus_mastery += 100 * self.food_wod_mastery * [1, 2][race]
-        bonus_mastery += 75 * self.food_wod_mastery_75 * [1, 2][race]
         bonus_mastery += 225 * self.food_legion_mastery_225 * [1, 2][race]
         bonus_mastery += 300 * self.food_legion_mastery_300 * [1, 2][race]
         bonus_mastery += 375 * self.food_legion_mastery_375 * [1, 2][race]
@@ -144,18 +118,10 @@ class Buffs(object):
 
     def buff_versatility(self, race=False):
         bonus_versatility = 0
-        bonus_versatility += 125 * self.food_wod_versatility_125 * [1, 2][race]
-        bonus_versatility += 100 * self.food_wod_versatility * [1, 2][race]
-        bonus_versatility += 75 * self.food_wod_versatility_75 * [1, 2][race]
         bonus_versatility += 225 * self.food_legion_versatility_225 * [1, 2][race]
         bonus_versatility += 300 * self.food_legion_versatility_300 * [1, 2][race]
         bonus_versatility += 375 * self.food_legion_versatility_375 * [1, 2][race]
         return bonus_versatility
-
-    def felmouth_food(self):
-        if self.food_felmouth_frenzy :
-            return True
-        return False
 
     def damage_food(self):
         if self.food_legion_damage_1:
